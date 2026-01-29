@@ -138,36 +138,6 @@ The Device Edit form displays lock/unlock buttons for all tracked fields:
 2. **Unlock Button** (🔓): Click to allow plugin overwrites again
 3. **Source Indicator**: Shows current field source (USER, LOCKED, NEWDEV, or plugin name)
 
-## UI Workflow
-
-### Locking a Field via UI
-
-1. Navigate to Device Details
-2. Find the field you want to protect
-3. Click the lock button (🔒) next to the field
-4. Button changes to unlock (🔓) and source indicator turns red (LOCKED)
-5. Field is now protected from plugin overwrites
-
-### Unlocking a Field via UI
-
-1. Find the locked field (button shows 🔓)
-2. Click the unlock button
-3. Button changes back to lock (🔒) and source resets to NEWDEV
-4. Plugins can now update this field again
-
-## Authorization
-
-All lock/unlock operations require:
-- Valid API token in `Authorization: Bearer {token}` header
-- User must be authenticated to the NetAlertX instance
-
-## Implementation Details
-
-### Backend Logic
-The lock/unlock feature is implemented in:
-- **API Endpoint**: `/server/api_server/api_server_start.py` - `api_device_field_lock()`
-- **Data Model**: `/server/models/device_instance.py` - Authorization checks in `setDeviceData()`
-- **Database**: Devices table with `*Source` columns tracking field origins
 
 ### Authorization Handler
 
@@ -179,6 +149,9 @@ The authoritative field update logic prevents plugin overwrites:
 4. If source is `NEWDEV` or plugin name, plugin update is accepted
 
 ## See Also
+
+- [Device locking](./DEVICE_FIELD_LOCK.md)
+- [Device source fields](./DEVICE_SOURCE_FIELDS.md)
 - [API Device Endpoints Documentation](./API_DEVICE.md)
 - [Authoritative Field Updates System](./PLUGINS_DEV.md#authoritative-fields)
 - [Plugin Configuration Reference](./PLUGINS_DEV_CONFIG.md)

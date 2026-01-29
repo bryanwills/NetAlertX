@@ -145,14 +145,18 @@ class NetAlertXStateManager {
         .attr('data-version', version);
 
       // 3. Update Build Timestamp placeholders
-      const buildTime = appState["buildTimestamp"] !== undefined ? appState["buildTimestamp"] : "";
-      const displayTime = (buildTime === 0) ? "UNKNOWN" : buildTime;
+      const buildTime = appState["buildTimestamp"] || 0;
+      const displayTime = buildTime ? localizeTimestamp(buildTime) : "UNKNOWN";
+
+      $('[data-plc="build-timestamp"]')
+          .html(displayTime)
+          .attr('data-build-time', buildTime);
 
       $('[data-plc="build-timestamp"]')
         .html(displayTime)
         .attr('data-build-time', buildTime);
 
-      console.log("[NetAlertX State] UI updated via jQuery");
+      // console.log("[NetAlertX State] UI updated via jQuery");
     } catch (e) {
       console.error("[NetAlertX State] Failed to update state display:", e);
     }

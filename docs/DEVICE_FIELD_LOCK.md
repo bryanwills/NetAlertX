@@ -37,7 +37,12 @@ Each locked field has a "source" indicator that shows you why the value is prote
 | 📡 **NEWDEV** | Default/unset value | Yes, plugins can update |
 | 📡 **Plugin name** | Last updated by a plugin (e.g., UNIFIAPI) | Yes, plugins can update if field in SET_ALWAYS |
 
-## How to Use
+Overwrite rules are
+
+> [!TIP]
+> You can bulk-unlock devices in the [Multi-edit](./DEVICES_BULK_EDITING.md) dialog. This removes all `USER` and `LOCKED` values from all `*Source` fields of selected devices.
+
+## Usage Examples
 
 ### Lock a Field (Prevent Plugin Changes)
 
@@ -147,13 +152,13 @@ Each locked field has a "source" indicator that shows you why the value is prote
 - Check if you accidentally unlocked it
 - Open an issue if it persists
 
-## For More Information
+## See also
 
-- **Technical details:** See [API_DEVICE_FIELD_LOCK.md](API_DEVICE_FIELD_LOCK.md)
-- **Plugin configuration:** See [PLUGINS_DEV_CONFIG.md](PLUGINS_DEV_CONFIG.md)
-- **Admin guide:** See [DEVICE_MANAGEMENT.md](DEVICE_MANAGEMENT.md)
-
----
-
-**Quick Start:** Find a device field you want to protect → Click the lock icon → That's it! The field won't change until you unlock it.
+- [Device locking](./DEVICE_FIELD_LOCK.md)
+- [Device source fields](./DEVICE_SOURCE_FIELDS.md)
+- [API Device Endpoints Documentation](./API_DEVICE.md)
+- [Authoritative Field Updates System](./PLUGINS_DEV.md#authoritative-fields)
+- [Plugin Configuration Reference](./PLUGINS_DEV_CONFIG.md)
+- [Device locking APIs](API_DEVICE_FIELD_LOCK.md)
+- [Device management](DEVICE_MANAGEMENT.md)
 
