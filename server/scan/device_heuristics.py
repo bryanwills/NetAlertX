@@ -5,6 +5,7 @@ import base64
 from pathlib import Path
 from typing import Optional, Tuple
 from logger import mylog
+from helpers import is_random_mac
 
 # Register NetAlertX directories
 INSTALL_PATH = os.getenv("NETALERTX_APP", "/app")
@@ -176,6 +177,12 @@ def guess_device_attributes(
     name = str(name).lower().strip() if name else "(unknown)"
     mac_clean = mac.replace(":", "").replace("-", "").upper()
 
+    # --- Check for Random MAC ---
+    # If the MAC is randomized (private), skip vendor/heuristics assignment
+    if is_random_mac(mac):
+        mylog("debug", f"[guess_device_attributes] Random MAC detected ({mac}); returning defaults to avoid incorrect assignment.")
+        return default_icon, default_type
+
     # # Internet shortcut
     # if mac == "INTERNET":
     #     return ICONS.get("globe", default_icon), DEVICE_TYPES.get("Internet", default_type)
@@ -261,4 +268,4 @@ def guess_type(
 
 # Handler for when this is run as a program instead of called as a module.
 if __name__ == "__main__":
-    mylog("error", "This module is not intended to be run directly.")
+    mylog("none", "This module is not intended to be run directly.")
