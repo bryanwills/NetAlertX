@@ -50,28 +50,33 @@ def write_notification(content, level="alert", timestamp=None):
     }
 
     # If file exists, load existing data, otherwise initialize as empty list
-    if os.path.exists(NOTIFICATION_API_FILE):
-        with open(NOTIFICATION_API_FILE, "r") as file:
-            # Check if the file object is of type _io.TextIOWrapper
-            if isinstance(file, _io.TextIOWrapper):
-                file_contents = file.read()  # Read file contents
-                if file_contents == "":
-                    file_contents = "[]"  # If file is empty, initialize as empty list
-
-                # mylog('debug', ['[Notification] User Notifications file: ', file_contents])
-                notifications = json.loads(file_contents)  # Parse JSON data
-            else:
-                mylog("none", "[Notification] File is not of type _io.TextIOWrapper")
-                notifications = []
-    else:
+    try:
+        if os.path.exists(NOTIFICATION_API_FILE):
+            with open(NOTIFICATION_API_FILE, "r") as file:
+                file_contents = file.read().strip()
+                if file_contents:
+                    notifications = json.loads(file_contents)
+                    if not isinstance(notifications, list):
+                        mylog("error", "[Notification] Invalid format: not a list, resetting")
+                        notifications = []
+                else:
+                    notifications = []
+        else:
+            notifications = []
+    except Exception as e:
+        mylog("error", [f"[Notification] Error reading notifications file: {e}"])
         notifications = []
 
     # Append new notification
     notifications.append(notification)
 
     # Write updated data back to file
-    with open(NOTIFICATION_API_FILE, "w") as file:
-        json.dump(notifications, file, indent=4)
+    try:
+        with open(NOTIFICATION_API_FILE, "w") as file:
+            json.dump(notifications, file, indent=4)
+    except Exception as e:
+        mylog("error", [f"[Notification] Error writing to notifications file: {e}"])
+        # Don't re-raise, just log. This prevents the API from crashing 500.
 
     # Broadcast unread count update
     try:

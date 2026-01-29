@@ -96,7 +96,9 @@ def register_tool(
     tags: Optional[List[str]] = None,
     deprecated: bool = False,
     original_operation_id: Optional[str] = None,
-    allow_multipart_payload: bool = False
+    allow_multipart_payload: bool = False,
+    response_content_types: Optional[List[str]] = None,
+    links: Optional[Dict[str, Any]] = None
 ) -> None:
     """
     Register an API endpoint for OpenAPI spec generation.
@@ -115,6 +117,8 @@ def register_tool(
         deprecated: Whether this endpoint is deprecated
         original_operation_id: The base ID before suffixing (for disablement mapping)
         allow_multipart_payload: Whether to allow multipart/form-data payloads
+        response_content_types: List of supported response media types (e.g. ["application/json", "text/csv"])
+        links: Dictionary of OpenAPI links to include in the response definition.
 
     Raises:
         DuplicateOperationIdError: If operation_id already exists in registry
@@ -140,7 +144,9 @@ def register_tool(
             "query_params": query_params or [],
             "tags": tags or ["default"],
             "deprecated": deprecated,
-            "allow_multipart_payload": allow_multipart_payload
+            "allow_multipart_payload": allow_multipart_payload,
+            "response_content_types": response_content_types or ["application/json"],
+            "links": links
         })
 
 

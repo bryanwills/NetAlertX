@@ -52,6 +52,16 @@ ALLOWED_LOG_FILES = Literal[
     "app.php_errors.log", "execution_queue.log", "db_is_locked.log"
 ]
 
+ALLOWED_SCAN_TYPES = Literal["ARPSCAN", "NMAPDEV", "NMAP", "INTRNT", "AVAHISCAN", "NBTSCAN"]
+
+ALLOWED_SESSION_CONNECTION_TYPES = Literal["Connected", "Reconnected", "New Device", "Down Reconnected"]
+ALLOWED_SESSION_DISCONNECTION_TYPES = Literal["Disconnected", "Device Down", "Timeout"]
+
+ALLOWED_EVENT_TYPES = Literal[
+    "Device Down", "Device Up", "New Device", "Connected", "Disconnected",
+    "IP Changed", "Down Reconnected"
+]
+
 
 def validate_mac(value: str) -> str:
     """Validate and normalize MAC address format."""
@@ -89,12 +99,40 @@ def validate_column_identifier(value: str) -> str:
 
 
 class BaseResponse(BaseModel):
-    """Standard API response wrapper."""
-    model_config = ConfigDict(extra="allow")
+    """
+    Standard API response wrapper.
+    Note: The API often returns 200 OK for most operations; clients MUST parse the 'success'
+    boolean field to determine if the operation was actually successful.
+    """
+    model_config = ConfigDict(
+        extra="allow",
+        json_schema_extra={
+            "examples": [{
+                "success": True
+            }]
+        }
+    )
 
     success: bool = Field(..., description="Whether the operation succeeded")
     message: Optional[str] = Field(None, description="Human-readable message")
     error: Optional[str] = Field(None, description="Error message if success=False")
+
+
+class ErrorResponse(BaseResponse):
+    """Standard error response model with details."""
+    model_config = ConfigDict(
+        extra="allow",
+        json_schema_extra={
+            "examples": [{
+                "success": False,
+                "error": "Error message"
+            }]
+        }
+    )
+
+    success: bool = Field(False, description="Always False for errors")
+    details: Optional[Any] = Field(None, description="Detailed error information (e.g., validation errors)")
+    code: Optional[str] = Field(None, description="Internal error code")
 
 
 class PaginatedResponse(BaseResponse):
@@ -130,7 +168,19 @@ class DeviceSearchRequest(BaseModel):
 
 class DeviceInfo(BaseModel):
     """Detailed device information model (Raw record)."""
-    model_config = ConfigDict(extra="allow")
+    model_config = ConfigDict(
+        extra="allow",
+        json_schema_extra={
+            "examples": [{
+                "devMac": "00:11:22:33:44:55",
+                "devName": "My iPhone",
+                "devLastIP": "192.168.1.10",
+                "devVendor": "Apple",
+                "devStatus": "online",
+                "devFavorite": 0
+            }]
+        }
+    )
 
     devMac: str = Field(..., description="Device MAC address")
     devName: Optional[str] = Field(None, description="Device display name/alias")
@@ -138,13 +188,27 @@ class DeviceInfo(BaseModel):
     devPrimaryIPv4: Optional[str] = Field(None, description="Primary IPv4 address")
     devPrimaryIPv6: Optional[str] = Field(None, description="Primary IPv6 address")
     devVlan: Optional[str] = Field(None, description="VLAN identifier")
-    devForceStatus: Optional[str] = Field(None, description="Force device status (online/offline/dont_force)")
+    devForceStatus: Optional[Literal["online", "offline", "dont_force"]] = Field(
+        "dont_force",
+        description="Force device status (online/offline/dont_force)"
+    )
     devVendor: Optional[str] = Field(None, description="Hardware vendor from OUI lookup")
     devOwner: Optional[str] = Field(None, description="Device owner")
     devType: Optional[str] = Field(None, description="Device type classification")
-    devFavorite: Optional[int] = Field(0, description="Favorite flag (0 or 1)")
-    devPresentLastScan: Optional[int] = Field(None, description="Present in last scan (0 or 1)")
-    devStatus: Optional[str] = Field(None, description="Online/Offline status")
+    devFavorite: Optional[int] = Field(
+        0,
+        description="Favorite flag (0=False, 1=True). Legacy boolean representation.",
+        json_schema_extra={"enum": [0, 1]}
+    )
+    devPresentLastScan: Optional[int] = Field(
+        None,
+        description="Present in last scan (0 or 1)",
+        json_schema_extra={"enum": [0, 1]}
+    )
+    devStatus: Optional[Literal["online", "offline"]] = Field(
+        None,
+        description="Online/Offline status"
+    )
     devMacSource: Optional[str] = Field(None, description="Source of devMac (USER, LOCKED, or plugin prefix)")
     devNameSource: Optional[str] = Field(None, description="Source of devName")
     devFQDNSource: Optional[str] = Field(None, description="Source of devFQDN")
@@ -270,7 +334,18 @@ class CopyDeviceRequest(BaseModel):
 class UpdateDeviceColumnRequest(BaseModel):
     """Request to update a specific device database column."""
     columnName: ALLOWED_DEVICE_COLUMNS = Field(..., description="Database column name")
-    columnValue: Any = Field(..., description="New value for the column")
+    columnValue: Union[str, int, bool, None] = Field(
+        ...,
+        description="New value for the column",
+        json_schema_extra={
+            "oneOf": [
+                {"type": "string"},
+                {"type": "integer"},
+                {"type": "boolean"},
+                {"type": "null"}
+            ]
+        }
+    )
 
 
 class LockDeviceFieldRequest(BaseModel):
@@ -301,7 +376,13 @@ class DeviceUpdateRequest(BaseModel):
 
     devName: Optional[str] = Field(None, description="Device name")
     devOwner: Optional[str] = Field(None, description="Device owner")
-    devType: Optional[str] = Field(None, description="Device type")
+    devType: Optional[str] = Field(
+        None,
+        description="Device type",
+        json_schema_extra={
+            "examples": ["Phone", "Laptop", "Desktop", "Router", "IoT", "Camera", "Server", "TV"]
+        }
+    )
     devVendor: Optional[str] = Field(None, description="Device vendor")
     devGroup: Optional[str] = Field(None, description="Device group")
     devLocation: Optional[str] = Field(None, description="Device location")
@@ -340,10 +421,9 @@ class DeleteDevicesRequest(BaseModel):
 
 class TriggerScanRequest(BaseModel):
     """Request to trigger a network scan."""
-    type: str = Field(
+    type: ALLOWED_SCAN_TYPES = Field(
         "ARPSCAN",
-        description="Scan plugin type to execute (e.g., ARPSCAN, NMAPDEV, NMAP)",
-        json_schema_extra={"examples": ["ARPSCAN", "NMAPDEV", "NMAP"]}
+        description="Scan plugin type to execute (e.g., ARPSCAN, NMAPDEV, NMAP)"
     )
 
 
@@ -420,7 +500,11 @@ class WakeOnLanRequest(BaseModel):
 
 class WakeOnLanResponse(BaseResponse):
     """Response for Wake-on-LAN operation."""
-    output: Optional[str] = Field(None, description="Command output")
+    output: Optional[str] = Field(
+        None,
+        description="Command output",
+        json_schema_extra={"examples": ["Sent magic packet to AA:BB:CC:DD:EE:FF"]}
+    )
 
 
 class TracerouteRequest(BaseModel):
@@ -507,7 +591,17 @@ class NetworkInterfacesResponse(BaseResponse):
 
 class EventInfo(BaseModel):
     """Event/alert information."""
-    model_config = ConfigDict(extra="allow")
+    model_config = ConfigDict(
+        extra="allow",
+        json_schema_extra={
+            "examples": [{
+                "eveMAC": "00:11:22:33:44:55",
+                "eveIP": "192.168.1.10",
+                "eveDateTime": "2024-01-29 10:00:00",
+                "eveEventType": "Device Down"
+            }]
+        }
+    )
 
     eveRowid: Optional[int] = Field(None, description="Event row ID")
     eveMAC: Optional[str] = Field(None, description="Device MAC address")
@@ -547,9 +641,19 @@ class LastEventsResponse(BaseResponse):
 class CreateEventRequest(BaseModel):
     """Request to create a device event."""
     ip: Optional[str] = Field("0.0.0.0", description="Device IP")
-    event_type: str = Field("Device Down", description="Event type")
+    event_type: str = Field(
+        "Device Down",
+        description="Event type",
+        json_schema_extra={
+            "examples": ["Device Down", "Device Up", "New Device", "Connected", "Disconnected"]
+        }
+    )
     additional_info: Optional[str] = Field("", description="Additional info")
-    pending_alert: int = Field(1, description="Pending alert flag")
+    pending_alert: int = Field(
+        1,
+        description="Pending alert flag (0 or 1)",
+        json_schema_extra={"enum": [0, 1]}
+    )
     event_time: Optional[str] = Field(None, description="Event timestamp (ISO)")
 
     @field_validator("ip", mode="before")
@@ -564,11 +668,18 @@ class CreateEventRequest(BaseModel):
 # =============================================================================
 # SESSIONS SCHEMAS
 # =============================================================================
-
-
-class SessionInfo(BaseModel):
     """Session information."""
-    model_config = ConfigDict(extra="allow")
+    model_config = ConfigDict(
+        extra="allow",
+        json_schema_extra={
+            "examples": [{
+                "sesMac": "00:11:22:33:44:55",
+                "sesDateTimeConnection": "2024-01-29 08:00:00",
+                "sesDateTimeDisconnection": "2024-01-29 09:00:00",
+                "sesIPAddress": "192.168.1.10"
+            }]
+        }
+    )
 
     sesRowid: Optional[int] = Field(None, description="Session row ID")
     sesMac: Optional[str] = Field(None, description="Device MAC address")
@@ -583,8 +694,20 @@ class CreateSessionRequest(BaseModel):
     ip: str = Field(..., description="Device IP")
     start_time: str = Field(..., description="Start time")
     end_time: Optional[str] = Field(None, description="End time")
-    event_type_conn: str = Field("Connected", description="Connection event type")
-    event_type_disc: str = Field("Disconnected", description="Disconnection event type")
+    event_type_conn: str = Field(
+        "Connected",
+        description="Connection event type",
+        json_schema_extra={
+            "examples": ["Connected", "Reconnected", "New Device", "Down Reconnected"]
+        }
+    )
+    event_type_disc: str = Field(
+        "Disconnected",
+        description="Disconnection event type",
+        json_schema_extra={
+            "examples": ["Disconnected", "Device Down", "Timeout"]
+        }
+    )
 
     @field_validator("mac")
     @classmethod
@@ -620,7 +743,11 @@ class InAppNotification(BaseModel):
     guid: Optional[str] = Field(None, description="Unique notification GUID")
     text: str = Field(..., description="Notification text content")
     level: NOTIFICATION_LEVELS = Field("info", description="Notification level")
-    read: Optional[int] = Field(0, description="Read status (0 or 1)")
+    read: Optional[int] = Field(
+        0,
+        description="Read status (0 or 1)",
+        json_schema_extra={"enum": [0, 1]}
+    )
     created_at: Optional[str] = Field(None, description="Creation timestamp")
 
 
@@ -665,10 +792,12 @@ class DbQueryRequest(BaseModel):
     """
     Request for raw database query.
     WARNING: This is a highly privileged operation.
+    Can be used to read settings by querying the 'Settings' table.
     """
     rawSql: str = Field(
         ...,
-        description="Base64-encoded SQL query. (UNSAFE: Use only for administrative tasks)"
+        description="Base64-encoded SQL query. (UNSAFE: Use only for administrative tasks)",
+        json_schema_extra={"examples": ["U0VMRUNUICogRlJPTSBTZXR0aW5ncw=="]}
     )
     # Legacy compatibility: removed strict safety check
     # TODO: SECURITY CRITICAL - Re-enable strict safety checks.
@@ -690,9 +819,23 @@ class DbQueryRequest(BaseModel):
 
 
 class DbQueryUpdateRequest(BaseModel):
-    """Request for DB update query."""
+    """
+    Request for DB update query.
+    Can be used to update settings by targeting the 'Settings' table.
+    """
     columnName: str = Field(..., description="Column to filter by")
-    id: List[Any] = Field(..., description="List of IDs to update")
+    id: List[Union[str, int]] = Field(
+        ...,
+        description="List of IDs to update (strings for MACs, integers for row IDs)",
+        json_schema_extra={
+            "items": {
+                "oneOf": [
+                    {"type": "string", "description": "A string identifier (e.g., MAC address)"},
+                    {"type": "integer", "description": "A numeric row ID"}
+                ]
+            }
+        }
+    )
     dbtable: ALLOWED_TABLES = Field(..., description="Table name")
     columns: List[str] = Field(..., description="Columns to update")
     values: List[Any] = Field(..., description="New values")
@@ -715,9 +858,23 @@ class DbQueryUpdateRequest(BaseModel):
 
 
 class DbQueryDeleteRequest(BaseModel):
-    """Request for DB delete query."""
+    """
+    Request for DB delete query.
+    Can be used to delete settings by targeting the 'Settings' table.
+    """
     columnName: str = Field(..., description="Column to filter by")
-    id: List[Any] = Field(..., description="List of IDs to delete")
+    id: List[Union[str, int]] = Field(
+        ...,
+        description="List of IDs to delete (strings for MACs, integers for row IDs)",
+        json_schema_extra={
+            "items": {
+                "oneOf": [
+                    {"type": "string", "description": "A string identifier (e.g., MAC address)"},
+                    {"type": "integer", "description": "A numeric row ID"}
+                ]
+            }
+        }
+    )
     dbtable: ALLOWED_TABLES = Field(..., description="Table name")
 
     @field_validator("columnName")
@@ -772,3 +929,14 @@ class SettingValue(BaseModel):
 class GetSettingResponse(BaseResponse):
     """Response for getting a setting value."""
     value: Any = Field(None, description="The setting value")
+
+
+# =============================================================================
+# GRAPHQL SCHEMAS
+# =============================================================================
+
+
+class GraphQLRequest(BaseModel):
+    """Request payload for GraphQL queries."""
+    query: str = Field(..., description="GraphQL query string", json_schema_extra={"examples": ["{ devices { devMac devName } }"]})
+    variables: Optional[Dict[str, Any]] = Field(None, description="Variables for the GraphQL query")

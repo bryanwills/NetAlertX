@@ -52,7 +52,7 @@ _rebuild_lock = threading.Lock()
 def generate_openapi_spec(
     title: str = "NetAlertX API",
     version: str = "2.0.0",
-    description: str = "NetAlertX Network Monitoring API - MCP Compatible",
+    description: str = "NetAlertX Network Monitoring API - Official Documentation - MCP Compatible",
     servers: Optional[List[Dict[str, str]]] = None,
     flask_app: Optional[Any] = None
 ) -> Dict[str, Any]:
@@ -80,12 +80,21 @@ def generate_openapi_spec(
                 "title": title,
                 "version": version,
                 "description": description,
+                "termsOfService": "https://github.com/netalertx/NetAlertX/blob/main/LICENSE.txt",
                 "contact": {
-                    "name": "NetAlertX",
-                    "url": "https://github.com/jokob-sk/NetAlertX"
+                    "name": "Open Source Project - NetAlertX - Github",
+                    "url": "https://github.com/netalertx/NetAlertX"
+                },
+                "license": {
+                    "name": "Licensed under GPLv3",
+                    "url": "https://www.gnu.org/licenses/gpl-3.0.html"
                 }
             },
-            "servers": servers or [{"url": "/", "description": "Local server"}],
+            "externalDocs": {
+                "description": "NetAlertX Official Documentation",
+                "url": "https://docs.netalertx.com/"
+            },
+            "servers": servers or [{"url": "/", "description": "This NetAlertX instance"}],
             "security": [
                 {"BearerAuth": []}
             ],
@@ -152,7 +161,11 @@ def generate_openapi_spec(
 
                 # Add responses
                 operation["responses"] = build_responses(
-                    entry.get("response_model"), definitions
+                    entry.get("response_model"),
+                    definitions,
+                    response_content_types=entry.get("response_content_types", ["application/json"]),
+                    links=entry.get("links"),
+                    method=method
                 )
 
                 spec["paths"][path][method] = operation

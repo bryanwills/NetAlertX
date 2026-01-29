@@ -100,6 +100,18 @@ from .sse_endpoint import (  # noqa: E402 [flake8 lint suppression]
 app = Flask(__name__)
 
 
+@app.errorhandler(500)
+@app.errorhandler(Exception)
+def handle_500_error(e):
+    """Global error handler for uncaught exceptions."""
+    mylog("none", [f"[API] Uncaught exception: {e}"])
+    return jsonify({
+        "success": False,
+        "error": "Internal Server Error",
+        "message": "Something went wrong on the server"
+    }), 500
+
+
 # Parse CORS origins from environment or use safe defaults
 _cors_origins_env = os.environ.get("CORS_ORIGINS", "")
 _cors_origins = [
@@ -599,7 +611,7 @@ def api_device_open_ports(payload=None):
 @validate_request(
     operation_id="get_all_devices",
     summary="Get All Devices",
-    description="Retrieve a list of all devices in the system.",
+    description="Retrieve a list of all devices in the system. Returns all records. No pagination supported.",
     response_model=DeviceListWrapperResponse,
     tags=["devices"],
     auth_callable=is_authorized
@@ -662,7 +674,7 @@ def api_delete_unknown_devices(payload=None):
 @app.route("/devices/export", methods=["GET"])
 @app.route("/devices/export/<format>", methods=["GET"])
 @validate_request(
-    operation_id="export_devices",
+    operation_id="export_devices_all",
     summary="Export Devices",
     description="Export all devices in CSV or JSON format.",
     query_params=[{
@@ -679,7 +691,8 @@ def api_delete_unknown_devices(payload=None):
     }],
     response_model=DeviceExportResponse,
     tags=["devices"],
-    auth_callable=is_authorized
+    auth_callable=is_authorized,
+    response_content_types=["application/json", "text/csv"]
 )
 def api_export_devices(format=None, payload=None):
     export_format = (format or request.args.get("format", "csv")).lower()
@@ -747,7 +760,7 @@ def api_devices_totals(payload=None):
 @app.route('/mcp/sse/devices/by-status', methods=['GET', 'POST'])
 @app.route("/devices/by-status", methods=["GET", "POST"])
 @validate_request(
-    operation_id="list_devices_by_status",
+    operation_id="list_devices_by_status_api",
     summary="List Devices by Status",
     description="List devices filtered by their online/offline status.",
     request_model=DeviceListRequest,
@@ -763,7 +776,30 @@ def api_devices_totals(payload=None):
             "connected", "down", "favorites", "new", "archived", "all", "my",
             "offline"
         ]}
-    }]
+    }],
+    links={
+        "GetOpenPorts": {
+            "operationId": "get_open_ports",
+            "parameters": {
+                "target": "$response.body#/0/devLastIP"
+            },
+            "description": "The `target` parameter for `get_open_ports` requires an IP address. Use the `devLastIP` from the first device in the list."
+        },
+        "WakeOnLan": {
+            "operationId": "wake_on_lan",
+            "parameters": {
+                "devMac": "$response.body#/0/devMac"
+            },
+            "description": "The `devMac` parameter for `wake_on_lan` requires a MAC address. Use the `devMac` from the first device in the list."
+        },
+        "UpdateDevice": {
+            "operationId": "update_device",
+            "parameters": {
+                "mac": "$response.body#/0/devMac"
+            },
+            "description": "The `mac` parameter for `update_device` is a path parameter. Use the `devMac` from the first device in the list."
+        }
+    }
 )
 def api_devices_by_status(payload: DeviceListRequest = None):
     status = payload.status if payload else request.args.get("status")
@@ -774,13 +810,43 @@ def api_devices_by_status(payload: DeviceListRequest = None):
 @app.route('/mcp/sse/devices/search', methods=['POST'])
 @app.route('/devices/search', methods=['POST'])
 @validate_request(
-    operation_id="search_devices",
+    operation_id="search_devices_api",
     summary="Search Devices",
     description="Search for devices based on various criteria like name, IP, MAC, or vendor.",
     request_model=DeviceSearchRequest,
     response_model=DeviceSearchResponse,
     tags=["devices"],
-    auth_callable=is_authorized
+    auth_callable=is_authorized,
+    links={
+        "GetOpenPorts": {
+            "operationId": "get_open_ports",
+            "parameters": {
+                "target": "$response.body#/devices/0/devLastIP"
+            },
+            "description": "The `target` parameter for `get_open_ports` requires an IP address. Use the `devLastIP` from the first device in the search results."
+        },
+        "WakeOnLan": {
+            "operationId": "wake_on_lan",
+            "parameters": {
+                "devMac": "$response.body#/devices/0/devMac"
+            },
+            "description": "The `devMac` parameter for `wake_on_lan` requires a MAC address. Use the `devMac` from the first device in the search results."
+        },
+        "NmapScan": {
+            "operationId": "run_nmap_scan",
+            "parameters": {
+                "scan": "$response.body#/devices/0/devLastIP"
+            },
+            "description": "The `scan` parameter for `run_nmap_scan` requires an IP or range. Use the `devLastIP` from the first device in the search results."
+        },
+        "UpdateDevice": {
+            "operationId": "update_device",
+            "parameters": {
+                "mac": "$response.body#/devices/0/devMac"
+            },
+            "description": "The `mac` parameter for `update_device` is a path parameter. Use the `devMac` from the first device in the search results."
+        }
+    }
 )
 def api_devices_search(payload=None):
     """Device search: accepts 'query' in JSON and maps to device info/search."""
@@ -1011,7 +1077,7 @@ def api_network_interfaces(payload=None):
 
 
 @app.route('/mcp/sse/nettools/trigger-scan', methods=['POST'])
-@app.route("/nettools/trigger-scan", methods=["GET"])
+@app.route("/nettools/trigger-scan", methods=["GET", "POST"])
 @validate_request(
     operation_id="trigger_network_scan",
     summary="Trigger Network Scan",
@@ -1300,13 +1366,25 @@ def api_create_event(mac, payload=None):
 
 @app.route("/events/<mac>", methods=["DELETE"])
 @validate_request(
-    operation_id="delete_events_by_mac",
-    summary="Delete Events by MAC",
-    description="Delete all events for a specific device MAC address.",
+    operation_id="delete_events",
+    summary="Delete Events",
+    description="Delete events by device MAC address or older than a specified number of days.",
     path_params=[{
         "name": "mac",
-        "description": "Device MAC address",
-        "schema": {"type": "string"}
+        "description": "Device MAC address or number of days",
+        "schema": {
+            "oneOf": [
+                {
+                    "type": "integer",
+                    "description": "Number of days (e.g., 30) to delete events older than this value."
+                },
+                {
+                    "type": "string",
+                    "pattern": "^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$",
+                    "description": "Device MAC address to delete all events for a specific device."
+                }
+            ]
+        }
     }],
     response_model=BaseResponse,
     tags=["events"],
@@ -1315,6 +1393,7 @@ def api_create_event(mac, payload=None):
 def api_events_by_mac(mac, payload=None):
     """Delete events for a specific device MAC; string converter keeps this distinct from /events/<int:days>."""
     device_handler = DeviceInstance()
+   
     result = device_handler.deleteDeviceEvents(mac)
     return jsonify(result)
 
@@ -1338,7 +1417,7 @@ def api_delete_all_events(payload=None):
 @validate_request(
     operation_id="get_all_events",
     summary="Get Events",
-    description="Retrieve a list of events, optionally filtered by MAC.",
+    description="Retrieve a list of events, optionally filtered by MAC. Returns all matching records. No pagination supported.",
     query_params=[{
         "name": "mac",
         "description": "Filter by Device MAC",
@@ -1372,7 +1451,8 @@ def api_get_events(payload=None):
     }],
     response_model=BaseResponse,
     tags=["events"],
-    auth_callable=is_authorized
+    auth_callable=is_authorized,
+    exclude_from_spec=True
 )
 def api_delete_old_events(days: int, payload=None):
     """
@@ -1406,7 +1486,7 @@ def api_get_events_totals(payload=None):
 
 
 @app.route('/mcp/sse/events/recent', methods=['GET', 'POST'])
-@app.route('/events/recent', methods=['GET'])
+@app.route('/events/recent', methods=['GET', 'POST'])
 @validate_request(
     operation_id="get_recent_events",
     summary="Get Recent Events",
@@ -1426,7 +1506,7 @@ def api_events_default_24h(payload=None):
 
 
 @app.route('/mcp/sse/events/last', methods=['GET', 'POST'])
-@app.route('/events/last', methods=['GET'])
+@app.route('/events/last', methods=['GET', 'POST'])
 @validate_request(
     operation_id="get_last_events",
     summary="Get Last Events",
@@ -1763,7 +1843,7 @@ def sync_endpoint_post(payload=None):
 @validate_request(
     operation_id="check_auth",
     summary="Check Authentication",
-    description="Check if the current API token is valid.",
+    description="Check if the current API token is valid. Note: tokens must be generated externally via the UI or CLI.",
     response_model=BaseResponse,
     tags=["auth"],
     auth_callable=is_authorized

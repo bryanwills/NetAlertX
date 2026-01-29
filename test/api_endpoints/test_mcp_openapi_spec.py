@@ -197,7 +197,7 @@ class TestOpenAPISpecGenerator:
                             f"Path param '{param_name}' not defined: {method.upper()} {path}"
 
     def test_standard_error_responses(self):
-        """Operations should have minimal standard error responses (400, 403, 404, etc) without schema bloat."""
+        """Operations should have standard error responses (400, 403, 404, etc)."""
         spec = generate_openapi_spec()
         expected_minimal_codes = ["400", "401", "403", "404", "500", "422"]
 
@@ -207,9 +207,9 @@ class TestOpenAPISpecGenerator:
                     continue
                 responses = details.get("responses", {})
                 for code in expected_minimal_codes:
-                    assert code in responses, f"Missing minimal {code} response in: {method.upper()} {path}."
-                    # Verify no "content" or schema is present (minimalism)
-                    assert "content" not in responses[code], f"Response {code} in {method.upper()} {path} should not have content/schema."
+                    assert code in responses, f"Missing {code} response in: {method.upper()} {path}."
+                    # Content should now be present (BaseResponse/Error schema)
+                    assert "content" in responses[code], f"Response {code} in {method.upper()} {path} should have content/schema."
 
 
 class TestMCPToolMapping:
@@ -239,9 +239,9 @@ class TestMCPToolMapping:
         spec = generate_openapi_spec()
         tools = map_openapi_to_mcp_tools(spec)
 
-        search_tool = next((t for t in tools if t["name"] == "search_devices"), None)
+        search_tool = next((t for t in tools if t["name"] == "search_devices_api"), None)
         assert search_tool is not None
-        assert "query" in search_tool["inputSchema"].get("required", [])
+        assert "query" in search_tool["inputSchema"]["required"]
 
     def test_tool_descriptions_present(self):
         """All tools should have non-empty descriptions."""
