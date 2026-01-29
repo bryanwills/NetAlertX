@@ -441,8 +441,9 @@
         "Device_TableHead_FQDN",
         "Device_TableHead_ParentRelType",
         "Device_TableHead_ReqNicsOnline",
-        "Device_TableHead_IPv6",
-        "Device_TableHead_IPv4"
+        "Device_TableHead_Vlan",
+        "Device_TableHead_IPv4",
+        "Device_TableHead_IPv6"
       ],
       "localized": ["name", "description"],
       "name": [
