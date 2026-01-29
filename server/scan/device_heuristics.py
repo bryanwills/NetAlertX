@@ -5,7 +5,7 @@ import base64
 from pathlib import Path
 from typing import Optional, Tuple
 from logger import mylog
-from helpers import is_random_mac
+from helper import is_random_mac
 
 # Register NetAlertX directories
 INSTALL_PATH = os.getenv("NETALERTX_APP", "/app")
