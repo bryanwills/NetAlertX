@@ -176,6 +176,12 @@ sql_devices_filters = """
                     SELECT DISTINCT 'devSyncHubNode' AS columnName, devSyncHubNode AS columnValue
                         FROM Devices WHERE devSyncHubNode NOT IN ('', 'null') AND devSyncHubNode IS NOT NULL
                     UNION
+                    SELECT DISTINCT 'devVlan' AS columnName, devVlan AS columnValue
+                        FROM Devices WHERE devVlan NOT IN ('', 'null') AND devVlan IS NOT NULL
+                    UNION
+                    SELECT DISTINCT 'devParentRelType' AS columnName, devParentRelType AS columnValue
+                        FROM Devices WHERE devParentRelType NOT IN ('', 'null') AND devParentRelType IS NOT NULL
+                    UNION
                     SELECT DISTINCT 'devSSID' AS columnName, devSSID AS columnValue
                         FROM Devices WHERE devSSID NOT IN ('', 'null') AND devSSID IS NOT NULL
                     ORDER BY columnName;
