@@ -193,7 +193,7 @@ def resolve_schema_refs(schema: Dict[str, Any], definitions: Dict[str, Any]) -> 
             resolved[k] = [resolve_schema_refs(i, definitions) for i in v]
         else:
             resolved[k] = v
-            
+
     return resolved
 
 

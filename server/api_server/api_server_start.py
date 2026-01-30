@@ -59,7 +59,8 @@ from .mcp_endpoint import (
     mcp_sse,
     mcp_messages,
     openapi_spec,
-)  # noqa: E402 [flake8 lint suppression]
+    get_openapi_spec,
+)
 # validation and schemas for MCP v2
 from .openapi.validation import validate_request  # noqa: E402 [flake8 lint suppression]
 from .openapi.schemas import (  # noqa: E402 [flake8 lint suppression]
@@ -950,9 +951,13 @@ def api_devices_network_topology(payload=None):
     auth_callable=is_authorized
 )
 def api_wakeonlan(payload=None):
-    data = request.get_json(silent=True) or {}
-    mac = data.get("devMac")
-    ip = data.get("devLastIP") or data.get('ip')
+    if payload:
+        mac = payload.mac
+        ip = payload.devLastIP
+    else:
+        data = request.get_json(silent=True) or {}
+        mac = data.get("mac") or data.get("devMac")
+        ip = data.get("devLastIP") or data.get('ip')
 
     if not mac and ip:
 
@@ -1857,6 +1862,14 @@ def check_auth(payload=None):
 # --------------------------
 # Mount SSE endpoints after is_authorized is defined (avoid circular import)
 create_sse_endpoint(app, is_authorized)
+
+# Apply environment-driven MCP disablement by regenerating the OpenAPI spec.
+# This populates the registry and applies any operation IDs listed in MCP_DISABLED_TOOLS.
+try:
+    get_openapi_spec(force_refresh=True, flask_app=app)
+    mylog("verbose", [f"[MCP] Applied MCP_DISABLED_TOOLS: {os.environ.get('MCP_DISABLED_TOOLS', '')}"])
+except Exception as e:
+    mylog("none", [f"[MCP] Error applying MCP_DISABLED_TOOLS: {e}"])
 
 
 def start_server(graphql_port, app_state):

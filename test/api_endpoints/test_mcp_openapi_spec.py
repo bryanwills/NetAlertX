@@ -66,7 +66,7 @@ class TestPydanticSchemas:
         """WakeOnLanRequest should validate MAC format."""
         # Valid MAC
         req = WakeOnLanRequest(devMac="00:11:22:33:44:55")
-        assert req.devMac == "00:11:22:33:44:55"
+        assert req.mac == "00:11:22:33:44:55"
 
         # Invalid MAC
         # with pytest.raises(ValidationError):
@@ -76,7 +76,7 @@ class TestPydanticSchemas:
         """WakeOnLanRequest should accept either MAC or IP."""
         req_mac = WakeOnLanRequest(devMac="00:11:22:33:44:55")
         req_ip = WakeOnLanRequest(devLastIP="192.168.1.50")
-        assert req_mac.devMac is not None
+        assert req_mac.mac is not None
         assert req_ip.devLastIP == "192.168.1.50"
 
     def test_traceroute_request_ip_validation(self):
@@ -216,12 +216,19 @@ class TestMCPToolMapping:
     """Test MCP tool generation from OpenAPI spec."""
 
     def test_tools_match_registry_count(self):
-        """Number of MCP tools should match registered endpoints."""
+        """Number of MCP tools should match unique original operation IDs in registry."""
         spec = generate_openapi_spec()
         tools = map_openapi_to_mcp_tools(spec)
         registry = get_registry()
 
-        assert len(tools) == len(registry)
+        # Count unique operation IDs (accounting for our deduplication logic)
+        unique_ops = set()
+        for entry in registry:
+            # We used x-original-operationId for deduplication logic, or operation_id if not present
+            op_id = entry.get("original_operation_id") or entry["operation_id"]
+            unique_ops.add(op_id)
+
+        assert len(tools) == len(unique_ops)
 
     def test_tools_have_input_schema(self):
         """All MCP tools should have inputSchema."""

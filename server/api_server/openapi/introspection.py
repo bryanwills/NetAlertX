@@ -97,6 +97,26 @@ def introspect_flask_app(app: Any):
                 # Ensure unique operationId
                 original_op_id = op_id
                 unique_op_id = op_id
+
+                # Semantic naming strategy for duplicates
+                if unique_op_id in _operation_ids:
+                    # Construct a semantic suffix to replace numeric ones
+                    # Priority: /mcp/ prefix and HTTP method
+                    suffix = ""
+                    if path.startswith("/mcp/"):
+                        suffix = "_mcp"
+                    
+                    if method.upper() == "POST":
+                        suffix += "_post"
+                    elif method.upper() == "GET":
+                        suffix += "_get"
+                    
+                    if suffix:
+                        candidate = f"{op_id}{suffix}"
+                        if candidate not in _operation_ids:
+                            unique_op_id = candidate
+
+                # Fallback to numeric suffixes if semantic naming didn't ensure uniqueness
                 count = 1
                 while unique_op_id in _operation_ids:
                     unique_op_id = f"{op_id}_{count}"
@@ -115,24 +135,27 @@ def introspect_flask_app(app: Any):
                 if method == 'GET' and not query_params and metadata.get("request_model"):
                     try:
                         schema = pydantic_to_json_schema(metadata["request_model"])
+                        defs = schema.get("$defs", {})
                         properties = schema.get("properties", {})
                         query_params = []
                         for name, prop in properties.items():
                             is_required = name in schema.get("required", [])
-                            # Create param definition, preserving enum/schema
+                            # Resolve references to inlined definitions (preserving Enums)
+                            resolved_prop = resolve_schema_refs(prop, defs)
+                            # Create param definition
                             param_def = {
                                 "name": name,
                                 "in": "query",
                                 "required": is_required,
                                 "description": prop.get("description", ""),
-                                "schema": prop
+                                "schema": resolved_prop
                             }
                             # Remove description from schema to avoid duplication
                             if "description" in param_def["schema"]:
                                 del param_def["schema"]["description"]
                             query_params.append(param_def)
                     except Exception:
-                        pass # Fallback to empty if schema generation fails
+                        pass  # Fallback to empty if schema generation fails
 
                 register_tool(
                     path=path,

@@ -29,7 +29,7 @@ Usage:
 """
 
 from __future__ import annotations
-
+import os
 import threading
 from typing import Optional, List, Dict, Any
 
@@ -73,6 +73,37 @@ def generate_openapi_spec(
             clear_registry()
             introspect_graphql_schema(devicesSchema)
             introspect_flask_app(flask_app)
+
+            # Apply default disabled tools from setting `MCP_DISABLED_TOOLS`, env var, or hard-coded defaults
+            # Format: comma-separated operation IDs, e.g. "dbquery_read,dbquery_write"
+            try:
+                disabled_env = ""
+                # Prefer setting from app.conf/settings when available
+                try:
+                    from helper import get_setting_value
+                    setting_val = get_setting_value("MCP_DISABLED_TOOLS")
+                    if setting_val:
+                        disabled_env = str(setting_val).strip()
+                except Exception:
+                    # If helper is unavailable, fall back to environment
+                    pass
+
+                if disabled_env is None:
+                    env_val = os.getenv("MCP_DISABLED_TOOLS")
+                    if env_val is not None:
+                        disabled_env = env_val.strip()
+
+                # If still not set, apply safe hard-coded defaults
+                if not disabled_env:
+                    disabled_env = "dbquery_read,dbquery_write"
+
+                if disabled_env:
+                    from .registry import set_tool_disabled
+                    for op in [p.strip() for p in disabled_env.split(",") if p.strip()]:
+                        set_tool_disabled(op, True)
+            except Exception:
+                # Never fail spec generation due to disablement application issues
+                pass
 
         spec = {
             "openapi": "3.1.0",

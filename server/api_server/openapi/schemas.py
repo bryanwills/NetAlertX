@@ -233,7 +233,17 @@ class DeviceListRequest(BaseModel):
         "offline"
     ]] = Field(
         None,
-        description="Filter devices by status (connected, down, favorites, new, archived, all, my, offline)"
+        description=(
+            "Filter devices by status:\n"
+            "- connected: Active devices present in the last scan\n"
+            "- down: Devices with active 'Device Down' alert\n"
+            "- favorites: Devices marked as favorite\n"
+            "- new: Devices flagged as new\n"
+            "- archived: Devices moved to archive\n"
+            "- all: All active (non-archived) devices\n"
+            "- my: All active devices (alias for 'all')\n"
+            "- offline: Devices not present in the last scan"
+        )
     )
 
 
@@ -336,7 +346,7 @@ class UpdateDeviceColumnRequest(BaseModel):
     columnName: ALLOWED_DEVICE_COLUMNS = Field(..., description="Database column name")
     columnValue: Union[str, int, bool, None] = Field(
         ...,
-        description="New value for the column",
+        description="New value for the column. Must match the column's expected data type (e.g., string for devName, integer for devFavorite).",
         json_schema_extra={
             "oneOf": [
                 {"type": "string"},
@@ -350,7 +360,7 @@ class UpdateDeviceColumnRequest(BaseModel):
 
 class LockDeviceFieldRequest(BaseModel):
     """Request to lock/unlock a device field."""
-    fieldName: Optional[str] = Field(None, description="Field name to lock/unlock (devMac, devName, devLastIP, etc.)")
+    fieldName: str = Field(..., description="Field name to lock/unlock (e.g., devName, devVendor). Required.")
     lock: bool = Field(True, description="True to lock the field, False to unlock")
 
 
@@ -387,7 +397,7 @@ class DeviceUpdateRequest(BaseModel):
     devGroup: Optional[str] = Field(None, description="Device group")
     devLocation: Optional[str] = Field(None, description="Device location")
     devComments: Optional[str] = Field(None, description="Comments")
-    createNew: bool = Field(False, description="Create new device if not exists")
+    createNew: bool = Field(False, description="If True, creates a new device. Recommended to provide at least devName and devVendor. If False, updates existing device.")
 
     @field_validator("devName", "devOwner", "devType", "devVendor", "devGroup", "devLocation", "devComments")
     @classmethod
@@ -461,8 +471,9 @@ class OpenPortsResponse(BaseResponse):
 
 class WakeOnLanRequest(BaseModel):
     """Request to send Wake-on-LAN packet."""
-    devMac: Optional[str] = Field(
+    mac: Optional[str] = Field(
         None,
+        alias="devMac",
         description="Target device MAC address",
         json_schema_extra={"examples": ["00:11:22:33:44:55"]}
     )
@@ -476,7 +487,7 @@ class WakeOnLanRequest(BaseModel):
     # But Pydantic V2 with populate_by_name=True allows both "devLastIP" and "ip".
     model_config = ConfigDict(populate_by_name=True)
 
-    @field_validator("devMac")
+    @field_validator("mac")
     @classmethod
     def validate_mac_if_provided(cls, v: Optional[str]) -> Optional[str]:
         if v is not None:
@@ -492,9 +503,9 @@ class WakeOnLanRequest(BaseModel):
 
     @model_validator(mode="after")
     def require_mac_or_ip(self) -> "WakeOnLanRequest":
-        """Ensure at least one of devMac or devLastIP is provided."""
-        if self.devMac is None and self.devLastIP is None:
-            raise ValueError("Either 'devMac' or 'devLastIP' (alias 'ip') must be provided")
+        """Ensure at least one of mac or devLastIP is provided."""
+        if self.mac is None and self.devLastIP is None:
+            raise ValueError("Either devMac (aka mac) or devLastIP (aka ip) must be provided")
         return self
 
 
@@ -530,7 +541,7 @@ class NmapScanRequest(BaseModel):
     """Request to perform NMAP scan."""
     scan: str = Field(
         ...,
-        description="Target IP address for NMAP scan"
+        description="Target IP address for NMAP scan (Single IP only, no CIDR/ranges/hostnames)."
     )
     mode: ALLOWED_NMAP_MODES = Field(
         ...,
@@ -826,7 +837,7 @@ class DbQueryUpdateRequest(BaseModel):
     columnName: str = Field(..., description="Column to filter by")
     id: List[Union[str, int]] = Field(
         ...,
-        description="List of IDs to update (strings for MACs, integers for row IDs)",
+        description="List of IDs to update. Use MAC address strings for 'Devices' table, and integer RowIDs for all other tables.",
         json_schema_extra={
             "items": {
                 "oneOf": [
@@ -865,7 +876,7 @@ class DbQueryDeleteRequest(BaseModel):
     columnName: str = Field(..., description="Column to filter by")
     id: List[Union[str, int]] = Field(
         ...,
-        description="List of IDs to delete (strings for MACs, integers for row IDs)",
+        description="List of IDs to delete. Use MAC address strings for 'Devices' table, and integer RowIDs for all other tables.",
         json_schema_extra={
             "items": {
                 "oneOf": [
