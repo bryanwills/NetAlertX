@@ -5,7 +5,12 @@
     "matching_pattern": [
       { "mac_prefix": "INTERNET", "vendor": "" }
     ],
-    "name_pattern": []
+    "name_pattern": [],
+    "ip_pattern": [
+      "^192\\.168\\.1\\.1$",
+      "^192\\.168\\.0\\.1$",
+      "^10\\.0\\.0\\.1$"
+    ]
   },
   {
     "dev_type": "Smart Switch",
@@ -178,11 +183,7 @@
       { "mac_prefix": "000C29", "vendor": "Cisco" },
       { "mac_prefix": "00155D", "vendor": "MikroTik" }
     ],
-    "name_pattern": ["router", "gateway", "ap", "access point"],
-    "ip_pattern": [
-      "^192\\.168\\.[0-1]\\.1$",
-      "^10\\.0\\.0\\.1$"
-    ]
+    "name_pattern": ["router", "gateway", "ap", "access point"]
   },
   {
     "dev_type": "Smart Light",
