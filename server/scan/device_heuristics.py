@@ -177,12 +177,6 @@ def guess_device_attributes(
     name = str(name).lower().strip() if name else "(unknown)"
     mac_clean = mac.replace(":", "").replace("-", "").upper()
 
-    # --- Check for Random MAC ---
-    # If the MAC is randomized (private), skip vendor/heuristics assignment
-    if is_random_mac(mac):
-        mylog("debug", f"[guess_device_attributes] Random MAC detected ({mac}); returning defaults to avoid incorrect assignment.")
-        return default_icon, default_type
-
     # # Internet shortcut
     # if mac == "INTERNET":
     #     return ICONS.get("globe", default_icon), DEVICE_TYPES.get("Internet", default_type)
@@ -190,16 +184,20 @@ def guess_device_attributes(
     type_ = None
     icon = None
 
-    # --- Strict MAC + vendor rule matching from external file ---
+    # 1. Try strict MAC match first
     type_, icon = match_mac_and_vendor(mac_clean, vendor, default_type, default_icon)
+
+    # 2. If no strict match, try Name match BEFORE checking for random MAC
+    if not type_ or type_ == default_type:
+        type_, icon = match_name(name, default_type, default_icon)
+
+    # 3. Only if it's STILL not found, apply the Random MAC block
+    if type_ == default_type and is_random_mac(mac):
+        return default_icon, default_type
 
     # --- Loose Vendor-based fallback ---
     if not type_ or type_ == default_type:
         type_, icon = match_vendor(vendor, default_type, default_icon)
-
-    # --- Loose Name-based fallback ---
-    if not type_ or type_ == default_type:
-        type_, icon = match_name(name, default_type, default_icon)
 
     # --- Loose IP-based fallback ---
     if (not type_ or type_ == default_type) or (not icon or icon == default_icon):

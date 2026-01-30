@@ -8,6 +8,24 @@
     "name_pattern": []
   },
   {
+    "dev_type": "Smart Switch",
+    "icon_html": "<i class=\"fa-solid fa-toggle-on\"></i>",
+    "matching_pattern": [
+      { "mac_prefix": "003192", "vendor": "TP-Link" },
+      { "mac_prefix": "50C7BF", "vendor": "TP-Link" },
+      { "mac_prefix": "B04E26", "vendor": "TP-Link" }
+    ],
+    "name_pattern": ["hs200", "hs210", "hs220", "ks230", "smart switch", "light switch", "wall switch"]
+  },
+  {
+    "dev_type": "Smart Plug",
+    "icon_html": "<i class=\"fa-solid fa-plug\"></i>",
+    "matching_pattern": [
+      { "mac_prefix": "2887BA", "vendor": "TP-Link" }
+    ],
+    "name_pattern": ["kp115", "hs100", "hs103", "hs105", "smart plug", "outlet"]
+  },
+  {
     "dev_type": "Access Point",
     "icon_html": "<i class=\"fa fa-network-wired\"></i>",
     "matching_pattern": [
@@ -16,15 +34,16 @@
       { "mac_prefix": "F4F5D8", "vendor": "TP-Link" },
       { "mac_prefix": "F88E85", "vendor": "Netgear" }
     ],
-    "name_pattern": ["router", "gateway", "ap", "access point", "access-point", "switch"]
+    "name_pattern": ["router", "gateway", "ap", "access point", "access-point", "switch", "sg105", "sg108", "managed switch", "unmanaged switch", "poe switch", "ethernet switch"]
   },
   {
     "dev_type": "Phone",
-    "icon_html": "<i class=\"fa-brands fa-apple\"></i>",
+    "icon_html": "<i class=\"fa-solid fa-mobile\"></i>",
     "matching_pattern": [
       { "mac_prefix": "001A79", "vendor": "Apple" },
       { "mac_prefix": "B0BE83", "vendor": "Samsung" },
-      { "mac_prefix": "BC926B", "vendor": "Motorola" }
+      { "mac_prefix": "BC926B", "vendor": "Motorola" },
+      { "mac_prefix": "", "vendor": "google" }
     ],
     "name_pattern": ["iphone", "ipad", "pixel", "galaxy", "redmi"]
   },
@@ -43,7 +62,7 @@
       { "mac_prefix": "BC4C4C", "vendor": "Samsung" }
     ],
     "name_pattern": ["tablet", "pad"]
-  },  
+  },
   {
     "dev_type": "IoT",
     "icon_html": "<i class=\"fa-brands fa-raspberry-pi\"></i>",
@@ -164,7 +183,7 @@
     "dev_type": "Smart Light",
     "icon_html": "<i class=\"fa fa-lightbulb\"></i>",
     "matching_pattern": [],
-    "name_pattern": ["hue", "lifx", "bulb"]
+    "name_pattern": ["hue", "lifx", "bulb", "light"]
   },
   {
     "dev_type": "Smart Home",
@@ -189,12 +208,5 @@
     "icon_html": "<i class=\"fa fa-shield-alt\"></i>",
     "matching_pattern": [],
     "name_pattern": ["doorbell", "lock", "security"]
-  },
-  {
-    "dev_type": "Smart Light",
-    "icon_html": "<i class=\"fa-solid fa-lightbulb\"></i>",
-    "matching_pattern": [
-    ],
-    "name_pattern": ["light","bulb"]
   }
 ]
