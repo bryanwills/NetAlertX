@@ -155,9 +155,10 @@
     "matching_pattern": [
       { "mac_prefix": "001FA7", "vendor": "Sony" },
       { "mac_prefix": "7C04D0", "vendor": "Nintendo" },
-      { "mac_prefix": "EC26CA", "vendor": "Sony" }
+      { "mac_prefix": "EC26CA", "vendor": "Sony" },
+      { "mac_prefix": "48B02D", "vendor": "NVIDIA" }
     ],
-    "name_pattern": ["playstation", "xbox"]
+    "name_pattern": ["playstation", "xbox", "shield", "nvidia"]
   },
   {
     "dev_type": "Camera",
