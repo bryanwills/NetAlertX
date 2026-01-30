@@ -36,6 +36,14 @@
     "name_pattern": ["echo", "alexa", "dot", "nest-audio", "nest-mini", "google-home"]
   },
   {
+    "dev_type": "Smart Appliance",
+    "icon_html": "<i class=\"fa-solid fa-wind\"></i>",
+    "matching_pattern": [
+      { "mac_prefix": "446FF8", "vendor": "Dyson" }
+    ],
+    "name_pattern": ["dyson", "purifier", "humidifier", "fan"]
+  },
+  {
     "dev_type": "Smart Home",
     "icon_html": "<i class=\"fa fa-house\"></i>",
     "matching_pattern": [],
@@ -90,9 +98,11 @@
     "matching_pattern": [
       { "mac_prefix": "001422", "vendor": "Dell" },
       { "mac_prefix": "001874", "vendor": "Lenovo" },
-      { "mac_prefix": "00E04C", "vendor": "Hewlett Packard" }
+      { "mac_prefix": "00E04C", "vendor": "Hewlett Packard" },
+      { "mac_prefix": "F44D30", "vendor": "Elitegroup Computer Systems" },
+      { "mac_prefix": "1C697A", "vendor": "Elitegroup Computer Systems" }
     ],
-    "name_pattern": ["desktop", "pc", "computer"]
+    "name_pattern": ["desktop", "pc", "computer", "liva", "ecs"]
   },
   {
     "dev_type": "Laptop",
@@ -101,9 +111,10 @@
       { "mac_prefix": "3C0754", "vendor": "HP" },
       { "mac_prefix": "0017A4", "vendor": "Dell" },
       { "mac_prefix": "F4CE46", "vendor": "Lenovo" },
-      { "mac_prefix": "409F38", "vendor": "Acer" }
+      { "mac_prefix": "409F38", "vendor": "Acer" },
+      { "mac_prefix": "9CB6D0", "vendor": "Rivet Networks" }
     ],
-    "name_pattern": ["macbook", "imac", "laptop", "notebook"]
+    "name_pattern": ["macbook", "imac", "laptop", "notebook", "alienware", "razer", "msi"]
   },
   {
     "dev_type": "Server",
