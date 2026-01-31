@@ -181,7 +181,7 @@ function getSettingOptions (key) {
 
   if (result == "")
   {
-    console.log(`Setting options with key "${key}" not found`)
+    // console.log(`Setting options with key "${key}" not found`)
     result = []
   }
 
@@ -197,10 +197,10 @@ function getSetting (key) {
 
   result = getCache(`nax_set_${key}`, true);
 
-  if (result == "")
-  {
-    console.log(`Setting with key "${key}" not found`)
-  }
+  // if (result == "")
+  // {
+  //   console.log(`Setting with key "${key}" not found`)
+  // }
 
   return result;
 }

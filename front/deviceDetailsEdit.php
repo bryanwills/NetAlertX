@@ -339,7 +339,7 @@ function getDeviceData() {
                           </i>
                         </label>
                         <div class="${obj.inputClasses}">
-                          ${generateFormHtml(settingsData, setting, fieldData.toString(), fieldOptionsOverride, null)}
+                          ${generateFormHtml(settingsData, setting, fieldData.toString(), fieldOptionsOverride, null, mac == "new")}
                           ${inlineControl}
                         </div>
                       </div>`;

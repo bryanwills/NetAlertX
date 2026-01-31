@@ -170,7 +170,8 @@ function showModalPopupForm(
   curValue = null,
   popupFormJson = null,
   parentSettingKey = null,
-  triggeredBy = null
+  triggeredBy = null,
+  populateFromOverrides = true
 ) {
   // set captions
   prefix = "modal-form";
@@ -229,7 +230,8 @@ function showModalPopupForm(
                                         setObj,
                                         null,
                                         fieldOptionsOverride,
-                                        null
+                                        null,
+                                        populateFromOverrides  // is new entry
                                       )}
                                   </div>
                               </div>
