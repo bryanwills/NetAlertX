@@ -1,4 +1,4 @@
-# tests/test_root_redirect.py
+# test/api_endpoints/test_docs.py - Tests for root redirect and API docs endpoints
 
 
 from api_server import api_server_start
