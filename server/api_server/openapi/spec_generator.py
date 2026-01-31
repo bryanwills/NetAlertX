@@ -77,7 +77,7 @@ def generate_openapi_spec(
             # Apply default disabled tools from setting `MCP_DISABLED_TOOLS`, env var, or hard-coded defaults
             # Format: comma-separated operation IDs, e.g. "dbquery_read,dbquery_write"
             try:
-                disabled_env = ""
+                disabled_env = None
                 # Prefer setting from app.conf/settings when available
                 try:
                     from helper import get_setting_value
@@ -88,9 +88,9 @@ def generate_openapi_spec(
                     # If helper is unavailable, fall back to environment
                     pass
 
-                if disabled_env is None:
+                if not disabled_env:
                     env_val = os.getenv("MCP_DISABLED_TOOLS")
-                    if env_val is not None:
+                    if env_val:
                         disabled_env = env_val.strip()
 
                 # If still not set, apply safe hard-coded defaults

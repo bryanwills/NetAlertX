@@ -679,6 +679,7 @@ class CreateEventRequest(BaseModel):
 # =============================================================================
 # SESSIONS SCHEMAS
 # =============================================================================
+class SessionInfo(BaseModel):
     """Session information."""
     model_config = ConfigDict(
         extra="allow",

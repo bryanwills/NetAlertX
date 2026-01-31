@@ -7,6 +7,7 @@ import os
 from flask import Flask, request, jsonify, Response
 from models.device_instance import DeviceInstance  # noqa: E402
 from flask_cors import CORS
+from werkzeug.exceptions import HTTPException
 
 # Register NetAlertX directories
 INSTALL_PATH = os.getenv("NETALERTX_APP", "/app")
@@ -105,6 +106,8 @@ app = Flask(__name__)
 @app.errorhandler(Exception)
 def handle_500_error(e):
     """Global error handler for uncaught exceptions."""
+    if isinstance(e, HTTPException):
+        return e
     mylog("none", [f"[API] Uncaught exception: {e}"])
     return jsonify({
         "success": False,
