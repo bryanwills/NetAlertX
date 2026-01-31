@@ -4,7 +4,7 @@ import os
 
 # flake8: noqa: E402
 
-from flask import Flask, request, jsonify, Response
+from flask import Flask, redirect, request, jsonify, url_for, Response
 from models.device_instance import DeviceInstance  # noqa: E402
 from flask_cors import CORS
 from werkzeug.exceptions import HTTPException
@@ -1164,6 +1164,11 @@ def api_docs():
     openapi_dir = os.path.join(api_server_dir, 'openapi')
     return send_from_directory(openapi_dir, 'swagger.html')
 
+
+@app.route('/')
+def index_redirect():
+    """Redirect root to API documentation."""
+    return redirect(url_for('api_docs'))
 
 # --------------------------
 # DB query
