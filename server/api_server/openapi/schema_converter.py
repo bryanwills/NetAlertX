@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Dict, Any, Optional, Type, List
 from pydantic import BaseModel
+from .schemas import ErrorResponse, BaseResponse
 
 
 def pydantic_to_json_schema(model: Type[BaseModel], mode: str = "validation") -> Dict[str, Any]:
@@ -161,57 +162,124 @@ def strip_validation(schema: Dict[str, Any]) -> Dict[str, Any]:
     return clean_schema
 
 
+def resolve_schema_refs(schema: Dict[str, Any], definitions: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Recursively resolve $ref in schema by inlining the definition.
+    Useful for standalone schema parts like query parameters where global definitions aren't available.
+    """
+    if not isinstance(schema, dict):
+        return schema
+
+    if "$ref" in schema:
+        ref = schema["$ref"]
+        # Handle #/$defs/Name syntax
+        if ref.startswith("#/$defs/"):
+            def_name = ref.split("/")[-1]
+            if def_name in definitions:
+                # Inline the definition (and resolve its refs recursively)
+                inlined = resolve_schema_refs(definitions[def_name], definitions)
+                # Merge any extra keys from the original schema (e.g. description override)
+                # Schema keys take precedence over definition keys
+                return {**inlined, **{k: v for k, v in schema.items() if k != "$ref"}}
+
+    # Recursively resolve properties
+    resolved = {}
+    for k, v in schema.items():
+        if k == "items":
+            resolved[k] = resolve_schema_refs(v, definitions)
+        elif k == "properties":
+            resolved[k] = {pk: resolve_schema_refs(pv, definitions) for pk, pv in v.items()}
+        elif k in ("allOf", "anyOf", "oneOf"):
+            resolved[k] = [resolve_schema_refs(i, definitions) for i in v]
+        else:
+            resolved[k] = v
+
+    return resolved
+
+
 def build_responses(
-    response_model: Optional[Type[BaseModel]], definitions: Dict[str, Any]
+    response_model: Optional[Type[BaseModel]],
+    definitions: Dict[str, Any],
+    response_content_types: Optional[List[str]] = None,
+    links: Optional[Dict[str, Any]] = None,
+    method: str = "post"
 ) -> Dict[str, Any]:
     """Build OpenAPI responses object."""
     responses = {}
 
-    # Success response (200)
-    if response_model:
-        # Strip validation from response schema to save tokens
-        schema = strip_validation(pydantic_to_json_schema(response_model, mode="serialization"))
-        schema = extract_definitions(schema, definitions)
-        responses["200"] = {
-            "description": "Successful response",
-            "content": {
-                "application/json": {
-                    "schema": schema
-                }
-            }
-        }
+    # Use a fresh list for response content types to avoid a shared mutable default.
+    if response_content_types is None:
+        response_content_types = ["application/json"]
     else:
-        responses["200"] = {
-            "description": "Successful response",
-            "content": {
-                "application/json": {
-                    "schema": {
-                        "type": "object",
-                        "properties": {
-                            "success": {"type": "boolean"},
-                            "message": {"type": "string"}
-                        }
-                    }
-                }
-            }
-        }
+        # Copy provided list to ensure each call gets its own list
+        response_content_types = list(response_content_types)
 
-    # Standard error responses - MINIMIZED context
-    # Annotate that these errors can occur, but provide no schema/content to save tokens.
-    # The LLM knows what "Bad Request" or "Not Found" means.
-    error_codes = {
-        "400": "Bad Request",
-        "401": "Unauthorized",
-        "403": "Forbidden",
-        "404": "Not Found",
-        "422": "Validation Error",
-        "500": "Internal Server Error"
+    # Success response (200)
+    effective_model = response_model or BaseResponse
+    schema = strip_validation(pydantic_to_json_schema(effective_model, mode="serialization"))
+    schema = extract_definitions(schema, definitions)
+
+    content = {}
+    for ct in response_content_types:
+        if ct == "application/json":
+            content[ct] = {"schema": schema}
+        else:
+            # For non-JSON types like CSV, we don't necessarily use the JSON schema
+            content[ct] = {"schema": {"type": "string", "format": "binary"}}
+
+    response_obj = {
+        "description": "Successful response",
+        "content": content
+    }
+    if links:
+        response_obj["links"] = links
+    responses["200"] = response_obj
+
+    # Standard error responses
+    error_configs = {
+        "400": ("Invalid JSON", "Request body must be valid JSON"),
+        "401": ("Unauthorized", None),
+        "403": ("Forbidden", "ERROR: Not authorized"),
+        "404": ("API route not found", "The requested URL /example/path was not found on the server."),
+        "422": ("Validation Error", None),
+        "500": ("Internal Server Error", "Something went wrong on the server")
     }
 
-    for code, desc in error_codes.items():
+    for code, (error_val, message_val) in error_configs.items():
+        # Generate a fresh schema for each error to customize examples
+        error_schema_raw = strip_validation(pydantic_to_json_schema(ErrorResponse, mode="serialization"))
+        error_schema = extract_definitions(error_schema_raw, definitions)
+
+        # Inject status-specific example
+        if "examples" in error_schema and len(error_schema["examples"]) > 0:
+            example = {
+                "success": False,
+                "error": error_val
+            }
+            if message_val:
+                example["message"] = message_val
+
+            if code == "422":
+                example["error"] = "Validation Error: Input should be a valid string"
+                example["details"] = [
+                    {
+                        "input": "invalid_value",
+                        "loc": ["field_name"],
+                        "msg": "Input should be a valid string",
+                        "type": "string_type",
+                        "url": "https://errors.pydantic.dev/2.12/v/string_type"
+                    }
+                ]
+
+            error_schema["examples"] = [example]
+
         responses[code] = {
-            "description": desc
-            # No "content" schema provided
+            "description": error_val,
+            "content": {
+                "application/json": {
+                    "schema": error_schema
+                }
+            }
         }
 
     return responses

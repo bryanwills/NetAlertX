@@ -44,7 +44,11 @@ def validate_request(
     query_params: Optional[list[dict]] = None,
     validation_error_code: int = 422,
     auth_callable: Optional[Callable[[], bool]] = None,
-    allow_multipart_payload: bool = False
+    allow_multipart_payload: bool = False,
+    exclude_from_spec: bool = False,
+    response_content_types: Optional[list[str]] = None,
+    links: Optional[dict] = None,
+    error_responses: Optional[dict] = None
 ):
     """
     Decorator to register a Flask route with the OpenAPI registry and validate incoming requests.
@@ -56,6 +60,10 @@ def validate_request(
     - Supports auth_callable to check permissions before validation.
     - Returns 422 (default) if validation fails.
     - allow_multipart_payload: If True, allows multipart/form-data and attempts validation from form fields.
+    - exclude_from_spec: If True, this endpoint will be omitted from the generated OpenAPI specification.
+    - response_content_types: List of supported response media types (e.g. ["application/json", "text/csv"]).
+    - links: Dictionary of OpenAPI links to include in the response definition.
+    - error_responses: Dictionary of custom error examples (e.g. {"404": "Device not found"}).
     """
 
     def decorator(f: Callable) -> Callable:
@@ -73,7 +81,11 @@ def validate_request(
             "tags": tags,
             "path_params": path_params,
             "query_params": query_params,
-            "allow_multipart_payload": allow_multipart_payload
+            "allow_multipart_payload": allow_multipart_payload,
+            "exclude_from_spec": exclude_from_spec,
+            "response_content_types": response_content_types,
+            "links": links,
+            "error_responses": error_responses
         }
 
         @wraps(f)
@@ -150,6 +162,7 @@ def validate_request(
                         data = request.args.to_dict()
                         validated_instance = request_model(**data)
                     except ValidationError as e:
+                        # Use configured validation error code (default 422)
                         return _handle_validation_error(e, operation_id, validation_error_code)
                     except (TypeError, ValueError, KeyError) as e:
                         mylog("verbose", [f"[Validation] Query param validation failed for {operation_id}: {e}"])
