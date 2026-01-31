@@ -760,7 +760,7 @@
     "run_event_tooltip": "在运行之前，请先启用设置并保存更改。",
     "select_icon_event_tooltip": "选择图标",
     "settings_core_icon": "fa-solid fa-gem",
-    "settings_core_label": "核心",
+    "settings_core_label": "主要",
     "settings_device_scanners": "设备扫描器用于发现写入当前扫描数据库表的设备。",
     "settings_device_scanners_icon": "fa-solid fa-magnifying-glass-plus",
     "settings_device_scanners_info": "使用 <a href=\"/settings.php#LOADED_PLUGINS\">LOADED_PLUGINS</a> 设置加载更多设备扫描仪",
