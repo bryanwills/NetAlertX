@@ -58,6 +58,17 @@ NetAlertX is a lightweight, flexible platform for monitoring networks, tracking 
 
 ---
 
+## MCP Server and OpenAPI
+
+![MCP Server](./img/FEATURES/MCP_Server.png)
+
+- **Data Access & Interaction**: The MCP server provides full programmatic access to NetAlertX, allowing you to query, monitor, and interact with network and device data.
+- **OpenAPI Integration**: Use the OpenAPI interface to fetch device status, network events, and logs, or trigger actions and alerts programmatically.
+- **Full Transparency**: All scan results, logs, and device information are accessible via the API, enabling auditing, automation, or integration with external systems.
+- **Flexible & Reliable**: Structured API access ensures predictable, repeatable interactions while allowing real-time data monitoring and operational control.
+
+---
+
 ## Extensible & Open Source
 
 ![Plugins](./img/plugins_json_settings.png)
