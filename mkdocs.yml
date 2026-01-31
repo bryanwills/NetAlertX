@@ -218,4 +218,8 @@ plugins:
   - gh-admonitions
   - search
 
+# Custom CSS
+extra_css:
+  - stylesheets/custom.css
+
 favicon: /img/netalertx_docs.png
