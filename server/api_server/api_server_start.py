@@ -1401,7 +1401,7 @@ def api_create_event(mac, payload=None):
 def api_events_by_mac(mac, payload=None):
     """Delete events for a specific device MAC; string converter keeps this distinct from /events/<int:days>."""
     device_handler = DeviceInstance()
-   
+
     result = device_handler.deleteDeviceEvents(mac)
     return jsonify(result)
 
@@ -1740,7 +1740,8 @@ def api_write_notification(payload=None):
     auth_callable=is_authorized
 )
 def api_get_unread_notifications(payload=None):
-    return get_unread_notifications()
+    notifications = get_unread_notifications()
+    return jsonify(notifications)
 
 
 @app.route("/messaging/in-app/read/all", methods=["POST"])

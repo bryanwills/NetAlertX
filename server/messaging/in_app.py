@@ -231,7 +231,7 @@ def get_unread_notifications():
         notifications = json.load(f)
 
     unread = [n for n in notifications if n.get("read", 0) == 0]
-    return jsonify(unread)
+    return unread
 
 
 def mark_notification_as_read(guid=None, max_attempts=3):
@@ -281,6 +281,13 @@ def mark_notification_as_read(guid=None, max_attempts=3):
     error_msg = f"Failed to read/write notification file after {max_attempts} attempts."
     mylog("none", f"[Notification] {error_msg}")
     return {"success": False, "error": error_msg}
+
+
+def update_unread_notifications_count():
+    """
+    Re-broadcast unread notifications for the frontend .
+    """
+    broadcast_unread_notifications_count(len(get_unread_notifications()))
 
 
 def delete_notification(guid):

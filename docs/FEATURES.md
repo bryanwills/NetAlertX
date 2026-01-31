@@ -6,7 +6,7 @@ NetAlertX is a lightweight, flexible platform for monitoring networks, tracking 
 
 ## Network Discovery & Device Tracking
 
-[Network Discovery & Device Tracking](./img/FEATURES/Network_Discovery_Device_Tracking.png)
+![Network Discovery & Device Tracking](./img/FEATURES/Network_Discovery_Device_Tracking.png)
 
 - **Automatic Device Detection**: Continuously scans your local network to detect all connected devices via ARP, DHCP, SNMP, and compatible controllers.
 - **Presence Monitoring**: Track when devices appear, disappear, or reconnect on the network.
