@@ -17,7 +17,7 @@ NetAlertX is a lightweight, flexible platform for monitoring networks, tracking 
 
 ## LAN Visualization
 
-[LAN visualization](./img/FEATURES/LAN_Visualization.png)
+![LAN visualization](./img/FEATURES/LAN_Visualization.png)
 
 - **Lightweight Network Map**: View a real-time representation of your local network with all connected devices.
 - **Device Status Indicators**: Quickly identify active, missing, or new devices at a glance.
@@ -29,7 +29,7 @@ NetAlertX is a lightweight, flexible platform for monitoring networks, tracking 
 
 ## Event-Driven Alerts
 
-[Event-Driven Alerts](./img/FEATURES/Event-Driven_Alerts.png)
+![Event-Driven Alerts](./img/FEATURES/Event-Driven_Alerts.png)
 
 - **Real-Time Notifications**: Receive immediate alerts for new devices, disconnected devices, or unexpected changes.
 - **Customizable Triggers**: Define rules based on device type, IP ranges, presence, or other network parameters.
@@ -40,7 +40,7 @@ NetAlertX is a lightweight, flexible platform for monitoring networks, tracking 
 
 ## Multi-Channel Notification
 
-[Multi-Channel Notification](./img/FEATURES/Multi-Channel_Notifications.png)
+![Multi-Channel Notification](./img/FEATURES/Multi-Channel_Notifications.png)
 
 - **Flexible Delivery Options**: Send alerts via email, webhooks, MQTT, and more.
 - **Integration with Automation**: Connect to ticketing systems, workflow engines, and custom scripts for automated responses.
@@ -50,7 +50,7 @@ NetAlertX is a lightweight, flexible platform for monitoring networks, tracking 
 
 ## Security & Compliance-Friendly Logging
 
-[Events](./img/FEATURES/Events.png)
+![Events](./img/FEATURES/Events.png)
 
 - **Device Accountability**: Maintain an auditable record of every device that appears or disappears from the network.
 - **Change Tracking**: Document network events with timestamps for review and compliance reporting.
@@ -60,7 +60,7 @@ NetAlertX is a lightweight, flexible platform for monitoring networks, tracking 
 
 ## Extensible & Open Source
 
-[Plugins](./img/plugins_json_settings.png)
+![Plugins](./img/plugins_json_settings.png)
 
 - **Plugin System**: Extend discovery methods, ingestion types, or notification channels through modular plugins.
 - **Community Contributions**: Open-source architecture encourages collaboration and improvements.

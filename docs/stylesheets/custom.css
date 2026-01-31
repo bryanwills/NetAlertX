@@ -14,30 +14,34 @@
  * limitations under the License.
  */
 
-/* --- PROMO CARDS  --- */
+/* --- PROMO CARDS --- */
 .promo-card-wrapper {
   display: flex;
+  flex-wrap: wrap;
   gap: 24px;
   max-width: 1200px;
   margin: 60px auto;
-  flex-wrap: wrap;
 }
 
 .promo-card {
-  flex: 1;
+  flex: 0 0 calc(50% - 12px);
   min-width: 300px;
-  background-color: #f8f9fa;
   border-radius: 24px;
   padding: 16px 24px;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+  background-color: var(--md-primary-bg-color--light);
+  transition: transform 0.2s ease;
+}
+
+.promo-card:hover {
+  transform: translateY(-2px);
 }
 
 .promo-card h3 {
-  color: #202124;
-  margin-top: 0;
-  margin-bottom: 12px;
+  margin: 0 0 12px;
+  color: var(--md-primary-fg-color);
 }
 
 .promo-card p {
@@ -45,27 +49,22 @@
   flex-grow: 1;
 }
 
+/* --- PROMO BUTTONS --- */
 .promo-button,
 .learn-more-btn {
   display: inline-block;
   padding: 0.5rem 1.2rem;
-  border: 1px solid #000;
-  border-radius: 50px; /* Pill shape */
+  border: 1px solid var(--md-primary-fg-color);
+  border-radius: 50px;
   text-decoration: none;
-  color: #000;
+  color: var(--md-primary-fg-color);
   font-weight: 500;
   font-size: 0.8rem;
-  transition: background-color 0.2s ease-in-out;
   background-color: transparent;
-}
-
-/* Ensure link buttons don't inherit blue color */
-:is(a.promo-button, a.learn-more-btn):is(:link, :visited) {
-  color: #000;
+  transition: opacity 0.2s ease-in-out;
 }
 
 .promo-button:hover,
 .learn-more-btn:hover {
-  background-color: #e9ecef;
-  color: #000;
+  opacity: 0.8;
 }
