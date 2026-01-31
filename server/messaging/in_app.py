@@ -3,6 +3,7 @@ import sys
 import json
 import uuid
 import time
+import fcntl
 
 from flask import jsonify
 
@@ -17,6 +18,35 @@ from api_server.sse_broadcast import broadcast_unread_notifications_count  # noq
 
 
 NOTIFICATION_API_FILE = apiPath + 'user_notifications.json'
+
+
+def locked_notifications_file(callback):
+    # Ensure file exists
+    if not os.path.exists(NOTIFICATION_API_FILE):
+        with open(NOTIFICATION_API_FILE, "w") as f:
+            f.write("[]")
+
+    with open(NOTIFICATION_API_FILE, "r+") as f:
+        fcntl.flock(f, fcntl.LOCK_EX)
+        try:
+            raw = f.read().strip() or "[]"
+            try:
+                data = json.loads(raw)
+            except json.JSONDecodeError:
+                mylog("none", "[Notification] Corrupted JSON detected, resetting.")
+                data = []
+
+            # Let caller modify data
+            result = callback(data)
+
+            # Write back atomically
+            f.seek(0)
+            f.truncate()
+            json.dump(data, f, indent=4)
+
+            return result
+        finally:
+            fcntl.flock(f, fcntl.LOCK_UN)
 
 
 # Show Frontend User Notification
@@ -36,50 +66,21 @@ def write_notification(content, level="alert", timestamp=None):
     if timestamp is None:
         timestamp = timeNowDB()
 
-    # Generate GUID
-    guid = str(uuid.uuid4())
-
-    # Prepare notification dictionary
     notification = {
         "timestamp": str(timestamp),
-        "guid": guid,
+        "guid": str(uuid.uuid4()),
         "read": 0,
         "level": level,
         "content": content,
     }
 
-    # If file exists, load existing data, otherwise initialize as empty list
-    try:
-        if os.path.exists(NOTIFICATION_API_FILE):
-            with open(NOTIFICATION_API_FILE, "r") as file:
-                file_contents = file.read().strip()
-                if file_contents:
-                    notifications = json.loads(file_contents)
-                    if not isinstance(notifications, list):
-                        mylog("error", "[Notification] Invalid format: not a list, resetting")
-                        notifications = []
-                else:
-                    notifications = []
-        else:
-            notifications = []
-    except Exception as e:
-        mylog("error", [f"[Notification] Error reading notifications file: {e}"])
-        notifications = []
+    def update(notifications):
+        notifications.append(notification)
 
-    # Append new notification
-    notifications.append(notification)
+    locked_notifications_file(update)
 
-    # Write updated data back to file
     try:
-        with open(NOTIFICATION_API_FILE, "w") as file:
-            json.dump(notifications, file, indent=4)
-    except Exception as e:
-        mylog("error", [f"[Notification] Error writing to notifications file: {e}"])
-        # Don't re-raise, just log. This prevents the API from crashing 500.
-
-    # Broadcast unread count update
-    try:
-        unread_count = sum(1 for n in notifications if n.get("read", 0) == 0)
+        unread_count = sum(1 for n in locked_notifications_file(lambda n: n) if n.get("read", 0) == 0)
         broadcast_unread_notifications_count(unread_count)
     except Exception as e:
         mylog("none", [f"[Notification] Failed to broadcast unread count: {e}"])
@@ -147,24 +148,42 @@ def mark_all_notifications_read():
                 "error": str (optional)
             }
     """
+    # If notifications file does not exist, nothing to mark
     if not os.path.exists(NOTIFICATION_API_FILE):
         return {"success": True}
 
     try:
-        with open(NOTIFICATION_API_FILE, "r") as f:
-            notifications = json.load(f)
-    except Exception as e:
-        mylog("none", f"[Notification] Failed to read notifications: {e}")
-        return {"success": False, "error": str(e)}
+        # Open file in read/write mode and acquire exclusive lock
+        with open(NOTIFICATION_API_FILE, "r+") as f:
+            fcntl.flock(f, fcntl.LOCK_EX)
 
-    for n in notifications:
-        n["read"] = 1
+            try:
+                # Read file contents
+                file_contents = f.read().strip()
+                if file_contents == "":
+                    notifications = []
+                else:
+                    try:
+                        notifications = json.loads(file_contents)
+                    except json.JSONDecodeError as e:
+                        mylog("none", f"[Notification] Corrupted notifications JSON: {e}")
+                        notifications = []
 
-    try:
-        with open(NOTIFICATION_API_FILE, "w") as f:
-            json.dump(notifications, f, indent=4)
+                # Mark all notifications as read
+                for n in notifications:
+                    n["read"] = 1
+
+                # Rewrite file safely
+                f.seek(0)
+                f.truncate()
+                json.dump(notifications, f, indent=4)
+
+            finally:
+                # Always release file lock
+                fcntl.flock(f, fcntl.LOCK_UN)
+
     except Exception as e:
-        mylog("none", f"[Notification] Failed to write notifications: {e}")
+        mylog("none", f"[Notification] Failed to read/write notifications: {e}")
         return {"success": False, "error": str(e)}
 
     mylog("debug", "[Notification] All notifications marked as read.")

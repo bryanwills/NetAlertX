@@ -5,6 +5,7 @@ import base64
 from pathlib import Path
 from typing import Optional, Tuple
 from logger import mylog
+from helper import is_random_mac
 
 # Register NetAlertX directories
 INSTALL_PATH = os.getenv("NETALERTX_APP", "/app")
@@ -183,16 +184,20 @@ def guess_device_attributes(
     type_ = None
     icon = None
 
-    # --- Strict MAC + vendor rule matching from external file ---
+    # 1. Try strict MAC match first
     type_, icon = match_mac_and_vendor(mac_clean, vendor, default_type, default_icon)
+
+    # 2. If no strict match, try Name match BEFORE checking for random MAC
+    if not type_ or type_ == default_type:
+        type_, icon = match_name(name, default_type, default_icon)
+
+    # 3. Only if it's STILL not found, apply the Random MAC block
+    if type_ == default_type and is_random_mac(mac):
+        return default_icon, default_type
 
     # --- Loose Vendor-based fallback ---
     if not type_ or type_ == default_type:
         type_, icon = match_vendor(vendor, default_type, default_icon)
-
-    # --- Loose Name-based fallback ---
-    if not type_ or type_ == default_type:
-        type_, icon = match_name(name, default_type, default_icon)
 
     # --- Loose IP-based fallback ---
     if (not type_ or type_ == default_type) or (not icon or icon == default_icon):
@@ -261,4 +266,4 @@ def guess_type(
 
 # Handler for when this is run as a program instead of called as a module.
 if __name__ == "__main__":
-    mylog("error", "This module is not intended to be run directly.")
+    mylog("none", "This module is not intended to be run directly.")

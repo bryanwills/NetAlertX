@@ -543,7 +543,10 @@ function mapColumnIndexToFieldName(index, tableColumnVisible) {
     "devCustomProps",          // 26
     "devFQDN",                 // 27
     "devParentRelType",        // 28
-    "devReqNicsOnline"         // 29
+    "devReqNicsOnline",        // 29
+    "devVlan",                 // 30
+    "devPrimaryIPv4",          // 31
+    "devPrimaryIPv6",          // 32
   ];
 
   // console.log("OrderBy: " + columnNames[tableColumnOrder[index]]);
@@ -660,6 +663,9 @@ function initializeDatatable (status) {
                 devFQDN
                 devParentRelType
                 devReqNicsOnline
+                devVlan
+                devPrimaryIPv4
+                devPrimaryIPv6
               }
               count
             }
@@ -743,7 +749,10 @@ function initializeDatatable (status) {
                 device.devCustomProps || "",
                 device.devFQDN || "",
                 device.devParentRelType || "",
-                device.devReqNicsOnline || 0
+                device.devReqNicsOnline || 0,
+                device.devVlan || "",
+                device.devPrimaryIPv4 || "",
+                device.devPrimaryIPv6 || "",
             ];
 
             const newRow = [];

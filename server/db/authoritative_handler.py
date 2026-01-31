@@ -448,4 +448,3 @@ def unlock_fields(conn, mac=None, fields=None, clear_all=False):
         }
     finally:
         conn.close()
-

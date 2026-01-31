@@ -110,6 +110,7 @@ FIELD_SPECS = {
         "source_col": "devNameSource",
         "empty_values": ["", "null", "(unknown)", "(name not found)"],
         "priority": ["NSLOOKUP", "AVAHISCAN", "NBTSCAN", "DIGSCAN", "ARPSCAN", "DHCPLSS", "NEWDEV", "N/A"],
+        "allow_override_if_changed": True,
     },
 
     # ==========================================================

@@ -668,7 +668,10 @@ function getColumnNameFromLangString(headStringKey) {
     "Device_TableHead_CustomProps": "devCustomProps",
     "Device_TableHead_FQDN": "devFQDN",
     "Device_TableHead_ParentRelType": "devParentRelType",
-    "Device_TableHead_ReqNicsOnline": "devReqNicsOnline"
+    "Device_TableHead_ReqNicsOnline": "devReqNicsOnline",
+    "Device_TableHead_Vlan": "devVlan",
+    "Device_TableHead_IPv4": "devPrimaryIPv4",
+    "Device_TableHead_IPv6": "devPrimaryIPv6"
   };
 
   return columnNameMap[headStringKey] || "";

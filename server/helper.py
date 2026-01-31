@@ -590,26 +590,6 @@ def normalize_string(text):
 # MAC and IP helper methods
 # -------------------------------------------------------------------------------
 
-
-# # -------------------------------------------------------------------------------------------
-# def is_random_mac(mac: str) -> bool:
-#     """Determine if a MAC address is random, respecting user-defined prefixes not to mark as random."""
-
-#     is_random = mac[1].upper() in ["2", "6", "A", "E"]
-
-#     # Get prefixes from settings
-#     prefixes = get_setting_value("UI_NOT_RANDOM_MAC")
-
-#     # If detected as random, make sure it doesn't start with a prefix the user wants to exclude
-#     if is_random:
-#         for prefix in prefixes:
-#             if mac.upper().startswith(prefix.upper()):
-#                 is_random = False
-#                 break
-
-#     return is_random
-
-
 # -------------------------------------------------------------------------------------------
 def generate_mac_links(html, deviceUrl):
     p = re.compile(r"(?:[0-9a-fA-F]:?){12}")

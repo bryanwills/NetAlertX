@@ -511,10 +511,10 @@ $settingsJSON_DB = json_encode($settings, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX
           }
 
           // INPUT
-          inputFormHtml = generateFormHtml(settingsData, set, valIn, null, null);
+          inputFormHtml = generateFormHtml(settingsData, set, valIn, null, null, false);
 
-                // construct final HTML for the setting
-                setHtml += inputFormHtml + overrideHtml + `
+          // construct final HTML for the setting
+          setHtml += inputFormHtml + overrideHtml + `
               </div>
             </div>
           `

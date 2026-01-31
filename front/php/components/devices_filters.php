@@ -18,7 +18,7 @@ function renderFilterDropdown($headerKey, $columnName, $values) {
     // Generate the dropdown HTML
     return '
     <div class="filter-group input-group">
-        <label for="filter_' . htmlspecialchars($columnName) . '">' . lang($headerKey) . '</label>
+        <label for="filter_' . htmlspecialchars($columnName) . '">' . lang($headerKey) . ': </label>
         <select id="filter_' . htmlspecialchars($columnName) . '" class="filter-dropdown" data-column="' . htmlspecialchars($columnName) . '">
             ' . $optionsHtml . '
         </select>
