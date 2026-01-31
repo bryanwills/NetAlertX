@@ -58,8 +58,8 @@ ALLOWED_SESSION_CONNECTION_TYPES = Literal["Connected", "Reconnected", "New Devi
 ALLOWED_SESSION_DISCONNECTION_TYPES = Literal["Disconnected", "Device Down", "Timeout"]
 
 ALLOWED_EVENT_TYPES = Literal[
-    "Device Down", "Device Up", "New Device", "Connected", "Disconnected",
-    "IP Changed", "Down Reconnected"
+    "Device Down", "New Device", "Connected", "Disconnected",
+    "IP Changed", "Down Reconnected", "<missing event>"
 ]
 
 
@@ -656,7 +656,7 @@ class CreateEventRequest(BaseModel):
         "Device Down",
         description="Event type",
         json_schema_extra={
-            "examples": ["Device Down", "Device Up", "New Device", "Connected", "Disconnected"]
+            "examples": ["Device Down", "New Device", "Connected", "Disconnected", "IP Changed", "Down Reconnected", "<missing event>"]
         }
     )
     additional_info: Optional[str] = Field("", description="Additional info")
