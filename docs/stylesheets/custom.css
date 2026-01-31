@@ -31,7 +31,11 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  background-color: var(--md-primary-bg-color--light);
+  background-color: color-mix(
+    in srgb,
+    var(--md-primary-fg-color) 8%,
+    transparent
+  );
   transition: transform 0.2s ease;
 }
 

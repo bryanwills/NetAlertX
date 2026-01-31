@@ -8,36 +8,39 @@ hide:
 
 Guides and resources to help you set up, configure, and troubleshoot NetAlertX.
 
-<div class="promo-card">
-  <h3>Learn</h3>
-  <p>Understand NetAlertX core features, discovery, and alerting concepts</p>
-  <a href="./FEATURES" class="promo-button">
-    Explore Features
-  </a>
-</div>
 
-<div class="promo-card">
-  <h3>Install</h3>
-  <p>Step-by-step installation guides for Docker, Home Assistant, Unraid, and bare-metal setups</p>
-  <a href="./INSTALLATION" class="promo-button">
-    View Installation Guides
-  </a>
-</div>
+<div class="promo-card-wrapper">
+  <div class="promo-card">
+    <h3>Learn</h3>
+    <p>Understand NetAlertX core features, discovery, and alerting concepts</p>
+    <a href="./FEATURES" class="promo-button">
+      Explore Features
+    </a>
+  </div>
 
-<div class="promo-card">
-  <h3>Notifications</h3>
-  <p>Learn how NetAlertX provides device presence, alerting, and compliance-friendly monitoring</p>
-  <a href="./NOTIFICATIONS" class="promo-button">
-    Explore Notifications
-  </a>
-</div>
+  <div class="promo-card">
+    <h3>Install</h3>
+    <p>Step-by-step installation guides for Docker, Home Assistant, Unraid, and bare-metal setups</p>
+    <a href="./INSTALLATION" class="promo-button">
+      View Installation Guides
+    </a>
+  </div>
 
-<div class="promo-card">
-  <h3>Contribute</h3>
-  <p>Source code, development environment setup, and contribution guidelines</p>
-  <a href="./DEV_ENV_SETUP" class="promo-button">
-    Contribute on GitHub
-  </a>
+  <div class="promo-card">
+    <h3>Notifications</h3>
+    <p>Learn how NetAlertX provides device presence, alerting, and compliance-friendly monitoring</p>
+    <a href="./NOTIFICATIONS" class="promo-button">
+      Explore Notifications
+    </a>
+  </div>
+
+  <div class="promo-card">
+    <h3>Contribute</h3>
+    <p>Source code, development environment setup, and contribution guidelines</p>
+    <a href="./DEV_ENV_SETUP" class="promo-button">
+      Contribute on GitHub
+    </a>
+  </div>
 </div>
 
 ![Preview](./img/devices_split.png)
