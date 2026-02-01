@@ -31,11 +31,6 @@ graph TB
     D -->|Response Data| C
     C -->|JSON Response| B
     B -->|Stream Events| A
-
-    style A fill:#e1f5fe
-    style B fill:#f3e5f5
-    style C fill:#fff3e0
-    style D fill:#e8f5e8
 ```
 
 ### MCP Tool Integration
@@ -98,15 +93,6 @@ graph LR
     F --> I
     G --> J
     H --> I
-
-    style A fill:#e1f5fe
-    style B fill:#e1f5fe
-    style C fill:#f3e5f5
-    style D fill:#f3e5f5
-    style E fill:#f3e5f5
-    style F fill:#fff3e0
-    style G fill:#fff3e0
-    style H fill:#fff3e0
 ```
 
 ---
