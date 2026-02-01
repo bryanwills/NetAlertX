@@ -13,7 +13,14 @@ get_scan_subnets() {
     while read -r _cidr _iface; do
         [[ "$_iface" =~ ^(lo|docker|veth) ]] && continue
         
-        _net=$(ipcalc -n "$_cidr" | awk -F= '{print $2}')
+        # Robustly get network address regardless of ipcalc version
+        if ipcalc -n "$_cidr" | grep -q '^Network:'; then
+            # Debian-style
+            _net=$(ipcalc -n "$_cidr" | grep '^Network:' | awk '{print $2}' | cut -d/ -f1)
+        else
+            # Alpine-style (Busybox)
+            _net=$(ipcalc -n "$_cidr" | awk -F= '{print $2}' | awk '{print $1}')
+        fi
         _mask=$(echo "$_cidr" | cut -d/ -f2)
         _entry="${_net}/${_mask} --interface=${_iface}"
 
@@ -66,7 +73,7 @@ if [ ! -f "${NETALERTX_CONFIG}/app.conf" ]; then
         exit 2
     }
 	# Generate the dynamic subnet list
-    SCAN_LIST=$(get_scan_subnets)
+    SCAN_LIST=$(get_scan_subnets | tr -d '\n\r')
 
     # Inject into the newly deployed config
     sed -i "s|^SCAN_SUBNETS=.*|SCAN_SUBNETS=$SCAN_LIST|" "${NETALERTX_CONFIG}/app.conf" ||true
