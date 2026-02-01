@@ -945,14 +945,14 @@ def test_missing_app_conf_triggers_seed(tmp_path: pathlib.Path) -> None:
                 "docker", "run", "--rm", "-v", f"{vol}:/data",
                 "alpine:3.22", "cat", "/data/config/app.conf"
             ],
-            capture_output=True, text=True
+            capture_output=True, text=True, timeout=SUBPROCESS_TIMEOUT_SECONDS
         )
-        if check_conf.returncode == 0:
-            match = re.search(r"SCAN_SUBNETS\s*=\s*(.*)", check_conf.stdout)
-            if match:
-                val = match.group(1)
-                assert "interface=" in val, f"SCAN_SUBNETS should have interface: {val}"
-                assert val != "['--localnet']", "SCAN_SUBNETS should not be default localnet"
+        assert check_conf.returncode == 0, f"Failed to read config. Stderr: {check_conf.stderr}, Stdout: {check_conf.stdout}"
+        match = re.search(r"SCAN_SUBNETS\s*=\s*(.*)", check_conf.stdout)
+        if match:
+            val = match.group(1)
+            assert "interface=" in val, f"SCAN_SUBNETS should have interface: {val}"
+            assert val != "['--localnet']", "SCAN_SUBNETS should not be default localnet"
 
     finally:
         _docker_volume_rm(vol)
@@ -960,7 +960,6 @@ def test_missing_app_conf_triggers_seed(tmp_path: pathlib.Path) -> None:
     _assert_contains(result, "Default configuration written to", result.args)
     # NOTE: The container may fail later in startup (e.g., nginx issues) but the seeding
     # test passes if the config file was created. Full startup success is tested elsewhere.
-
 
 
 def test_first_run_dynamic_subnet(tmp_path: pathlib.Path) -> None:
@@ -972,11 +971,13 @@ def test_first_run_dynamic_subnet(tmp_path: pathlib.Path) -> None:
     paths = _setup_mount_tree(tmp_path, "dynamic_subnet", seed_config=False)
     mount_args = _build_volume_args_for_keys(paths, CONTAINER_TARGETS.keys())
 
-    _run_container(
+    result_container = _run_container(
         "dyn-subnet",
         volumes=mount_args,
         sleep_seconds=15,
+        user="0:0",
     )
+    assert result_container.returncode == 0, f"Container failed: {result_container.output}"
 
     # Use docker to read the file to avoid permission issues (file is 600 root:root)
     # paths["app_config"] is the host absolute path
@@ -986,10 +987,10 @@ def test_first_run_dynamic_subnet(tmp_path: pathlib.Path) -> None:
         "alpine:3.22",
         "cat", "/mnt/app.conf"
     ]
-    result = subprocess.run(cmd, capture_output=True, text=True)
-    
-    assert result.returncode == 0, f"Could not read app.conf. Stderr: {result.stderr}"
-    content = result.stdout
+    read_result = subprocess.run(cmd, capture_output=True, text=True, timeout=SUBPROCESS_TIMEOUT_SECONDS)
+
+    assert read_result.returncode == 0, f"Could not read app.conf. Stderr: {read_result.stderr}, Stdout: {read_result.stdout}"
+    content = read_result.stdout
 
     # Check that SCAN_SUBNETS was set to something other than the default fallback
     # The default fallback in the script is ['--localnet'] if no interfaces found.
