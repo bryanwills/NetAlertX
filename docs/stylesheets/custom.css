@@ -49,11 +49,10 @@ p.hero-description {
 }
 
 .hero-image {
-  flex: 0 0 250px;
   display: flex;
   justify-content: center;
   margin-top: 15px;
-  max-width: 250px;
+  max-width: 45%;
 }
 
 .hero-logo-crisp {

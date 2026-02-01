@@ -54,16 +54,6 @@ hide:
   </div>
 </div>
 
-
-
-## In-App Help
-
-NetAlertX provides contextual help within the application:
-
-- **Hover over settings, fields, or labels** to see additional tooltips and guidance.
-- **Click ? (question-mark) icons** next to various elements to view detailed information.
-
-
 ---
 
 ## Help and Support
@@ -72,14 +62,16 @@ If you need help or run into issues, here are some resources to guide you:
 
 **Before opening an issue, please:**
 
+  - **Hover over settings, fields, or labels** to see additional tooltips and guidance.
+  - **Click ? (question-mark) icons** next to various elements to view detailed information.
   - [Check common issues](./DEBUG_TIPS.md#common-issues) to see if your problem has already been reported.
-  - [Look at closed issues](https://github.com/jokob-sk/NetAlertX/issues?q=is%3Aissue+is%3Aclosed) for possible solutions to past problems.
+  - [Look at closed issues](https://github.com/netalertx/NetAlertX/issues?q=is%3Aissue+is%3Aclosed) for possible solutions to past problems.
   - **Enable debugging** to gather more information: [Debug Guide](./DEBUG_TIPS.md).
 
 **Need more help?** Join the community discussions or submit a support request:
 
-  - Visit the [GitHub Discussions](https://github.com/jokob-sk/NetAlertX/discussions) for community support.
-  - If you are experiencing issues that require immediate attention, consider opening an issue on our [GitHub Issues page](https://github.com/jokob-sk/NetAlertX/issues).
+  - Visit the [GitHub Discussions](https://github.com/netalertx/NetAlertX/discussions) for community support.
+  - If you are experiencing issues that require immediate attention, consider opening an issue on our [GitHub Issues page](https://github.com/netalertx/NetAlertX/issues).
 
 ---
 
@@ -98,15 +90,15 @@ For more information on contributing, check out our [Dev Guide](./DEV_ENV_SETUP.
 
 To keep up with the latest changes and updates to NetAlertX, please refer to the following resources:
 
-- [Releases](https://github.com/jokob-sk/NetAlertX/releases)
+- [Releases](https://github.com/netalertx/NetAlertX/releases)
 
 Make sure to follow the project on GitHub to get notifications for new releases and important updates.
 
 ---
 ## Additional info
 
-- **Documentation Index**: Check out the full [documentation index](https://github.com/jokob-sk/NetAlertX/tree/main/docs) for all the guides available.
+- **Documentation Index**: Check out the full [documentation index](https://github.com/netalertx/NetAlertX/tree/main/docs) for all the guides available.
 
 If you have any suggestions or improvements, please don’t hesitate to contribute!
 
-NetAlertX is actively maintained. You can find the source code, report bugs, or request new features on our [GitHub page](https://github.com/jokob-sk/NetAlertX).
+NetAlertX is actively maintained. You can find the source code, report bugs, or request new features on our [GitHub page](https://github.com/netalertx/NetAlertX).
