@@ -18,7 +18,7 @@ from db.authoritative_handler import (
     unlock_fields
 )
 from helper import is_random_mac, get_setting_value
-from utils.datetime_utils import timeNowDB, format_date
+from utils.datetime_utils import timeNowDB
 
 
 class DeviceInstance:
@@ -489,8 +489,8 @@ class DeviceInstance:
             return None
 
         device_data = row_to_json(list(row.keys()), row)
-        device_data["devFirstConnection"] = format_date(device_data["devFirstConnection"])
-        device_data["devLastConnection"] = format_date(device_data["devLastConnection"])
+        device_data["devFirstConnection"] = device_data["devFirstConnection"]
+        device_data["devLastConnection"] = device_data["devLastConnection"]
         device_data["devIsRandomMAC"] = is_random_mac(device_data["devMac"])
 
         # Fetch children
