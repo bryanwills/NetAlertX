@@ -1,6 +1,6 @@
 ---
 name: testing-workflow
-description: Read before running tests. Detailed instructions for single, astandard unit tests (fast), full suites (slow), and handling authentication. Tests must be run when a job is complete.
+description: Read before running tests. Detailed instructions for single, standard unit tests (fast), full suites (slow), handling authentication, and obtaining the API Token. Tests must be run when a job is complete.
 ---
 
 # Testing Workflow
@@ -8,6 +8,19 @@ After code is developed, tests must be run to ensure the integrity of the final 
 
 **Crucial:** Tests MUST be run inside the container to access the correct runtime environment (DB, Config, Dependencies).
 
+## 0. Pre-requisites: Environment Check
+
+Before running any tests, verify you are inside the development container:
+
+```bash
+ls -d /workspaces/NetAlertX
+```
+
+**IF** this directory does not exist, you are likely on the host machine. You **MUST** immediately activate the `devcontainer-management` skill to enter the container or run commands inside it.
+
+```text
+activate_skill("devcontainer-management")
+```
 
 ## 1. Full Test Suite (MANDATORY DEFAULT)
 
