@@ -157,6 +157,8 @@ Check the [GitHub Issues](https://github.com/netalertx/NetAlertX/issues) for the
 ## Everything else
 <!--- --------------------------------------------------------------------- --->
 
+<a href="https://trendshift.io/repositories/12670" target="_blank"><img src="https://trendshift.io/api/badge/repositories/12670" alt="jokob-sk%2FNetAlertX | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
+
 ### 📧 Get notified what's new
 
 Get notified about a new release, what new functionality you can use and about breaking changes.
@@ -219,7 +221,7 @@ Proudly using [Weblate](https://hosted.weblate.org/projects/pialert/). Help out 
 [sync_hub]:                 ./docs/img/sync_hub.png                       "Screen 8"
 [notification_center]:      ./docs/img/notification_center.png            "Screen 8"
 [sent_reports_text]:        ./docs/img/sent_reports_text.png              "Screen 8"
-[device_nmap]:              ./docs/img/device_nmap.png                    "Screen 9"
+[device_nmap]:              ./docs/img/device_tools.png                    "Screen 9"
 [report1]:                  ./docs/img/report_sample.png                  "Report sample 1"
 [main_dark]:                /docs/img/1_devices_dark.jpg                  "Main screen dark"
 [maintain_dark]:            /docs/img/5_maintain.jpg                      "Maintain screen dark"
