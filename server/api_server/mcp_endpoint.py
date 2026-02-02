@@ -749,7 +749,8 @@ def _execute_tool(route: Dict[str, Any], args: Dict[str, Any]) -> Dict[str, Any]
                 "type": "text",
                 "text": json.dumps(json_content, indent=2)
             })
-        except json.JSONDecodeError:
+        except (json.JSONDecodeError, ValueError):
+            # Fallback for endpoints that return plain text instead of JSON (e.g., /metrics)
             content.append({
                 "type": "text",
                 "text": api_response.text
