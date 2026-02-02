@@ -70,6 +70,12 @@
           </div>
           <div class="col-md-10"><?= lang('Maintenance_Tool_del_unlockFields_selecteddev_text');?></div>
         </div>
+        <div class="col-md-12">
+          <div class="col-md-2" style="">
+              <button type="button" class="btn btn-default pa-btn pa-btn-delete bg-red" id="btnClearSourceFields" onclick="askClearSourceFields()"><?= lang('Maintenance_Tool_clearSourceFields_selected');?></button>
+          </div>
+          <div class="col-md-10"><?= lang('Maintenance_Tool_clearSourceFields_selected_text');?></div>
+        </div>
       </div>
     </div>
   </div>
@@ -437,12 +443,25 @@ function askUnlockFieldsSelected () {
 }
 
 // -----------------------------------------------------------------------------
+// Ask to unlock fields of selected devices
+function askClearSourceFields () {
+  // Ask
+  showModalWarning(
+    getString('Maintenance_Tool_clearSourceFields_selected_noti'),
+    getString('Gen_AreYouSure'),
+    getString('Gen_Cancel'),
+    getString('Gen_Okay'),
+    ()=>unlockFieldsSelected(null, true));
+}
+
+// -----------------------------------------------------------------------------
 // Unlock fields for selected devices
 function unlockFieldsSelected(fields = null, clearAll = false) {
     // Get selected MACs
     const macs_tmp = selectorMacs(); // returns array of MACs
 
     console.log(macs_tmp);
+    console.log(clearAll);
 
 
     if (!macs_tmp || macs_tmp == "" || macs_tmp.length === 0) {
@@ -461,7 +480,7 @@ function unlockFieldsSelected(fields = null, clearAll = false) {
     const payload = {
         mac: macsArray,      // array of MACs for backend
         fields: fields,      // null for all tracked fields
-        clear_all: clearAll  // true to clear all sources, false to clear only LOCKED/USER
+        clearAll: clearAll  // true to clear all sources, false to clear only LOCKED/USER
     };
 
     $.ajax({

@@ -478,9 +478,14 @@ function deleteEvents30()
 function askUnlockFields () {
   // Ask
   showModalWarning('<?= lang('Maintenance_Tool_UnlockFields_noti');?>', '<?= lang('Maintenance_Tool_UnlockFields_noti_text');?>',
-    '<?= lang('Gen_Cancel');?>', '<?= lang('Gen_Delete');?>', 'unlockFields');
+    '<?= lang('Gen_Cancel');?>', '<?= lang('Gen_Delete');?>', () => unlockFields(true));
 }
-function unlockFields() {
+function unlockFields(clearAllFields) {
+
+
+  console.log("clearAllFields");
+  console.log(clearAllFields);
+
   const apiBase = getApiBase();
   const apiToken = getSetting("API_TOKEN");
   const url = `${apiBase}/devices/fields/unlock`;
@@ -489,7 +494,7 @@ function unlockFields() {
   const payload = {
     mac: null,        // null = all devices
     fields: null,     // null = all tracked fields
-    clearAll: true    // clear all source values
+    clearAll: clearAllFields    // clear all source values
   };
 
   $.ajax({
