@@ -51,13 +51,24 @@ cd /workspaces/NetAlertX; pytest test/<path_to_test>
 cd /workspaces/NetAlertX; pytest test/api_endpoints/test_mcp_extended_endpoints.py
 ```
 
-## Authentication in Tests
+## Authentication & Environment Reset
 
-The test environment uses `API_TOKEN`. The most reliable way to retrieve the current token from a running container is:
+Authentication tokens are required to perform certain operations such as manual testing or crafting expressions to work with the web APIs.After making code changes, you MUST reset the environment to ensure the new code is running and verify you have the latest `API_TOKEN`.
 
-```bash
-python3 -c "from helper import get_setting_value; print(get_setting_value('API_TOKEN'))"
-```
+1. **Reset Environment:** Run the setup script inside the container.
+   ```bash
+   bash /workspaces/NetAlertX/.devcontainer/scripts/setup.sh
+   ```
+2. **Wait for Stabilization:** Wait at least 5 seconds for services (nginx, python server, etc.) to start.
+   ```bash
+   sleep 5
+   ```
+3. **Obtain Token:** Retrieve the current token from the container.
+   ```bash
+   python3 -c "from helper import get_setting_value; print(get_setting_value('API_TOKEN'))"
+   ```
+
+The retrieved token MUST be used in all subsequent API or test calls requiring authentication.
 
 ### Troubleshooting
 

@@ -39,8 +39,7 @@ ALLOWED_DEVICE_COLUMNS = Literal[
 ]
 
 ALLOWED_NMAP_MODES = Literal[
-    "quick", "intense", "ping", "comprehensive", "fast", "normal", "detail", "skipdiscovery",
-    "-sS", "-sT", "-sU", "-sV", "-O"
+    "fast", "normal", "detail", "skipdiscovery"
 ]
 
 NOTIFICATION_LEVELS = Literal["info", "warning", "error", "alert", "interrupt"]
@@ -299,6 +298,24 @@ class SetDeviceAliasRequest(BaseModel):
 class DeviceTotalsResponse(RootModel):
     """Response with device statistics."""
     root: List[int] = Field(default_factory=list, description="List of counts: [all, online, favorites, new, offline, archived]")
+
+
+class DeviceTotalsNamedResponse(BaseResponse):
+    """Response with named device statistics."""
+    totals: Dict[str, int] = Field(
+        ...,
+        description="Dictionary of counts",
+        json_schema_extra={
+            "examples": [{
+                "devices": 10,
+                "connected": 5,
+                "favorites": 2,
+                "new": 1,
+                "down": 0,
+                "archived": 2
+            }]
+        }
+    )
 
 
 class DeviceExportRequest(BaseModel):
