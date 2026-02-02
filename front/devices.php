@@ -799,11 +799,18 @@ function initializeDatatable (status) {
         'createdCell': function (td, cellData, rowData, row, col) {
 
             // console.log(cellData)
+
+            var displayedValue = cellData;
+
+            if(isEmpty(displayedValue))
+            {
+              displayedValue = "N/A"
+            }
             $(td).html (
               `<b class="anonymizeDev "
               >
                 <a href="deviceDetails.php?mac=${rowData[mapIndx(11)]}" class="hover-node-info"
-                  data-name="${cellData}"
+                  data-name="${displayedValue}"
                   data-ip="${rowData[mapIndx(8)]}"
                   data-mac="${rowData[mapIndx(11)]}"
                   data-vendor="${rowData[mapIndx(17)]}"
@@ -815,7 +822,7 @@ function initializeDatatable (status) {
                   data-present="${rowData[mapIndx(24)]}"
                   data-alert="${rowData[mapIndx(25)]}"
                   data-icon="${rowData[mapIndx(3)]}">
-                ${cellData}
+                ${displayedValue}
                 </a>
               </b>`
             );
