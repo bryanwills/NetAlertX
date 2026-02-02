@@ -719,7 +719,7 @@ class SessionInfo(BaseModel):
 
 class CreateSessionRequest(BaseModel):
     """Request to create a session."""
-    mac: str = Field(..., description="Device MAC")
+    mac: str = Field(..., description="Device MAC", pattern=MAC_PATTERN)
     ip: str = Field(..., description="Device IP")
     start_time: str = Field(..., description="Start time")
     end_time: Optional[str] = Field(None, description="End time")

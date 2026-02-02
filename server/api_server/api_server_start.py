@@ -1385,7 +1385,7 @@ def api_add_to_execution_queue(payload=None):
     path_params=[{
         "name": "mac",
         "description": "Device MAC address",
-        "schema": {"type": "string"}
+        "schema": {"type": "string", "pattern": "^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$"}
     }],
     request_model=CreateEventRequest,
     response_model=BaseResponse,
