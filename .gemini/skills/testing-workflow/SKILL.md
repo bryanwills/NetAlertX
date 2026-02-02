@@ -53,7 +53,7 @@ cd /workspaces/NetAlertX; pytest test/api_endpoints/test_mcp_extended_endpoints.
 
 ## Authentication & Environment Reset
 
-Authentication tokens are required to perform certain operations such as manual testing or crafting expressions to work with the web APIs.After making code changes, you MUST reset the environment to ensure the new code is running and verify you have the latest `API_TOKEN`.
+Authentication tokens are required to perform certain operations such as manual testing or crafting expressions to work with the web APIs. After making code changes, you MUST reset the environment to ensure the new code is running and verify you have the latest `API_TOKEN`.
 
 1. **Reset Environment:** Run the setup script inside the container.
    ```bash
