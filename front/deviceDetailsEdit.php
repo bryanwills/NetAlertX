@@ -172,6 +172,15 @@ function getDeviceData() {
                 labelClasses: "col-sm-4 col-xs-12 control-label",
                 inputClasses: "col-sm-8 col-xs-12 input-group"
               },
+              // Group for Custom properties.
+              DevDetail_CustomProperties_Title: {
+                data: ["devCustomProps"],
+                docs: "https://docs.netalertx.com/CUSTOM_PROPERTIES",
+                iconClass: "fa fa-list",
+                inputGroupClasses: "field-group cutprop-group col-lg-6 col-sm-12 col-xs-12",
+                labelClasses: "col-sm-12 col-xs-12 control-label",
+                inputClasses: "col-sm-12 col-xs-12 input-group"
+              },
               // Group for Children.
               DevDetail_Children_Title: {
                 data: ["devChildrenDynamic"],
@@ -181,15 +190,6 @@ function getDeviceData() {
                 labelClasses: "col-sm-12 col-xs-12 control-label",
                 inputClasses: "col-sm-12 col-xs-12 input-group"
               },
-              // Group for Custom properties.
-              DevDetail_CustomProperties_Title: {
-                data: ["devCustomProps"],
-                docs: "https://docs.netalertx.com/CUSTOM_PROPERTIES",
-                iconClass: "fa fa-list",
-                inputGroupClasses: "field-group cutprop-group col-lg-6 col-sm-12 col-xs-12",
-                labelClasses: "col-sm-12 col-xs-12 control-label",
-                inputClasses: "col-sm-12 col-xs-12 input-group"
-              }
             };
 
             // Filter settings data to get relevant settings

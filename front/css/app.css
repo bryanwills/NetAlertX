@@ -508,6 +508,41 @@ body
     color: #a0a0a0;
 }
 
+.small-box {
+  margin-bottom: 15px !important;
+  float: left;
+  width: 100%;
+}
+#TopSmallBoxes .small-box {
+    height: 3em;
+}
+
+.small-box .icon
+{
+  font-size: 2.2em !important;
+  float: right;
+  top: 0;
+}
+.small-box .small-box-text
+{
+    float:left;
+    font-size: x-large;
+    margin-top: -0.3em;
+}
+
+.small-box .infobox_label
+{
+    font-size: larger;
+    float: right;
+    text-align: center;
+}
+
+hr
+{
+    margin-top: 5px;
+    margin-bottom: 10px;
+}
+
 /* -----------------------------------------------------------------------------
    Customized Box Borders
 ----------------------------------------------------------------------------- */
@@ -899,10 +934,6 @@ height: 50px;
 
 .bg-gray {
     background-color: #b2b6be !important;
-}
-
-.infobox_label {
-    font-size: 16px !important;
 }
 
 .deviceSelector
@@ -1665,6 +1696,10 @@ textarea[readonly],
     width: initial;
     display: inline-block;
     min-height: 42px;
+}
+
+.form-group {
+  margin-bottom: 5px !important;
 }
 
 /* Remove the default Select2 chevron (the down arrow) */

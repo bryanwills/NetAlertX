@@ -1,6 +1,6 @@
-site_name: NetAlertX Documentation
+site_name: Documentation
 site_url: https://docs.netalertx.com
-repo_url: https://github.com/jokob-sk/NetAlertX/
+repo_url: https://github.com/netalertx/NetAlertX/
 edit_uri: blob/main/docs/
 docs_dir: docs
 use_directory_urls: true
@@ -141,7 +141,7 @@ theme:
   custom_dir: docs/overrides
   metadata:
     description: "NetAlertX Documentation - The go-to resource for all things related to NetAlertX."
-    image: "https://raw.githubusercontent.com/jokob-sk/NetAlertX/main/front/img/netalertx_docs.png"
+    image: "https://raw.githubusercontent.com/netalertx/NetAlertX/main/front/img/netalertx_docs.png"
   extra:
     home_hide_sidebar: true
     analytics:

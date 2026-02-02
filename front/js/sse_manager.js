@@ -23,10 +23,19 @@ class NetAlertXStateManager {
    */
   init() {
     if (this.initialized) return;
+      // waiting until cache ready
+      const waitForInit = () => {
+      if (!isAppInitialized()) {
+        setTimeout(waitForInit, 300);
+        return;
+      }
 
-    console.log("[NetAlertX State] Initializing state manager...");
-    this.trySSE();
-    this.initialized = true;
+      console.log("[NetAlertX State] App initialized, starting state manager");
+      this.trySSE();
+      this.initialized = true;
+    };
+
+    waitForInit();
   }
 
   /**

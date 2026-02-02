@@ -4,7 +4,7 @@ import os
 
 # flake8: noqa: E402
 
-from flask import Flask, request, jsonify, Response
+from flask import Flask, redirect, request, jsonify, url_for, Response
 from models.device_instance import DeviceInstance  # noqa: E402
 from flask_cors import CORS
 from werkzeug.exceptions import HTTPException
@@ -1165,6 +1165,11 @@ def api_docs():
     return send_from_directory(openapi_dir, 'swagger.html')
 
 
+@app.route('/')
+def index_redirect():
+    """Redirect root to API documentation."""
+    return redirect(url_for('api_docs'))
+
 # --------------------------
 # DB query
 # --------------------------
@@ -1401,7 +1406,7 @@ def api_create_event(mac, payload=None):
 def api_events_by_mac(mac, payload=None):
     """Delete events for a specific device MAC; string converter keeps this distinct from /events/<int:days>."""
     device_handler = DeviceInstance()
-   
+
     result = device_handler.deleteDeviceEvents(mac)
     return jsonify(result)
 
@@ -1740,7 +1745,8 @@ def api_write_notification(payload=None):
     auth_callable=is_authorized
 )
 def api_get_unread_notifications(payload=None):
-    return get_unread_notifications()
+    notifications = get_unread_notifications()
+    return jsonify(notifications)
 
 
 @app.route("/messaging/in-app/read/all", methods=["POST"])

@@ -450,10 +450,18 @@ function localizeTimestamp(input) {
     const date = new Date(str);
     if (!isFinite(date)) {
       console.error(`ERROR: Couldn't parse date: '${str}' with TIMEZONE ${tz}`);
-      return 'Failed conversion - Check browser console';
+      return 'Failed conversion';
     }
+
+    // CHECK: Does the input string have an offset (e.g., +11:00 or Z)?
+    // If it does, and we apply a 'tz' again, we double-shift.
+    const hasOffset = /[Z|[+-]\d{2}:?\d{2}]$/.test(str.trim());
+
     return new Intl.DateTimeFormat(LOCALE, {
-      timeZone: tz,
+      // If it has an offset, we display it as-is (UTC mode in Intl
+      // effectively means "don't add more hours").
+      // If no offset, apply your variable 'tz'.
+      timeZone: hasOffset ? 'UTC' : tz,
       year: 'numeric', month: '2-digit', day: '2-digit',
       hour: '2-digit', minute: '2-digit', second: '2-digit',
       hour12: false

@@ -59,6 +59,10 @@ http://<server>:<GRAPHQL_PORT>/
 
 ## Endpoints
 
+> [!NOTE]
+> You can explore the API endpoints by using the interactive API docs at `http://<server>:<GRAPHQL_PORT>/docs`.
+> ![API docs](./img/API/API_docs.png)
+
 > [!TIP]
 > When retrieving devices or settings try using the GraphQL API endpoint first as it is read-optimized.
 
