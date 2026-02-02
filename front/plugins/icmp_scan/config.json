@@ -418,7 +418,6 @@
     },
     {
       "column": "Watched_Value1",
-      "mapped_to_column": "scanName",
       "css_classes": "col-sm-2",
       "show": true,
       "type": "label",
