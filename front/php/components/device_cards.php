@@ -21,8 +21,10 @@ function renderSmallBox($params) {
             <a href="#" onclick="javascript: ' . htmlspecialchars($onclickEvent) . '">
                 <div class="small-box ' . htmlspecialchars($color) . '">
                     <div class="inner">
-                        <h3 id="' . htmlspecialchars($headerId) . '" style="' . htmlspecialchars($headerStyle) . '"> ' . htmlspecialchars($dataValue) . ' </h3>
-                        <p class="infobox_label">' . lang(htmlspecialchars($labelLang)) . '</p>
+                        <div class="col-lg-6 col-sm-6 col-xs-6">
+                            <div class="small-box-text col-lg-12 col-sm-12 col-xs-12" id="' . htmlspecialchars($headerId) . '" style="' . htmlspecialchars($headerStyle) . '"> <b>' . htmlspecialchars($dataValue) . '</b> </div>
+                        </div>
+                        <div class="infobox_label col-lg-6 col-sm-6 col-xs-6">' . lang(htmlspecialchars($labelLang)) . '</div>
                     </div>
                     <div class="icon">
                         <i id="' . htmlspecialchars($iconId) . '" class="' . htmlspecialchars($iconClass) . '"></i>
