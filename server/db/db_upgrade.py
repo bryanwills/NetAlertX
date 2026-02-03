@@ -295,6 +295,7 @@ def ensure_CurrentScan(sql) -> bool:
                                 scanVlan STRING(250),
                                 scanParentMAC STRING(250),
                                 scanParentPort STRING(250),
+                                scanFQDN STRING(250),
                                 scanType STRING(250)
                             );
                         """)

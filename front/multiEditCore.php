@@ -59,22 +59,22 @@
       </div>
       <div class="box-body">
         <div class="col-md-12">
-          <div class="col-md-2" style="">
-              <button type="button" class="btn btn-default pa-btn pa-btn-delete bg-red" id="btnDeleteMAC" onclick="askDeleteSelectedDevices()"><?= lang('Maintenance_Tool_del_selecteddev');?></button>
+          <div class="col-md-4" style="">
+              <button type="button" class="btn btn-default pa-btn pa-btn-delete bg-red col-md-12 col-sm-12 col-xs-12" id="btnDeleteMAC" onclick="askDeleteSelectedDevices()"><?= lang('Maintenance_Tool_del_selecteddev');?></button>
           </div>
-          <div class="col-md-10"><?= lang('Maintenance_Tool_del_selecteddev_text');?></div>
+          <div class="col-md-8"><?= lang('Maintenance_Tool_del_selecteddev_text');?></div>
         </div>
         <div class="col-md-12">
-          <div class="col-md-2" style="">
-              <button type="button" class="btn btn-default pa-btn pa-btn-delete bg-red" id="btnUnlockFieldsSelected" onclick="askUnlockFieldsSelected()"><?= lang('Maintenance_Tool_unlockFields_selecteddev');?></button>
+          <div class="col-md-4" style="">
+              <button type="button" class="btn btn-default pa-btn pa-btn-delete bg-red col-md-12 col-sm-12 col-xs-12" id="btnUnlockFieldsSelected" onclick="askUnlockFieldsSelected()"><?= lang('Maintenance_Tool_unlockFields_selecteddev');?></button>
           </div>
-          <div class="col-md-10"><?= lang('Maintenance_Tool_del_unlockFields_selecteddev_text');?></div>
+          <div class="col-md-8"><?= lang('Maintenance_Tool_del_unlockFields_selecteddev_text');?></div>
         </div>
         <div class="col-md-12">
-          <div class="col-md-2" style="">
-              <button type="button" class="btn btn-default pa-btn pa-btn-delete bg-red" id="btnClearSourceFields" onclick="askClearSourceFields()"><?= lang('Maintenance_Tool_clearSourceFields_selected');?></button>
+          <div class="col-md-4" style="">
+              <button type="button" class="btn btn-default pa-btn pa-btn-delete bg-red col-md-12 col-sm-12 col-xs-12" id="btnClearSourceFields" onclick="askClearSourceFields()"><?= lang('Maintenance_Tool_clearSourceFields_selected');?></button>
           </div>
-          <div class="col-md-10"><?= lang('Maintenance_Tool_clearSourceFields_selected_text');?></div>
+          <div class="col-md-8"><?= lang('Maintenance_Tool_clearSourceFields_selected_text');?></div>
         </div>
       </div>
     </div>

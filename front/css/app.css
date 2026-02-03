@@ -2249,21 +2249,14 @@ textarea[readonly],
 
 .red-hover-border:hover
 {
-    border-color: red !important;
-    border-width: 1px;
-    border-style: solid;
+  border-color: #ff0000 !important;
+  box-shadow: #ff0000;
 
 }
 
 .red-hover-background:hover
 {
     background-color: red !important;
-}
-
-#multi-edit-form .form-group
-{
-    height: 45px;
-
 }
 
 .top-left-logo

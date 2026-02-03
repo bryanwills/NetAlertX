@@ -103,7 +103,7 @@ def process_scan(db):
 
     # Clear current scan as processed
     # 🐛 CurrentScan DEBUG: comment out below when debugging to keep the CurrentScan table after restarts/scan finishes
-    db.sql.execute("DELETE FROM CurrentScan")
+    # db.sql.execute("DELETE FROM CurrentScan")
 
     # re-broadcast unread notifiation count to update FE
     update_unread_notifications_count()

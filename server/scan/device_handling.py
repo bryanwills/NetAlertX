@@ -103,17 +103,6 @@ FIELD_SPECS = {
     },
 
     # ==========================================================
-    # DEVICE FQDN
-    # ==========================================================
-    "devFQDN": {
-        "scan_col": "scanName",
-        "source_col": "devNameSource",
-        "empty_values": ["", "null", "(unknown)", "(name not found)"],
-        "priority": ["NSLOOKUP", "AVAHISCAN", "NBTSCAN", "DIGSCAN", "ARPSCAN", "DHCPLSS", "NEWDEV", "N/A"],
-        "allow_override_if_changed": True,
-    },
-
-    # ==========================================================
     # IP ADDRESS (last seen)
     # ==========================================================
     "devLastIP": {
@@ -297,8 +286,6 @@ def update_devices_data_from_scan(db):
                 current_source = row_dict.get(f"{field}Source") or ""
                 new_value = row_dict.get(scan_col)
 
-                mylog("debug", f"[Update Devices] - current_value: {current_value} new_value: {new_value} -> {field}")
-
                 if can_overwrite_field(
                     field_name=field,
                     current_value=current_value,
@@ -326,6 +313,7 @@ def update_devices_data_from_scan(db):
                         WHERE devMac = ?
                     """
 
+                    mylog("debug", f"[Update Devices] - ({source_prefix}) current_value: {current_value} new_value: {new_value} -> {field}")
                     mylog("debug", f"[Update Devices] - ({source_prefix}) {spec['scan_col']} -> {field}")
                     mylog("debug", f"[Update Devices] sql_tmp: {sql_tmp}, sql_val: {sql_val}")
                     sql.execute(sql_tmp, sql_val)
@@ -978,34 +966,38 @@ def update_devices_names(pm):
         notFound = 0
 
         for device in devices:
-            newName = nameNotFound
-            newFQDN = ""
+            resolved_successfully = False
 
             # Attempt each resolution strategy in order
             for resolve_fn, label in strategies:
                 resolved = resolve_fn(device["devMac"], device["devLastIP"])
 
-                # Only use name if resolving both name and FQDN
-                newName = resolved.cleaned if resolve_both_name_and_fqdn else None
-                newFQDN = resolved.raw
+                # Extract values
+                current_raw = resolved.raw if resolved.raw else ""
+                current_cleaned = resolved.cleaned if resolved.cleaned else ""
 
-                # If a valid result is found, record it and stop further attempts
-                if (
-                    newFQDN not in [nameNotFound, "", "localhost."] and " communications error to " not in newFQDN
-                ):
+                # Validation: Ensure we actually got a real FQDN/Name
+                if (current_raw not in [nameNotFound, "", "localhost."] and " communications error to " not in current_raw):
+
                     foundStats[label] += 1
+                    resolved_successfully = True
 
                     if resolve_both_name_and_fqdn:
-                        recordsToUpdate.append([newName, label, newFQDN, label, device["devMac"]])
+                        # Logic: If cleaned name is missing, fallback to raw,
+                        # but if both are missing, this strategy failed.
+                        final_name = current_cleaned if current_cleaned else current_raw
+                        recordsToUpdate.append([final_name, label, current_raw, label, device["devMac"]])
                     else:
-                        recordsToUpdate.append([newFQDN, label, device["devMac"]])
-                    break
+                        recordsToUpdate.append([current_raw, label, device["devMac"]])
 
-            # If no name was resolved, queue device for "(name not found)" update
-            if resolve_both_name_and_fqdn and newName == nameNotFound:
+                    break  # Stop trying other strategies for this device
+
+            # If after all strategies we found nothing
+            if not resolved_successfully:
                 notFound += 1
-                if device["devName"] != nameNotFound:
-                    recordsNotFound.append([nameNotFound, device["devMac"]])
+                if resolve_both_name_and_fqdn:
+                    if device["devName"] != nameNotFound:
+                        recordsNotFound.append([nameNotFound, device["devMac"]])
 
         return recordsToUpdate, recordsNotFound, foundStats, notFound
 
