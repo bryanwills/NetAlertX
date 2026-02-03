@@ -1510,8 +1510,8 @@ def api_delete_old_events(days: int, payload=None):
 @app.route("/sessions/totals", methods=["GET"])
 @validate_request(
     operation_id="get_events_totals",
-    summary="Get Events Totals",
-    description="Retrieve event totals for a specified period.",
+    summary="Get Events Totals (Deprecated)",
+    description="Retrieve event totals for a specified period. Deprecated: use /sessions/totals/named instead.",
     query_params=[{
         "name": "period",
         "description": "Time period (e.g., '7 days')",
