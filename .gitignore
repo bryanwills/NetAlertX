@@ -46,3 +46,5 @@ docker-compose.yml.ffsb42
 .env.omada.ffsb42
 .venv
 test_mounts/
+.gemini/settings.json
+.vscode/mcp.json
