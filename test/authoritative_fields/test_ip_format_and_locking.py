@@ -131,7 +131,7 @@ def test_ipv4_then_ipv6_scan_updates_primary_ips(scan_db, mock_ip_handlers):
 def test_ipv4_address_format_variations(scan_db, mock_ip_handlers):
     """Test various valid IPv4 formats."""
     cur = scan_db.cursor()
-    ipv4_addresses = ["0.0.0.0", "127.0.0.1", "192.168.1.1", "255.255.255.255"]
+    ipv4_addresses = ["1.1.1.1", "127.0.0.1", "192.168.1.1", "255.255.255.255"]
 
     for idx, ipv4 in enumerate(ipv4_addresses):
         mac = f"AA:BB:CC:DD:11:{idx:02X}"

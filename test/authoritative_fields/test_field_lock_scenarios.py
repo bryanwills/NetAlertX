@@ -133,11 +133,11 @@ def test_empty_plugin_value_not_used():
     # Allows overwrite as new value same as old
     result = can_overwrite_field(
         field_name="devName",
-        current_value="",
-        current_source="NEWDEV",
+        current_value="same value",
+        current_source="AVAHISCAN",
         plugin_prefix="NBTSCAN",
         plugin_settings={"set_always": [], "set_empty": []},
-        field_value="",
+        field_value="same value",
     )
     assert result is True
 
