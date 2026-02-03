@@ -54,7 +54,7 @@ def test_trigger_scan_ARPSCAN(mock_queue_class, client, api_token):
     mock_queue_class.return_value = mock_queue
 
     payload = {"type": "ARPSCAN"}
-    response = client.post("/mcp/sse/nettools/trigger-scan", json=payload, headers=auth_headers(api_token))
+    response = client.post("/nettools/trigger-scan", json=payload, headers=auth_headers(api_token))
 
     assert response.status_code == 200
     data = response.get_json()
@@ -71,7 +71,7 @@ def test_trigger_scan_invalid_type(mock_queue_class, client, api_token):
     mock_queue_class.return_value = mock_queue
 
     payload = {"type": "invalid_type", "target": "192.168.1.0/24"}
-    response = client.post("/mcp/sse/nettools/trigger-scan", json=payload, headers=auth_headers(api_token))
+    response = client.post("/nettools/trigger-scan", json=payload, headers=auth_headers(api_token))
 
     assert response.status_code == 400
     data = response.get_json()
@@ -267,7 +267,7 @@ def test_get_latest_device(mock_db_conn, client, api_token):
 
 def test_openapi_spec(client, api_token):
     """Test openapi_spec endpoint contains MCP tool paths."""
-    response = client.get("/mcp/sse/openapi.json", headers=auth_headers(api_token))
+    response = client.get("/openapi.json", headers=auth_headers(api_token))
     assert response.status_code == 200
     spec = response.get_json()
 
@@ -297,7 +297,7 @@ def test_mcp_devices_export_csv(mock_db_conn, client, api_token):
     mock_conn.execute.return_value = mock_execute_result
     mock_db_conn.return_value = mock_conn
 
-    response = client.get("/mcp/sse/devices/export", headers=auth_headers(api_token))
+    response = client.get("/devices/export", headers=auth_headers(api_token))
 
     assert response.status_code == 200
     # CSV response should have content-type header
@@ -314,7 +314,7 @@ def test_mcp_devices_export_json(mock_export, client, api_token):
         "columns": ["devMac", "devName", "devLastIP"],
     }
 
-    response = client.get("/mcp/sse/devices/export?format=json", headers=auth_headers(api_token))
+    response = client.get("/devices/export?format=json", headers=auth_headers(api_token))
 
     assert response.status_code == 200
     data = response.get_json()
@@ -339,7 +339,7 @@ def test_mcp_devices_import_json(mock_db_conn, client, api_token):
         mock_import.return_value = {"success": True, "message": "Imported 2 devices"}
 
         payload = {"content": "bW9ja2VkIGNvbnRlbnQ="}  # base64 encoded content
-        response = client.post("/mcp/sse/devices/import", json=payload, headers=auth_headers(api_token))
+        response = client.post("/devices/import", json=payload, headers=auth_headers(api_token))
 
         assert response.status_code == 200
         data = response.get_json()
@@ -362,7 +362,7 @@ def test_mcp_devices_totals(mock_db_conn, client, api_token):
     mock_conn.cursor.return_value = mock_sql
     mock_db_conn.return_value = mock_conn
 
-    response = client.get("/mcp/sse/devices/totals", headers=auth_headers(api_token))
+    response = client.get("/devices/totals", headers=auth_headers(api_token))
 
     assert response.status_code == 200
     data = response.get_json()
@@ -380,7 +380,7 @@ def test_mcp_traceroute(mock_traceroute, client, api_token):
     mock_traceroute.return_value = ({"success": True, "output": "traceroute output"}, 200)
 
     payload = {"devLastIP": "8.8.8.8"}
-    response = client.post("/mcp/sse/nettools/traceroute", json=payload, headers=auth_headers(api_token))
+    response = client.post("/nettools/traceroute", json=payload, headers=auth_headers(api_token))
 
     assert response.status_code == 200
     data = response.get_json()
@@ -395,7 +395,7 @@ def test_mcp_traceroute_missing_ip(mock_traceroute, client, api_token):
     mock_traceroute.return_value = ({"success": False, "error": "Invalid IP: None"}, 400)
 
     payload = {}  # Missing devLastIP
-    response = client.post("/mcp/sse/nettools/traceroute", json=payload, headers=auth_headers(api_token))
+    response = client.post("/nettools/traceroute", json=payload, headers=auth_headers(api_token))
 
     assert response.status_code == 422
     data = response.get_json()
