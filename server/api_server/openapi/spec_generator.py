@@ -52,7 +52,15 @@ _rebuild_lock = threading.Lock()
 def generate_openapi_spec(
     title: str = "NetAlertX API",
     version: str = "2.0.0",
-    description: str = "NetAlertX Network Monitoring API - Official Documentation - MCP Compatible",
+    description: str = '''
+**NetAlertX Network Monitoring API - Official Documentation - MCP Compatible**
+
+* **MCP endpoint**: `/mcp/sse`
+
+* **OpenAPI Spec**: `/openapi.json`
+
+Authorize with your API Key from the NetAlertX WebUI under `Settings > Core > General`
+''',
     servers: Optional[List[Dict[str, str]]] = None,
     flask_app: Optional[Any] = None
 ) -> Dict[str, Any]:
