@@ -73,6 +73,7 @@ from .openapi.schemas import (  # noqa: E402 [flake8 lint suppression]
     DeviceInfo,
     BaseResponse, DeviceTotalsResponse,
     DeviceTotalsNamedResponse,
+    EventsTotalsNamedResponse,
     DeleteDevicesRequest, DeviceImportRequest,
     DeviceImportResponse, UpdateDeviceColumnRequest,
     LockDeviceFieldRequest, UnlockDeviceFieldsRequest,
@@ -1509,8 +1510,8 @@ def api_delete_old_events(days: int, payload=None):
 @app.route("/sessions/totals", methods=["GET"])
 @validate_request(
     operation_id="get_events_totals",
-    summary="Get Events Totals",
-    description="Retrieve event totals for a specified period.",
+    summary="Get Events Totals (Deprecated)",
+    description="Retrieve event totals for a specified period. Deprecated: use /sessions/totals/named instead.",
     query_params=[{
         "name": "period",
         "description": "Time period (e.g., '7 days')",
@@ -1525,6 +1526,37 @@ def api_get_events_totals(payload=None):
     event_handler = EventInstance()
     totals = event_handler.getEventsTotals(period)
     return jsonify(totals)
+
+
+@app.route("/sessions/totals/named", methods=["GET"])
+@validate_request(
+    operation_id="get_events_totals_named",
+    summary="Get Named Event Totals",
+    description="Retrieve event/session totals with named fields for a specified period.",
+    query_params=[{
+        "name": "period",
+        "description": "Time period (e.g., '7 days')",
+        "required": False,
+        "schema": {"type": "string", "default": "7 days"}
+    }],
+    response_model=EventsTotalsNamedResponse,
+    tags=["events"],
+    auth_callable=is_authorized
+)
+def api_get_events_totals_named(payload=None):
+    period = request.args.get("period", "7 days")
+    event_handler = EventInstance()
+    totals = event_handler.getEventsTotals(period)
+    # totals order: [all_events, sessions, missing, voided, new, down]
+    totals_dict = {
+        "total": totals[0] if len(totals) > 0 else 0,
+        "sessions": totals[1] if len(totals) > 1 else 0,
+        "missing": totals[2] if len(totals) > 2 else 0,
+        "voided": totals[3] if len(totals) > 3 else 0,
+        "new": totals[4] if len(totals) > 4 else 0,
+        "down": totals[5] if len(totals) > 5 else 0
+    }
+    return jsonify({"success": True, "totals": totals_dict})
 
 
 @app.route('/events/recent', methods=['GET', 'POST'])

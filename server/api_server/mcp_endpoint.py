@@ -795,8 +795,17 @@ def get_log_dir() -> str:
 
 
 def _list_resources() -> List[Dict[str, Any]]:
-    """List available MCP resources (read-only data like logs)."""
+    """List available MCP resources (read-only data like logs and API spec)."""
     resources = []
+
+    # API Specification
+    resources.append({
+        "uri": "netalertx://api/openapi.json",
+        "name": "OpenAPI Specification",
+        "description": "The full OpenAPI 3.1 specification for the NetAlertX API and MCP tools",
+        "mimeType": "application/json"
+    })
+
     log_dir = get_log_dir()
     if not log_dir:
         return resources
@@ -840,6 +849,16 @@ def _list_resources() -> List[Dict[str, Any]]:
 
 def _read_resource(uri: str) -> List[Dict[str, Any]]:
     """Read a resource by URI."""
+    # Handle API Specification
+    if uri == "netalertx://api/openapi.json":
+        from flask import current_app
+        spec = get_openapi_spec(flask_app=current_app)
+        return [{
+            "uri": uri,
+            "mimeType": "application/json",
+            "text": json.dumps(spec, indent=2)
+        }]
+
     log_dir = get_log_dir()
     if not log_dir:
         return [{"uri": uri, "text": "Error: NETALERTX_LOG directory not configured"}]

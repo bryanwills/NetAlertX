@@ -1,6 +1,6 @@
 ---
 name: devcontainer-management
-description: Guide for identifying, managing, and running commands within the NetAlertX development container. Use this when asked to run backend logic, setup scripts, or troubleshoot container issues.
+description: Guide for identifying, managing, and running commands within the NetAlertX development container. Use this when asked to run commands, testing, setup scripts, or troubleshoot container issues.
 ---
 
 # Devcontainer Management
