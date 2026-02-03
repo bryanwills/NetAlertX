@@ -121,8 +121,8 @@ You can read or watch several [community configuration guides](https://docs.neta
 
 ## 💙 Support me
 
-| [![GitHub](https://i.imgur.com/emsRCPh.png)](https://github.com/sponsors/jokob-sk) | [![Buy Me A Coffee](https://i.imgur.com/pIM6YXL.png)](https://www.buymeacoffee.com/jokobsk) | [![Patreon](https://i.imgur.com/MuYsrq1.png)](https://www.patreon.com/user?u=84385063) |
-| --- | --- | --- |
+| [![GitHub](https://i.imgur.com/emsRCPh.png)](https://github.com/sponsors/jokob-sk) | [![Buy Me A Coffee](https://i.imgur.com/pIM6YXL.png)](https://www.buymeacoffee.com/jokobsk) |
+| --- | --- |
 
 - Bitcoin: `1N8tupjeCK12qRVU2XrV17WvKK7LCawyZM`
 - Ethereum: `0x6e2749Cb42F4411bc98501406BdcD82244e3f9C7`
