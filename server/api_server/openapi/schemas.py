@@ -318,6 +318,24 @@ class DeviceTotalsNamedResponse(BaseResponse):
     )
 
 
+class EventsTotalsNamedResponse(BaseResponse):
+    """Response with named event/session statistics."""
+    totals: Dict[str, int] = Field(
+        ...,
+        description="Dictionary of counts: total, sessions, missing, voided, new, down",
+        json_schema_extra={
+            "examples": [{
+                "total": 100,
+                "sessions": 50,
+                "missing": 0,
+                "voided": 0,
+                "new": 5,
+                "down": 2
+            }]
+        }
+    )
+
+
 class DeviceExportRequest(BaseModel):
     """Request for exporting devices."""
     format: Literal["csv", "json"] = Field(
