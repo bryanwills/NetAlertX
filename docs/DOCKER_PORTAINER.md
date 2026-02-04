@@ -35,9 +35,9 @@ services:
   netalertx:
     container_name: netalertx
     # Use this line for stable release
-    image: "ghcr.io/jokob-sk/netalertx:latest"
+    image: "ghcr.io/netalertx/netalertx:latest"
     # Or, use this for the latest development build
-    # image: "ghcr.io/jokob-sk/netalertx-dev:latest"
+    # image: "ghcr.io/netalertx/netalertx-dev:latest"
     network_mode: "host"
     restart: unless-stopped
     cap_drop:       # Drop all capabilities for enhanced security
@@ -48,7 +48,7 @@ services:
       - NET_BIND_SERVICE
       - CHOWN
       - SETUID
-      - SETGID               
+      - SETGID
     volumes:
       - ${APP_FOLDER}/netalertx/config:/data/config
       - ${APP_FOLDER}/netalertx/db:/data/db

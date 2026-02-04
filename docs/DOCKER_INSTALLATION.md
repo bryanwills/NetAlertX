@@ -31,7 +31,7 @@ docker run -d --rm --network=host \
   --tmpfs /tmp:uid=${NETALERTX_UID:-20211},gid=${NETALERTX_GID:-20211},mode=1700 \
   -e PORT=20211 \
   -e APP_CONF_OVERRIDE={"GRAPHQL_PORT":"20214"} \
-  ghcr.io/jokob-sk/netalertx:latest
+  ghcr.io/netalertx/netalertx:latest
 ```
 
 > Runtime UID/GID: The image defaults to a service user `netalertx` (UID/GID 20211). A separate readonly lock owner also uses UID/GID 20211 for 004/005 immutability. You can override the runtime UID/GID at build (ARG) or run (`--user` / compose `user:`) but must align writable mounts (`/data`, `/tmp*`) and tmpfs `uid/gid` to that choice.

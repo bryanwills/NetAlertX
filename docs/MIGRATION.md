@@ -318,7 +318,7 @@ As per user feedback, we’ve re-introduced the ability to control which user th
 services:
   netalertx:
     container_name: netalertx
-    image: "ghcr.io/jokob-sk/netalertx"
+    image: "ghcr.io/netalertx/netalertx"
     network_mode: "host"
     cap_drop:
       - ALL

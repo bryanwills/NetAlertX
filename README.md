@@ -56,14 +56,14 @@ docker run -d \
   --tmpfs /tmp:uid=20211,gid=20211,mode=1700 \
   -e PORT=20211 \
   -e APP_CONF_OVERRIDE='{"GRAPHQL_PORT":"20214"}' \
-  ghcr.io/jokob-sk/netalertx:latest
+  ghcr.io/netalertx/netalertx:latest
 ```
 
 Note: Your `/local_data_dir` should contain a `config` and `db` folder.
 
 To deploy a containerized instance directly from the source repository, execute the following BASH sequence:
 ```bash
-git clone https://github.com/jokob-sk/NetAlertX.git
+git clone https://github.com/netalertx/NetAlertX.git
 cd NetAlertX
 docker compose up --force-recreate --build
 # To customize: edit docker-compose.yaml and run that last command again

@@ -57,7 +57,7 @@
           virtualisation.oci-containers = {
             containers = {
               netalertx = {
-                image = "ghcr.io/jokob-sk/netalertx:${cfg.imageTag}";
+                image = "ghcr.io/netalertx/netalertx:${cfg.imageTag}";
                 autoStart = true;
                 extraOptions = [
                   "--network=host"

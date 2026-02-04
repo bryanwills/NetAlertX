@@ -185,7 +185,7 @@ printf "%b\n" "${GREEN}[INSTALLING]                          ${RESET}Cloning app
 printf "%b\n" "--------------------------------------------------------------------------"
 
 mkdir -p "$INSTALL_DIR"
-git clone https://github.com/jokob-sk/NetAlertX.git "$INSTALL_DIR/"
+git clone https://github.com/netalertx/NetAlertX.git "$INSTALL_DIR/"
 
 if [ ! -f "$INSTALL_DIR/front/buildtimestamp.txt" ]; then
   date +%s > "$INSTALL_DIR/front/buildtimestamp.txt"

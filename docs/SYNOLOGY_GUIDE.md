@@ -37,8 +37,8 @@ services:
   netalertx:
     container_name: netalertx
     # use the below line if you want to test the latest dev image
-    # image: "ghcr.io/jokob-sk/netalertx-dev:latest"
-    image: "ghcr.io/jokob-sk/netalertx:latest"
+    # image: "ghcr.io/netalertx/netalertx-dev:latest"
+    image: "ghcr.io/netalertx/netalertx:latest"
     network_mode: "host"
     restart: unless-stopped
     cap_drop:       # Drop all capabilities for enhanced security

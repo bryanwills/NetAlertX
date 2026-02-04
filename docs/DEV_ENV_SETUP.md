@@ -8,26 +8,26 @@ Before starting development, please review the following guidelines.
 
 ### Priority Order (Highest to Lowest)
 
-1. 🔼 Fixing core bugs that lack workarounds  
-2. 🔵 Adding core functionality that unlocks other features (e.g., plugins)  
-3. 🔵 Refactoring to enable faster development  
-4. 🔽 UI improvements (PRs welcome, but low priority)  
+1. 🔼 Fixing core bugs that lack workarounds
+2. 🔵 Adding core functionality that unlocks other features (e.g., plugins)
+3. 🔵 Refactoring to enable faster development
+4. 🔽 UI improvements (PRs welcome, but low priority)
 
 ### Design Philosophy
 
-The application architecture is designed for extensibility and maintainability. It relies heavily on configuration manifests via plugins and settings to dynamically build the UI and populate the application with data from various sources.  
+The application architecture is designed for extensibility and maintainability. It relies heavily on configuration manifests via plugins and settings to dynamically build the UI and populate the application with data from various sources.
 
-For details, see:  
-- [Plugins Development](PLUGINS_DEV.md) (includes video)  
-- [Settings System](SETTINGS_SYSTEM.md)  
+For details, see:
+- [Plugins Development](PLUGINS_DEV.md) (includes video)
+- [Settings System](SETTINGS_SYSTEM.md)
 
-Focus on **core functionality** and integrate with existing tools rather than reinventing the wheel.  
+Focus on **core functionality** and integrate with existing tools rather than reinventing the wheel.
 
-Examples:  
-- Using **Apprise** for notifications instead of implementing multiple separate gateways  
-- Implementing **regex-based validation** instead of one-off validation for each setting  
+Examples:
+- Using **Apprise** for notifications instead of implementing multiple separate gateways
+- Implementing **regex-based validation** instead of one-off validation for each setting
 
-> [!NOTE]  
+> [!NOTE]
 > UI changes have lower priority. PRs are welcome, but please keep them **small and focused**.
 
 ## Development Environment Set Up
@@ -43,7 +43,7 @@ The following steps will guide you to set up your environment for local developm
 ### 1. Download the code:
 
 - `mkdir /development`
-- `cd /development && git clone https://github.com/jokob-sk/NetAlertX.git`
+- `cd /development && git clone https://github.com/netalertx/NetAlertX.git`
 
 ### 2. Create a DEV .env_dev file
 
@@ -59,13 +59,13 @@ PORT=22222    # make sure this port is unique on your whole network
 DEV_LOCATION=/development/NetAlertX
 APP_DATA_LOCATION=/volume/docker_appdata
 # Make sure your GRAPHQL_PORT setting has a port that is unique on your whole host network
-APP_CONF_OVERRIDE={"GRAPHQL_PORT":"22223"} 
+APP_CONF_OVERRIDE={"GRAPHQL_PORT":"22223"}
 # ALWAYS_FRESH_INSTALL=true # uncommenting this will always delete the content of /config and /db dirs on boot to simulate a fresh install
 ```
 
-### 3. Create /db and /config dirs 
+### 3. Create /db and /config dirs
 
-Create a folder `netalertx` in the `APP_DATA_LOCATION` (in this example in `/volume/docker_appdata`) with 2 subfolders `db` and `config`. 
+Create a folder `netalertx` in the `APP_DATA_LOCATION` (in this example in `/volume/docker_appdata`) with 2 subfolders `db` and `config`.
 
 - `mkdir /volume/docker_appdata/netalertx`
 - `mkdir /volume/docker_appdata/netalertx/db`
@@ -82,9 +82,9 @@ You can then modify the python script without restarting/rebuilding the containe
 
 ## Tips
 
-A quick cheat sheet of useful commands. 
+A quick cheat sheet of useful commands.
 
-### Removing the container and image 
+### Removing the container and image
 
 A command to stop, remove the container and the image (replace `netalertx` and `netalertx-netalertx` with the appropriate values)
 
@@ -98,23 +98,23 @@ Most code changes can be tested without rebuilding the container. When working o
 
 ![image](./img/DEV/Maintenance_Logs_Restart_server.png)
 
-2. If above doesn't work, SSH into the container and kill & restart the main script loop 
+2. If above doesn't work, SSH into the container and kill & restart the main script loop
 
 - `sudo docker exec -it netalertx /bin/bash`
 - `pkill -f "python /app/server" && python /app/server & `
 
-3. If none of the above work, restart the docker container. 
+3. If none of the above work, restart the docker container.
 
-- This is usually the last resort as sometimes the Docker engine becomes unresponsive and the whole engine needs to be restarted. 
+- This is usually the last resort as sometimes the Docker engine becomes unresponsive and the whole engine needs to be restarted.
 
 ## Contributing & Pull Requests
 
 ### Before submitting a PR, please ensure:
 
-✔ Changes are **backward-compatible** with existing installs.  
-✔ No unnecessary changes are made.  
-✔ New features are **reusable**, not narrowly scoped.  
-✔ Features are implemented via **plugins** if possible.  
+✔ Changes are **backward-compatible** with existing installs.
+✔ No unnecessary changes are made.
+✔ New features are **reusable**, not narrowly scoped.
+✔ Features are implemented via **plugins** if possible.
 
 ### Mandatory Test Cases
 
@@ -122,15 +122,15 @@ Most code changes can be tested without rebuilding the container. When working o
 - Existing DB/config compatibility.
 - Notification testing:
 
-    - Email  
-    - Apprise (e.g., Telegram)  
-    - Webhook (e.g., Discord)  
-    - MQTT (e.g., Home Assistant)  
+    - Email
+    - Apprise (e.g., Telegram)
+    - Webhook (e.g., Discord)
+    - MQTT (e.g., Home Assistant)
 
 - Updating Settings and their persistence.
 - Updating a Device
 - Plugin functionality.
 - Error log inspection.
 
-> [!NOTE]  
+> [!NOTE]
 > Always run all available tests as per the [Testing documentation](API_TESTS.md).

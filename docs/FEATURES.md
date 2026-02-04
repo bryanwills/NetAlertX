@@ -32,9 +32,19 @@ NetAlertX is a lightweight, flexible platform for monitoring networks, tracking 
 ![Event-Driven Alerts](./img/FEATURES/Event-Driven_Alerts.png)
 
 - **Real-Time Notifications**: Receive immediate alerts for new devices, disconnected devices, or unexpected changes.
-- **Customizable Triggers**: Define rules based on device type, IP ranges, presence, or other network parameters.
+- **Customizable Filters and Rules**: Define rules based on device type, IP ranges, presence, or other network parameters.
 - **Alert Deduplication & Suppression**: Avoid unnecessary noise with smart alert handling.
 - **Historical Logs**: Maintain a complete timeline of network events for review and reporting.
+
+---
+
+## Workflows for implementing Business rules
+
+![orkflows](./img/WORKFLOWS/workflows.png)
+
+- **Custom rules**: Cretae custom flows and update device information based to scan results.
+- **Customizable Triggers**: Define rules based on any device data, including device type, IP ranges, presence, or other network parameters.
+- **Automated Updates**: Automate repetitive tasks, making network management more efficient.
 
 ---
 

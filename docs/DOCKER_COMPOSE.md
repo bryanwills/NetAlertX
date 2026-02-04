@@ -17,7 +17,7 @@ services:
   netalertx:
   #use an environmental variable to set host networking mode if needed
     container_name: netalertx                       # The name when you docker contiainer ls
-    image: ghcr.io/jokob-sk/netalertx:latest
+    image: ghcr.io/netalertx/netalertx:latest
     network_mode: ${NETALERTX_NETWORK_MODE:-host}   # Use host networking for ARP scanning and other services
 
     read_only: true                                 # Make the container filesystem read-only
