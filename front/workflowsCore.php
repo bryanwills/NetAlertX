@@ -43,7 +43,7 @@
 let workflows = [];
 
 let fieldOptions = [
-        "devName", "devMac", "devOwner", "devType", "devVendor", "devFavorite",
+        "devName", "devMac", "devOwner", "devType", "devVendor", "devVlan", "devFavorite",
         "devGroup", "devComments", "devFirstConnection", "devLastConnection",
         "devLastIP", "devStaticIP", "devScan", "devLogEvents", "devAlertEvents",
         "devAlertDown", "devSkipRepeated", "devLastNotification", "devPresentLastScan",
