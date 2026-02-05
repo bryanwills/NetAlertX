@@ -1287,14 +1287,22 @@ def dbquery_update(payload=None):
 def dbquery_delete(payload=None):
     data = request.get_json() or {}
     required = ["columnName", "id", "dbtable"]
-    if not all(data.get(k) for k in required):
-        return jsonify({"success": False, "message": "ERROR: Missing parameters", "error": "Missing required 'columnName', 'id', or 'dbtable' query parameter"}), 400
+    if not all(k in data and data[k] for k in required):
+        return jsonify({
+            "success": False,
+            "message": "ERROR: Missing parameters",
+            "error": "Missing required 'columnName', 'id', or 'dbtable' query parameter"
+        }), 400
 
-    return delete_query(
-        column_name=data["columnName"],
-        ids=data["id"],
-        dbtable=data["dbtable"],
-    )
+    dbtable = data["dbtable"]
+    column_name = data["columnName"]
+    ids = data["id"]
+
+    # Ensure ids is a list
+    if not isinstance(ids, list):
+        ids = [ids]
+
+    return delete_query(column_name, ids, dbtable)
 
 
 # --------------------------
