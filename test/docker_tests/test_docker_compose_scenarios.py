@@ -505,6 +505,8 @@ def _run_docker_compose(
         """Collect logs with retry to handle timing races where container hasn't flushed output yet."""
         logs_cmd = cmd + ["logs"]
         best_result: subprocess.CompletedProcess | None = None
+        # Initialize with a safe default in case loop doesn't run
+        logs_result = subprocess.CompletedProcess(logs_cmd, 1, stdout="", stderr="No log attempts made")
         for attempt in range(max_attempts):
             print(f"Running logs cmd (attempt {attempt + 1}/{max_attempts}): {logs_cmd}")
             logs_result = subprocess.run(
