@@ -4,7 +4,6 @@
 .vscode-server
 .gitconfig
 .*CommandMarker
-.gemini/settings.json
 deviceid
 .DS_Store
 .cache
