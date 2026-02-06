@@ -171,7 +171,7 @@ class DeviceInstance:
         conn = get_temp_db_connection()
         cur = conn.cursor()
 
-        if not macs:
+        if macs is None:
             # No MACs provided → delete all
             cur.execute("DELETE FROM Devices")
             conn.commit()

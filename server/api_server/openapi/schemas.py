@@ -444,8 +444,27 @@ class DeviceUpdateRequest(BaseModel):
 
 class DeleteDevicesRequest(BaseModel):
     """Request to delete multiple devices."""
-    macs: List[str] = Field([], description="List of MACs to delete")
-    confirm_delete_all: bool = Field(False, description="Explicit flag to delete ALL devices when macs is empty")
+    macs: List[str] = Field(
+        default_factory=list,
+        description="List of MACs to delete (supports '*' wildcard at the end or start for individual macs)"
+    )
+    confirm_delete_all: bool = Field(
+        default=False,
+        description="Explicit flag to delete ALL devices when macs is empty"
+    )
+    model_config = {
+        "json_schema_extra": {
+            "examples": [
+                {
+                    "summary": "Delete specific devices",
+                    "value": {
+                        "macs": ["AA:BB:CC:DD:EE:FF", "AA:BB:CC:DD:*"],
+                        "confirm_delete_all": False
+                    }
+                }
+            ]
+        }
+    }
 
     @field_validator("macs")
     @classmethod
@@ -453,9 +472,11 @@ class DeleteDevicesRequest(BaseModel):
         return [validate_mac(mac) for mac in v]
 
     @model_validator(mode="after")
-    def check_delete_all_safety(self) -> DeleteDevicesRequest:
+    def check_delete_all_safety(self):
         if not self.macs and not self.confirm_delete_all:
-            raise ValueError("Must provide at least one MAC or set confirm_delete_all=True")
+            raise ValueError(
+                "Must provide at least one MAC or set confirm_delete_all=True"
+            )
         return self
 
 

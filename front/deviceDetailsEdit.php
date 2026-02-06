@@ -17,7 +17,7 @@ require_once $_SERVER["DOCUMENT_ROOT"] . "/php/templates/security.php"; ?>
         class="btn btn-default pa-btn pa-btn-delete"
         style="margin-left:0px;"
         id="btnDelete"
-        onclick="askDeleteDevice()">
+        onclick="askDeleteDeviceByMac()">
           <i class="fas fa-trash-alt"></i>
           <?= lang("DevDetail_button_Delete") ?>
     </button>
