@@ -1,4 +1,28 @@
 from scan.session_events import process_scan
+from unittest.mock import Mock, patch
+import pytest
+
+
+@pytest.fixture
+def minimal_patches():
+    with patch.multiple(
+        "scan.session_events",
+        exclude_ignored_devices=Mock(),
+        save_scanned_devices=Mock(),
+        print_scan_stats=Mock(),
+        create_new_devices=Mock(),
+        update_devices_data_from_scan=Mock(),
+        update_devLastConnection_from_CurrentScan=Mock(),
+        update_vendors_from_mac=Mock(),
+        update_ipv4_ipv6=Mock(),
+        update_icons_and_types=Mock(),
+        pair_sessions_events=Mock(),
+        create_sessions_snapshot=Mock(),
+        insertOnlineHistory=Mock(),
+        skip_repeated_notifications=Mock(),
+        update_unread_notifications_count=Mock(),
+    ):
+        yield
 
 
 # ---------------------------------------------------
