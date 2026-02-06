@@ -87,6 +87,7 @@ def minimal_patches():
         insertOnlineHistory=Mock(),
         skip_repeated_notifications=Mock(),
         update_unread_notifications_count=Mock(),
+        insert_events=Mock(),
     ):
         yield
 
