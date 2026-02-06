@@ -1,85 +1,8 @@
-import sqlite3
 from unittest.mock import Mock, patch
 
 import pytest
 
 from scan.session_events import process_scan
-
-@pytest.fixture
-def scan_db():
-    conn = sqlite3.connect(":memory:")
-    conn.row_factory = sqlite3.Row
-    cur = conn.cursor()
-
-    # Devices
-    cur.execute("""
-    CREATE TABLE Devices (
-      devMac TEXT PRIMARY KEY,
-      devLastIP TEXT,
-      devPresentLastScan INTEGER,
-      devAlertDown INTEGER,
-      devAlertEvents INTEGER,
-      devIsArchived INTEGER DEFAULT 0
-    )
-    """)
-
-    # Current scan
-    cur.execute("""
-    CREATE TABLE CurrentScan (
-      scanMac TEXT,
-      scanLastIP TEXT
-    )
-    """)
-
-    # Events
-    cur.execute("""
-    CREATE TABLE Events (
-      eve_MAC TEXT,
-      eve_IP TEXT,
-      eve_DateTime TEXT,
-      eve_EventType TEXT,
-      eve_AdditionalInfo TEXT,
-      eve_PendingAlertEmail INTEGER
-    )
-    """)
-
-    # LatestEventsPerMAC view
-    cur.execute("""DROP VIEW IF EXISTS LatestEventsPerMAC;""")
-    cur.execute("""
-    CREATE VIEW LatestEventsPerMAC AS
-    WITH RankedEvents AS (
-        SELECT
-            e.*,
-            ROW_NUMBER() OVER (PARTITION BY e.eve_MAC ORDER BY e.eve_DateTime DESC) AS row_num
-        FROM Events AS e
-    )
-    SELECT
-        e.eve_MAC,
-        e.eve_EventType,
-        e.eve_DateTime,
-        e.eve_PendingAlertEmail,
-        d.devPresentLastScan,
-        c.scanLastIP
-    FROM RankedEvents AS e
-    LEFT JOIN Devices AS d ON e.eve_MAC = d.devMac
-    LEFT JOIN CurrentScan AS c ON e.eve_MAC = c.scanMac
-    WHERE e.row_num = 1;
-    """)
-
-    conn.commit()
-
-    db = Mock()
-    db.sql_connection = conn
-    db.sql = cur
-    db.commitDB = conn.commit
-
-    def read(query):
-        return [dict(cur.execute(query).fetchone())]
-
-    db.read = read
-
-    yield db
-    conn.close()
 
 
 @pytest.fixture
