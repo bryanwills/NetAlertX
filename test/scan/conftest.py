@@ -42,6 +42,7 @@ def scan_db():
             devFavorite INTEGER DEFAULT 0,
             devScan INTEGER DEFAULT 1,
             devAlertDown INTEGER DEFAULT 0,
+            devAlertEvents INTEGER DEFAULT 1,
 
             -- Authoritative Metadata Columns
             devMacSource TEXT,

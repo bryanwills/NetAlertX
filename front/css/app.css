@@ -538,6 +538,7 @@ body
     font-size: larger;
     float: right;
     text-align: center;
+    z-index: 1;
 }
 
 hr
