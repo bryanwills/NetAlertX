@@ -5,7 +5,6 @@ import pytest
 
 from scan.session_events import process_scan
 
-
 @pytest.fixture
 def scan_db():
     conn = sqlite3.connect(":memory:")
@@ -13,8 +12,7 @@ def scan_db():
     cur = conn.cursor()
 
     # Devices
-    cur.execute(
-        """
+    cur.execute("""
     CREATE TABLE Devices (
       devMac TEXT PRIMARY KEY,
       devLastIP TEXT,
@@ -23,22 +21,18 @@ def scan_db():
       devAlertEvents INTEGER,
       devIsArchived INTEGER DEFAULT 0
     )
-  """
-    )
+    """)
 
     # Current scan
-    cur.execute(
-        """
+    cur.execute("""
     CREATE TABLE CurrentScan (
       scanMac TEXT,
       scanLastIP TEXT
     )
-  """
-    )
+    """)
 
     # Events
-    cur.execute(
-        """
+    cur.execute("""
     CREATE TABLE Events (
       eve_MAC TEXT,
       eve_IP TEXT,
@@ -47,8 +41,30 @@ def scan_db():
       eve_AdditionalInfo TEXT,
       eve_PendingAlertEmail INTEGER
     )
-  """
+    """)
+
+    # LatestEventsPerMAC view
+    cur.execute("""DROP VIEW IF EXISTS LatestEventsPerMAC;""")
+    cur.execute("""
+    CREATE VIEW LatestEventsPerMAC AS
+    WITH RankedEvents AS (
+        SELECT
+            e.*,
+            ROW_NUMBER() OVER (PARTITION BY e.eve_MAC ORDER BY e.eve_DateTime DESC) AS row_num
+        FROM Events AS e
     )
+    SELECT
+        e.eve_MAC,
+        e.eve_EventType,
+        e.eve_DateTime,
+        e.eve_PendingAlertEmail,
+        d.devPresentLastScan,
+        c.scanLastIP
+    FROM RankedEvents AS e
+    LEFT JOIN Devices AS d ON e.eve_MAC = d.devMac
+    LEFT JOIN CurrentScan AS c ON e.eve_MAC = c.scanMac
+    WHERE e.row_num = 1;
+    """)
 
     conn.commit()
 
