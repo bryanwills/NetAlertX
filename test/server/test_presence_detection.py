@@ -68,17 +68,14 @@ def scan_db():
 
 @pytest.fixture
 def minimal_patches():
-    """Patch unrelated pipeline steps."""
     with patch.multiple(
-        "scan.session_events",   # <-- target module
+        "scan.session_events",
         exclude_ignored_devices=Mock(),
         save_scanned_devices=Mock(),
         print_scan_stats=Mock(),
         create_new_devices=Mock(),
         update_devices_data_from_scan=Mock(),
         update_devLastConnection_from_CurrentScan=Mock(),
-        update_devPresentLastScan_based_on_nics=Mock(),
-        update_devPresentLastScan_based_on_force_status=Mock(),
         update_vendors_from_mac=Mock(),
         update_ipv4_ipv6=Mock(),
         update_icons_and_types=Mock(),
@@ -87,7 +84,7 @@ def minimal_patches():
         insertOnlineHistory=Mock(),
         skip_repeated_notifications=Mock(),
         update_unread_notifications_count=Mock(),
-        insert_events=Mock(),
+        # insert_events optionally mocked depending on test
     ):
         yield
 
