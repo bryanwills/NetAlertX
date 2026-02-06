@@ -104,4 +104,3 @@ def test_primary_ipv4_is_set_and_ipv6_preserved(scan_db, mock_device_handling):
     assert row["devLastIP"] == "10.0.0.5"
     assert row["devPrimaryIPv4"] == "10.0.0.5"
     assert row["devPrimaryIPv6"] == "2001:db8::2"
-
