@@ -4,7 +4,7 @@
 NETALERTX_DB_FILE=${NETALERTX_DB:-/data/db}/app.db
 
 #remove the old database
-rm "${NETALERTX_DB_FILE}"
+rm -f "${NETALERTX_DB_FILE}" "${NETALERTX_DB_FILE}-shm" "${NETALERTX_DB_FILE}-wal"
 
 # Calculate script directory and schema path
 SCRIPT_DIR="$(dirname "$(readlink -f "$0")")"
