@@ -26,7 +26,7 @@ def client():
 @pytest.fixture
 def test_mac():
     # Generate a unique MAC for each test run
-    return "AA:BB:CC:" + ":".join(f"{random.randint(0, 255):02X}" for _ in range(3))
+    return "aa:bb:cc:" + ":".join(f"{random.randint(0, 255):02X}" for _ in range(3))
 
 
 def auth_headers(token):
@@ -115,7 +115,7 @@ def test_get_events_totals(client, api_token):
 def test_delete_all_events(client, api_token, test_mac):
     # create two events
     create_event(client, api_token, test_mac)
-    create_event(client, api_token, "FF:FF:FF:FF:FF:FF")
+    create_event(client, api_token, "ff:ff:ff:ff:ff:ff")
 
     resp = list_events(client, api_token)
     # At least the two we created should be present

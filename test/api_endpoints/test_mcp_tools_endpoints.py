@@ -200,7 +200,7 @@ def test_set_device_alias_not_found(mock_update_col, client, api_token):
     mock_update_col.return_value = {"success": False, "error": "Device not found"}
 
     payload = {"alias": "New Device Name"}
-    response = client.post("/device/FF:FF:FF:FF:FF:FF/set-alias", json=payload, headers=auth_headers(api_token))
+    response = client.post("/device/ff:ff:ff:ff:ff:ff/set-alias", json=payload, headers=auth_headers(api_token))
 
     assert response.status_code == 200
     data = response.get_json()
