@@ -728,10 +728,10 @@ def create_new_devices(db):
         scanParentMAC = raw_parent_mac
         scanParentMAC = (
             scanParentMAC
-            if scanParentMAC and scanMac != "Internet"
+            if scanParentMAC and scanMac.lower() != "internet"
             else (
                 get_setting_value("NEWDEV_devParentMAC")
-                if scanMac != "Internet"
+                if scanMac.lower() != "internet"
                 else "null"
             )
         )
@@ -1243,7 +1243,7 @@ def update_devPresentLastScan_based_on_force_status(db):
 
 
 # -------------------------------------------------------------------------------
-# Check if the variable contains a valid MAC address or "Internet"
+# Check if the variable contains a valid MAC address or "internet"
 def check_mac_or_internet(input_str):
     # Regular expression pattern for matching a MAC address
     mac_pattern = r"([0-9A-Fa-f]{2}[:-][0-9A-Fa-f]{2}[:-][0-9A-Fa-f]{2}[:-][0-9A-Fa-f]{2}[:-][0-9A-Fa-f]{2}[:-][0-9A-Fa-f]{2})"

@@ -105,6 +105,50 @@ def ensure_column(sql, table: str, column_name: str, column_type: str) -> bool:
         return False
 
 
+def ensure_mac_lowercase_triggers(sql):
+    """
+    Ensures the triggers for lowercasing MAC addresses exist on the Devices table.
+    """
+    try:
+        # 1. Handle INSERT Trigger
+        sql.execute("SELECT name FROM sqlite_master WHERE type='trigger' AND name='trg_lowercase_mac_insert'")
+        if not sql.fetchone():
+            mylog("verbose", ["[db_upgrade] Creating trigger 'trg_lowercase_mac_insert'"])
+            sql.execute("""
+                CREATE TRIGGER trg_lowercase_mac_insert
+                AFTER INSERT ON Devices
+                BEGIN
+                    UPDATE Devices
+                    SET devMac = LOWER(NEW.devMac),
+                        devParentMAC = LOWER(NEW.devParentMAC)
+                    WHERE rowid = NEW.rowid;
+                END;
+            """)
+
+        # 2. Handle UPDATE Trigger
+        sql.execute("SELECT name FROM sqlite_master WHERE type='trigger' AND name='trg_lowercase_mac_update'")
+        if not sql.fetchone():
+            mylog("verbose", ["[db_upgrade] Creating trigger 'trg_lowercase_mac_update'"])
+            # Note: Using 'WHEN' to prevent unnecessary updates and recursion
+            sql.execute("""
+                CREATE TRIGGER trg_lowercase_mac_update
+                AFTER UPDATE OF devMac, devParentMAC ON Devices
+                WHEN (NEW.devMac GLOB '*[A-Z]*') OR (NEW.devParentMAC GLOB '*[A-Z]*')
+                BEGIN
+                    UPDATE Devices
+                    SET devMac = LOWER(NEW.devMac),
+                        devParentMAC = LOWER(NEW.devParentMAC)
+                    WHERE rowid = NEW.rowid;
+                END;
+            """)
+
+        return True
+
+    except Exception as e:
+        mylog("none", [f"[db_upgrade] ERROR while ensuring MAC triggers: {e}"])
+        return False
+        
+
 def ensure_views(sql) -> bool:
     """
     Ensures required views exist.

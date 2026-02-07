@@ -16,6 +16,7 @@ from db.db_upgrade import (
     ensure_Parameters,
     ensure_Settings,
     ensure_Indexes,
+    ensure_mac_lowercase_triggers,
 )
 
 
@@ -197,6 +198,9 @@ class DB:
 
             # Indexes
             ensure_Indexes(self.sql)
+
+            # Normalization triggers
+            ensure_mac_lowercase_triggers(self.sql)
 
             # commit changes
             self.commitDB()

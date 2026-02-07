@@ -64,9 +64,9 @@ ALLOWED_EVENT_TYPES = Literal[
 
 def validate_mac(value: str) -> str:
     """Validate and normalize MAC address format."""
-    # Allow "Internet" as a special case for the gateway/WAN device
+    # Allow "internet" as a special case for the gateway/WAN device
     if value.lower() == "internet":
-        return "Internet"
+        return "internet"
 
     if not is_mac(value):
         raise ValueError(f"Invalid MAC address format: {value}")
@@ -439,7 +439,7 @@ class DeviceUpdateRequest(BaseModel):
     def sanitize_text_fields(cls, v: Optional[str]) -> Optional[str]:
         if v is None:
             return v
-        return sanitize_string(v)
+        return v
 
 
 class DeleteDevicesRequest(BaseModel):

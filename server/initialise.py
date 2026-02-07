@@ -358,7 +358,7 @@ def importConfigs(pm, db, all_plugins):
             "Router",
             "USB LAN Adapter",
             "USB WIFI Adapter",
-            "Internet",
+            "internet",
         ],
         c_d,
         "Network device types",

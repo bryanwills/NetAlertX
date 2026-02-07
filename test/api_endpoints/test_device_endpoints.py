@@ -132,7 +132,7 @@ def test_update_device_column(client, api_token, test_mac):
     # Update its parent MAC
     resp = client.post(
         f"/device/{test_mac}/update-column",
-        json={"columnName": "devParentMAC", "columnValue": "Internet"},
+        json={"columnName": "devParentMAC", "columnValue": "internet"},
         headers=auth_headers(api_token),
     )
 
@@ -142,7 +142,7 @@ def test_update_device_column(client, api_token, test_mac):
     # Try updating a non-existent device
     resp_missing = client.post(
         "/device/11:22:33:44:55:66/update-column",
-        json={"columnName": "devParentMAC", "columnValue": "Internet"},
+        json={"columnName": "devParentMAC", "columnValue": "internet"},
         headers=auth_headers(api_token),
     )
 

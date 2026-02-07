@@ -19,6 +19,6 @@ def test_normalize_mac_preserves_wildcard():
 
 
 def test_normalize_mac_preserves_internet_root():
-    assert normalize_mac("internet") == "Internet"
-    assert normalize_mac("Internet") == "Internet"
-    assert normalize_mac("INTERNET") == "Internet"
+    assert normalize_mac("internet") == "internet"
+    assert normalize_mac("Internet") == "internet"
+    assert normalize_mac("INTERNET") == "internet"

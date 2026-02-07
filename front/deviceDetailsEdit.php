@@ -423,7 +423,7 @@ function setDeviceData(direction = '', refreshCallback = '') {
 
   // Build payload
   const payload = {
-    devName: $('#NEWDEV_devName').val().replace(/'/g, "’"),
+    devName: $('#NEWDEV_devName').val(),
     devOwner: $('#NEWDEV_devOwner').val().replace(/'/g, "’"),
     devType: $('#NEWDEV_devType').val().replace(/'/g, ""),
     devVendor: $('#NEWDEV_devVendor').val().replace(/'/g, "’"),
@@ -432,7 +432,7 @@ function setDeviceData(direction = '', refreshCallback = '') {
     devFavorite: ($('#NEWDEV_devFavorite')[0].checked * 1),
     devGroup: $('#NEWDEV_devGroup').val().replace(/'/g, "’"),
     devLocation: $('#NEWDEV_devLocation').val().replace(/'/g, "’"),
-    devComments: encodeSpecialChars($('#NEWDEV_devComments').val()),
+    devComments: ($('#NEWDEV_devComments').val()),
 
     devParentMAC: $('#NEWDEV_devParentMAC').val(),
     devParentPort: $('#NEWDEV_devParentPort').val(),

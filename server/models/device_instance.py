@@ -495,7 +495,7 @@ class DeviceInstance:
 
         # Fetch children
         cur.execute(
-            "SELECT * FROM Devices WHERE devParentMAC = ? ORDER BY devPresentLastScan DESC",
+            "SELECT * FROM Devices WHERE LOWER(devParentMAC) = LOWER(?) ORDER BY devPresentLastScan DESC",
             (device_data["devMac"],),
         )
         children_rows = cur.fetchall()
