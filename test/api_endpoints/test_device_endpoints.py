@@ -28,7 +28,7 @@ def client():
 @pytest.fixture
 def test_mac():
     # Generate a unique MAC for each test run
-    return "AA:BB:CC:" + ":".join(f"{random.randint(0, 255):02X}" for _ in range(3))
+    return "aa:bb:cc:" + ":".join(f"{random.randint(0, 255):02X}" for _ in range(3))
 
 
 def auth_headers(token):
@@ -100,7 +100,7 @@ def test_copy_device(client, api_token, test_mac):
     assert resp.status_code == 200
 
     # Step 2: Generate a target MAC
-    target_mac = "AA:BB:CC:" + ":".join(
+    target_mac = "aa:bb:cc:" + ":".join(
         f"{random.randint(0, 255):02X}" for _ in range(3)
     )
 

@@ -91,11 +91,11 @@ def is_typical_router_ip(ip_address):
 def is_mac(input):
     input_str = str(input).lower().strip()  # Convert to string and lowercase so non-string values won't raise errors
 
-    # Full MAC (6 octets) e.g. AA:BB:CC:DD:EE:FF
+    # Full MAC (6 octets) e.g. aa:bb:cc:dd:ee:ff
     full_mac_re = re.compile(r"^[0-9a-f]{2}([-:]?)[0-9a-f]{2}(\1[0-9a-f]{2}){4}$")
 
     # Wildcard prefix format: exactly 3 octets followed by a trailing '*' component
-    # Examples: AA:BB:CC:*
+    # Examples: aa:bb:cc:*
     wildcard_re = re.compile(r"^[0-9a-f]{2}[-:]?[0-9a-f]{2}[-:]?[0-9a-f]{2}[-:]?\*$")
 
     if full_mac_re.match(input_str) or wildcard_re.match(input_str):

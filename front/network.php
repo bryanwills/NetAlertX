@@ -96,12 +96,14 @@
             COUNT(child.devMac) AS node_ports_count
         FROM Devices AS parent
         LEFT JOIN Devices AS child
-            ON child.devParentMAC = parent.devMac
-        WHERE parent.devType IN (
-        ${networkDeviceTypes})
+            /* CRITICAL FIX: COLLATE NOCASE ensures the join works
+               even if devParentMAC is uppercase and devMac is lowercase
+            */
+            ON child.devParentMAC = parent.devMac COLLATE NOCASE
+        WHERE parent.devType IN (${networkDeviceTypes})
           AND parent.devIsArchived = 0
         GROUP BY parent.devMac, parent.devName, parent.devPresentLastScan,
-                parent.devType, parent.devParentMAC, parent.devIcon, parent.devAlertDown
+                 parent.devType, parent.devParentMAC, parent.devIcon, parent.devAlertDown
         ORDER BY parent.devName;
     `;
 
@@ -381,9 +383,8 @@
   }
 
   // ----------------------------------------------------
-  function loadConnectedDevices(node_mac) {
-
-    // 1. Force to lowercase to match the new DB standard
+ function loadConnectedDevices(node_mac) {
+    // Standardize the input just in case
     const normalized_mac = node_mac.toLowerCase();
 
     const sql = `
@@ -397,13 +398,14 @@
             ELSE 'Unknown status'
         END AS devStatus
       FROM Devices
-      WHERE devParentMac = '${normalized_mac}'`;
+      /* Using COLLATE NOCASE here solves the 'TEXT' vs 'NOCASE' mismatch */
+      WHERE devParentMac = '${normalized_mac}' COLLATE NOCASE`;
 
-    const id = node_mac.replace(/:/g, '_');
+    // Keep the ID generation consistent
+    const id = normalized_mac.replace(/:/g, '_');
 
     const wrapperHtml = `
       <table class="table table-bordered table-striped node-leafs-table " id="table_leafs_${id}" data-node-mac="${normalized_mac}">
-
       </table>`;
 
     loadDeviceTable({

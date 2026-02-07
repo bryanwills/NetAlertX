@@ -458,7 +458,7 @@ class DeleteDevicesRequest(BaseModel):
                 {
                     "summary": "Delete specific devices",
                     "value": {
-                        "macs": ["AA:BB:CC:DD:EE:FF", "AA:BB:CC:DD:*"],
+                        "macs": ["aa:bb:cc:dd:ee:ff", "aa:bb:cc:dd:*"],
                         "confirm_delete_all": False
                     }
                 }
@@ -570,7 +570,7 @@ class WakeOnLanResponse(BaseResponse):
     output: Optional[str] = Field(
         None,
         description="Command output",
-        json_schema_extra={"examples": ["Sent magic packet to AA:BB:CC:DD:EE:FF"]}
+        json_schema_extra={"examples": ["Sent magic packet to aa:bb:cc:dd:ee:ff"]}
     )
 
 

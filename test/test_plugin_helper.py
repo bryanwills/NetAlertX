@@ -15,7 +15,7 @@ def test_normalize_mac_preserves_wildcard():
     # Call once and assert deterministic result
     result = normalize_mac("aabbcc*")
     assert result == "AA:BB:CC:*", f"Expected 'AA:BB:CC:*' but got '{result}'"
-    assert normalize_mac("aa:bb:cc:dd:ee:ff") == "AA:BB:CC:DD:EE:FF"
+    assert normalize_mac("aa:bb:cc:dd:ee:ff") == "aa:bb:cc:dd:ee:ff"
 
 
 def test_normalize_mac_preserves_internet_root():

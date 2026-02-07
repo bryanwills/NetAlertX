@@ -196,6 +196,6 @@ def test_devices_by_status(client, api_token, test_mac):
 def test_delete_test_devices(client, api_token):
 
     # Delete by MAC
-    resp = client.delete("/devices", json={"macs": ["AA:BB:CC:*"]}, headers=auth_headers(api_token))
+    resp = client.delete("/devices", json={"macs": ["aa:bb:cc:*"]}, headers=auth_headers(api_token))
     assert resp.status_code == 200
     assert resp.json.get("success") is True
