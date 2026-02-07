@@ -26,7 +26,7 @@ def client():
 @pytest.fixture
 def test_mac():
     # Generate a unique MAC for each test run
-    return "aa:bb:cc:" + ":".join(f"{random.randint(0, 255):02X}" for _ in range(3))
+    return "aa:bb:cc:" + ":".join(f"{random.randint(0, 255):02X}" for _ in range(3)).lower()
 
 
 def auth_headers(token):
