@@ -112,12 +112,29 @@ def normalizeTimeStamp(inputTimeStamp):
 
 
 # -------------------------------------------------------------------------------------------
-def format_date_iso(date1: str) -> Optional[str]:
-    """Return ISO 8601 string for a date or None if empty"""
-    if not date1:
+def format_date_iso(date_val: str) -> Optional[str]:
+    """Ensures a date string from DB is returned as a proper ISO string with TZ."""
+    if not date_val:
         return None
-    dt = datetime.datetime.fromisoformat(date1) if isinstance(date1, str) else date1
-    return dt.isoformat()
+
+    try:
+        # 1. Parse the string from DB (e.g., "2026-01-20 07:58:18")
+        if isinstance(date_val, str):
+            # Use a more flexible parser if it's not strict ISO
+            dt = datetime.datetime.fromisoformat(date_val.replace(" ", "T"))
+        else:
+            dt = date_val
+
+        # 2. If it has no timezone, ATTACH (don't convert) your config TZ
+        if dt.tzinfo is None:
+            target_tz = conf.tz if isinstance(conf.tz, datetime.tzinfo) else ZoneInfo(conf.tz)
+            dt = dt.replace(tzinfo=target_tz)
+
+        # 3. Return the string. .isoformat() will now include the +11:00 or +10:00
+        return dt.isoformat()
+    except Exception as e:
+        print(f"Error formatting date: {e}")
+        return str(date_val)
 
 
 # -------------------------------------------------------------------------------------------
@@ -156,21 +173,35 @@ def parse_datetime(dt_str):
 
 def format_date(date_str: str) -> str:
     try:
-        if isinstance(date_str, str):
-            # collapse all whitespace into single spaces
-            date_str = re.sub(r"\s+", " ", date_str.strip())
+        if not date_str:
+            return ""
 
+        date_str = re.sub(r"\s+", " ", str(date_str).strip())
         dt = parse_datetime(date_str)
+
+        if dt.tzinfo is None:
+            if isinstance(conf.tz, str):
+                dt = dt.replace(tzinfo=ZoneInfo(conf.tz))
+            else:
+                dt = dt.replace(tzinfo=conf.tz)
+
         if not dt:
             return f"invalid:{repr(date_str)}"
 
+        # If the DB has no timezone, we tell Python what it IS,
+        # we don't CONVERT it.
         if dt.tzinfo is None:
+            # Option A: If the DB time is already AEDT, use AEDT.
+            # Option B: Use conf.tz if that is your 'source of truth'
             dt = dt.replace(tzinfo=conf.tz)
 
-        return dt.astimezone().isoformat()
+        # IMPORTANT: Return the ISO format of the object AS IS.
+        # Calling .astimezone() here triggers a conversion to the
+        # System Local Time , which is causing your shift.
+        return dt.isoformat()
 
-    except Exception:
-        return f"invalid:{repr(date_str)}"
+    except Exception as e:
+        return f"invalid:{repr(date_str)} e: {e}"
 
 
 def format_date_diff(date1, date2, tz_name):

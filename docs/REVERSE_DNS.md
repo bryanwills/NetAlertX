@@ -39,7 +39,7 @@ You can specify the DNS server in the docker-compose to improve name resolution 
 services:
   netalertx:
     container_name: netalertx
-    image: "ghcr.io/jokob-sk/netalertx:latest"
+    image: "ghcr.io/netalertx/netalertx:latest"
 ...
     dns:           # specifying the DNS servers used for the container
       - 10.8.0.1

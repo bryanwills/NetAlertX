@@ -12,7 +12,7 @@ docker run --rm --network=host \
   -v /etc/localtime:/etc/localtime:ro \
   --tmpfs /tmp:uid=20211,gid=20211,mode=1700 \
   -e PORT=20211 \
-  ghcr.io/jokob-sk/netalertx:latest
+  ghcr.io/netalertx/netalertx:latest
 ```
 
 > [!WARNING]
@@ -70,7 +70,7 @@ If you use a custom `PUID` (e.g. `0`) and `GUID` (e.g. `100`) make sure you also
 docker run -it --rm --name netalertx --user "0" \
   -v /local_data_dir:/data \
   --tmpfs /tmp:uid=20211,gid=20211,mode=1700 \
-  ghcr.io/jokob-sk/netalertx:latest
+  ghcr.io/netalertx/netalertx:latest
 ```
 
 2. Wait for logs showing **permissions being fixed**. The container will then **hang intentionally**.
@@ -95,7 +95,7 @@ docker run -it --rm --name netalertx --user "0" \
 services:
   netalertx:
     container_name: netalertx
-    image: "ghcr.io/jokob-sk/netalertx"
+    image: "ghcr.io/netalertx/netalertx"
     network_mode: "host"
     cap_drop:                                       # Drop all capabilities for enhanced security
       - ALL

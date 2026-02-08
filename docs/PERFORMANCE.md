@@ -80,9 +80,9 @@ services:
   netalertx:
     container_name: netalertx
     # Use this line for the stable release
-    image: "ghcr.io/jokob-sk/netalertx:latest"
+    image: "ghcr.io/netalertx/netalertx:latest"
     # Or use this line for the latest development build
-    # image: "ghcr.io/jokob-sk/netalertx-dev:latest"
+    # image: "ghcr.io/netalertx/netalertx-dev:latest"
     network_mode: "host"
     restart: unless-stopped
 

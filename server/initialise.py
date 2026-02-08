@@ -273,7 +273,7 @@ def importConfigs(pm, db, all_plugins):
     )
     conf.BACKEND_API_URL = ccd(
         "BACKEND_API_URL",
-        "",
+        "/server",
         c_d,
         "API URL",
         '{"dataType":"string", "elements": [{"elementType" : "input", "elementOptions" : [] ,"transformers": []}]}',
@@ -358,7 +358,7 @@ def importConfigs(pm, db, all_plugins):
             "Router",
             "USB LAN Adapter",
             "USB WIFI Adapter",
-            "Internet",
+            "internet",
         ],
         c_d,
         "Network device types",
@@ -715,7 +715,7 @@ def importConfigs(pm, db, all_plugins):
     #             settingsImported = None (timestamp),
     #             showSpinner = False (1/0),
     #             graphQLServerStarted = 1 (1/0))
-    updateState("Config imported", conf.lastImportedConfFile, conf.lastImportedConfFile, False, 1, None, None, new_version)
+    updateState("Config imported", conf.lastImportedConfFile, conf.lastImportedConfFile, False, 1, None, None, new_version, buildTimestamp)
 
     msg = '[Config] Imported new settings config'
     mylog('minimal', msg)

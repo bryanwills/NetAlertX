@@ -44,7 +44,7 @@ Use the following Compose snippet to deploy NetAlertX with a **static LAN IP** a
 ```yaml
 services:
   netalertx:
-    image: ghcr.io/jokob-sk/netalertx:latest
+    image: ghcr.io/netalertx/netalertx:latest
 ...
     networks:
       swarm-ipvlan:

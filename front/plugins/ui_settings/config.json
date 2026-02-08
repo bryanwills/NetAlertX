@@ -199,7 +199,12 @@
         "PGkgY2xhc3M9ImZhIGZhLWxpZ2h0YnVsYiI+PC9pPg==",
         "PGkgY2xhc3M9ImZhIGZhLXNoaWVsZCI+PC9pPg==",
         "PGkgY2xhc3M9ImZhIGZhLXdpZmkiPjwvaT4=",
-        "PGkgY2xhc3M9ImZhIGZhLWdhbWVwYWQiPjwvaT4="
+        "PGkgY2xhc3M9ImZhIGZhLWdhbWVwYWQiPjwvaT4=",
+        "PGkgY2xhc3M9ImZhLXNvbGlkIGZhLXByaW50Ij48L2k+",
+        "PGkgY2xhc3M9ImZhLXNvbGlkIGZhLW1vYmlsZSI+PC9pPg==",
+        "PGkgY2xhc3M9ImZhLXNvbGlkIGZhLWhhcmQtZHJpdmUiPjwvaT4=",
+        "PGkgY2xhc3M9ImZhLXNvbGlkIGZhLXNlcnZlciI+PC9pPg==",
+        "PGkgY2xhc3M9ImZhLWJyYW5kcyBmYS1hbmRyb2lkIj48L2k+"
       ],
       "options": [],
       "localized": [],
@@ -435,7 +440,10 @@
         "Device_TableHead_CustomProps",
         "Device_TableHead_FQDN",
         "Device_TableHead_ParentRelType",
-        "Device_TableHead_ReqNicsOnline"
+        "Device_TableHead_ReqNicsOnline",
+        "Device_TableHead_Vlan",
+        "Device_TableHead_IPv4",
+        "Device_TableHead_IPv6"
       ],
       "localized": ["name", "description"],
       "name": [
@@ -512,7 +520,8 @@
         "Device_TableHead_NetworkSite",
         "Device_TableHead_SSID",
         "Device_TableHead_SourcePlugin",
-        "Device_TableHead_ParentRelType"
+        "Device_TableHead_ParentRelType",
+        "Device_TableHead_Vlan"
       ],
       "localized": ["name", "description"],
       "name": [

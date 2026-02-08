@@ -400,7 +400,7 @@
         "XC5ob21l",
         "LVthLWZBLUYwLTldezMyfQ==",
         "Iy4q",
-        "XC5cYg=="
+        "XC4k"
       ],
       "options": [],
       "localized": [
@@ -1589,6 +1589,38 @@
       ]
     },
     {
+      "function": "devVlan",
+      "type": {
+        "dataType": "string",
+        "elements": [
+          {
+            "elementType": "input",
+            "elementOptions": [],
+            "transformers": []
+          }
+        ]
+      },
+      "maxLength": 50,
+      "default_value": "",
+      "options": [],
+      "localized": [
+        "name",
+        "description"
+      ],
+      "name": [
+        {
+          "language_code": "en_us",
+          "string": "VLAN"
+        }
+      ],
+      "description": [
+        {
+          "language_code": "en_us",
+          "string": "The VLAN identifier or name the device belongs to. Database column name: <code>devVlan</code>."
+        }
+      ]
+    },
+    {
       "function": "devSyncHubNode",
       "type": {
         "dataType": "string",
@@ -1898,38 +1930,6 @@
         {
           "language_code": "en_us",
           "string": "The primary IPv6 address of the device. Uneditable - Automatically maintained from scan results. Database column name: <code>devPrimaryIPv6</code>."
-        }
-      ]
-    },
-    {
-      "function": "devVlan",
-      "type": {
-        "dataType": "string",
-        "elements": [
-          {
-            "elementType": "input",
-            "elementOptions": [],
-            "transformers": []
-          }
-        ]
-      },
-      "maxLength": 50,
-      "default_value": "",
-      "options": [],
-      "localized": [
-        "name",
-        "description"
-      ],
-      "name": [
-        {
-          "language_code": "en_us",
-          "string": "VLAN"
-        }
-      ],
-      "description": [
-        {
-          "language_code": "en_us",
-          "string": "The VLAN identifier or name the device belongs to. Database column name: <code>devVlan</code>."
         }
       ]
     },

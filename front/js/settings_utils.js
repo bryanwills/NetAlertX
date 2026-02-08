@@ -321,7 +321,8 @@ function addViaPopupForm(element) {
     null,                                                               // curValue
     popupFormJson,                                                      // popupform
     toId,                                                               // parentSettingKey
-    element                                                             // triggeredBy
+    element,                                                            // triggeredBy
+    true                                                                // initialize defaut values
   );
 
   // flag something changes to prevent navigating from page
@@ -475,7 +476,8 @@ function initListInteractionOptions(element) {
             curValue,                                                               // curValue
             popupFormJson,                                                          // popupform
             toId,                                                                   // parentSettingKey
-            this                                                                    // triggeredBy
+            this,                                                                    // triggeredBy
+            true                                                                    // populate overrides
           );
         } else {
           // Fallback to normal field input
@@ -1132,24 +1134,44 @@ function collectSetting(prefix, setCodeName, setType, settingsArray) {
 
 // ------------------------------------------------------------------------------
 // Generate the form control for setting
-function generateFormHtml(settingsData, set, overrideValue, overrideOptions, originalSetKey) {
+/**
+ * Generates the HTML string for form controls based on setting configurations.
+ * Supports various element types including select, input, button, textarea, span, and recursive datatables.
+ * * @param {Object} settingsData - The global settings object containing configuration for all available settings.
+ * @param {Object} set - The specific configuration object for the current setting.
+ * @param {string} set.setKey - Unique identifier for the setting.
+ * @param {string} set.setType - JSON string defining the UI components (dataType, elements, etc.).
+ * @param {string} [set.setValue] - The default value for the setting.
+ * @param {Array|string} [set.setEvents] - List of event triggers to be rendered as clickable icons.
+ * @param {any} overrideValue - The current value to be displayed in the form control.
+ * @param {any} overrideOptions - Custom options to override the default setting options (used primarily for dropdowns).
+ * @param {string} originalSetKey - The base key name (used to maintain reference when keys are modified for uniqueness in tables).
+ * @param {boolean} populateFromOverrides - Flag to determine if the value should be pulled from `set['setValue']` (true) or `overrideValue` (false).
+ * * @returns {string} A string of HTML containing the form elements and any associated event action icons.
+ * * @example
+ * const html = generateFormHtml(allSettings, currentSet, "DefaultVal", null, "my_key", false);
+ * $('#container').html(html);
+ */
+function generateFormHtml(settingsData, set, overrideValue, overrideOptions, originalSetKey, populateFromOverrides) {
   let inputHtml = '';
 
 
   // if override value is considered empty initialize from setting defaults
-  overrideValue == null || overrideValue == undefined ? inVal = set['setValue'] : inVal = overrideValue
+  populateFromOverrides ? inVal = set['setValue'] : inVal = overrideValue;
+
   const setKey = set['setKey'];
   const setType = set['setType'];
 
-  // if (setKey == 'NEWDEV_devParentMAC') {
+    // if (setKey == 'UNIFIAPI_site_name') {
 
-  //   console.log("==== DEBUG OUTPUT BELOW 1 ====");
-  //   console.log(setType);
-  //   console.log(setKey);
-  //   console.log(overrideValue);
-  //   console.log(inVal);
-
-  // }
+    //   console.log("==== DEBUG OUTPUT BELOW 1 ====");
+    //   console.log("populateFromOverrides: " + populateFromOverrides);
+    //   console.log(setType);
+    //   console.log(setKey);
+    //   console.log("overrideValue:" + overrideValue);
+    //   console.log("inVal:" + inVal);
+    //   console.log("set['setValue']:" + set['setValue']);
+    // }
 
   // Parse the setType JSON string
   // console.log(processQuotes(setType));
@@ -1189,15 +1211,14 @@ function generateFormHtml(settingsData, set, overrideValue, overrideOptions, ori
     // Override value
     let val = valRes;
 
-    // if (setKey == 'NEWDEV_devParentMAC') {
+    // if (setKey == 'UNIFIAPI_site_name') {
 
     //   console.log("==== DEBUG OUTPUT BELOW 2 ====");
     //   console.log(setType);
     //   console.log(setKey);
-    //   console.log(overrideValue);
-    //   console.log(inVal);
-    //   console.log(val);
-
+    //   console.log("overrideValue:" + overrideValue);
+    //   console.log("inVal:" + inVal);
+    //   console.log("val:" + val);
     // }
 
     // Generate HTML based on elementType
@@ -1227,7 +1248,7 @@ function generateFormHtml(settingsData, set, overrideValue, overrideOptions, ori
         break;
 
       case 'input':
-        const checked = val === 'True' || val === 'true' ||  val === '1' ? 'checked' : '';
+        const checked = val === 'True' || val === 'true' ||  val === '1' || val == true ? 'checked' : '';
         const inputClass = inputType === 'checkbox' ? 'checkbox' : 'form-control';
 
         inputHtml += `<input
@@ -1347,22 +1368,23 @@ function generateFormHtml(settingsData, set, overrideValue, overrideOptions, ori
                 // Extract the value for the current column
                 let columnOverrideValue = rowData[j] && Object.values(rowData[j])[0];
 
-                if(columnOverrideValue == undefined)
-                {
-                  columnOverrideValue = ""
-                }
-
                 // Create unique key to prevent dropdown data duplication
                 const oldKey = set["setKey"];
                 set["setKey"] = oldKey + "_" + index;
+
+                // console.log("settingsData");
+                // console.log(settingsData);
+                // console.log(set);
+
 
                 // Generate the cell HTML using the extracted value
                 const cellHtml = generateFormHtml(
                     settingsData,
                     set,
-                    columnOverrideValue.toString(),
+                    columnOverrideValue,
                     set["setOptions"],
-                    oldKey
+                    oldKey,
+                    false
                 );
                 datatableHtml += `<td> <div class="input-group"> ${cellHtml} </div></td>`;
 

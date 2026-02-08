@@ -572,7 +572,7 @@ function purgeAllExecute() {
     data: JSON.stringify({
       dbtable: dbTable,
       columnName: 'Plugin',
-      id: plugPrefix
+      id: [plugPrefix]
     }),
     contentType: "application/json",
     success: function(response, textStatus) {
@@ -603,14 +603,17 @@ function deleteListed(plugPrefixArg, dbTableArg) {
 
   // Ask for confirmation
   showModalWarning(`${getString('Gen_Purge')} ${plugPrefix} ${dbTable}`, `${getString('Gen_AreYouSure')} (${idArr.length})`,
-    `${getString('Gen_Cancel')}`, `${getString('Gen_Okay')}`, "deleteListedExecute");
+    `${getString('Gen_Cancel')}`, `${getString('Gen_Okay')}`,  () => deleteListedExecute(idArr));
 }
 
 // --------------------------------------------------------
-function deleteListedExecute() {
+function deleteListedExecute(idArr) {
   const apiBase = getApiBase();
   const apiToken = getSetting("API_TOKEN");
   const url = `${apiBase}/dbquery/delete`;
+
+  console.log(idArr);
+
 
   $.ajax({
     method: "POST",
@@ -619,7 +622,7 @@ function deleteListedExecute() {
     data: JSON.stringify({
       dbtable: dbTable,
       columnName: 'Index',
-      id: idArr.toString()
+      id: idArr
     }),
     contentType: "application/json",
     success: function(response, textStatus) {

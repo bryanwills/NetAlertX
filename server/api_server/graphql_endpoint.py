@@ -339,6 +339,9 @@ class Query(ObjectType):
                     "devFQDN",
                     "devParentRelType",
                     "devParentMAC",
+                    "devVlan",
+                    "devPrimaryIPv4",
+                    "devPrimaryIPv6"
                 ]
 
                 search_term = options.search.lower()

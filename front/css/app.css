@@ -105,7 +105,7 @@ a[target="_blank"] {
   background-color: black !important;
   font-family: 'Courier New', monospace;
   font-size: .85em;
-  cursor: pointer;
+  cursor: pointer !important;
 }
 .logs-row textarea
 {
@@ -508,6 +508,45 @@ body
     color: #a0a0a0;
 }
 
+.small-box {
+  margin-bottom: 15px !important;
+  float: left;
+  width: 100%;
+  border-radius: 4px;
+  border-top: 0px;
+}
+
+#TopSmallBoxes .small-box {
+    height: 3em;
+}
+
+.small-box .icon
+{
+  font-size: 2.2em !important;
+  float: right;
+  top: 0;
+}
+.small-box .small-box-text
+{
+    float:left;
+    font-size: x-large;
+    margin-top: -0.3em;
+}
+
+.small-box .infobox_label
+{
+    font-size: larger;
+    float: right;
+    text-align: center;
+    z-index: 1;
+}
+
+hr
+{
+    margin-top: 5px;
+    margin-bottom: 10px;
+}
+
 /* -----------------------------------------------------------------------------
    Customized Box Borders
 ----------------------------------------------------------------------------- */
@@ -891,6 +930,14 @@ height: 50px;
     .nav-tabs-custom .tab-content {
         overflow: scroll;
       }
+    .infobox_label
+    {
+        display: none;
+    }
+    .small-box .icon
+    {
+        display: block !important;
+    }
 }
 
 .top_small_box_gray_text {
@@ -899,10 +946,6 @@ height: 50px;
 
 .bg-gray {
     background-color: #b2b6be !important;
-}
-
-.infobox_label {
-    font-size: 16px !important;
 }
 
 .deviceSelector
@@ -1667,6 +1710,10 @@ textarea[readonly],
     min-height: 42px;
 }
 
+.form-group {
+  margin-bottom: 5px !important;
+}
+
 /* Remove the default Select2 chevron (the down arrow) */
 .select2-container .select2-selection__arrow b {
     display: none !important;
@@ -2214,21 +2261,14 @@ textarea[readonly],
 
 .red-hover-border:hover
 {
-    border-color: red !important;
-    border-width: 1px;
-    border-style: solid;
+  border-color: #ff0000 !important;
+  box-shadow: #ff0000;
 
 }
 
 .red-hover-background:hover
 {
     background-color: red !important;
-}
-
-#multi-edit-form .form-group
-{
-    height: 45px;
-
 }
 
 .top-left-logo

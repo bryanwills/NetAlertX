@@ -42,6 +42,7 @@ PIHOLEAPI_SES_SID = None
 PIHOLEAPI_SES_CSRF = None
 PIHOLEAPI_API_MAXCLIENTS = None
 PIHOLEAPI_VERIFY_SSL = True
+PIHOLEAPI_GET_OFFLINE = False
 PIHOLEAPI_RUN_TIMEOUT = 10
 PIHOLEAPI_FAKE_MAC = get_setting_value('PIHOLEAPI_FAKE_MAC')
 VERSION_DATE = "NAX-PIHOLEAPI-1.0"
@@ -195,47 +196,69 @@ def get_pihole_network_devices():
 # ------------------------------------------------------------------
 def gather_device_entries():
     """
-    Build a list of device entries suitable for Plugin_Objects.add_object.
-    Each entry is a dict with: mac, ip, name, macVendor, lastQuery
+    Build a list of device entries.
+    Online status is determined by comparing lastSeen (in seconds) vs the current time.
     """
     entries = []
-
-    iface_map = get_pihole_interface_data()
     devices = get_pihole_network_devices()
     now_ts = int(datetime.datetime.now().timestamp())
 
     for device in devices:
         hwaddr = device.get('hwaddr')
-        if not hwaddr or hwaddr == "00:00:00:00:00:00":
+
+        # Filter out invalid MACs/interfaces
+        if not hwaddr or hwaddr in ["00:00:00:00:00:00", "ip-::"]:
             continue
 
-        macVendor = device.get('macVendor', '')
-        lastQuery = device.get('lastQuery')
-        # 'ips' is a list of dicts: {ip, name}
-        for ip_info in device.get('ips', []):
+        device_ips = device.get('ips', [])
+        if not device_ips:
+            continue
+
+        # 1. Find the freshest timestamp across all IPs for this MAC
+        # This ensures if the device is active on ANY IP, the MAC is considered online.
+        max_last_seen = 0
+        for ip_info in device_ips:
+            ls = ip_info.get('lastSeen', 0)
+            if ls > max_last_seen:
+                max_last_seen = ls
+
+        # 2. Determine online status: (Current Time - Last Seen) <= PIHOLEAPI_CONSIDER_ONLINE
+        # Math is in seconds.
+        if (now_ts - max_last_seen) <= PIHOLEAPI_CONSIDER_ONLINE:
+            is_online = True
+        else:
+            is_online = False
+
+        # 3. Skip if offline (and user doesn't want offline devices)
+        if not is_online and not PIHOLEAPI_GET_OFFLINE:
+            mylog('verbose', [f'[{pluginName}] Not online in the last {PIHOLEAPI_CONSIDER_ONLINE}s, import of offline disabled (PIHOLEAPI_GET_OFFLINE) skipping device: {device}.'])
+            continue
+
+        mac_vendor = device.get('macVendor', '')
+
+        # 4. Process each valid IP for the device
+        for ip_info in device_ips:
             ip = ip_info.get('ip')
-            if not ip:
+
+            # Skip internal Pi-hole placeholders
+            if not ip or ip in ["0.0.0.0", "::"]:
+                mylog('verbose', [f'[{pluginName}] Not a valid ip ({ip}), skipping device: {device}.'])
                 continue
 
             name = ip_info.get('name') or '(unknown)'
+            tmp_mac = hwaddr.lower()
 
-            # mark active if ip present on local interfaces
-            for mac, iplist in iface_map.items():
-                if ip in iplist:
-                    lastQuery = str(now_ts)
-
-            tmpMac = hwaddr.lower()
-
-            # ensure fake mac if enabled
-            if PIHOLEAPI_FAKE_MAC and is_mac(tmpMac) is False:
-                tmpMac = string_to_fake_mac(ip)
+            # Handle Fake MAC logic for non-standard hardware addresses
+            if PIHOLEAPI_FAKE_MAC and not is_mac(tmp_mac):
+                tmp_mac = string_to_fake_mac(ip)
 
             entries.append({
-                'mac': tmpMac,
+                'mac': tmp_mac,
                 'ip': ip,
                 'name': name,
-                'macVendor': macVendor,
-                'lastQuery': str(lastQuery) if lastQuery is not None else ''
+                'macVendor': mac_vendor,
+                # Pass the Unix timestamp as a string for NAX tracking
+                'lastQuery': str(max_last_seen) if max_last_seen > 0 else ""
             })
 
     return entries
@@ -244,7 +267,7 @@ def gather_device_entries():
 # ------------------------------------------------------------------
 def main():
     """Main plugin entrypoint."""
-    global PIHOLEAPI_URL, PIHOLEAPI_PASSWORD, PIHOLEAPI_API_MAXCLIENTS, PIHOLEAPI_VERIFY_SSL, PIHOLEAPI_RUN_TIMEOUT
+    global PIHOLEAPI_URL, PIHOLEAPI_PASSWORD, PIHOLEAPI_API_MAXCLIENTS, PIHOLEAPI_VERIFY_SSL, PIHOLEAPI_RUN_TIMEOUT, PIHOLEAPI_GET_OFFLINE, PIHOLEAPI_CONSIDER_ONLINE
 
     mylog('verbose', [f'[{pluginName}] start script.'])
 
@@ -260,6 +283,12 @@ def main():
     # Accept boolean or string "True"/"False"
     PIHOLEAPI_VERIFY_SSL = get_setting_value('PIHOLEAPI_SSL_VERIFY')
     PIHOLEAPI_RUN_TIMEOUT = get_setting_value('PIHOLEAPI_RUN_TIMEOUT')
+    PIHOLEAPI_GET_OFFLINE = get_setting_value('PIHOLEAPI_GET_OFFLINE')
+    PIHOLEAPI_CONSIDER_ONLINE = get_setting_value('PIHOLEAPI_CONSIDER_ONLINE')
+
+    # Fallback in case the setting is missing or returned as an empty string
+    if not isinstance(PIHOLEAPI_CONSIDER_ONLINE, int):
+        PIHOLEAPI_CONSIDER_ONLINE = 300
 
     # Authenticate
     if not pihole_api_auth():

@@ -31,11 +31,6 @@ graph TB
     D -->|Response Data| C
     C -->|JSON Response| B
     B -->|Stream Events| A
-
-    style A fill:#e1f5fe
-    style B fill:#f3e5f5
-    style C fill:#fff3e0
-    style D fill:#e8f5e8
 ```
 
 ### MCP Tool Integration
@@ -54,7 +49,7 @@ sequenceDiagram
     API-->>MCP: 5. Available tools spec
     MCP-->>AI: 6. Tool definitions
     AI->>MCP: 7. tools/call: search_devices
-    MCP->>API: 8. POST /mcp/sse/devices/search
+    MCP->>API: 8. POST /devices/search
     API->>DB: 9. Query devices
     DB-->>API: 10. Device data
     API-->>MCP: 11. JSON response
@@ -77,9 +72,9 @@ graph LR
     end
 
     subgraph "NetAlertX API Server (:20211)"
-        F[Device APIs<br/>/mcp/sse/devices/*]
-        G[Network Tools<br/>/mcp/sse/nettools/*]
-        H[Events API<br/>/mcp/sse/events/*]
+        F[Device APIs<br/>/devices/*]
+        G[Network Tools<br/>/nettools/*]
+        H[Events API<br/>/events/*]
     end
 
     subgraph "Backend"
@@ -98,15 +93,6 @@ graph LR
     F --> I
     G --> J
     H --> I
-
-    style A fill:#e1f5fe
-    style B fill:#e1f5fe
-    style C fill:#f3e5f5
-    style D fill:#f3e5f5
-    style E fill:#f3e5f5
-    style F fill:#fff3e0
-    style G fill:#fff3e0
-    style H fill:#fff3e0
 ```
 
 ---
@@ -196,27 +182,28 @@ eventSource.onmessage = function(event) {
 
 | Tool | Endpoint | Description |
 |------|----------|-------------|
-| `list_devices` | `/mcp/sse/devices/by-status` | List devices by online status |
-| `get_device_info` | `/mcp/sse/device/<mac>` | Get detailed device information |
-| `search_devices` | `/mcp/sse/devices/search` | Search devices by MAC, name, or IP |
-| `get_latest_device` | `/mcp/sse/devices/latest` | Get most recently connected device |
-| `set_device_alias` | `/mcp/sse/device/<mac>/set-alias` | Set device friendly name |
+| `list_devices` | `/devices/by-status` | List devices by online status |
+| `get_device_info` | `/device/{mac}` | Get detailed device information |
+| `search_devices` | `/devices/search` | Search devices by MAC, name, or IP |
+| `get_latest_device` | `/devices/latest` | Get most recently connected device |
+| `set_device_alias` | `/device/{mac}/set-alias` | Set device friendly name |
 
 ### Network Tools
 
 | Tool | Endpoint | Description |
 |------|----------|-------------|
-| `trigger_scan` | `/mcp/sse/nettools/trigger-scan` | Trigger network discovery scan |
-| `get_open_ports` | `/mcp/sse/device/open_ports` | Get stored NMAP open ports for device |
-| `wol_wake_device` | `/mcp/sse/nettools/wakeonlan` | Wake device using Wake-on-LAN |
-| `get_network_topology` | `/mcp/sse/devices/network/topology` | Get network topology map |
+| `trigger_scan` | `/nettools/trigger-scan` | Trigger network discovery scan to find new devices. |
+| `run_nmap_scan` | `/nettools/nmap` | Perform NMAP scan on a target to identify open ports. |
+| `get_open_ports` | `/device/open_ports` | Get stored NMAP open ports. Use `run_nmap_scan` first if empty. |
+| `wol_wake_device` | `/nettools/wakeonlan` | Wake device using Wake-on-LAN |
+| `get_network_topology` | `/devices/network/topology` | Get network topology map |
 
 ### Event & Monitoring Tools
 
 | Tool | Endpoint | Description |
 |------|----------|-------------|
-| `get_recent_alerts` | `/mcp/sse/events/recent` | Get events from last 24 hours |
-| `get_last_events` | `/mcp/sse/events/last` | Get 10 most recent events |
+| `get_recent_alerts` | `/events/recent` | Get events from last 24 hours |
+| `get_last_events` | `/events/last` | Get 10 most recent events |
 
 ---
 

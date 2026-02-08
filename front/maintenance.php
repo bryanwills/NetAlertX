@@ -66,21 +66,24 @@ $db->close();
                           <a href="https://docs.netalertx.com/VERSIONS" target="_blank"> <span><i class="fa fa-circle-question"></i></a></span>
                         </div>
                         <div class="db_info_table_cell">
-                        <div class="version" id="version" data-build-time="<?php echo file_get_contents( "buildtimestamp.txt");?>">
-                          <?php echo '<span id="new-version-text" class="myhidden"><i class="fa-solid fa-rocket fa-beat"></i> ' .lang('Maintenance_new_version').'</span>'.'<span id="current-version-text" class="myhidden">' .lang('Maintenance_current_version').'</span>';?>
+                        <div class="version" id="version" data-build-time="">
+                          <span id="new-version-text" class="myhidden"><i class="fa-solid fa-rocket fa-beat"></i>
+                            <?php echo lang('Maintenance_new_version');?> </span> <span id="current-version-text" class="myhidden">
+                            <?php echo lang('Maintenance_current_version') ;?> </span>
+
                         </div>
                         </div>
                     </div>
                     <div class="db_info_table_row">
                         <div class="db_info_table_cell" style="min-width: 140px"><?= lang('Maintenance_built_on');?></div>
                         <div class="db_info_table_cell">
-                            <?php echo date("Y-m-d", ((int)file_get_contents( "buildtimestamp.txt")));?>
+                            <span data-plc="build-timestamp"></span>
                         </div>
                     </div>
                     <div class="db_info_table_row">
                         <div class="db_info_table_cell" style="min-width: 140px"><?= lang('Maintenance_Running_Version');?></div>
                         <div class="db_info_table_cell">
-                          <?php include 'php/templates/version.php'; ?>
+                          <span data-plc="version"></span>
                         </div>
                     </div>
                     <div class="db_info_table_row">
@@ -173,6 +176,12 @@ $db->close();
                             <button type="button" class="btn btn-default pa-btn pa-btn-delete bg-red dbtools-button" id="btnDeleteEvents30" onclick="askDeleteEvents30()"><?= lang('Maintenance_Tool_del_allevents30');?></button>
                         </div>
                         <div class="db_tools_table_cell_b"><?= lang('Maintenance_Tool_del_allevents30_text');?></div>
+                    </div>
+                    <div class="db_info_table_row">
+                        <div class="db_tools_table_cell_a" >
+                            <button type="button" class="btn btn-default pa-btn pa-btn-delete bg-red dbtools-button" id="btnUnlockFields" onclick="askUnlockFields()"><?= lang('Maintenance_Tool_UnlockFields');?></button>
+                        </div>
+                        <div class="db_tools_table_cell_b"><?= lang('Maintenance_Tool_UnlockFields_text');?></div>
                     </div>
                     <div class="db_info_table_row">
                         <div class="db_tools_table_cell_a" >
@@ -364,7 +373,10 @@ function deleteAllDevices()
     url,
     method: "DELETE",
     headers: { "Authorization": `Bearer ${apiToken}` },
-    data: JSON.stringify({ macs: null }),
+    data: JSON.stringify({
+      macs: [],
+    confirm_delete_all: true
+    }),
     contentType: "application/json",
     success: function(response) {
       showMessage(response.success ? "All devices deleted successfully" : (response.error || "Unknown error"));
@@ -459,6 +471,51 @@ function deleteEvents30()
     },
     error: function(xhr, status, error) {
       console.error("Error deleting events:", status, error);
+      showMessage("Error: " + (xhr.responseJSON?.error || error));
+    }
+  });
+}
+
+// -----------------------------------------------------------
+// Unlock/clear sources
+function askUnlockFields () {
+  // Ask
+  showModalWarning('<?= lang('Maintenance_Tool_UnlockFields_noti');?>', '<?= lang('Maintenance_Tool_UnlockFields_noti_text');?>',
+    '<?= lang('Gen_Cancel');?>', '<?= lang('Gen_Delete');?>', () => unlockFields(true));
+}
+function unlockFields(clearAllFields) {
+
+
+  console.log("clearAllFields");
+  console.log(clearAllFields);
+
+  const apiBase = getApiBase();
+  const apiToken = getSetting("API_TOKEN");
+  const url = `${apiBase}/devices/fields/unlock`;
+
+  // Payload: clear all sources for all devices and all fields
+  const payload = {
+    mac: null,        // null = all devices
+    fields: null,     // null = all tracked fields
+    clearAll: clearAllFields    // clear all source values
+  };
+
+  $.ajax({
+    url: url,
+    method: "POST",
+    contentType: "application/json",
+    headers: {
+      "Authorization": `Bearer ${apiToken}`
+    },
+    data: JSON.stringify(payload),
+    success: function(response) {
+      showMessage(response.success
+        ? "All device fields unlocked/cleared successfully"
+        : (response.error || "Unknown error")
+      );
+    },
+    error: function(xhr, status, error) {
+      console.error("Error unlocking fields:", status, error);
       showMessage("Error: " + (xhr.responseJSON?.error || error));
     }
   });

@@ -23,10 +23,19 @@ class NetAlertXStateManager {
    */
   init() {
     if (this.initialized) return;
+      // waiting until cache ready
+      const waitForInit = () => {
+      if (!isAppInitialized()) {
+        setTimeout(waitForInit, 300);
+        return;
+      }
 
-    console.log("[NetAlertX State] Initializing state manager...");
-    this.trySSE();
-    this.initialized = true;
+      console.log("[NetAlertX State] App initialized, starting state manager");
+      this.trySSE();
+      this.initialized = true;
+    };
+
+    waitForInit();
   }
 
   /**
@@ -128,14 +137,35 @@ class NetAlertXStateManager {
   }
 
   /**
-   * Handle state update from SSE
+   * Handle state update from SSE or Polling
    */
   handleStateUpdate(appState) {
     try {
-      if (document.getElementById("state")) {
-        const cleanState = appState["currentState"].replaceAll('"', "");
-        document.getElementById("state").innerHTML = cleanState;
+      // 1. Update the main status text
+      if (appState["currentState"]) {
+        const cleanState = appState["currentState"].replace(/"/g, "");
+        $("#state").html(cleanState);
       }
+
+      // 2. Update Version placeholders
+      const version = appState["appVersion"] || "UNKNOWN";
+      $('[data-plc="version"]')
+        .html(version)
+        .attr('data-version', version);
+
+      // 3. Update Build Timestamp placeholders
+      const buildTime = appState["buildTimestamp"] || 0;
+      const displayTime = buildTime ? localizeTimestamp(buildTime) : "UNKNOWN";
+
+      $('[data-plc="build-timestamp"]')
+          .html(displayTime)
+          .attr('data-build-time', buildTime);
+
+      $('[data-plc="build-timestamp"]')
+        .html(displayTime)
+        .attr('data-build-time', buildTime);
+
+      // console.log("[NetAlertX State] UI updated via jQuery");
     } catch (e) {
       console.error("[NetAlertX State] Failed to update state display:", e);
     }

@@ -21,7 +21,7 @@ docker run \
   --tmpfs /tmp:uid=20211,gid=20211,mode=1700 \
   -e PORT=20211 \
   -e APP_CONF_OVERRIDE='{"GRAPHQL_PORT":"20214"}' \
-  ghcr.io/jokob-sk/netalertx:latest
+  ghcr.io/netalertx/netalertx:latest
 
 ```
 
@@ -34,7 +34,7 @@ Note: Your `/local_data_dir` should contain a `config` and `db` folder.
 
 If possible, check if your issue got fixed in the `_dev` image before opening a new issue. The container is:
 
-`ghcr.io/jokob-sk/netalertx-dev:latest`
+`ghcr.io/netalertx/netalertx-dev:latest`
 
 > ⚠ Please backup your DB and config beforehand!
 

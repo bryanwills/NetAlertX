@@ -17,7 +17,7 @@ services:
   netalertx:
   #use an environmental variable to set host networking mode if needed
     container_name: netalertx                       # The name when you docker contiainer ls
-    image: ghcr.io/jokob-sk/netalertx:latest
+    image: ghcr.io/netalertx/netalertx:latest
     network_mode: ${NETALERTX_NETWORK_MODE:-host}   # Use host networking for ARP scanning and other services
 
     read_only: true                                 # Make the container filesystem read-only
@@ -27,6 +27,9 @@ services:
       - NET_ADMIN                                   # Required for ARP scanning
       - NET_RAW                                     # Required for raw socket operations
       - NET_BIND_SERVICE                            # Required to bind to privileged ports (nbtscan)
+      - CHOWN                                       # Required for root-entrypoint to chown /data + /tmp before dropping privileges
+      - SETUID                                      # Required for root-entrypoint to switch to non-root user
+      - SETGID                                      # Required for root-entrypoint to switch to non-root group
 
     volumes:
       - type: volume                                # Persistent Docker-managed named volume for config + database
@@ -78,7 +81,6 @@ services:
     cpu_shares: 512             # Relative CPU weight for CPU contention scenarios
     pids_limit: 512             # Limit the number of processes/threads to prevent fork bombs
     logging:
-      driver: "json-file"       # Use JSON file logging driver
       options:
         max-size: "10m"         # Rotate log files after they reach 10MB
         max-file: "3"           # Keep a maximum of 3 log files

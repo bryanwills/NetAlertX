@@ -29,7 +29,7 @@ Usage:
 """
 
 from __future__ import annotations
-
+import os
 import threading
 from typing import Optional, List, Dict, Any
 
@@ -52,7 +52,15 @@ _rebuild_lock = threading.Lock()
 def generate_openapi_spec(
     title: str = "NetAlertX API",
     version: str = "2.0.0",
-    description: str = "NetAlertX Network Monitoring API - MCP Compatible",
+    description: str = '''
+**NetAlertX Network Monitoring API - Official Documentation - MCP Compatible**
+
+* **MCP endpoint**: `/mcp/sse`
+
+* **OpenAPI Spec**: `/openapi.json`
+
+Authorize with your API Key from the NetAlertX WebUI under `Settings > Core > General`
+''',
     servers: Optional[List[Dict[str, str]]] = None,
     flask_app: Optional[Any] = None
 ) -> Dict[str, Any]:
@@ -74,18 +82,58 @@ def generate_openapi_spec(
             introspect_graphql_schema(devicesSchema)
             introspect_flask_app(flask_app)
 
+            # Apply default disabled tools from setting `MCP_DISABLED_TOOLS`, env var, or hard-coded defaults
+            # Format: comma-separated operation IDs, e.g. "dbquery_read,dbquery_write"
+            try:
+                disabled_env = None
+                # Prefer setting from app.conf/settings when available
+                try:
+                    from helper import get_setting_value
+                    setting_val = get_setting_value("MCP_DISABLED_TOOLS")
+                    if setting_val:
+                        disabled_env = str(setting_val).strip()
+                except Exception:
+                    # If helper is unavailable, fall back to environment
+                    pass
+
+                if not disabled_env:
+                    env_val = os.getenv("MCP_DISABLED_TOOLS")
+                    if env_val:
+                        disabled_env = env_val.strip()
+
+                # If still not set, apply safe hard-coded defaults
+                if not disabled_env:
+                    disabled_env = "dbquery_read,dbquery_write"
+
+                if disabled_env:
+                    from .registry import set_tool_disabled
+                    for op in [p.strip() for p in disabled_env.split(",") if p.strip()]:
+                        set_tool_disabled(op, True)
+            except Exception:
+                # Never fail spec generation due to disablement application issues
+                pass
+
         spec = {
             "openapi": "3.1.0",
             "info": {
                 "title": title,
                 "version": version,
                 "description": description,
+                "termsOfService": "https://github.com/netalertx/NetAlertX/blob/main/LICENSE.txt",
                 "contact": {
-                    "name": "NetAlertX",
-                    "url": "https://github.com/jokob-sk/NetAlertX"
+                    "name": "Open Source Project - NetAlertX - Github",
+                    "url": "https://github.com/netalertx/NetAlertX"
+                },
+                "license": {
+                    "name": "Licensed under GPLv3",
+                    "url": "https://www.gnu.org/licenses/gpl-3.0.html"
                 }
             },
-            "servers": servers or [{"url": "/", "description": "Local server"}],
+            "externalDocs": {
+                "description": "NetAlertX Official Documentation",
+                "url": "https://docs.netalertx.com/"
+            },
+            "servers": servers or [{"url": "/", "description": "This NetAlertX instance"}],
             "security": [
                 {"BearerAuth": []}
             ],
@@ -152,7 +200,11 @@ def generate_openapi_spec(
 
                 # Add responses
                 operation["responses"] = build_responses(
-                    entry.get("response_model"), definitions
+                    entry.get("response_model"),
+                    definitions,
+                    response_content_types=entry.get("response_content_types", ["application/json"]),
+                    links=entry.get("links"),
+                    method=method
                 )
 
                 spec["paths"][path][method] = operation

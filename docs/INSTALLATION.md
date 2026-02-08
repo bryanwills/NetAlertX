@@ -8,11 +8,12 @@ NetAlertX can be installed several ways. The best supported option is Docker, fo
 - [[Installation] Home Assistant](https://github.com/alexbelgium/hassio-addons/tree/master/netalertx)
 - [[Installation] Unraid App](https://unraid.net/community/apps)
 - [[Installation] Bare metal (experimental - looking for maintainers)](https://docs.netalertx.com/HW_INSTALL)
+- [[Installation] Nix flake (community supported)](https://github.com/netalertx/NetAlertX/blob/main/install/nix/flake.nix) submitted by [2m](https://github.com/2m)
 
 
 ## Help
 
-If facing issues, please spend a few minutes seraching.
+If facing issues, please spend a few minutes searching.
 
 - Check [common issues](./COMMON_ISSUES.md)
 - Have a look at [Community guides](./COMMUNITY_GUIDES.md)

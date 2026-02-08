@@ -79,14 +79,14 @@ def main():
     plugin_objects = Plugin_Objects(RESULT_FILE)
 
     plugin_objects.add_object(
-        primaryId   = 'Internet',       # MAC (Device Name)
+        primaryId   = 'internet',       # MAC (Device Name)
         secondaryId = new_internet_IP,  # IP Address
         watched1    = f'Previous IP: {PREV_IP}',
         watched2    = cmd_output.replace('\n', ''),
         watched3    = retries_needed,
         watched4    = 'Gateway',
         extra       = f'Previous IP: {PREV_IP}',
-        foreignKey  = 'Internet'
+        foreignKey  = 'internet'
     )
 
     plugin_objects.write_result_file()
@@ -101,8 +101,8 @@ def main():
 # ===============================================================================
 def check_internet_IP(PREV_IP, DIG_GET_IP_ARG):
 
-    # Get Internet IP
-    mylog('verbose', [f'[{pluginName}] - Retrieving Internet IP'])
+    # Get internet IP
+    mylog('verbose', [f'[{pluginName}] - Retrieving internet IP'])
     internet_IP, cmd_output = get_internet_IP(DIG_GET_IP_ARG)
 
     mylog('verbose', [f'[{pluginName}]  Current internet_IP : {internet_IP}'])

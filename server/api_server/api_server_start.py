@@ -4,16 +4,17 @@ import os
 
 # flake8: noqa: E402
 
-from flask import Flask, request, jsonify, Response
+from flask import Flask, redirect, request, jsonify, url_for, Response
 from models.device_instance import DeviceInstance  # noqa: E402
 from flask_cors import CORS
+from werkzeug.exceptions import HTTPException
 
 # Register NetAlertX directories
 INSTALL_PATH = os.getenv("NETALERTX_APP", "/app")
 sys.path.extend([f"{INSTALL_PATH}/front/plugins", f"{INSTALL_PATH}/server"])
 
 from logger import mylog  # noqa: E402 [flake8 lint suppression]
-from helper import get_setting_value, get_env_setting_value  # noqa: E402 [flake8 lint suppression]
+from helper import get_setting_value, get_env_setting_value, getBuildTimeStampAndVersion  # noqa: E402 [flake8 lint suppression]
 from db.db_helper import get_date_from_period  # noqa: E402 [flake8 lint suppression]
 from app_state import updateState  # noqa: E402 [flake8 lint suppression]
 
@@ -59,7 +60,8 @@ from .mcp_endpoint import (
     mcp_sse,
     mcp_messages,
     openapi_spec,
-)  # noqa: E402 [flake8 lint suppression]
+    get_openapi_spec,
+)
 # validation and schemas for MCP v2
 from .openapi.validation import validate_request  # noqa: E402 [flake8 lint suppression]
 from .openapi.schemas import (  # noqa: E402 [flake8 lint suppression]
@@ -70,9 +72,11 @@ from .openapi.schemas import (  # noqa: E402 [flake8 lint suppression]
     DeviceUpdateRequest,
     DeviceInfo,
     BaseResponse, DeviceTotalsResponse,
+    DeviceTotalsNamedResponse,
+    EventsTotalsNamedResponse,
     DeleteDevicesRequest, DeviceImportRequest,
     DeviceImportResponse, UpdateDeviceColumnRequest,
-    LockDeviceFieldRequest,
+    LockDeviceFieldRequest, UnlockDeviceFieldsRequest,
     CopyDeviceRequest, TriggerScanRequest,
     OpenPortsRequest,
     OpenPortsResponse, WakeOnLanRequest,
@@ -98,6 +102,20 @@ from .sse_endpoint import (  # noqa: E402 [flake8 lint suppression]
 
 # Flask application
 app = Flask(__name__)
+
+
+@app.errorhandler(500)
+@app.errorhandler(Exception)
+def handle_500_error(e):
+    """Global error handler for uncaught exceptions."""
+    if isinstance(e, HTTPException):
+        return e
+    mylog("none", [f"[API] Uncaught exception: {e}"])
+    return jsonify({
+        "success": False,
+        "error": "Internal Server Error",
+        "message": "Something went wrong on the server"
+    }), 500
 
 
 # Parse CORS origins from environment or use safe defaults
@@ -273,7 +291,6 @@ def api_get_setting(setKey):
 # --------------------------
 # Device Endpoints
 # --------------------------
-@app.route('/mcp/sse/device/<mac>', methods=['GET', 'POST'])
 @app.route("/device/<mac>", methods=["GET"])
 @validate_request(
     operation_id="get_device_info",
@@ -416,7 +433,7 @@ def api_device_copy(payload=None):
 @validate_request(
     operation_id="update_device_column",
     summary="Update Device Column",
-    description="Update a specific database column for a device.",
+    description="Update a specific database column for a device. Use this to mark devices as favorites (columnName='devFavorite', columnValue=1). See `get_favorite_devices` to retrieve them.",
     path_params=[{
         "name": "mac",
         "description": "Device MAC address",
@@ -444,6 +461,10 @@ def api_device_update_column(mac, payload=None):
 
     return jsonify(result)
 
+
+# --------------------------
+# Field sources and locking
+# --------------------------
 
 @app.route("/device/<mac>/field/lock", methods=["POST"])
 @validate_request(
@@ -496,7 +517,44 @@ def api_device_field_lock(mac, payload=None):
         return jsonify({"success": False, "error": str(e)}), 500
 
 
-@app.route('/mcp/sse/device/<mac>/set-alias', methods=['POST'])
+@app.route("/devices/fields/unlock", methods=["POST"])
+@validate_request(
+    operation_id="unlock_device_fields",
+    summary="Unlock/Clear Device Fields",
+    description=(
+        "Unlock device fields (clear LOCKED/USER sources) or clear all sources. "
+        "Can target one device or all devices, and one or multiple fields."
+    ),
+    request_model=UnlockDeviceFieldsRequest,
+    response_model=BaseResponse,
+    tags=["devices"],
+    auth_callable=is_authorized
+)
+def api_device_fields_unlock(payload=None):
+    """
+    Unlock or clear fields for one device or all devices.
+    """
+    data = request.get_json() or {}
+
+    mac = data.get("mac")
+    fields = data.get("fields")
+    if fields and not isinstance(fields, list):
+        return jsonify({
+            "success": False,
+            "error": "fields must be a list of field names"
+        }), 400
+
+    clear_all = bool(data.get("clearAll", False))
+    device_handler = DeviceInstance()
+
+    # Call wrapper directly — it handles validation and normalization
+    result = device_handler.unlockFields(mac=mac, fields=fields, clear_all=clear_all)
+    return jsonify(result)
+
+# --------------------------
+# Devices Collections
+# --------------------------
+
 @app.route('/device/<mac>/set-alias', methods=['POST'])
 @validate_request(
     operation_id="set_device_alias",
@@ -524,16 +582,25 @@ def api_device_set_alias(mac, payload=None):
     return jsonify(result)
 
 
-@app.route('/mcp/sse/device/open_ports', methods=['POST'])
 @app.route('/device/open_ports', methods=['POST'])
 @validate_request(
     operation_id="get_open_ports",
     summary="Get Open Ports",
-    description="Retrieve open ports for a target IP or MAC address. Returns cached NMAP scan results.",
+    description="Retrieve open ports for a target IP or MAC address. Returns cached NMAP scan results. If no ports are found, run a scan first using `run_nmap_scan`.",
     request_model=OpenPortsRequest,
     response_model=OpenPortsResponse,
     tags=["nettools"],
-    auth_callable=is_authorized
+    auth_callable=is_authorized,
+    links={
+        "RunNmapScan": {
+            "operationId": "run_nmap_scan",
+            "parameters": {
+                "scan": "$response.body#/target",
+                "mode": "fast"
+            },
+            "description": "Refresh the open ports data by running a new NMAP scan on this target."
+        }
+    }
 )
 def api_device_open_ports(payload=None):
     """Get stored NMAP open ports for a target IP or MAC."""
@@ -548,19 +615,16 @@ def api_device_open_ports(payload=None):
     open_ports = device_handler.getOpenPorts(target)
 
     if not open_ports:
-        return jsonify({"success": False, "error": f"No stored open ports for {target}. Run a scan with `/nettools/trigger-scan`"}), 404
+        return jsonify({"success": False, "error": f"No stored open ports for {target}. Run a scan with the 'run_nmap_scan' tool (or /nettools/nmap)."}), 404
 
     return jsonify({"success": True, "target": target, "open_ports": open_ports})
 
 
-# --------------------------
-# Devices Collections
-# --------------------------
 @app.route("/devices", methods=["GET"])
 @validate_request(
     operation_id="get_all_devices",
     summary="Get All Devices",
-    description="Retrieve a list of all devices in the system.",
+    description="Retrieve a list of all devices in the system. Returns all records. No pagination supported.",
     response_model=DeviceListWrapperResponse,
     tags=["devices"],
     auth_callable=is_authorized
@@ -574,20 +638,17 @@ def api_get_devices(payload=None):
 @app.route("/devices", methods=["DELETE"])
 @validate_request(
     operation_id="delete_devices",
-    summary="Delete Multiple Devices",
-    description="Delete multiple devices by MAC address.",
+    summary="Delete Devices (Bulk / All)",
+    description="Delete devices by MAC address. Provide a list of MACs to delete specific devices, set confirm_delete_all=true with an empty macs list to delete ALL devices. Supports wildcard '*' matching.",
     request_model=DeleteDevicesRequest,
     tags=["devices"],
     auth_callable=is_authorized
 )
-def api_devices_delete(payload=None):
-    data = request.get_json(silent=True) or {}
-    macs = data.get('macs', [])
-
-    if not macs:
-        return jsonify({"success": False, "message": "ERROR: Missing parameters", "error": "macs list is required"}), 400
-
+def api_devices_delete(payload: DeleteDevicesRequest = None):
     device_handler = DeviceInstance()
+
+    macs = None if payload.confirm_delete_all else payload.macs
+
     return jsonify(device_handler.deleteDevices(macs))
 
 
@@ -619,11 +680,10 @@ def api_delete_unknown_devices(payload=None):
     return jsonify(device_handler.deleteUnknownDevices())
 
 
-@app.route('/mcp/sse/devices/export', methods=['GET'])
 @app.route("/devices/export", methods=["GET"])
 @app.route("/devices/export/<format>", methods=["GET"])
 @validate_request(
-    operation_id="export_devices",
+    operation_id="export_devices_all",
     summary="Export Devices",
     description="Export all devices in CSV or JSON format.",
     query_params=[{
@@ -640,7 +700,8 @@ def api_delete_unknown_devices(payload=None):
     }],
     response_model=DeviceExportResponse,
     tags=["devices"],
-    auth_callable=is_authorized
+    auth_callable=is_authorized,
+    response_content_types=["application/json", "text/csv"]
 )
 def api_export_devices(format=None, payload=None):
     export_format = (format or request.args.get("format", "csv")).lower()
@@ -660,7 +721,6 @@ def api_export_devices(format=None, payload=None):
         )
 
 
-@app.route('/mcp/sse/devices/import', methods=['POST'])
 @app.route("/devices/import", methods=["POST"])
 @validate_request(
     operation_id="import_devices",
@@ -690,12 +750,11 @@ def api_import_csv(payload=None):
     return jsonify(result)
 
 
-@app.route('/mcp/sse/devices/totals', methods=['GET'])
 @app.route("/devices/totals", methods=["GET"])
 @validate_request(
     operation_id="get_device_totals",
-    summary="Get Device Totals",
-    description="Get device statistics including total count, online/offline counts, new devices, and archived devices.",
+    summary="Get Device Totals (Deprecated)",
+    description="Get device statistics including total count, online/offline counts, new devices, and archived devices. Deprecated: use /devices/totals/named instead.",
     response_model=DeviceTotalsResponse,
     tags=["devices"],
     auth_callable=is_authorized
@@ -705,10 +764,33 @@ def api_devices_totals(payload=None):
     return jsonify(device_handler.getTotals())
 
 
-@app.route('/mcp/sse/devices/by-status', methods=['GET', 'POST'])
+@app.route("/devices/totals/named", methods=["GET"])
+@validate_request(
+    operation_id="get_device_totals_named",
+    summary="Get Named Device Totals",
+    description="Get device statistics with named fields including total count, online/offline counts, new devices, and archived devices.",
+    response_model=DeviceTotalsNamedResponse,
+    tags=["devices"],
+    auth_callable=is_authorized
+)
+def api_devices_totals_named(payload=None):
+    device_handler = DeviceInstance()
+    totals_list = device_handler.getTotals()
+    # totals_list order: [devices, connected, favorites, new, down, archived]
+    totals_dict = {
+        "devices": totals_list[0] if len(totals_list) > 0 else 0,
+        "connected": totals_list[1] if len(totals_list) > 1 else 0,
+        "favorites": totals_list[2] if len(totals_list) > 2 else 0,
+        "new": totals_list[3] if len(totals_list) > 3 else 0,
+        "down": totals_list[4] if len(totals_list) > 4 else 0,
+        "archived": totals_list[5] if len(totals_list) > 5 else 0
+    }
+    return jsonify({"success": True, "totals": totals_dict})
+
+
 @app.route("/devices/by-status", methods=["GET", "POST"])
 @validate_request(
-    operation_id="list_devices_by_status",
+    operation_id="list_devices_by_status_api",
     summary="List Devices by Status",
     description="List devices filtered by their online/offline status.",
     request_model=DeviceListRequest,
@@ -724,7 +806,30 @@ def api_devices_totals(payload=None):
             "connected", "down", "favorites", "new", "archived", "all", "my",
             "offline"
         ]}
-    }]
+    }],
+    links={
+        "GetOpenPorts": {
+            "operationId": "get_open_ports",
+            "parameters": {
+                "target": "$response.body#/0/devLastIP"
+            },
+            "description": "The `target` parameter for `get_open_ports` requires an IP address. Use the `devLastIP` from the first device in the list."
+        },
+        "WakeOnLan": {
+            "operationId": "wake_on_lan",
+            "parameters": {
+                "devMac": "$response.body#/0/devMac"
+            },
+            "description": "The `devMac` parameter for `wake_on_lan` requires a MAC address. Use the `devMac` from the first device in the list."
+        },
+        "UpdateDevice": {
+            "operationId": "update_device",
+            "parameters": {
+                "mac": "$response.body#/0/devMac"
+            },
+            "description": "The `mac` parameter for `update_device` is a path parameter. Use the `devMac` from the first device in the list."
+        }
+    }
 )
 def api_devices_by_status(payload: DeviceListRequest = None):
     status = payload.status if payload else request.args.get("status")
@@ -732,16 +837,45 @@ def api_devices_by_status(payload: DeviceListRequest = None):
     return jsonify(device_handler.getByStatus(status))
 
 
-@app.route('/mcp/sse/devices/search', methods=['POST'])
 @app.route('/devices/search', methods=['POST'])
 @validate_request(
-    operation_id="search_devices",
+    operation_id="search_devices_api",
     summary="Search Devices",
-    description="Search for devices based on various criteria like name, IP, MAC, or vendor.",
+    description="Search for devices based on various criteria like name, IP, MAC, or vendor. Use this to find MAC addresses for other tools.",
     request_model=DeviceSearchRequest,
     response_model=DeviceSearchResponse,
     tags=["devices"],
-    auth_callable=is_authorized
+    auth_callable=is_authorized,
+    links={
+        "GetOpenPorts": {
+            "operationId": "get_open_ports",
+            "parameters": {
+                "target": "$response.body#/devices/0/devLastIP"
+            },
+            "description": "The `target` parameter for `get_open_ports` requires an IP address. Use the `devLastIP` from the first device in the search results."
+        },
+        "WakeOnLan": {
+            "operationId": "wake_on_lan",
+            "parameters": {
+                "devMac": "$response.body#/devices/0/devMac"
+            },
+            "description": "The `devMac` parameter for `wake_on_lan` requires a MAC address. Use the `devMac` from the first device in the search results."
+        },
+        "NmapScan": {
+            "operationId": "run_nmap_scan",
+            "parameters": {
+                "scan": "$response.body#/devices/0/devLastIP"
+            },
+            "description": "The `scan` parameter for `run_nmap_scan` requires an IP or range. Use the `devLastIP` from the first device in the search results."
+        },
+        "UpdateDevice": {
+            "operationId": "update_device",
+            "parameters": {
+                "mac": "$response.body#/devices/0/devMac"
+            },
+            "description": "The `mac` parameter for `update_device` is a path parameter. Use the `devMac` from the first device in the search results."
+        }
+    }
 )
 def api_devices_search(payload=None):
     """Device search: accepts 'query' in JSON and maps to device info/search."""
@@ -769,7 +903,6 @@ def api_devices_search(payload=None):
     return jsonify({"success": True, "devices": matches})
 
 
-@app.route('/mcp/sse/devices/latest', methods=['GET'])
 @app.route('/devices/latest', methods=['GET'])
 @validate_request(
     operation_id="get_latest_device",
@@ -790,12 +923,11 @@ def api_devices_latest(payload=None):
     return jsonify([latest])
 
 
-@app.route('/mcp/sse/devices/favorite', methods=['GET'])
 @app.route('/devices/favorite', methods=['GET'])
 @validate_request(
     operation_id="get_favorite_devices",
     summary="Get Favorite Devices",
-    description="Get list of devices marked as favorites.",
+    description="Get list of devices marked as favorites. Use `update_device_column` with 'devFavorite' to add devices.",
     response_model=DeviceListResponse,
     tags=["devices"],
     auth_callable=is_authorized
@@ -807,11 +939,10 @@ def api_devices_favorite(payload=None):
     favorite = device_handler.getFavorite()
 
     if not favorite:
-        return jsonify({"success": False, "message": "No devices found", "error": "No devices found"}), 404
+        return jsonify({"success": False, "message": "No devices found", "error": "No favorite devices found. Mark devices using `update_device_column`."}), 404
     return jsonify([favorite])
 
 
-@app.route('/mcp/sse/devices/network/topology', methods=['GET'])
 @app.route('/devices/network/topology', methods=['GET'])
 @validate_request(
     operation_id="get_network_topology",
@@ -833,7 +964,6 @@ def api_devices_network_topology(payload=None):
 # --------------------------
 # Net tools
 # --------------------------
-@app.route('/mcp/sse/nettools/wakeonlan', methods=['POST'])
 @app.route("/nettools/wakeonlan", methods=["POST"])
 @validate_request(
     operation_id="wake_on_lan",
@@ -845,9 +975,13 @@ def api_devices_network_topology(payload=None):
     auth_callable=is_authorized
 )
 def api_wakeonlan(payload=None):
-    data = request.get_json(silent=True) or {}
-    mac = data.get("devMac")
-    ip = data.get("devLastIP") or data.get('ip')
+    if payload:
+        mac = payload.mac
+        ip = payload.devLastIP
+    else:
+        data = request.get_json(silent=True) or {}
+        mac = data.get("mac") or data.get("devMac")
+        ip = data.get("devLastIP") or data.get('ip')
 
     if not mac and ip:
 
@@ -866,7 +1000,6 @@ def api_wakeonlan(payload=None):
     return wakeonlan(mac)
 
 
-@app.route('/mcp/sse/nettools/traceroute', methods=['POST'])
 @app.route("/nettools/traceroute", methods=["POST"])
 @validate_request(
     operation_id="perform_traceroute",
@@ -923,11 +1056,20 @@ def api_nslookup(payload: NslookupRequest = None):
 @validate_request(
     operation_id="run_nmap_scan",
     summary="NMAP Scan",
-    description="Perform an NMAP scan on a target IP.",
+    description="Perform an NMAP scan on a target IP to identify open ports. This data is used by `get_open_ports`.",
     request_model=NmapScanRequest,
     response_model=NmapScanResponse,
     tags=["nettools"],
-    auth_callable=is_authorized
+    auth_callable=is_authorized,
+    links={
+        "GetOpenPorts": {
+            "operationId": "get_open_ports",
+            "parameters": {
+                "target": "$response.body#/ip"
+            },
+            "description": "View the open ports discovered by this scan."
+        }
+    }
 )
 def api_nmap(payload: NmapScanRequest = None):
     """
@@ -971,8 +1113,7 @@ def api_network_interfaces(payload=None):
     return network_interfaces()
 
 
-@app.route('/mcp/sse/nettools/trigger-scan', methods=['POST'])
-@app.route("/nettools/trigger-scan", methods=["GET"])
+@app.route("/nettools/trigger-scan", methods=["GET", "POST"])
 @validate_request(
     operation_id="trigger_network_scan",
     summary="Trigger Network Scan",
@@ -1026,7 +1167,6 @@ def api_trigger_scan(payload=None):
 # MCP Server
 # --------------------------
 @app.route('/openapi.json', methods=['GET'])
-@app.route('/mcp/sse/openapi.json', methods=['GET'])
 def serve_openapi_spec():
     # Allow unauthenticated access to the spec itself so Swagger UI can load.
     # The actual API endpoints remain protected.
@@ -1051,6 +1191,11 @@ def api_docs():
     openapi_dir = os.path.join(api_server_dir, 'openapi')
     return send_from_directory(openapi_dir, 'swagger.html')
 
+
+@app.route('/')
+def index_redirect():
+    """Redirect root to API documentation."""
+    return redirect(url_for('api_docs'))
 
 # --------------------------
 # DB query
@@ -1139,14 +1284,22 @@ def dbquery_update(payload=None):
 def dbquery_delete(payload=None):
     data = request.get_json() or {}
     required = ["columnName", "id", "dbtable"]
-    if not all(data.get(k) for k in required):
-        return jsonify({"success": False, "message": "ERROR: Missing parameters", "error": "Missing required 'columnName', 'id', or 'dbtable' query parameter"}), 400
+    if not all(k in data and data[k] for k in required):
+        return jsonify({
+            "success": False,
+            "message": "ERROR: Missing parameters",
+            "error": "Missing required 'columnName', 'id', or 'dbtable' query parameter"
+        }), 400
 
-    return delete_query(
-        column_name=data["columnName"],
-        ids=data["id"],
-        dbtable=data["dbtable"],
-    )
+    dbtable = data["dbtable"]
+    column_name = data["columnName"]
+    ids = data["id"]
+
+    # Ensure ids is a list
+    if not isinstance(ids, list):
+        ids = [ids]
+
+    return delete_query(column_name, ids, dbtable)
 
 
 # --------------------------
@@ -1238,7 +1391,7 @@ def api_add_to_execution_queue(payload=None):
     path_params=[{
         "name": "mac",
         "description": "Device MAC address",
-        "schema": {"type": "string"}
+        "schema": {"type": "string", "pattern": "^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$"}
     }],
     request_model=CreateEventRequest,
     response_model=BaseResponse,
@@ -1261,13 +1414,25 @@ def api_create_event(mac, payload=None):
 
 @app.route("/events/<mac>", methods=["DELETE"])
 @validate_request(
-    operation_id="delete_events_by_mac",
-    summary="Delete Events by MAC",
-    description="Delete all events for a specific device MAC address.",
+    operation_id="delete_events",
+    summary="Delete Events",
+    description="Delete events by device MAC address or older than a specified number of days.",
     path_params=[{
         "name": "mac",
-        "description": "Device MAC address",
-        "schema": {"type": "string"}
+        "description": "Device MAC address or number of days",
+        "schema": {
+            "oneOf": [
+                {
+                    "type": "integer",
+                    "description": "Number of days (e.g., 30) to delete events older than this value."
+                },
+                {
+                    "type": "string",
+                    "pattern": "^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$",
+                    "description": "Device MAC address to delete all events for a specific device."
+                }
+            ]
+        }
     }],
     response_model=BaseResponse,
     tags=["events"],
@@ -1276,6 +1441,7 @@ def api_create_event(mac, payload=None):
 def api_events_by_mac(mac, payload=None):
     """Delete events for a specific device MAC; string converter keeps this distinct from /events/<int:days>."""
     device_handler = DeviceInstance()
+
     result = device_handler.deleteDeviceEvents(mac)
     return jsonify(result)
 
@@ -1299,7 +1465,7 @@ def api_delete_all_events(payload=None):
 @validate_request(
     operation_id="get_all_events",
     summary="Get Events",
-    description="Retrieve a list of events, optionally filtered by MAC.",
+    description="Retrieve a list of events, optionally filtered by MAC. Returns all matching records. No pagination supported.",
     query_params=[{
         "name": "mac",
         "description": "Filter by Device MAC",
@@ -1333,7 +1499,8 @@ def api_get_events(payload=None):
     }],
     response_model=BaseResponse,
     tags=["events"],
-    auth_callable=is_authorized
+    auth_callable=is_authorized,
+    exclude_from_spec=True
 )
 def api_delete_old_events(days: int, payload=None):
     """
@@ -1348,8 +1515,8 @@ def api_delete_old_events(days: int, payload=None):
 @app.route("/sessions/totals", methods=["GET"])
 @validate_request(
     operation_id="get_events_totals",
-    summary="Get Events Totals",
-    description="Retrieve event totals for a specified period.",
+    summary="Get Events Totals (Deprecated)",
+    description="Retrieve event totals for a specified period. Deprecated: use /sessions/totals/named instead.",
     query_params=[{
         "name": "period",
         "description": "Time period (e.g., '7 days')",
@@ -1366,8 +1533,38 @@ def api_get_events_totals(payload=None):
     return jsonify(totals)
 
 
-@app.route('/mcp/sse/events/recent', methods=['GET', 'POST'])
-@app.route('/events/recent', methods=['GET'])
+@app.route("/sessions/totals/named", methods=["GET"])
+@validate_request(
+    operation_id="get_events_totals_named",
+    summary="Get Named Event Totals",
+    description="Retrieve event/session totals with named fields for a specified period.",
+    query_params=[{
+        "name": "period",
+        "description": "Time period (e.g., '7 days')",
+        "required": False,
+        "schema": {"type": "string", "default": "7 days"}
+    }],
+    response_model=EventsTotalsNamedResponse,
+    tags=["events"],
+    auth_callable=is_authorized
+)
+def api_get_events_totals_named(payload=None):
+    period = request.args.get("period", "7 days")
+    event_handler = EventInstance()
+    totals = event_handler.getEventsTotals(period)
+    # totals order: [all_events, sessions, missing, voided, new, down]
+    totals_dict = {
+        "total": totals[0] if len(totals) > 0 else 0,
+        "sessions": totals[1] if len(totals) > 1 else 0,
+        "missing": totals[2] if len(totals) > 2 else 0,
+        "voided": totals[3] if len(totals) > 3 else 0,
+        "new": totals[4] if len(totals) > 4 else 0,
+        "down": totals[5] if len(totals) > 5 else 0
+    }
+    return jsonify({"success": True, "totals": totals_dict})
+
+
+@app.route('/events/recent', methods=['GET', 'POST'])
 @validate_request(
     operation_id="get_recent_events",
     summary="Get Recent Events",
@@ -1386,8 +1583,7 @@ def api_events_default_24h(payload=None):
     return api_events_recent(hours)
 
 
-@app.route('/mcp/sse/events/last', methods=['GET', 'POST'])
-@app.route('/events/last', methods=['GET'])
+@app.route('/events/last', methods=['GET', 'POST'])
 @validate_request(
     operation_id="get_last_events",
     summary="Get Last Events",
@@ -1575,7 +1771,7 @@ def api_get_session_events(payload=None):
     auth_callable=is_authorized
 )
 def metrics(payload=None):
-    # Return Prometheus metrics as plain text
+    # Return Prometheus metrics as plain text (not JSON)
     return Response(get_metric_stats(), mimetype="text/plain")
 
 
@@ -1613,7 +1809,8 @@ def api_write_notification(payload=None):
     auth_callable=is_authorized
 )
 def api_get_unread_notifications(payload=None):
-    return get_unread_notifications()
+    notifications = get_unread_notifications()
+    return jsonify(notifications)
 
 
 @app.route("/messaging/in-app/read/all", methods=["POST"])
@@ -1724,7 +1921,7 @@ def sync_endpoint_post(payload=None):
 @validate_request(
     operation_id="check_auth",
     summary="Check Authentication",
-    description="Check if the current API token is valid.",
+    description="Check if the current API token is valid. Note: tokens must be generated externally via the UI or CLI.",
     response_model=BaseResponse,
     tags=["auth"],
     auth_callable=is_authorized
@@ -1738,6 +1935,14 @@ def check_auth(payload=None):
 # --------------------------
 # Mount SSE endpoints after is_authorized is defined (avoid circular import)
 create_sse_endpoint(app, is_authorized)
+
+# Apply environment-driven MCP disablement by regenerating the OpenAPI spec.
+# This populates the registry and applies any operation IDs listed in MCP_DISABLED_TOOLS.
+try:
+    get_openapi_spec(force_refresh=True, flask_app=app)
+    mylog("verbose", [f"[MCP] Applied MCP_DISABLED_TOOLS: {os.environ.get('MCP_DISABLED_TOOLS', '')}"])
+except Exception as e:
+    mylog("none", [f"[MCP] Error applying MCP_DISABLED_TOOLS: {e}"])
 
 
 def start_server(graphql_port, app_state):
@@ -1769,6 +1974,9 @@ def start_server(graphql_port, app_state):
             )
         )
         thread.start()
+
+        # Pass Application "VERSION" into the app_state
+        buildTimestamp, newBuildVersion = getBuildTimeStampAndVersion()
 
         # Update the state to indicate the server has started
         app_state = updateState("Process: Idle", None, None, None, 1)

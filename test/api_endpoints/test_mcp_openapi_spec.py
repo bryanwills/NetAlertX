@@ -66,7 +66,7 @@ class TestPydanticSchemas:
         """WakeOnLanRequest should validate MAC format."""
         # Valid MAC
         req = WakeOnLanRequest(devMac="00:11:22:33:44:55")
-        assert req.devMac == "00:11:22:33:44:55"
+        assert req.mac == "00:11:22:33:44:55"
 
         # Invalid MAC
         # with pytest.raises(ValidationError):
@@ -76,7 +76,7 @@ class TestPydanticSchemas:
         """WakeOnLanRequest should accept either MAC or IP."""
         req_mac = WakeOnLanRequest(devMac="00:11:22:33:44:55")
         req_ip = WakeOnLanRequest(devLastIP="192.168.1.50")
-        assert req_mac.devMac is not None
+        assert req_mac.mac is not None
         assert req_ip.devLastIP == "192.168.1.50"
 
     def test_traceroute_request_ip_validation(self):
@@ -197,7 +197,7 @@ class TestOpenAPISpecGenerator:
                             f"Path param '{param_name}' not defined: {method.upper()} {path}"
 
     def test_standard_error_responses(self):
-        """Operations should have minimal standard error responses (400, 403, 404, etc) without schema bloat."""
+        """Operations should have standard error responses (400, 403, 404, etc)."""
         spec = generate_openapi_spec()
         expected_minimal_codes = ["400", "401", "403", "404", "500", "422"]
 
@@ -207,21 +207,28 @@ class TestOpenAPISpecGenerator:
                     continue
                 responses = details.get("responses", {})
                 for code in expected_minimal_codes:
-                    assert code in responses, f"Missing minimal {code} response in: {method.upper()} {path}."
-                    # Verify no "content" or schema is present (minimalism)
-                    assert "content" not in responses[code], f"Response {code} in {method.upper()} {path} should not have content/schema."
+                    assert code in responses, f"Missing {code} response in: {method.upper()} {path}."
+                    # Content should now be present (BaseResponse/Error schema)
+                    assert "content" in responses[code], f"Response {code} in {method.upper()} {path} should have content/schema."
 
 
 class TestMCPToolMapping:
     """Test MCP tool generation from OpenAPI spec."""
 
     def test_tools_match_registry_count(self):
-        """Number of MCP tools should match registered endpoints."""
+        """Number of MCP tools should match unique original operation IDs in registry."""
         spec = generate_openapi_spec()
         tools = map_openapi_to_mcp_tools(spec)
         registry = get_registry()
 
-        assert len(tools) == len(registry)
+        # Count unique operation IDs (accounting for our deduplication logic)
+        unique_ops = set()
+        for entry in registry:
+            # We used x-original-operationId for deduplication logic, or operation_id if not present
+            op_id = entry.get("original_operation_id") or entry["operation_id"]
+            unique_ops.add(op_id)
+
+        assert len(tools) == len(unique_ops)
 
     def test_tools_have_input_schema(self):
         """All MCP tools should have inputSchema."""
@@ -239,9 +246,9 @@ class TestMCPToolMapping:
         spec = generate_openapi_spec()
         tools = map_openapi_to_mcp_tools(spec)
 
-        search_tool = next((t for t in tools if t["name"] == "search_devices"), None)
+        search_tool = next((t for t in tools if t["name"] == "search_devices_api"), None)
         assert search_tool is not None
-        assert "query" in search_tool["inputSchema"].get("required", [])
+        assert "query" in search_tool["inputSchema"]["required"]
 
     def test_tool_descriptions_present(self):
         """All tools should have non-empty descriptions."""

@@ -17,7 +17,7 @@ require_once $_SERVER["DOCUMENT_ROOT"] . "/php/templates/security.php"; ?>
         class="btn btn-default pa-btn pa-btn-delete"
         style="margin-left:0px;"
         id="btnDelete"
-        onclick="askDeleteDevice()">
+        onclick="askDeleteDeviceByMac()">
           <i class="fas fa-trash-alt"></i>
           <?= lang("DevDetail_button_Delete") ?>
     </button>
@@ -138,7 +138,7 @@ function getDeviceData() {
               },
               // Group for event and alert settings
               DevDetail_EveandAl_Title: {
-                data: ["devAlertEvents", "devAlertDown", "devSkipRepeated", "devReqNicsOnline", "devChildrenNicsDynamic"],
+                data: ["devAlertEvents", "devAlertDown", "devSkipRepeated", "devReqNicsOnline", "devChildrenNicsDynamic", "devForceStatus"],
                 docs: "https://docs.netalertx.com/NOTIFICATIONS",
                 iconClass: "fa fa-bell",
                 inputGroupClasses: "field-group alert-group col-lg-4 col-sm-6 col-xs-12",
@@ -147,7 +147,7 @@ function getDeviceData() {
               },
               // Group for network details
               DevDetail_MainInfo_Network_Title: {
-                data: ["devParentMAC", "devParentRelType", "devParentPort", "devSSID", "devSite", "devSyncHubNode"],
+                data: ["devParentMAC", "devParentRelType", "devParentPort", "devSSID", "devSite", "devVlan", "devSyncHubNode"],
                 docs: "https://docs.netalertx.com/NETWORK_TREE",
                 iconClass: "fa fa-sitemap fa-rotate-270",
                 inputGroupClasses: "field-group network-group col-lg-4 col-sm-6 col-xs-12",
@@ -156,7 +156,7 @@ function getDeviceData() {
               },
               // Group for other fields like static IP, archived status, etc.
               DevDetail_DisplayFields_Title: {
-                data: ["devStaticIP", "devIsNew", "devFavorite", "devIsArchived", "devForceStatus"],
+                data: ["devStaticIP", "devIsNew", "devFavorite", "devIsArchived"],
                 docs: "https://docs.netalertx.com/DEVICE_DISPLAY_SETTINGS",
                 iconClass: "fa fa-list-check",
                 inputGroupClasses: "field-group display-group col-lg-4 col-sm-6 col-xs-12",
@@ -172,6 +172,15 @@ function getDeviceData() {
                 labelClasses: "col-sm-4 col-xs-12 control-label",
                 inputClasses: "col-sm-8 col-xs-12 input-group"
               },
+              // Group for Custom properties.
+              DevDetail_CustomProperties_Title: {
+                data: ["devCustomProps"],
+                docs: "https://docs.netalertx.com/CUSTOM_PROPERTIES",
+                iconClass: "fa fa-list",
+                inputGroupClasses: "field-group cutprop-group col-lg-6 col-sm-12 col-xs-12",
+                labelClasses: "col-sm-12 col-xs-12 control-label",
+                inputClasses: "col-sm-12 col-xs-12 input-group"
+              },
               // Group for Children.
               DevDetail_Children_Title: {
                 data: ["devChildrenDynamic"],
@@ -181,15 +190,6 @@ function getDeviceData() {
                 labelClasses: "col-sm-12 col-xs-12 control-label",
                 inputClasses: "col-sm-12 col-xs-12 input-group"
               },
-              // Group for Custom properties.
-              DevDetail_CustomProperties_Title: {
-                data: ["devCustomProps"],
-                docs: "https://docs.netalertx.com/CUSTOM_PROPERTIES",
-                iconClass: "fa fa-list",
-                inputGroupClasses: "field-group cutprop-group col-lg-6 col-sm-12 col-xs-12",
-                labelClasses: "col-sm-12 col-xs-12 control-label",
-                inputClasses: "col-sm-12 col-xs-12 input-group"
-              }
             };
 
             // Filter settings data to get relevant settings
@@ -339,7 +339,7 @@ function getDeviceData() {
                           </i>
                         </label>
                         <div class="${obj.inputClasses}">
-                          ${generateFormHtml(settingsData, setting, fieldData.toString(), fieldOptionsOverride, null)}
+                          ${generateFormHtml(settingsData, setting, fieldData.toString(), fieldOptionsOverride, null, mac == "new")}
                           ${inlineControl}
                         </div>
                       </div>`;
@@ -423,7 +423,7 @@ function setDeviceData(direction = '', refreshCallback = '') {
 
   // Build payload
   const payload = {
-    devName: $('#NEWDEV_devName').val().replace(/'/g, "’"),
+    devName: $('#NEWDEV_devName').val(),
     devOwner: $('#NEWDEV_devOwner').val().replace(/'/g, "’"),
     devType: $('#NEWDEV_devType').val().replace(/'/g, ""),
     devVendor: $('#NEWDEV_devVendor').val().replace(/'/g, "’"),
@@ -432,7 +432,7 @@ function setDeviceData(direction = '', refreshCallback = '') {
     devFavorite: ($('#NEWDEV_devFavorite')[0].checked * 1),
     devGroup: $('#NEWDEV_devGroup').val().replace(/'/g, "’"),
     devLocation: $('#NEWDEV_devLocation').val().replace(/'/g, "’"),
-    devComments: encodeSpecialChars($('#NEWDEV_devComments').val()),
+    devComments: ($('#NEWDEV_devComments').val()),
 
     devParentMAC: $('#NEWDEV_devParentMAC').val(),
     devParentPort: $('#NEWDEV_devParentPort').val(),
@@ -440,6 +440,7 @@ function setDeviceData(direction = '', refreshCallback = '') {
 
     devSSID: $('#NEWDEV_devSSID').val(),
     devSite: $('#NEWDEV_devSite').val(),
+    devVlan: $('#NEWDEV_devVlan').val(),
 
     devStaticIP: ($('#NEWDEV_devStaticIP')[0].checked * 1),
     devScan: 1,
@@ -579,6 +580,12 @@ function toggleFieldLock(mac, fieldName) {
   const sourceField = fieldName + "Source";
   const currentSource = deviceData[sourceField] || "N/A";
   const shouldLock = currentSource !== "LOCKED";
+
+  if(shouldLock && somethingChanged)
+  {
+    showMessage(getString("FieldLock_SaveBeforeLocking"), 5000, "modal_red");
+    return;
+  }
 
   const payload = {
     fieldName: fieldName,

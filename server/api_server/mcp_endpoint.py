@@ -309,6 +309,7 @@ def map_openapi_to_mcp_tools(spec: Dict[str, Any]) -> List[Dict[str, Any]]:
 
     This function transforms OpenAPI operations into MCP-compatible tool schemas,
     ensuring proper inputSchema derivation from request bodies and parameters.
+    It deduplicates tools by their original operationId, preferring /mcp/ routes.
 
     Args:
         spec: OpenAPI specification dictionary
@@ -316,10 +317,10 @@ def map_openapi_to_mcp_tools(spec: Dict[str, Any]) -> List[Dict[str, Any]]:
     Returns:
         List of MCP tool definitions with name, description, and inputSchema
     """
-    tools = []
+    tools_map = {}
 
     if not spec or "paths" not in spec:
-        return tools
+        return []
 
     for path, methods in spec["paths"].items():
         for method, details in methods.items():
@@ -327,6 +328,9 @@ def map_openapi_to_mcp_tools(spec: Dict[str, Any]) -> List[Dict[str, Any]]:
                 continue
 
             operation_id = details["operationId"]
+            # Deduplicate using the original operationId (before suffixing)
+            # or the unique operationId as fallback.
+            original_op_id = details.get("x-original-operationId", operation_id)
 
             # Build inputSchema from requestBody and parameters
             input_schema = {
@@ -382,31 +386,82 @@ def map_openapi_to_mcp_tools(spec: Dict[str, Any]) -> List[Dict[str, Any]]:
             tool = {
                 "name": operation_id,
                 "description": details.get("description", details.get("summary", "")),
-                "inputSchema": input_schema
+                "inputSchema": input_schema,
+                "_original_op_id": original_op_id,
+                "_is_mcp": path.startswith("/mcp/"),
+                "_is_post": method.upper() == "POST"
             }
 
-            tools.append(tool)
+            # Preference logic for deduplication:
+            # 1. Prefer /mcp/ routes over standard ones.
+            # 2. Prefer POST methods over GET for the same logic (usually more robust body validation).
+            existing = tools_map.get(original_op_id)
+            if not existing:
+                tools_map[original_op_id] = tool
+            else:
+                # Upgrade if current is MCP and existing is not
+                mcp_upgrade = tool["_is_mcp"] and not existing["_is_mcp"]
+                # Upgrade if same route type but current is POST and existing is GET
+                method_upgrade = (tool["_is_mcp"] == existing["_is_mcp"]) and tool["_is_post"] and not existing["_is_post"]
+                
+                if mcp_upgrade or method_upgrade:
+                    tools_map[original_op_id] = tool
 
-    return tools
+    # Final cleanup: remove internal preference flags and ensure tools have the original names
+    # unless we explicitly want the suffixed ones. 
+    # The user said "Eliminate Duplicate Tool Names", so we should use original_op_id as the tool name.
+    final_tools = []
+    _tool_name_to_operation_id: Dict[str, str] = {}
+    for tool in tools_map.values():
+        actual_operation_id = tool["name"]  # Save before overwriting
+        tool["name"] = tool["_original_op_id"]
+        _tool_name_to_operation_id[tool["name"]] = actual_operation_id
+        del tool["_original_op_id"]
+        del tool["_is_mcp"]
+        del tool["_is_post"]
+        final_tools.append(tool)
+
+    return final_tools
 
 
 def find_route_for_tool(tool_name: str) -> Optional[Dict[str, Any]]:
     """
     Find the registered route for a given tool name (operationId).
+    Handles exact matches and deduplicated original IDs.
 
     Args:
-        tool_name: The operationId to look up
+        tool_name: The operationId or original_operation_id to look up
 
     Returns:
         Route dictionary with path, method, and models, or None if not found
     """
     registry = get_registry()
+    candidates = []
 
     for entry in registry:
+        # Exact match (priority) - if the client passed the specific suffixed ID
         if entry["operation_id"] == tool_name:
             return entry
+        if entry.get("original_operation_id") == tool_name:
+            candidates.append(entry)
 
-    return None
+    if not candidates:
+        return None
+
+    # Apply same preference logic as map_openapi_to_mcp_tools to ensure we pick the
+    # same route definition that generated the tool schema.
+    
+    # Priority 1: MCP routes (they have specialized paths/behavior)
+    mcp_candidates = [c for c in candidates if c["path"].startswith("/mcp/")]
+    pool = mcp_candidates if mcp_candidates else candidates
+
+    # Priority 2: POST methods (usually preferred for tools)
+    post_candidates = [c for c in pool if c["method"].upper() == "POST"]
+    if post_candidates:
+        return post_candidates[0]
+
+    # Fallback: return the first from the best pool available
+    return pool[0]
 
 
 # =============================================================================
@@ -694,7 +749,8 @@ def _execute_tool(route: Dict[str, Any], args: Dict[str, Any]) -> Dict[str, Any]
                 "type": "text",
                 "text": json.dumps(json_content, indent=2)
             })
-        except json.JSONDecodeError:
+        except (json.JSONDecodeError, ValueError):
+            # Fallback for endpoints that return plain text instead of JSON (e.g., /metrics)
             content.append({
                 "type": "text",
                 "text": api_response.text
@@ -739,8 +795,17 @@ def get_log_dir() -> str:
 
 
 def _list_resources() -> List[Dict[str, Any]]:
-    """List available MCP resources (read-only data like logs)."""
+    """List available MCP resources (read-only data like logs and API spec)."""
     resources = []
+
+    # API Specification
+    resources.append({
+        "uri": "netalertx://api/openapi.json",
+        "name": "OpenAPI Specification",
+        "description": "The full OpenAPI 3.1 specification for the NetAlertX API and MCP tools",
+        "mimeType": "application/json"
+    })
+
     log_dir = get_log_dir()
     if not log_dir:
         return resources
@@ -784,6 +849,16 @@ def _list_resources() -> List[Dict[str, Any]]:
 
 def _read_resource(uri: str) -> List[Dict[str, Any]]:
     """Read a resource by URI."""
+    # Handle API Specification
+    if uri == "netalertx://api/openapi.json":
+        from flask import current_app
+        spec = get_openapi_spec(flask_app=current_app)
+        return [{
+            "uri": uri,
+            "mimeType": "application/json",
+            "text": json.dumps(spec, indent=2)
+        }]
+
     log_dir = get_log_dir()
     if not log_dir:
         return [{"uri": uri, "text": "Error: NETALERTX_LOG directory not configured"}]

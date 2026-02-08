@@ -57,7 +57,7 @@
               </div>
               <div class="box-body">
                 <div class="chart">
-                  <script src="lib/chart.js/Chart.js?v=<?php include 'php/templates/version.php'; ?>"></script>
+                  <script src="lib/chart.js/Chart.js"></script>
                   <!-- presence chart -->
                   <?php
                       require 'php/components/graph_online_history.php';
@@ -543,7 +543,10 @@ function mapColumnIndexToFieldName(index, tableColumnVisible) {
     "devCustomProps",          // 26
     "devFQDN",                 // 27
     "devParentRelType",        // 28
-    "devReqNicsOnline"         // 29
+    "devReqNicsOnline",        // 29
+    "devVlan",                 // 30
+    "devPrimaryIPv4",          // 31
+    "devPrimaryIPv6",          // 32
   ];
 
   // console.log("OrderBy: " + columnNames[tableColumnOrder[index]]);
@@ -660,6 +663,9 @@ function initializeDatatable (status) {
                 devFQDN
                 devParentRelType
                 devReqNicsOnline
+                devVlan
+                devPrimaryIPv4
+                devPrimaryIPv6
               }
               count
             }
@@ -743,7 +749,10 @@ function initializeDatatable (status) {
                 device.devCustomProps || "",
                 device.devFQDN || "",
                 device.devParentRelType || "",
-                device.devReqNicsOnline || 0
+                device.devReqNicsOnline || 0,
+                device.devVlan || "",
+                device.devPrimaryIPv4 || "",
+                device.devPrimaryIPv6 || "",
             ];
 
             const newRow = [];
@@ -790,11 +799,18 @@ function initializeDatatable (status) {
         'createdCell': function (td, cellData, rowData, row, col) {
 
             // console.log(cellData)
+
+            var displayedValue = cellData;
+
+            if(isEmpty(displayedValue))
+            {
+              displayedValue = "N/A"
+            }
             $(td).html (
               `<b class="anonymizeDev "
               >
                 <a href="deviceDetails.php?mac=${rowData[mapIndx(11)]}" class="hover-node-info"
-                  data-name="${cellData}"
+                  data-name="${displayedValue}"
                   data-ip="${rowData[mapIndx(8)]}"
                   data-mac="${rowData[mapIndx(11)]}"
                   data-vendor="${rowData[mapIndx(17)]}"
@@ -806,7 +822,7 @@ function initializeDatatable (status) {
                   data-present="${rowData[mapIndx(24)]}"
                   data-alert="${rowData[mapIndx(25)]}"
                   data-icon="${rowData[mapIndx(3)]}">
-                ${cellData}
+                ${displayedValue}
                 </a>
               </b>`
             );
@@ -1132,7 +1148,7 @@ function renderCustomProps(custProps, mac) {
             onClickEvent = `alert('Not implemented')`;
             break;
           case "delete_dev":
-            onClickEvent = `askDelDevDTInline('${mac}')`;
+            onClickEvent = `askDeleteDeviceByMac('${mac}')`;
             break;
           default:
             break;

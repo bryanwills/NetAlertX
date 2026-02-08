@@ -16,6 +16,7 @@ from db.db_upgrade import (
     ensure_Parameters,
     ensure_Settings,
     ensure_Indexes,
+    ensure_mac_lowercase_triggers,
 )
 
 
@@ -198,6 +199,9 @@ class DB:
             # Indexes
             ensure_Indexes(self.sql)
 
+            # Normalization triggers
+            ensure_mac_lowercase_triggers(self.sql)
+
             # commit changes
             self.commitDB()
         except Exception as e:
@@ -207,27 +211,6 @@ class DB:
 
         # Init the AppEvent database table
         AppEvent_obj(self)
-
-    # # -------------------------------------------------------------------------------
-    # def get_table_as_json(self, sqlQuery):
-
-    #     # mylog('debug',[ '[Database] - get_table_as_json - Query: ', sqlQuery])
-    #     try:
-    #         self.sql.execute(sqlQuery)
-    #         columnNames = list(map(lambda x: x[0], self.sql.description))
-    #         rows = self.sql.fetchall()
-    #     except sqlite3.Error as e:
-    #         mylog('verbose',[ '[Database] - SQL ERROR: ', e])
-    #         return json_obj({}, []) # return empty object
-
-    #     result = {"data":[]}
-    #     for row in rows:
-    #         tmp = row_to_json(columnNames, row)
-    #         result["data"].append(tmp)
-
-    #     # mylog('debug',[ '[Database] - get_table_as_json - returning ', len(rows), " rows with columns: ", columnNames])
-    #     # mylog('debug',[ '[Database] - get_table_as_json - returning json ', json.dumps(result) ])
-    #     return json_obj(result, columnNames)
 
     def get_table_as_json(self, sqlQuery, parameters=None):
         """

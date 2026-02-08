@@ -11,6 +11,7 @@ INSTALL_PATH = os.getenv("NETALERTX_APP", "/app")
 sys.path.extend([f"{INSTALL_PATH}/front/plugins", f"{INSTALL_PATH}/server"])
 
 from database import get_temp_db_connection  # noqa: E402 [flake8 lint suppression]
+from logger import mylog  # noqa: E402 [flake8 lint suppression]
 
 
 def read_query(raw_sql_b64):
@@ -82,17 +83,18 @@ def delete_query(column_name, ids, dbtable):
         conn = get_temp_db_connection()
         cur = conn.cursor()
 
-        if not isinstance(ids, list):
-            ids = [ids]
-
         deleted_count = 0
         for id_val in ids:
-            sql = f"DELETE FROM {dbtable} WHERE {column_name} = ?"
+            # Wrap table and column in quotes to handle reserved words
+            sql = f'DELETE FROM "{dbtable}" WHERE "{column_name}" = ?'
+            mylog("debug", f"[delete_query] sql {sql} with id={id_val}")
             cur.execute(sql, (id_val,))
             deleted_count += cur.rowcount
 
         conn.commit()
         conn.close()
         return jsonify({"success": True, "deleted_count": deleted_count})
+
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 400
+

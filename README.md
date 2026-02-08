@@ -4,34 +4,43 @@
 [![Discord](https://img.shields.io/discord/1274490466481602755?color=0aa8d2&logoColor=fff&logo=Discord&style=for-the-badge)](https://discord.gg/NczTUTWyRr)
 [![Home Assistant](https://img.shields.io/badge/Repo-blue?logo=home-assistant&style=for-the-badge&color=0aa8d2&logoColor=fff&label=Add)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2Falexbelgium%2Fhassio-addons)
 
-# NetAlertX - Network, presence scanner and alert framework
+# NetAlertX - Network Visibility & Asset Intelligence Framework
 
-Get visibility of what's going on on your WIFI/LAN network and enable presence detection of important devices. Schedule scans for devices, port changes and get alerts if unknown devices or changes are found. Write your own [Plugin](https://docs.netalertx.com/PLUGINS#readme) with auto-generated UI and in-build notification system. Build out and easily maintain your network source of truth (NSoT) and device inventory.
+![main][main]
 
-## 📋 Table of Contents
+<details>
+  <summary>📷 Click for more screenshots</summary>
 
-- [NetAlertX - Network, presence scanner and alert framework](#netalertx---network-presence-scanner-and-alert-framework)
-  - [📋 Table of Contents](#-table-of-contents)
-  - [🚀 Quick Start](#-quick-start)
-  - [📦 Features](#-features)
-    - [Scanners](#scanners)
-    - [Notification gateways](#notification-gateways)
-    - [Integrations and Plugins](#integrations-and-plugins)
-    - [Workflows](#workflows)
-  - [📚 Documentation](#-documentation)
-  - [🔐 Security \& Privacy](#-security--privacy)
-  - [❓ FAQ](#-faq)
-  - [🐞 Known Issues](#-known-issues)
-  - [📃 Everything else](#-everything-else)
-    - [📧 Get notified what's new](#-get-notified-whats-new)
-    - [🔀 Other Alternative Apps](#-other-alternative-apps)
-    - [💙 Donations](#-donations)
-    - [🏗 Contributors](#-contributors)
-    - [🌍 Translations](#-translations)
-    - [License](#license)
+  | ![Main screen][main] | ![device_details 1][device_details]  | ![Screen network][network] |
+  |----------------------|----------------------|----------------------|
+  | ![presence][presence] | ![maintenance][maintenance] | ![settings][settings]  |
+  | ![sync_hub][sync_hub] | ![report1][report1] | ![device_nmap][device_nmap]  |
+
+  Head to [https://netalertx.com/](https://netalertx.com/) for even more gifs and screenshots 📷.
+
+</details>
 
 
-## 🚀 Quick Start
+Centralized network visibility and continuous asset discovery.
+
+Monitor devices, detect change, and stay aware across distributed networks.
+
+NetAlertX provides a centralized "Source of Truth" (NSoT) for network infrastructure. Maintain a real-time inventory of every connected device, identify Shadow IT and unauthorized hardware to maintain regulatory compliance, and automate compliance workflows across distributed sites.
+
+NetAlertX is designed to bridge the gap between simple network scanning and complex SIEM tools, providing actionable insights without the overhead.
+
+
+## Table of Contents
+
+- [Quick Start](#quick-start)
+- [Features](#features)
+- [Documentation](#documentation)
+- [Security \& Privacy](#security--privacy)
+- [FAQ](#faq)
+- [Troubleshooting Tips](#troubleshooting-tips)
+- [Everything else](#everything-else)
+
+## Quick Start
 
 > [!WARNING]
 > ⚠️ **Important:** The docker-compose has recently changed. Carefully read the [Migration guide](https://docs.netalertx.com/MIGRATION/?h=migrat#12-migration-from-netalertx-v25524) for detailed instructions.
@@ -47,14 +56,14 @@ docker run -d \
   --tmpfs /tmp:uid=20211,gid=20211,mode=1700 \
   -e PORT=20211 \
   -e APP_CONF_OVERRIDE='{"GRAPHQL_PORT":"20214"}' \
-  ghcr.io/jokob-sk/netalertx:latest
+  ghcr.io/netalertx/netalertx:latest
 ```
 
 Note: Your `/local_data_dir` should contain a `config` and `db` folder.
 
 To deploy a containerized instance directly from the source repository, execute the following BASH sequence:
 ```bash
-git clone https://github.com/jokob-sk/NetAlertX.git
+git clone https://github.com/netalertx/NetAlertX.git
 cd NetAlertX
 docker compose up --force-recreate --build
 # To customize: edit docker-compose.yaml and run that last command again
@@ -64,31 +73,17 @@ Need help configuring it? Check the [usage guide](https://docs.netalertx.com/REA
 
 For Home Assistant users: [Click here to add NetAlertX](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2Falexbelgium%2Fhassio-addons)
 
-For other install methods, check the [installation docs](#-documentation)
+For other install methods, check the [installation docs](#documentation)
 
+---
+### || [Docker guide](https://docs.netalertx.com/DOCKER_INSTALLATION) || [Releases](https://github.com/netalertx/NetAlertX/releases) || [Docs](https://docs.netalertx.com/) || [Plugins](https://docs.netalertx.com/PLUGINS) || [Website](https://netalertx.com)
+---
 
-| [📑 Docker guide](https://docs.netalertx.com/DOCKER_INSTALLATION) | [🚀 Releases](https://github.com/jokob-sk/NetAlertX/releases) | [📚 Docs](https://docs.netalertx.com/) | [🔌 Plugins](https://docs.netalertx.com/PLUGINS) | [🤖 Ask AI](https://gurubase.io/g/netalertx)
-|----------------------| ----------------------|  ----------------------| ----------------------| ----------------------|
+## Features
 
-![showcase][showcase]
+### Discovery & Asset Intelligence
 
-<details>
-  <summary>📷 Click for more screenshots</summary>
-
-  | ![Main screen][main] | ![device_details 1][device_details]  | ![Screen network][network] |
-  |----------------------|----------------------|----------------------|
-  | ![presence][presence] | ![maintenance][maintenance] | ![settings][settings]  |
-  | ![sync_hub][sync_hub] | ![report1][report1] | ![device_nmap][device_nmap]  |
-
-  Head to [https://netalertx.com/](https://netalertx.com/) for even more gifs and screenshots 📷.
-
-</details>
-
-## 📦 Features
-
-### Scanners
-
-The app scans your network for **New devices**, **New connections** (re-connections), **Disconnections**, **"Always Connected" devices down**, Devices **IP changes** and **Internet IP address changes**. Discovery & scan methods include: **arp-scan**,  **Pi-hole - DB import**,  **Pi-hole - DHCP leases import**, **Generic DHCP leases import**, **UNIFI controller import**, **SNMP-enabled router import**. Check the [Plugins](https://docs.netalertx.com/PLUGINS#readme) docs for a full list of avaliable plugins.
+Continuous monitoring for unauthorized asset discovery, connection state changes, and IP address management (IPAM) drift. Discovery & scan methods include: **arp-scan**,  **Pi-hole - DB import**,  **Pi-hole - DHCP leases import**, **Generic DHCP leases import**, **UNIFI controller import**, **SNMP-enabled router import**. Check the [Plugins](https://docs.netalertx.com/PLUGINS#readme) docs for a full list of avaliable plugins.
 
 ### Notification gateways
 
@@ -101,11 +96,13 @@ build your own scanners with the [Plugin system](https://docs.netalertx.com/PLUG
 
 ### Workflows
 
-The [workflows module](https://docs.netalertx.com/WORKFLOWS) allows to automate repetitive tasks, making network management more efficient. Whether you need to assign newly discovered devices to a specific Network Node, auto-group devices from a given vendor, unarchive a device if detected online, or automatically delete devices, this module provides the flexibility to tailor the automations to your needs.
+The [workflows module](https://docs.netalertx.com/WORKFLOWS) automates IT governance by enforcing device categorization and cleanup policies. Whether you need to assign newly discovered devices to a specific Network Node, auto-group devices from a given vendor, unarchive a device if detected online, or automatically delete devices, this module provides the flexibility to tailor the automations to your needs.
 
 
-## 📚 Documentation
+## Documentation
 <!--- --------------------------------------------------------------------- --->
+
+Explore all the [documentation here](https://docs.netalertx.com/) or navigate to a specific installation option below.
 
 Supported browsers: Chrome, Firefox
 
@@ -117,49 +114,50 @@ Supported browsers: Chrome, Firefox
 - [[Development] API docs](https://docs.netalertx.com/API)
 - [[Development] Custom Plugins](https://docs.netalertx.com/PLUGINS_DEV)
 
-...or explore all the [documentation here](https://docs.netalertx.com/).
-
-## 🔐 Security & Privacy
+## Security & Privacy
 
 NetAlertX scans your local network and can store metadata about connected devices. By default, all data is stored **locally**. No information is sent to external services unless you explicitly configure notifications or integrations.
 
-To further secure your installation:
+Compliance & Hardening:
 - Run it behind a reverse proxy with authentication
 - Use firewalls to restrict access to the web UI
 - Regularly update to the latest version for security patches
+- Role-Based Access Control (RBAC) via Reverse Proxy: Integrate with your existing SSO/Identity provider for secure dashboard access.
 
-See [Security Best Practices](https://github.com/jokob-sk/NetAlertX/security) for more details.
+See [Security Best Practices](https://github.com/netalertx/NetAlertX/security) for more details.
 
 
-## ❓ FAQ
+## FAQ
 
-**Q: Why don’t I see any devices?**
+**Q: How do I monitor VLANs or remote subnets?**
 A: Ensure the container has proper network access (e.g., use `--network host` on Linux). Also check that your scan method is properly configured in the UI.
 
-**Q: Does this work on Wi-Fi-only devices like Raspberry Pi?**
-A: Yes, but some scanners (e.g. ARP) work best on Ethernet. For Wi-Fi, try SNMP, DHCP, or Pi-hole import.
+**Q: What is the recommended deployment for high-availability?**
+A: We recommend deploying via Docker with persistent volume mounts for database integrity and running behind a reverse proxy for secure access.
 
 **Q: Will this send any data to the internet?**
 A: No. All scans and data remain local, unless you set up cloud-based notifications.
 
 **Q: Can I use this without Docker?**
-A: Yes! You can install it bare-metal. See the [bare metal installation guide](https://docs.netalertx.com/HW_INSTALL).
+A: You can install the application directly on your own hardware by following the [bare metal installation guide](https://docs.netalertx.com/HW_INSTALL).
 
 **Q: Where is the data stored?**
 A: In the `/data/config` and `/data/db` folders. Back up these folders regularly.
 
 
-## 🐞 Known Issues
+## Troubleshooting Tips
 
 - Some scanners (e.g. ARP) may not detect devices on different subnets. See the [Remote networks guide](https://docs.netalertx.com/REMOTE_NETWORKS) for workarounds.
 - Wi-Fi-only networks may require alternate scanners for accurate detection.
 - Notification throttling may be needed for large networks to prevent spam.
 - On some systems, elevated permissions (like `CAP_NET_RAW`) may be needed for low-level scanning.
 
-Check the [GitHub Issues](https://github.com/jokob-sk/NetAlertX/issues) for the latest bug reports and solutions and consult [the official documentation](https://docs.netalertx.com/).
+Check the [GitHub Issues](https://github.com/netalertx/NetAlertX/issues) for the latest bug reports and solutions and consult [the official documentation](https://docs.netalertx.com/).
 
-## 📃 Everything else
+## Everything else
 <!--- --------------------------------------------------------------------- --->
+
+<a href="https://trendshift.io/repositories/12670" target="_blank"><img src="https://trendshift.io/api/badge/repositories/12670" alt="jokob-sk%2FNetAlertX | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
 
 ### 📧 Get notified what's new
 
@@ -169,10 +167,10 @@ Get notified about a new release, what new functionality you can use and about b
 
 ### 🔀 Other Alternative Apps
 
-- [PiAlert by leiweibau](https://github.com/leiweibau/Pi.Alert/) (maintained, bare-metal install)
-- [WatchYourLAN](https://github.com/aceberg/WatchYourLAN) - Lightweight network IP scanner with web GUI (Open source)
 - [Fing](https://www.fing.com/) - Network scanner app for your Internet security (Commercial, Phone App, Proprietary hardware)
 - [NetBox](https://netboxlabs.com/) - Network management software (Commercial)
+- [Zabbix](https://www.zabbix.com/) or [Nagios](https://www.nagios.org/) - Strong focus on infrastructure monitoring.
+- [NetAlertX](https://netalertx.com) - The streamlined, discovery-focused alternative for real-time asset intelligence.
 
 ### 💙 Donations
 
@@ -183,9 +181,8 @@ Thank you to everyone who appreciates this tool and donates.
 
   <hr>
 
-  | [![GitHub](https://i.imgur.com/emsRCPh.png)](https://github.com/sponsors/jokob-sk) | [![Buy Me A Coffee](https://i.imgur.com/pIM6YXL.png)](https://www.buymeacoffee.com/jokobsk) | [![Patreon](https://i.imgur.com/MuYsrq1.png)](https://www.patreon.com/user?u=84385063) |
-| --- | --- | --- |
-
+  | [![GitHub](https://i.imgur.com/emsRCPh.png)](https://github.com/sponsors/jokob-sk) | [![Buy Me A Coffee](https://i.imgur.com/pIM6YXL.png)](https://www.buymeacoffee.com/jokobsk) |
+  | --- | --- |
   - Bitcoin: `1N8tupjeCK12qRVU2XrV17WvKK7LCawyZM`
   - Ethereum: `0x6e2749Cb42F4411bc98501406BdcD82244e3f9C7`
 
@@ -197,7 +194,7 @@ Thank you to everyone who appreciates this tool and donates.
 
 This project would be nothing without the amazing work of the community, with special thanks to:
 
-> [pucherot/Pi.Alert](https://github.com/pucherot/Pi.Alert) (the original creator of PiAlert), [leiweibau](https://github.com/leiweibau/Pi.Alert): Dark mode (and much more), [Macleykun](https://github.com/Macleykun) (Help with Dockerfile clean-up), [vladaurosh](https://github.com/vladaurosh) for Alpine re-base help, [Final-Hawk](https://github.com/Final-Hawk) (Help with NTFY, styling and other fixes), [TeroRERO](https://github.com/terorero) (Spanish translations), [Data-Monkey](https://github.com/Data-Monkey), (Split-up of the python.py file and more), [cvc90](https://github.com/cvc90) (Spanish translation and various UI work) to name a few. Check out all the [amazing contributors](https://github.com/jokob-sk/NetAlertX/graphs/contributors).
+> [pucherot/Pi.Alert](https://github.com/pucherot/Pi.Alert) (the original creator of PiAlert), [leiweibau](https://github.com/leiweibau/Pi.Alert): Dark mode (and much more), [Macleykun](https://github.com/Macleykun) (Help with Dockerfile clean-up), [vladaurosh](https://github.com/vladaurosh) for Alpine re-base help, [Final-Hawk](https://github.com/Final-Hawk) (Help with NTFY, styling and other fixes), [TeroRERO](https://github.com/terorero) (Spanish translations), [Data-Monkey](https://github.com/Data-Monkey), (Split-up of the python.py file and more), [cvc90](https://github.com/cvc90) (Spanish translation and various UI work) to name a few. Check out all the [amazing contributors](https://github.com/netalertx/NetAlertX/graphs/contributors).
 
 ### 🌍 Translations
 
@@ -223,7 +220,7 @@ Proudly using [Weblate](https://hosted.weblate.org/projects/pialert/). Help out 
 [sync_hub]:                 ./docs/img/sync_hub.png                       "Screen 8"
 [notification_center]:      ./docs/img/notification_center.png            "Screen 8"
 [sent_reports_text]:        ./docs/img/sent_reports_text.png              "Screen 8"
-[device_nmap]:              ./docs/img/device_nmap.png                    "Screen 9"
+[device_nmap]:              ./docs/img/device_tools.png                    "Screen 9"
 [report1]:                  ./docs/img/report_sample.png                  "Report sample 1"
 [main_dark]:                /docs/img/1_devices_dark.jpg                  "Main screen dark"
 [maintain_dark]:            /docs/img/5_maintain.jpg                      "Maintain screen dark"

@@ -23,6 +23,8 @@ curl 'http://host:GRAPHQL_PORT/graphql' \
 
 The API server runs on `0.0.0.0:<graphql_port>` with **CORS enabled** for all main endpoints.
 
+CORS configuration: You can limit allowed CORS origins with the `CORS_ORIGINS` environment variable. Set it to a comma-separated list of origins (for example: `CORS_ORIGINS="https://example.com,http://localhost:3000"`). The server parses this list at startup and only allows origins that begin with `http://` or `https://`. If `CORS_ORIGINS` is unset or parses to an empty list, the API falls back to a safe development default list (localhosts) and will include `*` as a last-resort permissive origin.
+
 ---
 
 ## Authentication
@@ -57,6 +59,10 @@ http://<server>:<GRAPHQL_PORT>/
 
 ## Endpoints
 
+> [!NOTE]
+> You can explore the API endpoints by using the interactive API docs at `http://<server>:<GRAPHQL_PORT>/docs`.
+> ![API docs](./img/API/API_docs.png)
+
 > [!TIP]
 > When retrieving devices or settings try using the GraphQL API endpoint first as it is read-optimized.
 
@@ -76,6 +82,7 @@ http://<server>:<GRAPHQL_PORT>/
 * [Sync](API_SYNC.md) – Synchronization between multiple NetAlertX instances
 * [Logs](API_LOGS.md) – Purging of logs and adding to the event execution queue for user triggered events
 * [DB query](API_DBQUERY.md) (⚠ Internal) - Low level database access - use other endpoints if possible
+* `/server` (⚠ Internal) - Backend server endpoint for internal communication only - **do not use directly**
 
 ### MCP Server Bridge
 

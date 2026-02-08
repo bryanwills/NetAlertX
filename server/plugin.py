@@ -212,8 +212,8 @@ class plugin_manager:
         # Run test
         self.handle_run(runType)
 
-        # Remove sample notification
-        notificationObj.remove(notificationObj.GUID)
+        # Save notification
+        notificationObj.upsert()
 
         mylog("minimal", ["[Test] END Test: ", runType])
 
