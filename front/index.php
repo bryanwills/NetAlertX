@@ -2,98 +2,159 @@
 <link rel="stylesheet" href="css/app.css">
 
 <?php
+declare(strict_types=1);
 
-//------------------------------------------------------------------------------
-// check if authenticated
-// Be CAREFUL WHEN INCLUDING NEW PHP FILES
-require_once $_SERVER['DOCUMENT_ROOT'] . '/php/server/db.php';
-require_once $_SERVER['DOCUMENT_ROOT'] . '/php/templates/language/lang.php';
-require_once $_SERVER['DOCUMENT_ROOT'] . '/php/templates/security.php';
+require_once $_SERVER['DOCUMENT_ROOT'].'/php/server/db.php';
+require_once $_SERVER['DOCUMENT_ROOT'].'/php/templates/language/lang.php';
+require_once $_SERVER['DOCUMENT_ROOT'].'/php/templates/security.php';
 
-// capture the redirect to after log in query string if available
-$redirectTo = 'devices.php'; // Default destination
-if (!empty($_GET['next'])) {
-    $decoded = base64_decode($_GET['next']);
-    // Validate that it's a local path to prevent Open Redirect vulnerabilities
-    if (strpos($decoded, '/') === 0 && strpos($decoded, '//') !== 0) {
-        $redirectTo = $decoded;
-    }
-}
+session_start();
 
-$CookieSaveLoginName = 'NetAlertX_SaveLogin';
+const COOKIE_NAME = 'NetAlertX_SaveLogin';
+const DEFAULT_REDIRECT = '/devices.php';
 
-if ($nax_WebProtection != 'true')
-{
-    if (!empty($_POST['url_hash'])) {
-        $redirectTo .= $_POST['url_hash'];
-    }
-    header("Location: $redirectTo");
-    $_SESSION["login"] = 1;
+/* =====================================================
+   Helper Functions
+===================================================== */
+
+function safe_redirect(string $path): void {
+    header("Location: {$path}", true, 302);
     exit;
 }
 
-// Logout
-if (isset ($_GET["action"]) && $_GET["action"] == 'logout')
-{
-  setcookie($CookieSaveLoginName, '', time()+1); // reset cookie
-  $_SESSION["login"] = 0;
-  header('Location: index.php');
-  exit;
+function validate_local_path(?string $encoded): string {
+    if (!$encoded) return DEFAULT_REDIRECT;
+
+    $decoded = base64_decode($encoded, true);
+    if ($decoded === false) return DEFAULT_REDIRECT;
+
+    // strict local path check
+    if (!preg_match('#^/[a-zA-Z0-9_\-/\.]*$#', $decoded)) {
+        return DEFAULT_REDIRECT;
+    }
+
+    return $decoded;
 }
 
-// Password without Cookie check -> pass and set initial cookie
-if (isset ($_POST["loginpassword"]) && $nax_Password === hash('sha256',$_POST["loginpassword"]))
-{
+function append_hash(string $url): string {
     if (!empty($_POST['url_hash'])) {
-        $redirectTo .= $_POST['url_hash'];
+        return $url . preg_replace('/[^#a-zA-Z0-9_\-]/', '', $_POST['url_hash']);
     }
-    header("Location: $redirectTo");
-    $_SESSION["login"] = 1;
-    if (isset($_POST['PWRemember'])) {setcookie($CookieSaveLoginName, hash('sha256',$_POST["loginpassword"]), time()+604800);}
-    exit;
+    return $url;
 }
 
-// active Session or valid cookie (cookie not extends)
-if (( isset ($_SESSION["login"]) && ($_SESSION["login"] == 1)) || (isset ($_COOKIE[$CookieSaveLoginName]) && $nax_Password === $_COOKIE[$CookieSaveLoginName]))
-{
-    if (!empty($_POST['url_hash'])) {
-        $redirectTo .= $_POST['url_hash'];
-    }
-    header("Location: $redirectTo");
-    $_SESSION["login"] = 1;
-    if (isset($_POST['PWRemember'])) {setcookie($CookieSaveLoginName, hash('sha256',$_POST["loginpassword"]), time()+604800);}
-    exit;
+function is_authenticated(): bool {
+    return isset($_SESSION['login']) && $_SESSION['login'] === 1;
 }
+
+function login_user(): void {
+    $_SESSION['login'] = 1;
+    session_regenerate_id(true);
+}
+
+function logout_user(): void {
+    $_SESSION = [];
+    session_destroy();
+
+    setcookie(COOKIE_NAME,'',[
+        'expires'=>time()-3600,
+        'path'=>'/',
+        'httponly'=>true,
+        'samesite'=>'Strict'
+    ]);
+}
+
+/* =====================================================
+   Redirect Handling
+===================================================== */
+
+$redirectTo = validate_local_path($_GET['next'] ?? null);
+
+/* =====================================================
+   Web Protection Disabled
+===================================================== */
+
+if ($nax_WebProtection !== 'true') {
+    login_user();
+    safe_redirect(append_hash($redirectTo));
+}
+
+/* =====================================================
+   Logout
+===================================================== */
+
+if (($_GET['action'] ?? '') === 'logout') {
+    logout_user();
+    safe_redirect('/index.php');
+}
+
+/* =====================================================
+   Login Attempt
+===================================================== */
+
+if (!empty($_POST['loginpassword'])) {
+
+    $incomingHash = hash('sha256', $_POST['loginpassword']);
+
+    if (hash_equals($nax_Password, $incomingHash)) {
+
+        login_user();
+
+        if (!empty($_POST['PWRemember'])) {
+            $token = bin2hex(random_bytes(32));
+
+            $_SESSION['remember_token'] = hash('sha256',$token);
+
+            setcookie(COOKIE_NAME,$token,[
+                'expires'=>time()+604800,
+                'path'=>'/',
+                'secure'=>isset($_SERVER['HTTPS']),
+                'httponly'=>true,
+                'samesite'=>'Strict'
+            ]);
+        }
+
+        safe_redirect(append_hash($redirectTo));
+    }
+}
+
+/* =====================================================
+   Remember Me Validation
+===================================================== */
+
+if (!is_authenticated() && !empty($_COOKIE[COOKIE_NAME]) && !empty($_SESSION['remember_token'])) {
+
+    if (hash_equals($_SESSION['remember_token'], hash('sha256',$_COOKIE[COOKIE_NAME]))) {
+        login_user();
+        safe_redirect(append_hash($redirectTo));
+    }
+}
+
+/* =====================================================
+   Already Logged In
+===================================================== */
+
+if (is_authenticated()) {
+    safe_redirect(append_hash($redirectTo));
+}
+
+/* =====================================================
+   Login UI Variables
+===================================================== */
 
 $login_headline = lang('Login_Toggle_Info_headline');
-$login_info = lang('Login_Info');
-$login_mode = 'danger';
-$login_display_mode = 'display: block;';
-$login_icon = 'fa-info';
+$login_info     = lang('Login_Info');
+$login_mode     = 'info';
+$login_display_mode = 'display:none;';
+$login_icon     = 'fa-info';
 
-// no active session, cookie not checked
-if (isset ($_SESSION["login"]) == FALSE || $_SESSION["login"] != 1)
-{
-  if ($nax_Password === '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92')
-  {
+if ($nax_Password === '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92') {
     $login_info = lang('Login_Default_PWD');
     $login_mode = 'danger';
-    $login_display_mode = 'display: block;';
+    $login_display_mode = 'display:block;';
     $login_headline = lang('Login_Toggle_Alert_headline');
     $login_icon = 'fa-ban';
-  }
-  else
-  {
-    $login_mode = 'info';
-    $login_display_mode = 'display: none;';
-    $login_headline = lang('Login_Toggle_Info_headline');
-    $login_icon = 'fa-info';
-  }
 }
-
-// ##################################################
-// ## Login Processing end
-// ##################################################
 ?>
 
 <!DOCTYPE html>
