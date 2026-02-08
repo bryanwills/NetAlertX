@@ -2,7 +2,6 @@
 <link rel="stylesheet" href="css/app.css">
 
 <?php
-declare(strict_types=1);
 
 require_once $_SERVER['DOCUMENT_ROOT'].'/php/server/db.php';
 require_once $_SERVER['DOCUMENT_ROOT'].'/php/templates/language/lang.php';
