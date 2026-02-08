@@ -86,7 +86,8 @@ if ($nax_WebProtection == 'true') {
         // Logged in or stay on this page if we are on the index.php already
     } else {
         // We need to redirect
-        redirect('/index.php');
+        $returnUrl = base64_encode($_SERVER['REQUEST_URI']);
+        redirect("/index.php?next=" . $returnUrl);
         exit; // exit is needed to prevent authentication bypass
     }
 }

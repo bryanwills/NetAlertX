@@ -10,11 +10,24 @@ require_once $_SERVER['DOCUMENT_ROOT'] . '/php/server/db.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/php/templates/language/lang.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/php/templates/security.php';
 
+// capture the redirect to after log in query string if available
+$redirectTo = 'devices.php'; // Default destination
+if (!empty($_GET['next'])) {
+    $decoded = base64_decode($_GET['next']);
+    // Validate that it's a local path to prevent Open Redirect vulnerabilities
+    if (strpos($decoded, '/') === 0 && strpos($decoded, '//') !== 0) {
+        $redirectTo = $decoded;
+    }
+}
+
 $CookieSaveLoginName = 'NetAlertX_SaveLogin';
 
 if ($nax_WebProtection != 'true')
 {
-    header('Location: devices.php');
+    if (!empty($_POST['url_hash'])) {
+        $redirectTo .= $_POST['url_hash'];
+    }
+    header("Location: $redirectTo");
     $_SESSION["login"] = 1;
     exit;
 }
@@ -31,17 +44,25 @@ if (isset ($_GET["action"]) && $_GET["action"] == 'logout')
 // Password without Cookie check -> pass and set initial cookie
 if (isset ($_POST["loginpassword"]) && $nax_Password === hash('sha256',$_POST["loginpassword"]))
 {
-    header('Location: devices.php');
+    if (!empty($_POST['url_hash'])) {
+        $redirectTo .= $_POST['url_hash'];
+    }
+    header("Location: $redirectTo");
     $_SESSION["login"] = 1;
     if (isset($_POST['PWRemember'])) {setcookie($CookieSaveLoginName, hash('sha256',$_POST["loginpassword"]), time()+604800);}
+    exit;
 }
 
 // active Session or valid cookie (cookie not extends)
 if (( isset ($_SESSION["login"]) && ($_SESSION["login"] == 1)) || (isset ($_COOKIE[$CookieSaveLoginName]) && $nax_Password === $_COOKIE[$CookieSaveLoginName]))
 {
-    header('Location: devices.php');
+    if (!empty($_POST['url_hash'])) {
+        $redirectTo .= $_POST['url_hash'];
+    }
+    header("Location: $redirectTo");
     $_SESSION["login"] = 1;
     if (isset($_POST['PWRemember'])) {setcookie($CookieSaveLoginName, hash('sha256',$_POST["loginpassword"]), time()+604800);}
+    exit;
 }
 
 $login_headline = lang('Login_Toggle_Info_headline');
@@ -53,15 +74,15 @@ $login_icon = 'fa-info';
 // no active session, cookie not checked
 if (isset ($_SESSION["login"]) == FALSE || $_SESSION["login"] != 1)
 {
-  if ($nax_Password === '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92') 
+  if ($nax_Password === '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92')
   {
     $login_info = lang('Login_Default_PWD');
     $login_mode = 'danger';
     $login_display_mode = 'display: block;';
     $login_headline = lang('Login_Toggle_Alert_headline');
     $login_icon = 'fa-ban';
-  } 
-  else 
+  }
+  else
   {
     $login_mode = 'info';
     $login_display_mode = 'display: none;';
@@ -109,8 +130,9 @@ if (isset ($_SESSION["login"]) == FALSE || $_SESSION["login"] != 1)
   <!-- /.login-logo -->
   <div class="login-box-body">
     <p class="login-box-msg"><?= lang('Login_Box');?></p>
-      <form action="index.php" method="post">
+      <form action="index.php<?php echo !empty($_GET['next']) ? '?next=' . htmlspecialchars($_GET['next']) : ''; ?>" method="post">
       <div class="form-group has-feedback">
+        <input type="hidden" name="url_hash" id="url_hash">
         <input type="password" class="form-control" placeholder="<?= lang('Login_Psw-box');?>" name="loginpassword">
         <span class="glyphicon glyphicon-lock form-control-feedback"></span>
       </div>
@@ -119,7 +141,7 @@ if (isset ($_SESSION["login"]) == FALSE || $_SESSION["login"] != 1)
           <div class="checkbox icheck">
             <label>
               <input type="checkbox" name="PWRemember">
-                <div style="margin-left: 10px; display: inline-block; vertical-align: top;"> 
+                <div style="margin-left: 10px; display: inline-block; vertical-align: top;">
                   <?= lang('Login_Remember');?><br><span style="font-size: smaller"><?= lang('Login_Remember_small');?></span>
                 </div>
             </label>
@@ -129,7 +151,7 @@ if (isset ($_SESSION["login"]) == FALSE || $_SESSION["login"] != 1)
         <div class="col-xs-4" style="padding-top: 10px;">
           <button type="submit" class="btn btn-primary btn-block btn-flat"><?= lang('Login_Submit');?></button>
         </div>
-        <!-- /.col --> 
+        <!-- /.col -->
       </div>
     </form>
 
@@ -159,6 +181,9 @@ if (isset ($_SESSION["login"]) == FALSE || $_SESSION["login"] != 1)
 <!-- iCheck -->
 <script src="lib/iCheck/icheck.min.js"></script>
 <script>
+  if (window.location.hash) {
+      document.getElementById('url_hash').value = window.location.hash;
+  }
   $(function () {
     $('input').iCheck({
       checkboxClass: 'icheckbox_square-blue',
@@ -174,7 +199,7 @@ function Passwordhinfo() {
   } else {
     x.style.display = "none";
   }
-} 
+}
 
 </script>
 </body>
