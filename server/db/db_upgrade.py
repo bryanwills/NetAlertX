@@ -147,7 +147,7 @@ def ensure_mac_lowercase_triggers(sql):
     except Exception as e:
         mylog("none", [f"[db_upgrade] ERROR while ensuring MAC triggers: {e}"])
         return False
-        
+
 
 def ensure_views(sql) -> bool:
     """
@@ -228,7 +228,7 @@ def ensure_views(sql) -> bool:
                         )
                         SELECT
                             d.*,           -- all Device fields
-                            r.*            -- all CurrentScan fields (cur_*)
+                            r.*            -- all CurrentScan fields 
                         FROM Devices d
                         LEFT JOIN RankedScans r
                             ON d.devMac = r.scanMac

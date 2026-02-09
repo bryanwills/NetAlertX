@@ -8,7 +8,7 @@ from front.plugins.plugin_helper import is_mac, normalize_mac
 from logger import mylog
 from models.plugin_object_instance import PluginObjectInstance
 from database import get_temp_db_connection
-from db.db_helper import get_table_json, get_device_condition_by_status, row_to_json, get_date_from_period
+from db.db_helper import get_table_json, get_device_conditions, get_device_condition_by_status, row_to_json, get_date_from_period
 from db.authoritative_handler import (
     enforce_source_on_user_update,
     get_locked_field_overrides,
@@ -331,21 +331,44 @@ class DeviceInstance:
         conn = get_temp_db_connection()
         sql = conn.cursor()
 
-        # Build a combined query with sub-selects for each status
-        query = f"""
-        SELECT
-            (SELECT COUNT(*) FROM Devices {get_device_condition_by_status("my")}) AS devices,
-            (SELECT COUNT(*) FROM Devices {get_device_condition_by_status("connected")}) AS connected,
-            (SELECT COUNT(*) FROM Devices {get_device_condition_by_status("favorites")}) AS favorites,
-            (SELECT COUNT(*) FROM Devices {get_device_condition_by_status("new")}) AS new,
-            (SELECT COUNT(*) FROM Devices {get_device_condition_by_status("down")}) AS down,
-            (SELECT COUNT(*) FROM Devices {get_device_condition_by_status("archived")}) AS archived
-        """
+        conditions = get_device_conditions()
+
+        # Build sub-selects dynamically for all dictionary entries
+        sub_queries = []
+        for key, condition in conditions.items():
+            # Make sure the alias is SQL-safe (no spaces or special chars)
+            alias = key.replace(" ", "_").lower()
+            sub_queries.append(f'(SELECT COUNT(*) FROM Devices {condition}) AS "{alias}"')
+
+        # Join all sub-selects with commas
+        query = "SELECT\n    " + ",\n    ".join(sub_queries)
         sql.execute(query)
         row = sql.fetchone()
         conn.close()
 
         return list(row) if row else []
+
+    def getNamedTotals(self):
+        """Get device totals by status."""
+        conn = get_temp_db_connection()
+        sql = conn.cursor()
+
+        conditions = get_device_conditions()
+
+        # Build sub-selects dynamically for all dictionary entries
+        sub_queries = []
+        for key, condition in conditions.items():
+            # Make sure the alias is SQL-safe (no spaces or special chars)
+            alias = key.replace(" ", "_").lower()
+            sub_queries.append(f'(SELECT COUNT(*) FROM Devices {condition}) AS "{alias}"')
+
+        # Join all sub-selects with commas
+        query = "SELECT\n    " + ",\n    ".join(sub_queries)
+
+        mylog('none', [f'[getNamedTotals] query {query}'])
+        json_obj = get_table_json(sql, query, parameters=None)
+
+        return json_obj
 
     def getByStatus(self, status=None):
         """

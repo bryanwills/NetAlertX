@@ -18,6 +18,7 @@ from utils.datetime_utils import timeNowDB
 from logger import mylog, Logger
 from messaging.reporting import skip_repeated_notifications
 from messaging.in_app import update_unread_notifications_count
+from const import NULL_EQUIVALENTS, NULL_EQUIVALENTS_SQL
 
 
 # Make sure log level is initialized correctly
@@ -222,7 +223,7 @@ def insert_events(db):
                     FROM Devices, CurrentScan
                     WHERE devMac = scanMac
                       AND scanLastIP IS NOT NULL
-                      AND scanLastIP NOT IN ('', 'null', '(unknown)', '(Unknown)')
+                      AND scanLastIP NOT IN ({NULL_EQUIVALENTS_SQL})
                       AND scanLastIP <> COALESCE(devPrimaryIPv4, '')
                       AND scanLastIP <> COALESCE(devPrimaryIPv6, '')
                       AND scanLastIP <> COALESCE(devLastIP, '') """)
