@@ -7,6 +7,10 @@ require_once $_SERVER['DOCUMENT_ROOT'].'/php/server/db.php';
 require_once $_SERVER['DOCUMENT_ROOT'].'/php/templates/language/lang.php';
 require_once $_SERVER['DOCUMENT_ROOT'].'/php/templates/security.php';
 
+// if (session_status() === PHP_SESSION_NONE) {
+//     session_start();
+// }
+
 session_start();
 
 const COOKIE_NAME = 'NetAlertX_SaveLogin';
@@ -25,10 +29,13 @@ function validate_local_path(?string $encoded): string {
     if (!$encoded) return DEFAULT_REDIRECT;
 
     $decoded = base64_decode($encoded, true);
-    if ($decoded === false) return DEFAULT_REDIRECT;
+    if ($decoded === false) {
+        return DEFAULT_REDIRECT;
+    }
 
-    // strict local path check
-    if (!preg_match('#^/[a-zA-Z0-9_\-/\.]*$#', $decoded)) {
+    // strict local path check (allow safe query strings + fragments)
+    // Using ~ as the delimiter instead of #
+    if (!preg_match('~^(?!//)(?!.*://)/[a-zA-Z0-9_\-./?=&:%#]*$~', $decoded)) {
         return DEFAULT_REDIRECT;
     }
 
@@ -74,7 +81,9 @@ $redirectTo = validate_local_path($_GET['next'] ?? null);
 ===================================================== */
 
 if ($nax_WebProtection !== 'true') {
-    login_user();
+    if (!is_authenticated()) {
+        login_user();
+    }
     safe_redirect(append_hash($redirectTo));
 }
 
@@ -190,7 +199,11 @@ if ($nax_Password === '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923
   <!-- /.login-logo -->
   <div class="login-box-body">
     <p class="login-box-msg"><?= lang('Login_Box');?></p>
-      <form action="index.php<?php echo !empty($_GET['next']) ? '?next=' . htmlspecialchars($_GET['next']) : ''; ?>" method="post">
+      <form action="index.php<?php
+      echo !empty($_GET['next'])
+          ? '?next=' . htmlspecialchars($_GET['next'], ENT_QUOTES, 'UTF-8')
+          : '';
+      ?>" method="post">
       <div class="form-group has-feedback">
         <input type="hidden" name="url_hash" id="url_hash">
         <input type="password" class="form-control" placeholder="<?= lang('Login_Psw-box');?>" name="loginpassword">

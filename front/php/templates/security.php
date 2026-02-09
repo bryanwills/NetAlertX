@@ -1,5 +1,10 @@
 <?php
 
+// Start session if not already started
+if (session_status() == PHP_SESSION_NONE) {
+    session_start();
+}
+
 // Constants
 $configFolderPath = rtrim(getenv('NETALERTX_CONFIG') ?: '/data/config', '/');
 $legacyConfigPath = $_SERVER['DOCUMENT_ROOT'] . "/../config/app.conf";
@@ -45,10 +50,6 @@ $isLogonPage = ($parsedUrl === '/' || $parsedUrl === '/index.php');
 $authHeader = apache_request_headers()['Authorization'] ?? '';
 $sessionLogin = isset($_SESSION['login']) ? $_SESSION['login'] : 0;
 
-// Start session if not already started
-if (session_status() == PHP_SESSION_NONE) {
-    session_start();
-}
 
 // Handle logout
 if (!empty($_REQUEST['action']) && $_REQUEST['action'] == 'logout') {
@@ -86,7 +87,7 @@ if ($nax_WebProtection == 'true') {
         // Logged in or stay on this page if we are on the index.php already
     } else {
         // We need to redirect
-        $returnUrl = base64_encode($_SERVER['REQUEST_URI']);
+        $returnUrl = rawurlencode(base64_encode($_SERVER['REQUEST_URI']));
         redirect("/index.php?next=" . $returnUrl);
         exit; // exit is needed to prevent authentication bypass
     }
