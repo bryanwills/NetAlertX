@@ -58,6 +58,33 @@ function login_user(): void {
     session_regenerate_id(true);
 }
 
+function is_https_request(): bool {
+
+    // Direct HTTPS detection
+    if (!empty($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) !== 'off') {
+        return true;
+    }
+
+    // Standard port check
+    if (!empty($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == 443) {
+        return true;
+    }
+
+    // Trusted proxy headers (only valid if behind a trusted reverse proxy)
+    if (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) &&
+        strtolower($_SERVER['HTTP_X_FORWARDED_PROTO']) === 'https') {
+        return true;
+    }
+
+    if (!empty($_SERVER['HTTP_X_FORWARDED_SSL']) &&
+        strtolower($_SERVER['HTTP_X_FORWARDED_SSL']) === 'on') {
+        return true;
+    }
+
+    return false;
+}
+
+
 function logout_user(): void {
     $_SESSION = [];
     session_destroy();
@@ -65,6 +92,7 @@ function logout_user(): void {
     setcookie(COOKIE_NAME,'',[
         'expires'=>time()-3600,
         'path'=>'/',
+        'secure'=>is_https_request(),
         'httponly'=>true,
         'samesite'=>'Strict'
     ]);
@@ -88,15 +116,6 @@ if ($nax_WebProtection !== 'true') {
 }
 
 /* =====================================================
-   Logout
-===================================================== */
-
-if (($_GET['action'] ?? '') === 'logout') {
-    logout_user();
-    safe_redirect('/index.php');
-}
-
-/* =====================================================
    Login Attempt
 ===================================================== */
 
@@ -116,7 +135,7 @@ if (!empty($_POST['loginpassword'])) {
             setcookie(COOKIE_NAME,$token,[
                 'expires'=>time()+604800,
                 'path'=>'/',
-                'secure'=>isset($_SERVER['HTTPS']),
+                'secure'=>is_https_request(),
                 'httponly'=>true,
                 'samesite'=>'Strict'
             ]);
