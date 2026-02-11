@@ -8,7 +8,7 @@ INSTALL_PATH = os.getenv('NETALERTX_APP', '/app')
 sys.path.extend([f"{INSTALL_PATH}/front/plugins", f"{INSTALL_PATH}/server"])
 
 from helper import get_setting_value  # noqa: E402 [flake8 lint suppression]
-from utils.datetime_utils import timeNowTZ  # noqa: E402 [flake8 lint suppression]
+from utils.datetime_utils import timeNowUTC  # noqa: E402 [flake8 lint suppression]
 from api_server.api_server_start import app  # noqa: E402 [flake8 lint suppression]
 
 
@@ -38,7 +38,7 @@ def create_event(client, api_token, mac, event="UnitTest Event", days_old=None):
 
     # Calculate the event_time if days_old is given
     if days_old is not None:
-        event_time = timeNowTZ() - timedelta(days=days_old)
+        event_time = timeNowUTC(as_string=False) - timedelta(days=days_old)
         # ISO 8601 string
         payload["event_time"] = event_time.isoformat()
 
@@ -140,7 +140,7 @@ def test_delete_events_dynamic_days(client, api_token, test_mac):
     # Count pre-existing events younger than 30 days for test_mac
     # These will remain after delete operation
     from datetime import datetime
-    thirty_days_ago = timeNowTZ() - timedelta(days=30)
+    thirty_days_ago = timeNowUTC(as_string=False) - timedelta(days=30)
     initial_younger_count = 0
     for ev in initial_events:
         if ev.get("eve_MAC") == test_mac and ev.get("eve_DateTime"):

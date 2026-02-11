@@ -14,11 +14,11 @@ from scan.device_handling import (
 )
 from helper import get_setting_value
 from db.db_helper import print_table_schema
-from utils.datetime_utils import timeNowDB
+from utils.datetime_utils import timeNowUTC
 from logger import mylog, Logger
 from messaging.reporting import skip_repeated_notifications
 from messaging.in_app import update_unread_notifications_count
-from const import NULL_EQUIVALENTS, NULL_EQUIVALENTS_SQL
+from const import NULL_EQUIVALENTS_SQL
 
 
 # Make sure log level is initialized correctly
@@ -167,7 +167,7 @@ def create_sessions_snapshot(db):
 # -------------------------------------------------------------------------------
 def insert_events(db):
     sql = db.sql  # TO-DO
-    startTime = timeNowDB()
+    startTime = timeNowUTC()
 
     # Check device down
     mylog("debug", "[Events] - 1 - Devices down")
@@ -234,7 +234,7 @@ def insert_events(db):
 def insertOnlineHistory(db):
     sql = db.sql  # TO-DO: Implement sql object
 
-    scanTimestamp = timeNowDB()
+    scanTimestamp = timeNowUTC()
 
     # Query to fetch all relevant device counts in one go
     query = """

@@ -12,7 +12,7 @@ import uuid
 import conf
 from const import fullConfPath, fullConfFolder, default_tz
 from helper import getBuildTimeStampAndVersion, collect_lang_strings, updateSubnets, generate_random_string
-from utils.datetime_utils import timeNowDB
+from utils.datetime_utils import timeNowUTC
 from app_state import updateState
 from logger import mylog
 from api import update_api
@@ -419,7 +419,7 @@ def importConfigs(pm, db, all_plugins):
 
     # TODO cleanup later ----------------------------------------------------------------------------------
     # init all time values as we have timezone - all this shoudl be moved into plugin/plugin settings
-    conf.time_started = datetime.datetime.now(conf.tz)
+    conf.time_started = timeNowUTC(as_string=False)
     conf.plugins_once_run = False
 
     # timestamps of last execution times
@@ -645,7 +645,7 @@ def importConfigs(pm, db, all_plugins):
 
         if run_val == "schedule":
             newSchedule = Cron(run_sch).schedule(
-                start_date=datetime.datetime.now(conf.tz)
+                start_date=timeNowUTC(as_string=False)
             )
             conf.mySchedules.append(
                 schedule_class(
@@ -682,7 +682,7 @@ def importConfigs(pm, db, all_plugins):
             Check out new features and what has changed in the \
             <a href="https://github.com/jokob-sk/NetAlertX/releases" target="_blank">📓 release notes</a>.""",
             'interrupt',
-            timeNowDB()
+            timeNowUTC()
         )
 
     # -----------------
@@ -721,7 +721,7 @@ def importConfigs(pm, db, all_plugins):
     mylog('minimal', msg)
 
     # front end app log loggging
-    write_notification(msg, 'info', timeNowDB())
+    write_notification(msg, 'info', timeNowUTC())
 
     return pm, all_plugins, True
 
@@ -770,7 +770,7 @@ def renameSettings(config_file):
     # If the file contains old settings, proceed with renaming and backup
     if contains_old_settings:
         # Create a backup file with the suffix "_old_setting_names" and timestamp
-        timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+        timestamp = timeNowUTC(as_string=False).strftime("%Y%m%d%H%M%S")
         backup_file = f"{config_file}_old_setting_names_{timestamp}.bak"
 
         mylog("debug", f"[Config] Old setting names will be replaced and a backup ({backup_file}) of the config created.",)
