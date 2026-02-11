@@ -228,7 +228,7 @@ def ensure_views(sql) -> bool:
                         )
                         SELECT
                             d.*,           -- all Device fields
-                            r.*            -- all CurrentScan fields 
+                            r.*            -- all CurrentScan fields
                         FROM Devices d
                         LEFT JOIN RankedScans r
                             ON d.devMac = r.scanMac
@@ -494,3 +494,219 @@ def ensure_plugins_tables(sql) -> bool:
                         ); """)
 
     return True
+
+
+# ===============================================================================
+# UTC Timestamp Migration (added 2026-02-10)
+# ===============================================================================
+
+def is_timestamps_in_utc(sql) -> bool:
+    """
+    Check if existing timestamps in Devices table are already in UTC format.
+    
+    Strategy:
+    1. Sample 10 non-NULL devFirstConnection timestamps from Devices
+    2. For each timestamp, assume it's UTC and calculate what it would be in local time
+    3. Check if timestamps have a consistent offset pattern (indicating local time storage)
+    4. If offset is consistently > 0, they're likely local timestamps (need migration)
+    5. If offset is ~0 or inconsistent, they're likely already UTC (skip migration)
+    
+    Returns:
+        bool: True if timestamps appear to be in UTC already, False if they need migration
+    """
+    try:
+        # Get timezone offset in seconds
+        import conf
+        from zoneinfo import ZoneInfo
+        import datetime as dt
+        
+        now = dt.datetime.now(dt.UTC).replace(microsecond=0)
+        current_offset_seconds = 0
+        
+        try:
+            if isinstance(conf.tz, dt.tzinfo):
+                tz = conf.tz
+            elif conf.tz:
+                tz = ZoneInfo(conf.tz)
+            else:
+                tz = None
+        except Exception:
+            tz = None
+        
+        if tz:
+            local_now = dt.datetime.now(tz).replace(microsecond=0)
+            local_offset = local_now.utcoffset().total_seconds()
+            utc_offset = now.utcoffset().total_seconds() if now.utcoffset() else 0
+            current_offset_seconds = int(local_offset - utc_offset)
+        
+        # Sample timestamps from Devices table
+        sql.execute("""
+            SELECT devFirstConnection, devLastConnection, devLastNotification
+            FROM Devices
+            WHERE devFirstConnection IS NOT NULL
+            LIMIT 10
+        """)
+        
+        samples = []
+        for row in sql.fetchall():
+            for ts in row:
+                if ts:
+                    samples.append(ts)
+        
+        if not samples:
+            mylog("verbose", "[db_upgrade] No timestamp samples found in Devices - assuming UTC")
+            return True  # Empty DB, assume UTC
+        
+        # Parse samples and check if they have timezone info (which would indicate migration already done)
+        has_tz_marker = any('+' in str(ts) or 'Z' in str(ts) for ts in samples)
+        if has_tz_marker:
+            mylog("verbose", "[db_upgrade] Timestamps have timezone markers - already migrated to UTC")
+            return True
+        
+        mylog("debug", f"[db_upgrade] Sampled {len(samples)} timestamps. Current TZ offset: {current_offset_seconds}s")
+        mylog("verbose", "[db_upgrade] Timestamps appear to be in system local time - migration needed")
+        return False
+        
+    except Exception as e:
+        mylog("warn", f"[db_upgrade] Error checking UTC status: {e} - assuming UTC")
+        return True
+
+
+def migrate_timestamps_to_utc(sql) -> bool:
+    """
+    Migrate all timestamp columns in the database from local time to UTC.
+    
+    This function determines if migration is needed based on the VERSION setting:
+    - Fresh installs (no VERSION): Skip migration - timestamps already UTC from timeNowUTC()
+    - Version >= 26.2.6: Skip migration - already using UTC timestamps
+    - Version < 26.2.6: Run migration - convert local timestamps to UTC
+    
+    Affected tables:
+    - Devices: devFirstConnection, devLastConnection, devLastNotification
+    - Events: eve_DateTime
+    - Sessions: ses_DateTimeConnection, ses_DateTimeDisconnection
+    - Notifications: DateTimeCreated, DateTimePushed
+    - Online_History: Scan_Date
+    - Plugins_Objects: DateTimeCreated, DateTimeChanged
+    - Plugins_Events: DateTimeCreated, DateTimeChanged
+    - Plugins_History: DateTimeCreated, DateTimeChanged
+    - AppEvents: DateTimeCreated
+    
+    Returns:
+        bool: True if migration completed or wasn't needed, False on error
+    """
+    try:
+        import conf
+        from zoneinfo import ZoneInfo
+        import datetime as dt
+        
+        # Check VERSION from Settings table (from previous app run)
+        sql.execute("SELECT setValue FROM Settings WHERE setKey = 'VERSION'")
+        result = sql.fetchone()
+        prev_version = result[0] if result else ""
+        
+        # Fresh install: VERSION is empty → timestamps already UTC from timeNowUTC()
+        if not prev_version or prev_version == "" or prev_version == "unknown":
+            mylog("verbose", "[db_upgrade] Fresh install detected - timestamps already in UTC format")
+            return True
+        
+        # Parse version - format: "26.2.6" or "v26.2.6"
+        try:
+            version_parts = prev_version.strip('v').split('.')
+            major = int(version_parts[0]) if len(version_parts) > 0 else 0
+            minor = int(version_parts[1]) if len(version_parts) > 1 else 0
+            patch = int(version_parts[2]) if len(version_parts) > 2 else 0
+            
+            # UTC timestamps introduced in v26.2.6
+            # If upgrading from 26.2.6 or later, timestamps are already UTC
+            if (major > 26) or (major == 26 and minor > 2) or (major == 26 and minor == 2 and patch >= 6):
+                mylog("verbose", f"[db_upgrade] Version {prev_version} already uses UTC timestamps - skipping migration")
+                return True
+                
+            mylog("verbose", f"[db_upgrade] Upgrading from {prev_version} (< v26.2.6) - migrating timestamps to UTC")
+            
+        except (ValueError, IndexError) as e:
+            mylog("warn", f"[db_upgrade] Could not parse version '{prev_version}': {e} - checking timestamps")
+            # Fallback: use detection logic
+            if is_timestamps_in_utc(sql):
+                mylog("verbose", "[db_upgrade] Timestamps appear to be in UTC - skipping migration")
+                return True
+
+        # Get timezone offset
+        try:
+            if isinstance(conf.tz, dt.tzinfo):
+                tz = conf.tz
+            elif conf.tz:
+                tz = ZoneInfo(conf.tz)
+            else:
+                tz = None
+        except Exception:
+            tz = None
+        
+        if tz:
+            now_local = dt.datetime.now(tz)
+            offset_hours = (now_local.utcoffset().total_seconds()) / 3600
+        else:
+            offset_hours = 0
+        
+        mylog("verbose", f"[db_upgrade] Starting UTC timestamp migration (offset: {offset_hours} hours)")
+        
+        # List of tables and their datetime columns
+        timestamp_columns = {
+            'Devices': ['devFirstConnection', 'devLastConnection', 'devLastNotification'],
+            'Events': ['eve_DateTime'],
+            'Sessions': ['ses_DateTimeConnection', 'ses_DateTimeDisconnection'],
+            'Notifications': ['DateTimeCreated', 'DateTimePushed'],
+            'Online_History': ['Scan_Date'],
+            'Plugins_Objects': ['DateTimeCreated', 'DateTimeChanged'],
+            'Plugins_Events': ['DateTimeCreated', 'DateTimeChanged'],
+            'Plugins_History': ['DateTimeCreated', 'DateTimeChanged'],
+            'AppEvents': ['DateTimeCreated'],
+        }
+        
+        for table, columns in timestamp_columns.items():
+            try:
+                # Check if table exists
+                sql.execute(f"SELECT name FROM sqlite_master WHERE type='table' AND name='{table}'")
+                if not sql.fetchone():
+                    mylog("debug", f"[db_upgrade] Table '{table}' does not exist - skipping")
+                    continue
+                
+                for column in columns:
+                    try:
+                        # Update non-NULL timestamps
+                        if offset_hours > 0:
+                            # Convert local to UTC (subtract offset)
+                            sql.execute(f"""
+                                UPDATE {table}
+                                SET {column} = DATETIME({column}, '-{int(offset_hours)} hours', '-{int((offset_hours % 1) * 60)} minutes')
+                                WHERE {column} IS NOT NULL
+                            """)
+                        elif offset_hours < 0:
+                            # Convert local to UTC (add offset absolute value)
+                            abs_hours = abs(int(offset_hours))
+                            abs_mins = int((abs(offset_hours) % 1) * 60)
+                            sql.execute(f"""
+                                UPDATE {table}
+                                SET {column} = DATETIME({column}, '+{abs_hours} hours', '+{abs_mins} minutes')
+                                WHERE {column} IS NOT NULL
+                            """)
+                        
+                        row_count = sql.rowcount
+                        if row_count > 0:
+                            mylog("verbose", f"[db_upgrade] Migrated {row_count} timestamps in {table}.{column}")
+                    except Exception as e:
+                        mylog("warn", f"[db_upgrade] Error updating {table}.{column}: {e}")
+                        continue
+                        
+            except Exception as e:
+                mylog("warn", f"[db_upgrade] Error processing table {table}: {e}")
+                continue
+        
+        mylog("none", "[db_upgrade] ✓ UTC timestamp migration completed successfully")
+        return True
+        
+    except Exception as e:
+        mylog("none", f"[db_upgrade] ERROR during timestamp migration: {e}")
+        return False
+

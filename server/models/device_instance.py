@@ -18,7 +18,7 @@ from db.authoritative_handler import (
     unlock_fields
 )
 from helper import is_random_mac, get_setting_value
-from utils.datetime_utils import timeNowDB
+from utils.datetime_utils import timeNowUTC
 
 
 class DeviceInstance:
@@ -407,7 +407,7 @@ class DeviceInstance:
 
     def getDeviceData(self, mac, period=""):
         """Fetch device info with children, event stats, and presence calculation."""
-        now = timeNowDB()
+        now = timeNowUTC()
 
         # Special case for new device
         if mac.lower() == "new":
@@ -639,8 +639,8 @@ class DeviceInstance:
                     data.get("devSkipRepeated") or 0,
                     data.get("devIsNew") or 0,
                     data.get("devIsArchived") or 0,
-                    data.get("devLastConnection") or timeNowDB(),
-                    data.get("devFirstConnection") or timeNowDB(),
+                    data.get("devLastConnection") or timeNowUTC(),
+                    data.get("devFirstConnection") or timeNowUTC(),
                     data.get("devLastIP") or "",
                     data.get("devGUID") or "",
                     data.get("devCustomProps") or "",

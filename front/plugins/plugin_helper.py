@@ -12,7 +12,7 @@ sys.path.append(f"{INSTALL_PATH}/front/plugins")
 sys.path.append(f'{INSTALL_PATH}/server')
 
 from logger import mylog  # noqa: E402 [flake8 lint suppression]
-from utils.datetime_utils import timeNowDB  # noqa: E402 [flake8 lint suppression]
+from utils.datetime_utils import timeNowUTC  # noqa: E402 [flake8 lint suppression]
 from const import default_tz, fullConfPath  # noqa: E402 [flake8 lint suppression]
 
 
@@ -237,7 +237,7 @@ class Plugin_Object:
         self.pluginPref = ""
         self.primaryId = primaryId
         self.secondaryId = secondaryId
-        self.created = timeNowDB()
+        self.created = timeNowUTC()
         self.changed = ""
         self.watched1 = watched1
         self.watched2 = watched2

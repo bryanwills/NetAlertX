@@ -17,6 +17,7 @@ from db.db_upgrade import (
     ensure_Settings,
     ensure_Indexes,
     ensure_mac_lowercase_triggers,
+    migrate_timestamps_to_utc,
 )
 
 
@@ -186,6 +187,9 @@ class DB:
 
             # Parameters tables setup
             ensure_Parameters(self.sql)
+
+            # One-time UTC timestamp migration (must run after Parameters table exists)
+            migrate_timestamps_to_utc(self.sql)
 
             # Plugins tables setup
             ensure_plugins_tables(self.sql)
