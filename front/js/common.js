@@ -452,11 +452,11 @@ function localizeTimestamp(input) {
     // - Has GMT±offset: "Wed Feb 11 2026 12:34:12 GMT+1100 (...)"
     // - Has offset at end: "2026-02-11 11:37:02+11:00"
     // - Has timezone name in parentheses: "(Australian Eastern Daylight Time)"
-    const hasOffset = /Z$/i.test(str.trim()) || 
+    const hasOffset = /Z$/i.test(str.trim()) ||
                       /GMT[+-]\d{2,4}/.test(str) ||
                       /[+-]\d{2}:?\d{2}$/.test(str.trim()) ||
                       /\([^)]+\)$/.test(str.trim());
-    
+
     // ⚠️ CRITICAL: All DB timestamps are stored in UTC without timezone markers.
     // If no offset is present, we must explicitly mark it as UTC by appending 'Z'
     // so JavaScript doesn't interpret it as local browser time.
@@ -464,9 +464,9 @@ function localizeTimestamp(input) {
     if (!hasOffset) {
       // Ensure proper ISO format before appending Z
       // Replace space with 'T' if needed: "2026-02-11 11:37:02" → "2026-02-11T11:37:02Z"
-      isoStr = isoStr.replace(' ', 'T') + 'Z';
+      isoStr = isoStr.trim().replace(/^(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2})$/, '$1T$2') + 'Z';
     }
-    
+
     const date = new Date(isoStr);
     if (!isFinite(date)) {
       console.error(`ERROR: Couldn't parse date: '${str}' with TIMEZONE ${tz}`);

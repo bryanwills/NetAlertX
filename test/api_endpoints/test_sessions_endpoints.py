@@ -188,7 +188,7 @@ def test_get_sessions_calendar(client, api_token, test_mac):
     Cleans up test sessions after test.
     """
     # --- Setup: create two sessions for the test MAC ---
-    now = datetime.now()
+    now = timeNowUTC(as_string=False)
     start1 = (now - timedelta(days=2)).isoformat(timespec="seconds")
     end1   = (now - timedelta(days=1, hours=20)).isoformat(timespec="seconds")
 

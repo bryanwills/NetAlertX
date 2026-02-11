@@ -27,18 +27,18 @@ DATETIME_REGEX = re.compile(r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$')
 def timeNowUTC(as_string=True):
     """
     Return the current time in UTC.
-    
+
     This is the ONLY function that calls datetime.datetime.now() in the entire codebase.
     All timestamps stored in the database MUST use UTC format.
-    
+
     Args:
         as_string (bool): If True, returns formatted string for DB storage.
                          If False, returns datetime object for operations.
-    
+
     Returns:
         str: UTC timestamp as 'YYYY-MM-DD HH:MM:SS' when as_string=True
         datetime.datetime: UTC datetime object when as_string=False
-    
+
     Examples:
         timeNowUTC()              → '2025-11-04 07:09:11'  (for DB writes)
         timeNowUTC(as_string=False) → datetime.datetime(2025, 11, 4, 7, 9, 11, tzinfo=UTC)
@@ -48,9 +48,12 @@ def timeNowUTC(as_string=True):
 
 
 def get_timezone_offset():
-    now = timeNowUTC(as_string=False).replace(tzinfo=conf.tz) if conf.tz else timeNowUTC(as_string=False)
-    offset_hours = now.utcoffset().total_seconds() / 3600 if now.utcoffset() else 0
-    offset_formatted =  "{:+03d}:{:02d}".format(int(offset_hours), int((offset_hours % 1) * 60))
+    if conf.tz:
+        now = timeNowUTC(as_string=False).astimezone(conf.tz)
+        offset_hours = now.utcoffset().total_seconds() / 3600
+    else:
+        offset_hours = 0
+    offset_formatted = "{:+03d}:{:02d}".format(int(offset_hours), int((offset_hours % 1) * 60))
     return offset_formatted
 
 
@@ -107,7 +110,7 @@ def normalizeTimeStamp(inputTimeStamp):
 # -------------------------------------------------------------------------------------------
 def format_date_iso(date_val: str) -> Optional[str]:
     """Ensures a date string from DB is returned as a proper ISO string with TZ.
-    
+
     Assumes DB timestamps are stored in UTC and converts them to user's configured timezone.
     """
     if not date_val:
@@ -173,7 +176,7 @@ def parse_datetime(dt_str):
 
 def format_date(date_str: str) -> str:
     """Format a date string from DB for display.
-    
+
     Assumes DB timestamps are stored in UTC and converts them to user's configured timezone.
     """
     try:

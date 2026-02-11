@@ -44,7 +44,7 @@ class TestTimeNowUTC:
     def test_timeNowUTC_datetime_has_UTC_timezone(self):
         """Test that datetime object has UTC timezone"""
         result = timeNowUTC(as_string=False)
-        assert result.tzinfo is datetime.UTC or result.tzinfo is not None
+        assert result.tzinfo is datetime.UTC
 
     def test_timeNowUTC_datetime_no_microseconds(self):
         """Test that datetime object has microseconds set to 0"""
@@ -55,7 +55,7 @@ class TestTimeNowUTC:
         """Test that string and datetime modes return consistent values"""
         dt_obj = timeNowUTC(as_string=False)
         str_result = timeNowUTC(as_string=True)
-        
+
         # Convert datetime to string and compare (within 1 second tolerance)
         dt_str = dt_obj.strftime(DATETIME_PATTERN)
         # Parse both to compare timestamps
@@ -68,7 +68,7 @@ class TestTimeNowUTC:
         """Test that timeNowUTC() returns actual UTC time, not local time"""
         utc_now = datetime.datetime.now(datetime.UTC).replace(microsecond=0)
         result = timeNowUTC(as_string=False)
-        
+
         # Should be within 1 second
         diff = abs((utc_now - result).total_seconds())
         assert diff <= 1
@@ -77,10 +77,10 @@ class TestTimeNowUTC:
         """Test that string result matches datetime object conversion"""
         dt_obj = timeNowUTC(as_string=False)
         str_result = timeNowUTC(as_string=True)
-        
+
         # Convert datetime to string using same format
         expected = dt_obj.strftime(DATETIME_PATTERN)
-        
+
         # Should be same or within 1 second
         t1 = datetime.datetime.strptime(expected, DATETIME_PATTERN)
         t2 = datetime.datetime.strptime(str_result, DATETIME_PATTERN)
@@ -95,12 +95,12 @@ class TestTimeNowUTC:
     def test_timeNowUTC_multiple_calls_increase(self):
         """Test that subsequent calls return increasing timestamps"""
         import time
-        
+
         t1_str = timeNowUTC()
         time.sleep(0.1)
         t2_str = timeNowUTC()
-        
+
         t1 = datetime.datetime.strptime(t1_str, DATETIME_PATTERN)
         t2 = datetime.datetime.strptime(t2_str, DATETIME_PATTERN)
-        
+
         assert t2 >= t1

@@ -93,7 +93,7 @@ class EventInstance:
                 eve_EventType, eve_AdditionalInfo,
                 eve_PendingAlertEmail, eve_PairEventRowid
             ) VALUES (?,?,?,?,?,?,?)
-        """, (mac, ip, timeNowUTC(as_string=False), eventType, info,
+        """, (mac, ip, timeNowUTC(), eventType, info,
               1 if pendingAlert else 0, pairRow))
         conn.commit()
         conn.close()
