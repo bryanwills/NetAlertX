@@ -447,6 +447,7 @@ function localizeTimestamp(input) {
   return formatSafe(input, tz);
 
   function formatSafe(str, tz) {
+
     // CHECK: Does the input string have timezone information?
     // - Ends with Z: "2026-02-11T11:37:02Z"
     // - Has GMT±offset: "Wed Feb 11 2026 12:34:12 GMT+1100 (...)"
