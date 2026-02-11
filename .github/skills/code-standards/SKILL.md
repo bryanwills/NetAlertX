@@ -50,9 +50,9 @@ timestamp = timeNowUTC()
 This is the ONLY function that calls datetime.datetime.now() in the entire codebase.
 
 ⚠️ CRITICAL: ALL database timestamps MUST be stored in UTC
-# This is the SINGLE SOURCE OF TRUTH for current time in NetAlertX
-# Use timeNowUTC() for DB writes (returns UTC string by default)
-# Use timeNowUTC(as_string=False) for datetime operations (scheduling, comparisons, logging)
+This is the SINGLE SOURCE OF TRUTH for current time in NetAlertX
+Use timeNowUTC() for DB writes (returns UTC string by default)
+Use timeNowUTC(as_string=False) for datetime operations (scheduling, comparisons, logging)
 
 ## String Sanitization
 
