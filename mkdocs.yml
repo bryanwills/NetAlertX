@@ -65,6 +65,9 @@ nav:
         - Workflows: WORKFLOWS.md
         - Workflow Examples: WORKFLOW_EXAMPLES.md
         - Docker Swarm: DOCKER_SWARM.md
+      - Best practice advisories:
+        - Eyes on glass: ADVISORY_EYES_ON_GLASS.md
+        - Multi-network monitoring: ADVISORY_MULTI_NETWORK.md
       - Help:
         - Common issues: COMMON_ISSUES.md
         - Random MAC: RANDOM_MAC.md
