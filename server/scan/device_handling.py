@@ -3,7 +3,7 @@ import os
 import re
 import ipaddress
 from helper import get_setting_value, check_IP_format
-from utils.datetime_utils import timeNowDB, normalizeTimeStamp
+from utils.datetime_utils import timeNowUTC, normalizeTimeStamp
 from logger import mylog, Logger
 from const import vendorsPath, vendorsPathNewest, sql_generateGuid, NULL_EQUIVALENTS
 from models.device_instance import DeviceInstance
@@ -227,7 +227,7 @@ def update_devLastConnection_from_CurrentScan(db):
     Update devLastConnection to current time for all devices seen in CurrentScan.
     """
     sql = db.sql
-    startTime = timeNowDB()
+    startTime = timeNowUTC()
     mylog("debug", f"[Update Devices] - Updating devLastConnection to {startTime}")
 
     sql.execute(f"""
@@ -600,7 +600,7 @@ def print_scan_stats(db):
 # -------------------------------------------------------------------------------
 def create_new_devices(db):
     sql = db.sql  # TO-DO
-    startTime = timeNowDB()
+    startTime = timeNowUTC()
 
     # Insert events for new devices from CurrentScan (not yet in Devices)
 
@@ -1109,7 +1109,7 @@ def update_devices_names(pm):
 
     # --- Step 3: Log last checked time ---
     # After resolving names, update last checked
-    pm.plugin_checks = {"DIGSCAN": timeNowDB(), "AVAHISCAN": timeNowDB(), "NSLOOKUP": timeNowDB(), "NBTSCAN": timeNowDB()}
+    pm.plugin_checks = {"DIGSCAN": timeNowUTC(), "AVAHISCAN": timeNowUTC(), "NSLOOKUP": timeNowUTC(), "NBTSCAN": timeNowUTC()}
 
 
 # -------------------------------------------------------------------------------

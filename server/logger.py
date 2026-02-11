@@ -9,7 +9,7 @@ import logging
 # NetAlertX imports
 import conf
 from const import logPath
-from utils.datetime_utils import timeNowTZ
+from utils.datetime_utils import timeNowUTC
 
 DEFAULT_LEVEL = "none"
 
@@ -124,7 +124,7 @@ def start_log_writer_thread():
 
 # -------------------------------------------------------------------------------
 def file_print(*args):
-    result = timeNowTZ().strftime("%H:%M:%S") + " "
+    result = timeNowUTC(as_string=False).strftime("%H:%M:%S") + " "
     for arg in args:
         if isinstance(arg, list):
             arg = " ".join(
