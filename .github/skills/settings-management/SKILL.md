@@ -43,5 +43,5 @@ Use `APP_CONF_OVERRIDE` environment variable for settings that must be set befor
 For Codespaces, set `BACKEND_API_URL` to your Codespace URL:
 
 ```
-BACKEND_API_URL=https://something-20212.app.github.dev/
+BACKEND_API_URL=/server
 ```
