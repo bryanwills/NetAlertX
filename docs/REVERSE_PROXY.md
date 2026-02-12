@@ -72,7 +72,7 @@ flowchart LR
 Using a proxy to secure API access with TLS or IP limiting.
 
 **Why is this important?**
-The backend API (`:20212`) is powerful. The backend has more capabilities than the Web UI which is a safer, and password-protectable interface. By using a reverse proxy to **limit sources** (e.g., allowing only your Home Assistant server's IP), you ensure that only trusted devices can talk to your backend.
+The backend API (`:20212`) is powerful—more so than the Web UI, which is a safer, password-protectable interface. By using a reverse proxy to **limit sources** (e.g., allowing only your Home Assistant server's IP), you ensure that only trusted devices can talk to your backend.
 
 ```mermaid
 flowchart LR
