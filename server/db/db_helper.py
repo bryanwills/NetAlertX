@@ -14,6 +14,7 @@ from const import NULL_EQUIVALENTS_SQL  # noqa: E402 [flake8 lint suppression]
 def get_device_conditions():
     network_dev_types = ",".join(f"'{v.replace('\'', '\'\'')}'" for v in get_setting_value("NETWORK_DEVICE_TYPES"))
 
+    # DO NOT CHANGE ORDER
     conditions = {
         "all": "WHERE devIsArchived=0",
         "my": "WHERE devIsArchived=0",
@@ -27,6 +28,7 @@ def get_device_conditions():
         "network_devices_down": f"WHERE devIsArchived=0 AND devType in ({network_dev_types}) AND devPresentLastScan=0",
         "unknown": f"WHERE devIsArchived=0 AND devName in ({NULL_EQUIVALENTS_SQL})",
         "known": f"WHERE devIsArchived=0 AND devName not in ({NULL_EQUIVALENTS_SQL})",
+        "favorites_offline": "WHERE devIsArchived=0 AND devFavorite=1 AND devPresentLastScan=0",
     }
 
     return conditions
