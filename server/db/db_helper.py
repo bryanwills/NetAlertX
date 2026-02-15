@@ -12,7 +12,7 @@ from const import NULL_EQUIVALENTS_SQL  # noqa: E402 [flake8 lint suppression]
 
 
 def get_device_conditions():
-    network_dev_types = ",".join(f"'{v.replace('\'', '\'\'')}'" for v in get_setting_value("NETWORK_DEVICE_TYPES"))
+    network_dev_types = ",".join("'" + v.replace("'", "''") + "'" for v in get_setting_value("NETWORK_DEVICE_TYPES"))
 
     # DO NOT CHANGE ORDER
     conditions = {
