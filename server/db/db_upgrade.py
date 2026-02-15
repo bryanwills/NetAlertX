@@ -534,7 +534,6 @@ def is_timestamps_in_utc(sql) -> bool:
     try:
         # Get timezone offset in seconds
         import conf
-        from zoneinfo import ZoneInfo
         import datetime as dt
 
         now = dt.datetime.now(dt.UTC).replace(microsecond=0)
@@ -754,4 +753,3 @@ def migrate_timestamps_to_utc(sql) -> bool:
     except Exception as e:
         mylog("none", f"[db_upgrade] ERROR during timestamp migration: {e}")
         return False
-

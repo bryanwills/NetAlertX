@@ -16,7 +16,7 @@ from helper import (
     getBuildTimeStampAndVersion,
 )
 from messaging.in_app import write_notification
-from utils.datetime_utils import timeNowUTC, get_timezone_offset
+from utils.datetime_utils import timeNowUTC, timeNowTZ, get_timezone_offset
 
 
 # -----------------------------------------------------------------------------
@@ -107,7 +107,7 @@ class NotificationInstance:
             mail_html = mail_html.replace("NEW_VERSION", newVersionText)
 
             # Report "REPORT_DATE" in Header & footer
-            timeFormated = timeNowUTC()
+            timeFormated = timeNowTZ()
             mail_text = mail_text.replace("REPORT_DATE", timeFormated)
             mail_html = mail_html.replace("REPORT_DATE", timeFormated)
 

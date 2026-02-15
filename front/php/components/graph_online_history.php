@@ -27,8 +27,11 @@ function initOnlineHistoryGraph() {
         var archivedCounts = [];
 
         res.data.forEach(function(entry) {
-            var dateObj = new Date(entry.Scan_Date);
-            var formattedTime = dateObj.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit', hour12: false});
+          console.log(entry.Scan_Date);
+
+            // var dateObj = new Date(entry.Scan_Date);
+            var formattedTime = localizeTimestamp(entry.Scan_Date).slice(11, 17);
+            // dateObj.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit', hour12: false});
 
             timeStamps.push(formattedTime);
             onlineCounts.push(entry.Online_Devices);
