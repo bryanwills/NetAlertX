@@ -88,7 +88,7 @@ class EventInstance:
     def add(self, mac, ip, eventType, info="", pendingAlert=True, pairRow=None):
         conn = self._conn()
         conn.execute("""
-            INSERT INTO Events (
+            INSERT OR IGNORE INTO Events  (
                 eve_MAC, eve_IP, eve_DateTime,
                 eve_EventType, eve_AdditionalInfo,
                 eve_PendingAlertEmail, eve_PairEventRowid
@@ -124,7 +124,7 @@ class EventInstance:
         cur = conn.cursor()
         cur.execute(
             """
-            INSERT INTO Events (eve_MAC, eve_IP, eve_DateTime, eve_EventType, eve_AdditionalInfo, eve_PendingAlertEmail)
+            INSERT OR IGNORE INTO Events  (eve_MAC, eve_IP, eve_DateTime, eve_EventType, eve_AdditionalInfo, eve_PendingAlertEmail)
             VALUES (?, ?, ?, ?, ?, ?)
         """,
             (mac, ip, start_time, event_type, additional_info, pending_alert),

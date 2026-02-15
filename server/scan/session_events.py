@@ -171,7 +171,7 @@ def insert_events(db):
 
     # Check device down
     mylog("debug", "[Events] - 1 - Devices down")
-    sql.execute(f"""INSERT INTO Events (eve_MAC, eve_IP, eve_DateTime,
+    sql.execute(f"""INSERT OR IGNORE INTO Events  (eve_MAC, eve_IP, eve_DateTime,
                         eve_EventType, eve_AdditionalInfo,
                         eve_PendingAlertEmail)
                     SELECT devMac, devLastIP, '{startTime}', 'Device Down', '', 1
@@ -184,7 +184,7 @@ def insert_events(db):
 
     # Check new Connections or Down Reconnections
     mylog("debug", "[Events] - 2 - New Connections")
-    sql.execute(f"""    INSERT INTO Events (eve_MAC, eve_IP, eve_DateTime,
+    sql.execute(f"""    INSERT OR IGNORE INTO Events (eve_MAC, eve_IP, eve_DateTime,
                                             eve_EventType, eve_AdditionalInfo,
                                             eve_PendingAlertEmail)
                         SELECT DISTINCT c.scanMac, c.scanLastIP, '{startTime}',
@@ -201,7 +201,7 @@ def insert_events(db):
 
     # Check disconnections
     mylog("debug", "[Events] - 3 - Disconnections")
-    sql.execute(f"""INSERT INTO Events (eve_MAC, eve_IP, eve_DateTime,
+    sql.execute(f"""INSERT OR IGNORE INTO Events (eve_MAC, eve_IP, eve_DateTime,
                         eve_EventType, eve_AdditionalInfo,
                         eve_PendingAlertEmail)
                     SELECT devMac, devLastIP, '{startTime}', 'Disconnected', '',
@@ -215,7 +215,7 @@ def insert_events(db):
 
     # Check IP Changed
     mylog("debug", "[Events] - 4 - IP Changes")
-    sql.execute(f"""INSERT INTO Events (eve_MAC, eve_IP, eve_DateTime,
+    sql.execute(f"""INSERT OR IGNORE INTO Events (eve_MAC, eve_IP, eve_DateTime,
                         eve_EventType, eve_AdditionalInfo,
                         eve_PendingAlertEmail)
                     SELECT scanMac, scanLastIP, '{startTime}', 'IP Changed',

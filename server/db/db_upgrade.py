@@ -242,6 +242,23 @@ def ensure_Indexes(sql) -> bool:
     Parameters:
     - sql: database cursor or connection wrapper (must support execute()).
     """
+
+    # Remove after 12/12/2026 - prevens idx_events_unique from failing - dedupe
+    clean_duplicate_events = """
+                                DELETE FROM Events
+                                    WHERE rowid NOT IN (
+                                        SELECT MIN(rowid)
+                                        FROM Events
+                                        GROUP BY
+                                            eve_MAC,
+                                            eve_IP,
+                                            eve_EventType,
+                                            eve_DateTime
+                                    );
+                            """
+
+    sql.execute(clean_duplicate_events)
+
     indexes = [
         # Sessions
         (
@@ -268,6 +285,10 @@ def ensure_Indexes(sql) -> bool:
         (
             "idx_eve_type_date",
             "CREATE INDEX idx_eve_type_date ON Events(eve_EventType, eve_DateTime)",
+        ),
+        (
+            "idx_events_unique",
+            "CREATE UNIQUE INDEX idx_events_unique ON Events (eve_MAC, eve_IP, eve_EventType, eve_DateTime)",
         ),
         # Devices
         ("idx_dev_mac", "CREATE INDEX idx_dev_mac ON Devices(devMac)"),

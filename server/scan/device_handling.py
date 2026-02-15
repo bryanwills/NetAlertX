@@ -606,7 +606,7 @@ def create_new_devices(db):
 
     mylog("debug", '[New Devices] Insert "New Device" Events')
     query_new_device_events = f"""
-    INSERT INTO Events (
+    INSERT OR IGNORE INTO Events  (
         eve_MAC, eve_IP, eve_DateTime,
         eve_EventType, eve_AdditionalInfo,
         eve_PendingAlertEmail
