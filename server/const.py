@@ -56,7 +56,7 @@ default_tz = "Europe/Berlin"
 NULL_EQUIVALENTS = ["", "null", "(unknown)", "(Unknown)", "(name not found)"]
 
 # Convert list to SQL string: wrap each value in single quotes and escape single quotes if needed
-NULL_EQUIVALENTS_SQL = ",".join(f"'{v.replace('\'', '\'\'')}'" for v in NULL_EQUIVALENTS)
+NULL_EQUIVALENTS_SQL = ",".join("'" + v.replace("'", "''") + "'" for v in NULL_EQUIVALENTS)
 
 
 # ===============================================================================
