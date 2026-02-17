@@ -12,7 +12,11 @@ var timerRefreshData = ''
 
 var   emptyArr      = ['undefined', "", undefined, null, 'null'];
 var   UI_LANG       = "English (en_us)";
-const allLanguages  = ["ar_ar","ca_ca","cs_cz","de_de","en_us","es_es","fa_fa","fr_fr","it_it","ja_jp","nb_no","pl_pl","pt_br","pt_pt","ru_ru","sv_sv","tr_tr","uk_ua","zh_cn"]; // needs to be same as in lang.php
+const allLanguages  = ["ar_ar","ca_ca","cs_cz","de_de",
+                       "en_us","es_es","fa_fa","fr_fr",
+                       "it_it","ja_jp","nb_no","pl_pl",
+                       "pt_br","pt_pt","ru_ru","sv_sv",
+                       "tr_tr","uk_ua","vi_vn","zh_cn"]; // needs to be same as in lang.php
 var   settingsJSON  = {}
 
 
@@ -364,6 +368,9 @@ function getLangCode() {
       case 'Ukrainian (uk_uk)':
         lang_code = 'uk_ua';
         break;
+      case 'Vietnamese (vi_vn)':
+        lang_code = 'vi_vn';
+        break;
     }
 
     return lang_code;
@@ -447,6 +454,7 @@ function localizeTimestamp(input) {
   return formatSafe(input, tz);
 
   function formatSafe(str, tz) {
+
     // CHECK: Does the input string have timezone information?
     // - Ends with Z: "2026-02-11T11:37:02Z"
     // - Has GMT±offset: "Wed Feb 11 2026 12:34:12 GMT+1100 (...)"

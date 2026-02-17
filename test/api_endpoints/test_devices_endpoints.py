@@ -159,9 +159,13 @@ def test_devices_totals(client, api_token, test_mac):
     # 3. Ensure the response is a JSON list
     data = resp.json
     assert isinstance(data, list)
-    assert len(data) ==  len(get_device_conditions())  # devices, connected, favorites, new, down, archived
 
-    # 4. Check that at least 1 device exists
+    # 4. Dynamically get expected length
+    conditions = get_device_conditions()
+    expected_length = len(conditions)
+    assert len(data) == expected_length
+
+    # 5. Check that at least 1 device exists
     assert data[0] >= 1  # 'devices' count includes the dummy device
 
 
