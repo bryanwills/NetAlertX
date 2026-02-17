@@ -8,6 +8,7 @@ import pytest
 
 from helper import get_setting_value
 from api_server.api_server_start import app
+from db.db_helper import get_device_conditions
 
 
 @pytest.fixture(scope="session")
@@ -158,7 +159,7 @@ def test_devices_totals(client, api_token, test_mac):
     # 3. Ensure the response is a JSON list
     data = resp.json
     assert isinstance(data, list)
-    assert len(data) == 6  # devices, connected, favorites, new, down, archived
+    assert len(data) ==  len(get_device_conditions())  # devices, connected, favorites, new, down, archived
 
     # 4. Check that at least 1 device exists
     assert data[0] >= 1  # 'devices' count includes the dummy device
