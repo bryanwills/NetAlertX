@@ -536,6 +536,12 @@ class DeviceInstance:
         normalized_mac = normalize_mac(mac)
         normalized_parent_mac = normalize_mac(data.get("devParentMAC") or "")
 
+        if normalized_mac == normalized_parent_mac:
+            return {
+                "success": False,
+                "error": "Can't set current node as the node parent."
+            }
+
         fields_updated_by_set_device_data = {
             "devName",
             "devOwner",

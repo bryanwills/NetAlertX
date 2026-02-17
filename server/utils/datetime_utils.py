@@ -47,6 +47,33 @@ def timeNowUTC(as_string=True):
     return utc_now.strftime(DATETIME_PATTERN) if as_string else utc_now
 
 
+def timeNowTZ(as_string=True):
+    """
+    Return the current time in the configured local timezone.
+    Falls back to UTC if conf.tz is invalid or missing.
+    """
+    # Get canonical UTC time
+    utc_now = timeNowUTC(as_string=False)
+
+    # Resolve timezone safely
+    tz = None
+    try:
+        if isinstance(conf.tz, datetime.tzinfo):
+            tz = conf.tz
+        elif isinstance(conf.tz, str) and conf.tz:
+            tz = ZoneInfo(conf.tz)
+    except Exception:
+        tz = None
+
+    if tz is None:
+        tz = datetime.UTC  # fallback to UTC
+
+    # Convert to local timezone (or UTC fallback)
+    local_now = utc_now.astimezone(tz)
+
+    return local_now.strftime(DATETIME_PATTERN) if as_string else local_now
+
+
 def get_timezone_offset():
     if conf.tz:
         now = timeNowUTC(as_string=False).astimezone(conf.tz)

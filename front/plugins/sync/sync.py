@@ -269,7 +269,6 @@ def main():
 # Data retrieval methods
 api_endpoints = [
     "/sync",  # New Python-based endpoint
-    "/plugins/sync/hub.php"  # Legacy PHP endpoint
 ]
 
 

@@ -479,7 +479,12 @@ function setDeviceData(direction = '', refreshCallback = '') {
       if (resp && resp.success) {
         showMessage(getString("Device_Saved_Success"));
       } else {
-        showMessage(getString("Device_Saved_Unexpected"));
+
+        console.log(resp);
+
+        errorMessage = resp?.error;
+
+        showMessage(`${getString("Device_Saved_Unexpected")}: ${errorMessage}`, 5000, "modal_red");
       }
 
       // Remove navigation prompt
