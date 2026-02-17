@@ -1955,7 +1955,7 @@ def check_health(payload=None):
         return jsonify({
             "success": False,
             "error": "Failed to retrieve health status",
-            "message": str(e)
+            "message": "Internal server error"
         }), 500
 
 

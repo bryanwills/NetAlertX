@@ -673,9 +673,9 @@ class HealthCheckResponse(BaseResponse):
     )
 
     db_size_mb: float = Field(..., description="Database size in MB (app.db + app.db-wal)")
-    mem_usage_pct: int = Field(..., ge=0, le=100, description="Memory usage percentage (0-100)")
+    mem_usage_pct: Optional[int] = Field(None, ge=0, le=100, description="Memory usage percentage (0-100, nullable if unavailable)")
     load_1m: float = Field(..., description="1-minute load average")
-    storage_pct: int = Field(..., ge=0, le=100, description="Disk usage percentage of /data mount (0-100)")
+    storage_pct: Optional[int] = Field(None, ge=0, le=100, description="Disk usage percentage of /data mount (0-100, nullable if unavailable)")
     cpu_temp: Optional[int] = Field(None, description="CPU temperature in Celsius (nullable if unavailable)")
 
 

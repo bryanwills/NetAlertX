@@ -44,7 +44,7 @@ def get_mem_usage_pct():
     Calculate memory usage percentage (used / total * 100).
 
     Returns:
-        int: Memory usage as integer percentage (0-100), or -1 on error.
+        int: Memory usage as integer percentage (0-100), or None on error.
     """
     try:
         vm = psutil.virtual_memory()
@@ -52,12 +52,7 @@ def get_mem_usage_pct():
         return max(0, min(100, pct))  # Clamp to 0-100
     except Exception as e:
         mylog("verbose", [f"[health] Error calculating memory usage: {e}"])
-        return -1
-
-
-# ===============================================================================
-# System Stress
-# ===============================================================================
+        return None
 
 def get_load_avg_1m():
     """
@@ -83,7 +78,7 @@ def get_storage_pct():
     Calculate disk usage percentage of /data mount.
 
     Returns:
-        int: Disk usage as integer percentage (0-100), or -1 on error.
+        int: Disk usage as integer percentage (0-100), or None on error.
     """
     try:
         stat = os.statvfs(dataPath)
@@ -93,12 +88,7 @@ def get_storage_pct():
         return max(0, min(100, pct))  # Clamp to 0-100
     except Exception as e:
         mylog("verbose", [f"[health] Error calculating storage usage: {e}"])
-        return -1
-
-
-# ===============================================================================
-# Thermal Health
-# ===============================================================================
+        return None
 
 def get_cpu_temp():
     """
