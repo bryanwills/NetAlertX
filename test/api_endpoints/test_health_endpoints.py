@@ -82,6 +82,8 @@ def test_health_response_structure(client, api_token):
     assert "load_1m" in data
     assert "storage_pct" in data
     assert "cpu_temp" in data
+    assert "storage_gb" in data
+    assert "mem_mb" in data
 
 
 def test_health_db_size_type(client, api_token):
@@ -204,6 +206,8 @@ def test_health_multiple_calls_consistency(client, api_token):
         assert "load_1m" in data
         assert "storage_pct" in data
         assert "cpu_temp" in data
+        assert "storage_gb" in data
+        assert "mem_mb" in data
 
 
 # ========================================================================

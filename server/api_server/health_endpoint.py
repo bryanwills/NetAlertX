@@ -54,6 +54,7 @@ def get_mem_usage_pct():
         mylog("verbose", [f"[health] Error calculating memory usage: {e}"])
         return None
 
+
 def get_load_avg_1m():
     """
     Get 1-minute load average.
@@ -90,6 +91,7 @@ def get_storage_pct():
         mylog("verbose", [f"[health] Error calculating storage usage: {e}"])
         return None
 
+
 def get_cpu_temp():
     """
     Get CPU temperature from hardware sensors if available.
@@ -117,6 +119,42 @@ def get_cpu_temp():
         return None
 
 
+def get_mem_mb():
+    """
+    Get total system memory in MB.
+
+    Returns:
+        int: Total memory in MB, or None on error.
+    """
+    try:
+        vm = psutil.virtual_memory()
+        total_mb = int(vm.total / (1024 * 1024))
+        return total_mb
+
+    except Exception as e:
+        mylog("verbose", [f"[health] Error getting memory size: {e}"])
+        return None
+
+
+def get_storage_gb():
+    """
+    Get total storage size of /data in GB.
+
+    Returns:
+        float: Total storage in GB, or None on error.
+    """
+    try:
+        stat = os.statvfs(dataPath)
+        total = stat.f_blocks * stat.f_frsize
+
+        gb = round(total / (1024 ** 3), 2)
+        return gb
+
+    except Exception as e:
+        mylog("verbose", [f"[health] Error getting storage size: {e}"])
+        return None
+
+
 # ===============================================================================
 # Aggregator
 # ===============================================================================
@@ -134,4 +172,6 @@ def get_health_status():
         "load_1m": get_load_avg_1m(),
         "storage_pct": get_storage_pct(),
         "cpu_temp": get_cpu_temp(),
+        "storage_gb": get_storage_gb(),
+        "mem_mb": get_mem_mb(),
     }
