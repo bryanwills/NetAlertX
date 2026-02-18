@@ -22,6 +22,5 @@ python-nmap
 dnspython
 librouteros
 yattag
-zeroconf
-psutil
+zeroconf 
 git+https://github.com/foreign-sub/aiofreepybox.git

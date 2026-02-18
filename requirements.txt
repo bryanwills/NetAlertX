@@ -32,5 +32,4 @@ httplib2
 gunicorn
 git+https://github.com/foreign-sub/aiofreepybox.git
 mcp
-psutil
 pydantic>=2.0,<3.0
