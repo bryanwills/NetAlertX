@@ -27,7 +27,7 @@
     "AppEvents_ObjectType": "Тип объекта",
     "AppEvents_Plugin": "Плагин",
     "AppEvents_Type": "Тип",
-    "BACKEND_API_URL_description": "Используется для создания URL-адресов серверного API. Укажите, используете ли вы обратный прокси-сервер для сопоставления с вашим <code>GRAPHQL_PORT</code>. Введите полный URL-адрес, начинающийся с <code>http://</code>, включая номер порта (без косой черты <code>/</code>).",
+    "BACKEND_API_URL_description": "Используется для обеспечения связи между фронтендом и бэкендом.  По умолчанию это значение установлено на <code>/server</code> и, как правило, не должно изменяться.",
     "BACKEND_API_URL_name": "URL-адрес серверного API",
     "BackDevDetail_Actions_Ask_Run": "Вы хотите выполнить действие?",
     "BackDevDetail_Actions_Not_Registered": "Действие не зарегистрировано:· ",
