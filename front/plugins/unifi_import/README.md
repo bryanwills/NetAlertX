@@ -11,7 +11,7 @@ Specify the following settings in the Settings section of NetAlertX:
 - `UNFIMP_host` - Host URL or IP address where the UNIFI controller is hosted (excluding `http://`)
 - `UNFIMP_sites` - Name of the sites (usually 'default', check the URL in your UniFi controller UI if unsure. The site id is in the following part of the URL: `https://192.168.1.1:8443/manage/site/this-is-the-site-id/settings/`).
 - `UNFIMP_protocol` - https:// or http://
-- `UNFIMP_port` - Usually `8443`, `8843`, or `443` (UPSTREAM BUG: Setting `UNFIMP_version='UDMP-unifiOS'` will force `443` see [#1524](https://github.com/netalertx/NetAlertX/issues/1524))
+- `UNFIMP_port` - Usually `8443`, `8843`, or `443` (UPSTREAM BUG: Setting `UNFIMP_version='UDMP-unifiOS'` will force `443` see [#1524](https://github.com/netalertx/NetAlertX/issues/1524) or switch to the `UNIFIAPI` plugin)
 - `UNFIMP_version` - see below table for details
 
 
