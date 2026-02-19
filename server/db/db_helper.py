@@ -29,6 +29,7 @@ def get_device_conditions():
         "unknown": f"WHERE devIsArchived=0 AND devName in ({NULL_EQUIVALENTS_SQL})",
         "known": f"WHERE devIsArchived=0 AND devName not in ({NULL_EQUIVALENTS_SQL})",
         "favorites_offline": "WHERE devIsArchived=0 AND devFavorite=1 AND devPresentLastScan=0",
+        "new_online": "WHERE devIsArchived=0 AND devIsNew=1 AND devPresentLastScan=0",
     }
 
     return conditions
