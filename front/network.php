@@ -570,8 +570,8 @@ function getChildren(node, list, path, visited = [])
     // Loop through all items to find children of the current node
     for (var i in list) {
       const item = list[i];
-      const parentMac = item.devParentMAC.toLowerCase() || "";       // null-safe
-      const nodeMac = node.devMac.toLowerCase() || "";               // null-safe
+      const parentMac = item.devParentMAC?.toLowerCase() || "";       // null-safe
+      const nodeMac = node.devMac?.toLowerCase() || "";               // null-safe
 
       if (parentMac != "" && parentMac == nodeMac && !hiddenMacs.includes(parentMac)) {
 
