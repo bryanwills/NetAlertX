@@ -1,3 +1,4 @@
+CREATE TABLE sqlite_stat1(tbl,idx,stat);
 CREATE TABLE Events (eve_MAC STRING (50) NOT NULL COLLATE NOCASE, eve_IP STRING (50) NOT NULL COLLATE NOCASE, eve_DateTime DATETIME NOT NULL, eve_EventType STRING (30) NOT NULL COLLATE NOCASE, eve_AdditionalInfo STRING (250) DEFAULT (''), eve_PendingAlertEmail BOOLEAN NOT NULL CHECK (eve_PendingAlertEmail IN (0, 1)) DEFAULT (1), eve_PairEventRowid INTEGER);
 CREATE TABLE Sessions (ses_MAC STRING (50) COLLATE NOCASE, ses_IP STRING (50) COLLATE NOCASE, ses_EventTypeConnection STRING (30) COLLATE NOCASE, ses_DateTimeConnection DATETIME, ses_EventTypeDisconnection STRING (30) COLLATE NOCASE, ses_DateTimeDisconnection DATETIME, ses_StillConnected BOOLEAN, ses_AdditionalInfo STRING (250));
 CREATE TABLE IF NOT EXISTS "Online_History" (
@@ -10,6 +11,7 @@ CREATE TABLE IF NOT EXISTS "Online_History" (
             "Offline_Devices" INTEGER,
             PRIMARY KEY("Index" AUTOINCREMENT)
           );
+CREATE TABLE sqlite_sequence(name,seq);
 CREATE TABLE Devices (
               devMac STRING (50) PRIMARY KEY NOT NULL COLLATE NOCASE,
               devName STRING (50) NOT NULL DEFAULT "(unknown)",
@@ -22,6 +24,10 @@ CREATE TABLE Devices (
               devFirstConnection DATETIME NOT NULL,
               devLastConnection DATETIME NOT NULL,
               devLastIP STRING (50) NOT NULL COLLATE NOCASE,
+              devPrimaryIPv4 TEXT,
+              devPrimaryIPv6 TEXT,
+              devVlan TEXT,
+              devForceStatus TEXT,
               devStaticIP BOOLEAN DEFAULT (0) NOT NULL CHECK (devStaticIP IN (0, 1)),
               devScan INTEGER DEFAULT (1) NOT NULL,
               devLogEvents BOOLEAN NOT NULL DEFAULT (1) CHECK (devLogEvents IN (0, 1)),
@@ -42,7 +48,17 @@ CREATE TABLE Devices (
               devSSID TEXT,
               devSyncHubNode TEXT,
               devSourcePlugin TEXT,
-			  devFQDN TEXT,
+              devFQDN TEXT,
+              devMacSource TEXT,
+              devNameSource TEXT,
+              devFQDNSource TEXT,
+              devLastIPSource TEXT,
+              devVendorSource TEXT,
+              devSSIDSource TEXT,
+              devParentMACSource TEXT,
+              devParentPortSource TEXT,
+              devParentRelTypeSource TEXT,
+              devVlanSource TEXT,
               "devCustomProps" TEXT);
 CREATE TABLE IF NOT EXISTS "Settings" (
             "setKey"            TEXT,
@@ -56,8 +72,8 @@ CREATE TABLE IF NOT EXISTS "Settings" (
             "setOverriddenByEnv" INTEGER
             );
 CREATE TABLE IF NOT EXISTS "Parameters" (
-            "par_ID" TEXT PRIMARY KEY,
-            "par_Value" TEXT
+            "parID" TEXT PRIMARY KEY,
+            "parValue" TEXT
           );
 CREATE TABLE Plugins_Objects(
                                     "Index"               INTEGER,
@@ -145,6 +161,7 @@ CREATE TABLE CurrentScan (
                                 scanSyncHubNode STRING(50),
                                 scanSite STRING(250),
                                 scanSSID STRING(250),
+                                scanVlan STRING(250),
                                 scanParentMAC STRING(250),
                                 scanParentPort STRING(250),
                                 scanType STRING(250),
@@ -203,6 +220,13 @@ CREATE INDEX IDX_dev_Favorite ON Devices (devFavorite);
 CREATE INDEX IDX_dev_LastIP ON Devices (devLastIP);
 CREATE INDEX IDX_dev_NewDevice ON Devices (devIsNew);
 CREATE INDEX IDX_dev_Archived ON Devices (devIsArchived);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_events_unique
+ON Events (
+    eve_MAC,
+    eve_IP,
+    eve_EventType,
+    eve_DateTime
+);
 CREATE VIEW Events_Devices AS
                             SELECT *
                             FROM Events

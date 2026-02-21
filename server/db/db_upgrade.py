@@ -378,8 +378,8 @@ def ensure_Parameters(sql) -> bool:
 
     sql.execute("""
           CREATE TABLE "Parameters" (
-            "par_ID" TEXT PRIMARY KEY,
-            "par_Value"	TEXT
+            "parID" TEXT PRIMARY KEY,
+            "parValue"	TEXT
           );
           """)
 
