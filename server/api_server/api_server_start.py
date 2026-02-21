@@ -728,7 +728,7 @@ def api_export_devices(format=None, payload=None):
     operation_id="import_devices",
     summary="Import Devices",
     description="Import devices from CSV or JSON content.",
-    request_model=DeviceImportRequest,
+    request_model=None,
     response_model=DeviceImportResponse,
     tags=["devices"],
     auth_callable=is_authorized,
