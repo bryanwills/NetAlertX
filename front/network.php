@@ -570,10 +570,10 @@ function getChildren(node, list, path, visited = [])
     // Loop through all items to find children of the current node
     for (var i in list) {
       const item = list[i];
-      const parentMac = item.devParentMAC || "";       // null-safe
-      const nodeMac = node.devMac || "";               // null-safe
+      const parentMac = item.devParentMAC.toLowerCase() || "";       // null-safe
+      const nodeMac = node.devMac.toLowerCase() || "";               // null-safe
 
-      if (parentMac != "" && parentMac.toLowerCase() == nodeMac.toLowerCase() && !hiddenMacs.includes(parentMac)) {
+      if (parentMac != "" && parentMac == nodeMac && !hiddenMacs.includes(parentMac)) {
 
         visibleNodesCount++;
 
@@ -653,6 +653,8 @@ function getHierarchy()
 function toggleSubTree(parentMac, treePath)
 {
   treePath = treePath.split('|')
+
+  parentMac = parentMac.toLowerCase()
 
   if(!hiddenMacs.includes(parentMac))
   {
