@@ -1516,6 +1516,9 @@
     },
     {
       "function": "devSSID",
+      "events": [
+        "add_option"
+      ],
       "type": {
         "dataType": "string",
         "elements": [
@@ -1599,6 +1602,9 @@
     },
     {
       "function": "devVlan",
+      "events": [
+        "add_option"
+      ],
       "type": {
         "dataType": "string",
         "elements": [

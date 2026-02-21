@@ -611,6 +611,7 @@ function getChildren(node, list, path, visited = [])
         hasChildren: children.length > 0 || hiddenMacs.includes(node.devMac),
         relType: node.devParentRelType,
         devVlan: node.devVlan,
+        devSSID: node.devSSID,
         hiddenChildren: hiddenMacs.includes(node.devMac),
         qty: children.length,
         children: children
@@ -890,12 +891,18 @@ function initTree(myHierarchy)
       linkLabel: {
       render: (parent, child) => {
         // Return text or HTML to display on the connection line
-        return child.data.devVlan ?? "";
+        connectionLabel = (child?.data.devVlan ?? "") + "/" + (child?.data.devSSID ?? "");
+        if(connectionLabel == "/")
+        {
+          connectionLabel = "";
+        }
+
+        return connectionLabel;
         // or with HTML:
         // return "<tspan><strong>reports to</strong></tspan>";
       },
       color: "#336c87ff",      // Label text color (optional)
-      fontSize: 11           // Label font size in px (optional)
+      fontSize: nodeHeightPx - 5           // Label font size in px (optional)
     },
       linkWidth: (nodeData) => 2,
       linkColor: (nodeData) => {
