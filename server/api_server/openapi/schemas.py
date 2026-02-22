@@ -1034,8 +1034,6 @@ class GetSettingResponse(BaseResponse):
 # =============================================================================
 # GRAPHQL SCHEMAS
 # =============================================================================
-
-
 class GraphQLRequest(BaseModel):
     """Request payload for GraphQL queries."""
     query: str = Field(..., description="GraphQL query string", json_schema_extra={"examples": ["{ devices { devMac devName } }"]})

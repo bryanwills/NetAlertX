@@ -75,7 +75,7 @@ from .openapi.schemas import (  # noqa: E402 [flake8 lint suppression]
     BaseResponse, DeviceTotalsResponse,
     DeviceTotalsNamedResponse,
     EventsTotalsNamedResponse,
-    DeleteDevicesRequest, DeviceImportRequest,
+    DeleteDevicesRequest,
     DeviceImportResponse, UpdateDeviceColumnRequest,
     LockDeviceFieldRequest, UnlockDeviceFieldsRequest,
     CopyDeviceRequest, TriggerScanRequest,
@@ -94,7 +94,7 @@ from .openapi.schemas import (  # noqa: E402 [flake8 lint suppression]
     DbQueryRequest, DbQueryResponse,
     DbQueryUpdateRequest, DbQueryDeleteRequest,
     AddToQueueRequest, GetSettingResponse,
-    RecentEventsRequest, SetDeviceAliasRequest
+    RecentEventsRequest, SetDeviceAliasRequest,
 )
 
 from .sse_endpoint import (  # noqa: E402 [flake8 lint suppression]
@@ -1931,6 +1931,9 @@ def sync_endpoint_post(payload=None):
 def check_auth(payload=None):
     if request.method == "GET":
         return jsonify({"success": True, "message": "Authentication check successful"}), 200
+
+
+# Remember Me is now implemented via cookies only (no API endpoints required)
 
 
 # --------------------------
