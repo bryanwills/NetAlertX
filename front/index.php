@@ -87,32 +87,6 @@ function login_user(): void {
     session_regenerate_id(true);
 }
 
-function is_https_request(): bool {
-
-    // Direct HTTPS detection
-    if (!empty($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) !== 'off') {
-        return true;
-    }
-
-    // Standard port check
-    if (!empty($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == 443) {
-        return true;
-    }
-
-    // Trusted proxy headers (only valid if behind a trusted reverse proxy)
-    if (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) &&
-        strtolower($_SERVER['HTTP_X_FORWARDED_PROTO']) === 'https') {
-        return true;
-    }
-
-    if (!empty($_SERVER['HTTP_X_FORWARDED_SSL']) &&
-        strtolower($_SERVER['HTTP_X_FORWARDED_SSL']) === 'on') {
-        return true;
-    }
-
-    return false;
-}
-
 
 function logout_user(): void {
     $_SESSION = [];
