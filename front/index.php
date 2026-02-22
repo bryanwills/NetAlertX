@@ -113,52 +113,6 @@ function is_https_request(): bool {
     return false;
 }
 
-function call_api(string $endpoint, array $data = []): ?array {
-    /*
-    Call NetAlertX API endpoint (for login page endpoints that don't require auth).
-
-    Returns: JSON response as array, or null on failure
-    */
-    try {
-        // Determine API host (assume localhost on same port as frontend)
-        $api_host = $_SERVER['HTTP_HOST'] ?? 'localhost';
-        $api_scheme = is_https_request() ? 'https' : 'http';
-        $api_url = $api_scheme . '://' . $api_host;
-
-        $url = $api_url . $endpoint;
-
-        $ch = curl_init($url);
-        if (!$ch) return null;
-
-        curl_setopt_array($ch, [
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_TIMEOUT => 5,
-            CURLOPT_FOLLOWLOCATION => false,
-            CURLOPT_HTTPHEADER => [
-                'Content-Type: application/json',
-                'Accept: application/json'
-            ]
-        ]);
-
-        if (!empty($data)) {
-            curl_setopt($ch, CURLOPT_POST, true);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
-        }
-
-        $response = curl_exec($ch);
-        $httpcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
-
-        if ($httpcode !== 200 || !$response) {
-            return null;
-        }
-
-        return json_decode($response, true);
-    } catch (Exception $e) {
-        return null;
-    }
-}
-
 
 function logout_user(): void {
     $_SESSION = [];
@@ -198,10 +152,6 @@ if (!empty($_POST['loginpassword'])) {
         safe_redirect(append_hash($redirectTo));
     }
 }
-
-/* =====================================================
-   Remember Me Validation
-===================================================== */
 
 /* =====================================================
    Already Logged In
