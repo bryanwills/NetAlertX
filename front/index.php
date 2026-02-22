@@ -13,7 +13,6 @@ require_once $_SERVER['DOCUMENT_ROOT'].'/php/templates/security.php';
 
 session_start();
 
-const COOKIE_NAME = 'NetAlertX_SaveLogin';
 const DEFAULT_REDIRECT = '/devices.php';
 
 /* =====================================================
@@ -42,9 +41,39 @@ function validate_local_path(?string $encoded): string {
     return $decoded;
 }
 
+function extract_hash_from_path(string $path): array {
+    /*
+    Split a path into path and hash components.
+    
+    For deep links encoded in the 'next' parameter like /devices.php#device-123,
+    extract the hash fragment so it can be properly included in the redirect.
+    
+    Args:
+        path: Full path potentially with hash (e.g., "/devices.php#device-123")
+    
+    Returns:
+        Array with keys 'path' (without hash) and 'hash' (with # prefix, or empty string)
+    */
+    $parts = explode('#', $path, 2);
+    return [
+        'path' => $parts[0],
+        'hash' => !empty($parts[1]) ? '#' . $parts[1] : ''
+    ];
+}
+
 function append_hash(string $url): string {
+    // First check if the URL already has a hash from the deep link
+    $parts = extract_hash_from_path($url);
+    if (!empty($parts['hash'])) {
+        return $parts['path'] . $parts['hash'];
+    }
+    
+    // Fall back to POST url_hash (for browser-captured hashes)
     if (!empty($_POST['url_hash'])) {
-        return $url . preg_replace('/[^#a-zA-Z0-9_\-]/', '', $_POST['url_hash']);
+        $sanitized = preg_replace('/[^#a-zA-Z0-9_\-]/', '', $_POST['url_hash']);
+        if (str_starts_with($sanitized, '#')) {
+            return $url . $sanitized;
+        }
     }
     return $url;
 }
@@ -134,14 +163,6 @@ function call_api(string $endpoint, array $data = []): ?array {
 function logout_user(): void {
     $_SESSION = [];
     session_destroy();
-
-    setcookie(COOKIE_NAME,'',[
-        'expires'=>time()-3600,
-        'path'=>'/',
-        'secure'=>is_https_request(),
-        'httponly'=>true,
-        'samesite'=>'Strict'
-    ]);
 }
 
 /* =====================================================
@@ -173,28 +194,7 @@ if (!empty($_POST['loginpassword'])) {
 
         login_user();
 
-        // Handle "Remember Me" if checked
-        if (!empty($_POST['PWRemember'])) {
-            // Generate random token (64-byte hex = 128 chars, use 64 chars)
-            $token = bin2hex(random_bytes(32));
-
-            // Call API to save token hash to Parameters table
-            $save_response = call_api('/auth/remember-me/save', [
-                'token' => $token
-            ]);
-
-            // If API call successful, set persistent cookie
-            if ($save_response && isset($save_response['success']) && $save_response['success']) {
-                setcookie(COOKIE_NAME, $token, [
-                    'expires' => time() + 604800,
-                    'path' => '/',
-                    'secure' => is_https_request(),
-                    'httponly' => true,
-                    'samesite' => 'Strict'
-                ]);
-            }
-        }
-
+        // Redirect to target page, preserving deep link hash if present
         safe_redirect(append_hash($redirectTo));
     }
 }
@@ -202,20 +202,6 @@ if (!empty($_POST['loginpassword'])) {
 /* =====================================================
    Remember Me Validation
 ===================================================== */
-
-if (!is_authenticated() && !empty($_COOKIE[COOKIE_NAME])) {
-
-    // Call API to validate token against stored hash
-    $validate_response = call_api('/auth/validate-remember', [
-        'token' => $_COOKIE[COOKIE_NAME]
-    ]);
-
-    // If API returns valid token, authenticate and redirect
-    if ($validate_response && isset($validate_response['valid']) && $validate_response['valid'] === true) {
-        login_user();
-        safe_redirect(append_hash($redirectTo));
-    }
-}
 
 /* =====================================================
    Already Logged In
@@ -289,18 +275,7 @@ if ($nax_Password === '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923
         <span class="glyphicon glyphicon-lock form-control-feedback"></span>
       </div>
       <div class="row">
-        <div class="col-xs-8">
-          <div class="checkbox icheck">
-            <label>
-              <input type="checkbox" name="PWRemember">
-                <div style="margin-left: 10px; display: inline-block; vertical-align: top;">
-                  <?= lang('Login_Remember');?><br><span style="font-size: smaller"><?= lang('Login_Remember_small');?></span>
-                </div>
-            </label>
-          </div>
-        </div>
-        <!-- /.col -->
-        <div class="col-xs-4" style="padding-top: 10px;">
+        <div class="col-xs-12">
           <button type="submit" class="btn btn-primary btn-block btn-flat"><?= lang('Login_Submit');?></button>
         </div>
         <!-- /.col -->
