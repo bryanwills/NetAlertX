@@ -6,7 +6,6 @@ import os
 
 from flask import Flask, redirect, request, jsonify, url_for, Response
 from models.device_instance import DeviceInstance  # noqa: E402
-from models.parameters_instance import ParametersInstance  # noqa: E402
 from flask_cors import CORS
 from werkzeug.exceptions import HTTPException
 
@@ -76,7 +75,7 @@ from .openapi.schemas import (  # noqa: E402 [flake8 lint suppression]
     BaseResponse, DeviceTotalsResponse,
     DeviceTotalsNamedResponse,
     EventsTotalsNamedResponse,
-    DeleteDevicesRequest, DeviceImportRequest,
+    DeleteDevicesRequest,
     DeviceImportResponse, UpdateDeviceColumnRequest,
     LockDeviceFieldRequest, UnlockDeviceFieldsRequest,
     CopyDeviceRequest, TriggerScanRequest,
@@ -96,8 +95,6 @@ from .openapi.schemas import (  # noqa: E402 [flake8 lint suppression]
     DbQueryUpdateRequest, DbQueryDeleteRequest,
     AddToQueueRequest, GetSettingResponse,
     RecentEventsRequest, SetDeviceAliasRequest,
-    ValidateRememberRequest, ValidateRememberResponse,
-    SaveRememberRequest, SaveRememberResponse
 )
 
 from .sse_endpoint import (  # noqa: E402 [flake8 lint suppression]

@@ -1032,18 +1032,8 @@ class GetSettingResponse(BaseResponse):
 
 
 # =============================================================================
-# AUTH SCHEMAS (Remember Me)
-# =============================================================================
-
-
-# Remember Me schemas removed - Remember Me now uses cookies only (no API endpoints)
-
-
-# =============================================================================
 # GRAPHQL SCHEMAS
 # =============================================================================
-
-
 class GraphQLRequest(BaseModel):
     """Request payload for GraphQL queries."""
     query: str = Field(..., description="GraphQL query string", json_schema_extra={"examples": ["{ devices { devMac devName } }"]})
