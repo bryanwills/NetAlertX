@@ -338,7 +338,7 @@ class DeviceInstance:
         for key, condition in conditions.items():
             # Make sure the alias is SQL-safe (no spaces or special chars)
             alias = key.replace(" ", "_").lower()
-            sub_queries.append(f'(SELECT COUNT(*) FROM Devices {condition}) AS "{alias}"')
+            sub_queries.append(f'(SELECT COUNT(*) FROM DevicesView {condition}) AS "{alias}"')
 
         # Join all sub-selects with commas
         query = "SELECT\n    " + ",\n    ".join(sub_queries)
@@ -360,7 +360,7 @@ class DeviceInstance:
         for key, condition in conditions.items():
             # Make sure the alias is SQL-safe (no spaces or special chars)
             alias = key.replace(" ", "_").lower()
-            sub_queries.append(f'(SELECT COUNT(*) FROM Devices {condition}) AS "{alias}"')
+            sub_queries.append(f'(SELECT COUNT(*) FROM DevicesView {condition}) AS "{alias}"')
 
         # Join all sub-selects with commas
         query = "SELECT\n    " + ",\n    ".join(sub_queries)
@@ -381,7 +381,8 @@ class DeviceInstance:
         # Build condition for SQL
         condition = get_device_condition_by_status(status) if status else ""
 
-        query = f"SELECT * FROM Devices {condition}"
+        # Only DevicesView has devFlapping
+        query = f"SELECT * FROM DevicesView {condition}"
         sql.execute(query)
 
         table_data = []

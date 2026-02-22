@@ -100,6 +100,7 @@ class Device(ObjectType):
     devParentPortSource = String(description="Source tracking for devParentPort (USER, LOCKED, NEWDEV, or plugin prefix)")
     devParentRelTypeSource = String(description="Source tracking for devParentRelType (USER, LOCKED, NEWDEV, or plugin prefix)")
     devVlanSource = String(description="Source tracking for devVlan")
+    devFlapping = String(description="ndicates flapping device (device changing between online/offline states frequently)")
 
 
 class DeviceResult(ObjectType):
@@ -266,7 +267,7 @@ class Query(ObjectType):
                             filtered.append(device)
 
                     devices_data = filtered
-                # 🔻 START If you change anything here, also update get_device_condition_by_status
+                # 🔻 START If you change anything here, also update get_device_conditions
                 elif status == "connected":
                     devices_data = [
                         device
@@ -323,7 +324,25 @@ class Query(ObjectType):
                         for device in devices_data
                         if device["devType"] in network_dev_types and device["devPresentLastScan"] == 0 and device["devIsArchived"] == 0
                     ]
-                # 🔺 END If you change anything here, also update get_device_condition_by_status
+                elif status == "unstable_devices":
+                    devices_data = [
+                        device
+                        for device in devices_data
+                        if device["devIsArchived"] == 0 and device["devFlapping"] == 1
+                    ]
+                elif status == "unstable_favorites":
+                    devices_data = [
+                        device
+                        for device in devices_data
+                        if device["devIsArchived"] == 0 and device["devFavorite"] == 1 and device["devFlapping"] == 1
+                    ]
+                elif status == "unstable_network_devices":
+                    devices_data = [
+                        device
+                        for device in devices_data
+                        if device["devIsArchived"] == 0 and device["devType"] in network_dev_types and device["devFlapping"] == 1
+                    ]
+                # 🔺 END If you change anything here, also update get_device_conditions
                 elif status == "all_devices":
                     devices_data = devices_data  # keep all
 

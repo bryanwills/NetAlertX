@@ -218,6 +218,7 @@
     "Device_Shortcut_Favorites": "お気に入り",
     "Device_Shortcut_NewDevices": "新規デバイス",
     "Device_Shortcut_OnlineChart": "デバイス検出",
+    "Device_Shortcut_Unstable": "",
     "Device_TableHead_AlertDown": "ダウンアラート",
     "Device_TableHead_Connected_Devices": "接続",
     "Device_TableHead_CustomProps": "属性 / アクション",

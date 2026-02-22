@@ -220,6 +220,7 @@
     "Device_Shortcut_Favorites": "Favorito(s)",
     "Device_Shortcut_NewDevices": "Nuevos dispositivos",
     "Device_Shortcut_OnlineChart": "Presencia del dispositivo a lo largo del tiempo",
+    "Device_Shortcut_Unstable": "",
     "Device_TableHead_AlertDown": "Alerta desactivada",
     "Device_TableHead_Connected_Devices": "Conexiones",
     "Device_TableHead_CustomProps": "Propiedades / Acciones",

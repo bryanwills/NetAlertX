@@ -315,6 +315,9 @@
               <a href="devices.php#archived" onclick="forceLoadUrl('devices.php#archived')" >  <?= lang("Device_Shortcut_Archived");?> </a>
             </li>
             <li>
+              <a href="devices.php#unstable_devices" onclick="forceLoadUrl('devices.php#unstable_devices')" >  <?= lang("Device_Shortcut_Unstable");?> </a>
+            </li>
+            <li>
               <a href="devices.php#all_devices" onclick="forceLoadUrl('devices.php#all_devices')" >  <?= lang("Gen_All_Devices");?> </a>
             </li>
             <li>
