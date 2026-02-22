@@ -1,4 +1,3 @@
-CREATE TABLE sqlite_stat1(tbl,idx,stat);
 CREATE TABLE Events (eve_MAC STRING (50) NOT NULL COLLATE NOCASE, eve_IP STRING (50) NOT NULL COLLATE NOCASE, eve_DateTime DATETIME NOT NULL, eve_EventType STRING (30) NOT NULL COLLATE NOCASE, eve_AdditionalInfo STRING (250) DEFAULT (''), eve_PendingAlertEmail BOOLEAN NOT NULL CHECK (eve_PendingAlertEmail IN (0, 1)) DEFAULT (1), eve_PairEventRowid INTEGER);
 CREATE TABLE Sessions (ses_MAC STRING (50) COLLATE NOCASE, ses_IP STRING (50) COLLATE NOCASE, ses_EventTypeConnection STRING (30) COLLATE NOCASE, ses_DateTimeConnection DATETIME, ses_EventTypeDisconnection STRING (30) COLLATE NOCASE, ses_DateTimeDisconnection DATETIME, ses_StillConnected BOOLEAN, ses_AdditionalInfo STRING (250));
 CREATE TABLE IF NOT EXISTS "Online_History" (
@@ -11,7 +10,6 @@ CREATE TABLE IF NOT EXISTS "Online_History" (
             "Offline_Devices" INTEGER,
             PRIMARY KEY("Index" AUTOINCREMENT)
           );
-CREATE TABLE sqlite_sequence(name,seq);
 CREATE TABLE Devices (
               devMac STRING (50) PRIMARY KEY NOT NULL COLLATE NOCASE,
               devName STRING (50) NOT NULL DEFAULT "(unknown)",
