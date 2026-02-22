@@ -9,13 +9,11 @@ import os
 import time
 
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 
 # Add test directory to path
 sys.path.insert(0, os.path.dirname(__file__))
 
-from .test_helpers import BASE_URL, wait_for_page_load, wait_for_element_by_css  # noqa: E402
+from .test_helpers import BASE_URL, wait_for_page_load  # noqa: E402
 
 
 def get_login_password():
@@ -31,7 +29,6 @@ def get_login_password():
 
     # SHA256 hash of "password" - the default test password (from index.php)
     DEFAULT_PASSWORD_HASH = '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92'
-
 
     # Try common config file locations
     config_paths = [
@@ -56,7 +53,7 @@ def get_login_password():
 
                             # If it's the default, use the default password
                             if value == DEFAULT_PASSWORD_HASH:
-                                print(f"  Using default password: '123456'")
+                                print("  Using default password: '123456'")
                                 return "123456"
                             # If it's plaintext and looks reasonable
                             elif len(value) < 100 and not value.startswith('{') and value.isalnum():
@@ -69,7 +66,7 @@ def get_login_password():
             continue
 
     # If we couldn't determine the password from config, try default password
-    print(f"ℹ Password not determinable from config, trying default passwords...")
+    print("ℹ Password not determinable from config, trying default passwords...")
 
     # For now, return first test password to try
     # Tests will skip if login fails
@@ -201,11 +198,6 @@ def test_login_with_deep_link_to_network_page(driver):
 
     # Verify the hash fragment is preserved
     assert '#settings-panel' in current_url, f"Expected #settings-panel hash in URL, got {current_url}"
-
-
-
-
-
 
 
 def test_login_without_next_parameter(driver):
