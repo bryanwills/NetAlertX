@@ -44,13 +44,13 @@ function validate_local_path(?string $encoded): string {
 function extract_hash_from_path(string $path): array {
     /*
     Split a path into path and hash components.
-    
+
     For deep links encoded in the 'next' parameter like /devices.php#device-123,
     extract the hash fragment so it can be properly included in the redirect.
-    
+
     Args:
         path: Full path potentially with hash (e.g., "/devices.php#device-123")
-    
+
     Returns:
         Array with keys 'path' (without hash) and 'hash' (with # prefix, or empty string)
     */
@@ -67,7 +67,7 @@ function append_hash(string $url): string {
     if (!empty($parts['hash'])) {
         return $parts['path'] . $parts['hash'];
     }
-    
+
     // Fall back to POST url_hash (for browser-captured hashes)
     if (!empty($_POST['url_hash'])) {
         $sanitized = preg_replace('/[^#a-zA-Z0-9_\-]/', '', $_POST['url_hash']);

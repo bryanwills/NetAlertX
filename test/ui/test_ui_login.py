@@ -137,7 +137,7 @@ def test_login_redirects_to_devices(driver):
 
 def test_login_with_deep_link_preserves_hash(driver):
     """Test: Login with deep link (?next=...) preserves the URL fragment hash
-    
+
     When a user logs in from a deep link URL (e.g., ?next=base64(devices.php%23device-123)),
     they should be redirected to the target page with the hash fragment intact.
     """
@@ -162,7 +162,7 @@ def test_login_with_deep_link_preserves_hash(driver):
     # Check that we're on the right page with the hash preserved
     current_url = driver.current_url
     print(f"URL after login with deep link: {current_url}")
-    
+
     if '/devices.php' not in current_url:
         pytest.skip(f"Login failed or redirect not configured. URL: {current_url}")
 
@@ -172,7 +172,7 @@ def test_login_with_deep_link_preserves_hash(driver):
 
 def test_login_with_deep_link_to_network_page(driver):
     """Test: Login with deep link to network.php page preserves hash
-    
+
     User can login with a deep link to the network page (e.g., network.php#settings-panel),
     and should be redirected to that page with the hash fragment intact.
     """
@@ -197,7 +197,7 @@ def test_login_with_deep_link_to_network_page(driver):
     # Check that we're on the right page with the hash preserved
     current_url = driver.current_url
     print(f"URL after login with network.php deep link: {current_url}")
-    
+
     if '/network.php' not in current_url:
         pytest.skip(f"Login failed or redirect not configured. URL: {current_url}")
 
@@ -233,7 +233,7 @@ def test_login_without_next_parameter(driver):
 
 def test_url_hash_hidden_input_present(driver):
     """Test: URL fragment hash field is present in login form
-    
+
     The hidden url_hash input field is used to capture and preserve
     URL hash fragments during form submission and redirect.
     """
