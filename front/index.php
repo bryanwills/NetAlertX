@@ -84,6 +84,52 @@ function is_https_request(): bool {
     return false;
 }
 
+function call_api(string $endpoint, array $data = []): ?array {
+    /*
+    Call NetAlertX API endpoint (for login page endpoints that don't require auth).
+    
+    Returns: JSON response as array, or null on failure
+    */
+    try {
+        // Determine API host (assume localhost on same port as frontend)
+        $api_host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+        $api_scheme = is_https_request() ? 'https' : 'http';
+        $api_url = $api_scheme . '://' . $api_host;
+        
+        $url = $api_url . $endpoint;
+        
+        $ch = curl_init($url);
+        if (!$ch) return null;
+        
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT => 5,
+            CURLOPT_FOLLOWLOCATION => false,
+            CURLOPT_HTTPHEADER => [
+                'Content-Type: application/json',
+                'Accept: application/json'
+            ]
+        ]);
+        
+        if (!empty($data)) {
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+        }
+        
+        $response = curl_exec($ch);
+        $httpcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        
+        if ($httpcode !== 200 || !$response) {
+            return null;
+        }
+        
+        return json_decode($response, true);
+    } catch (Exception $e) {
+        return null;
+    }
+}
+
 
 function logout_user(): void {
     $_SESSION = [];
@@ -127,18 +173,26 @@ if (!empty($_POST['loginpassword'])) {
 
         login_user();
 
+        // Handle "Remember Me" if checked
         if (!empty($_POST['PWRemember'])) {
+            // Generate random token (64-byte hex = 128 chars, use 64 chars)
             $token = bin2hex(random_bytes(32));
 
-            $_SESSION['remember_token'] = hash('sha256',$token);
-
-            setcookie(COOKIE_NAME,$token,[
-                'expires'=>time()+604800,
-                'path'=>'/',
-                'secure'=>is_https_request(),
-                'httponly'=>true,
-                'samesite'=>'Strict'
+            // Call API to save token hash to Parameters table
+            $save_response = call_api('/auth/remember-me/save', [
+                'token' => $token
             ]);
+
+            // If API call successful, set persistent cookie
+            if ($save_response && isset($save_response['success']) && $save_response['success']) {
+                setcookie(COOKIE_NAME, $token, [
+                    'expires' => time() + 604800,
+                    'path' => '/',
+                    'secure' => is_https_request(),
+                    'httponly' => true,
+                    'samesite' => 'Strict'
+                ]);
+            }
         }
 
         safe_redirect(append_hash($redirectTo));
@@ -149,9 +203,15 @@ if (!empty($_POST['loginpassword'])) {
    Remember Me Validation
 ===================================================== */
 
-if (!is_authenticated() && !empty($_COOKIE[COOKIE_NAME]) && !empty($_SESSION['remember_token'])) {
+if (!is_authenticated() && !empty($_COOKIE[COOKIE_NAME])) {
 
-    if (hash_equals($_SESSION['remember_token'], hash('sha256',$_COOKIE[COOKIE_NAME]))) {
+    // Call API to validate token against stored hash
+    $validate_response = call_api('/auth/validate-remember', [
+        'token' => $_COOKIE[COOKIE_NAME]
+    ]);
+
+    // If API returns valid token, authenticate and redirect
+    if ($validate_response && isset($validate_response['valid']) && $validate_response['valid'] === true) {
         login_user();
         safe_redirect(append_hash($redirectTo));
     }

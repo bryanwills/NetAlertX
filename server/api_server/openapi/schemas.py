@@ -1032,6 +1032,89 @@ class GetSettingResponse(BaseResponse):
 
 
 # =============================================================================
+# AUTH SCHEMAS (Remember Me)
+# =============================================================================
+
+
+class ValidateRememberRequest(BaseModel):
+    """Request to validate a Remember Me token."""
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [{
+                "token": "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6a7b8c9d0e1f2"
+            }]
+        }
+    )
+
+    token: str = Field(
+        ...,
+        min_length=64,
+        max_length=128,
+        description="The unhashed Remember Me token from persistent cookie (hex-encoded binary)"
+    )
+
+
+class ValidateRememberResponse(BaseResponse):
+    """Response from Remember Me token validation."""
+    model_config = ConfigDict(
+        extra="allow",
+        json_schema_extra={
+            "examples": [{
+                "success": True,
+                "valid": True,
+                "message": "Token validation successful"
+            }, {
+                "success": True,
+                "valid": False,
+                "message": "Token validation failed"
+            }]
+        }
+    )
+
+    valid: bool = Field(
+        ...,
+        description="Whether the token is valid and matches stored hash"
+    )
+
+
+class SaveRememberRequest(BaseModel):
+    """Request to save a Remember Me token."""
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [{
+                "token": "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6a7b8c9d0e1f2"
+            }]
+        }
+    )
+
+    token: str = Field(
+        ...,
+        min_length=64,
+        max_length=128,
+        description="The unhashed Remember Me token to save (hex-encoded binary from bin2hex(random_bytes(32)))"
+    )
+
+
+class SaveRememberResponse(BaseResponse):
+    """Response from Remember Me token save operation."""
+    model_config = ConfigDict(
+        extra="allow",
+        json_schema_extra={
+            "examples": [{
+                "success": True,
+                "message": "Token saved successfully",
+                "token_id": "remember_me_token_550e8400-e29b-41d4-a716-446655440000"
+            }]
+        }
+    )
+
+    token_id: Optional[str] = Field(
+        None,
+        description="The parameter ID where token hash was stored (UUID-based)"
+    )
+
+
+# =============================================================================
 # GRAPHQL SCHEMAS
 # =============================================================================
 
