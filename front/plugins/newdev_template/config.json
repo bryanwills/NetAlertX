@@ -1516,18 +1516,30 @@
     },
     {
       "function": "devSSID",
+      "events": [
+        "add_option"
+      ],
       "type": {
         "dataType": "string",
         "elements": [
           {
-            "elementType": "input",
+            "elementType": "select",
             "elementOptions": [],
             "transformers": []
           }
         ]
       },
       "default_value": "",
-      "options": [],
+      "options": [
+        "{value}"
+      ],
+      "options_params": [
+        {
+          "name": "value",
+          "type": "sql",
+          "value": "SELECT DISTINCT '' as id, '❌None' as name UNION SELECT devSSID as id, devSSID as name FROM (SELECT devSSID FROM Devices) AS all_devices ORDER BY id;"
+        }
+      ],
       "localized": [
         "name",
         "description"
@@ -1590,11 +1602,14 @@
     },
     {
       "function": "devVlan",
+      "events": [
+        "add_option"
+      ],
       "type": {
         "dataType": "string",
         "elements": [
           {
-            "elementType": "input",
+            "elementType": "select",
             "elementOptions": [],
             "transformers": []
           }
@@ -1602,7 +1617,16 @@
       },
       "maxLength": 50,
       "default_value": "",
-      "options": [],
+       "options": [
+        "{value}"
+      ],
+      "options_params": [
+        {
+          "name": "value",
+          "type": "sql",
+          "value": "SELECT DISTINCT '' as id, '❌None' as name UNION SELECT devVlan as id, devVlan as name FROM (SELECT devVlan FROM Devices) AS all_devices ORDER BY id;"
+        }
+      ],
       "localized": [
         "name",
         "description"

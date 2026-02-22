@@ -69,7 +69,8 @@
   require 'php/templates/footer.php';
 ?>
 
-<script src="lib/treeviz/bundle.js"></script>
+<!-- <script src="lib/treeviz/bundle.js"></script> -->
+<script src="lib/treeviz/treeviz.iife.js"></script>
 
 <script defer>
 
@@ -388,7 +389,7 @@
     const normalized_mac = node_mac.toLowerCase();
 
     const sql = `
-      SELECT devName, devMac, devLastIP, devVendor, devPresentLastScan, devAlertDown, devParentPort,
+      SELECT devName, devMac, devLastIP, devVendor, devPresentLastScan, devAlertDown, devParentPort, devVlan,
         CASE
             WHEN devIsNew = 1 THEN 'New'
             WHEN devPresentLastScan = 1 THEN 'On-line'
@@ -569,10 +570,10 @@ function getChildren(node, list, path, visited = [])
     // Loop through all items to find children of the current node
     for (var i in list) {
       const item = list[i];
-      const parentMac = item.devParentMAC || "";       // null-safe
-      const nodeMac = node.devMac || "";               // null-safe
+      const parentMac = item.devParentMAC?.toLowerCase() || "";       // null-safe
+      const nodeMac = node.devMac?.toLowerCase() || "";               // null-safe
 
-      if (parentMac != "" && parentMac.toLowerCase() == nodeMac.toLowerCase() && !hiddenMacs.includes(parentMac)) {
+      if (parentMac != "" && parentMac == nodeMac && !hiddenMacs.includes(parentMac)) {
 
         visibleNodesCount++;
 
@@ -587,6 +588,8 @@ function getChildren(node, list, path, visited = [])
     } else {
         parentNodesCount++;
     }
+
+    // console.log(node);
 
     return {
         name: node.devName,
@@ -607,6 +610,8 @@ function getChildren(node, list, path, visited = [])
         alertDown: node.devAlertDown,
         hasChildren: children.length > 0 || hiddenMacs.includes(node.devMac),
         relType: node.devParentRelType,
+        devVlan: node.devVlan,
+        devSSID: node.devSSID,
         hiddenChildren: hiddenMacs.includes(node.devMac),
         qty: children.length,
         children: children
@@ -648,6 +653,8 @@ function getHierarchy()
 function toggleSubTree(parentMac, treePath)
 {
   treePath = treePath.split('|')
+
+  parentMac = parentMac.toLowerCase()
 
   if(!hiddenMacs.includes(parentMac))
   {
@@ -883,6 +890,22 @@ function initTree(myHierarchy)
       idKey: "mac",
       hasFlatData: false,
       relationnalField: "children",
+      linkLabel: {
+      render: (parent, child) => {
+        // Return text or HTML to display on the connection line
+        connectionLabel = (child?.data.devVlan ?? "") + "/" + (child?.data.devSSID ?? "");
+        if(connectionLabel == "/")
+        {
+          connectionLabel = "";
+        }
+
+        return connectionLabel;
+        // or with HTML:
+        // return "<tspan><strong>reports to</strong></tspan>";
+      },
+      color: "#336c87ff",      // Label text color (optional)
+      fontSize: nodeHeightPx - 5           // Label font size in px (optional)
+    },
       linkWidth: (nodeData) => 2,
       linkColor: (nodeData) => {
         relConf = getRelationshipConf(nodeData.data.relType)

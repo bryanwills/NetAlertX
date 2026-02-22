@@ -4,7 +4,7 @@ aiohttp
 graphene
 flask
 flask-cors
-unifi-sm-api
+unifi-sm-api>=0.2.3
 tplink-omada-client
 wakeonlan
 pycryptodome
@@ -22,5 +22,6 @@ python-nmap
 dnspython
 librouteros
 yattag
-zeroconf 
+zeroconf
+psutil
 git+https://github.com/foreign-sub/aiofreepybox.git
