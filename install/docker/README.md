@@ -40,8 +40,8 @@ The container uses `network_mode: host` by default. This is **required** for cor
 ### Environment Variables
 You can customize the application by editing the `environment` section in the compose file. Common overrides include:
 
-*   `TZ`: Timezone (mapped via `/etc/localtime`).
-*   `SCAN_SUBNETS`: Define specific subnets to scan if auto-detection fails (e.g., `192.168.1.0/24`).
+*   Timezone is controlled by the read-only `/etc/localtime` bind mount (do not use a `TZ` variable).
+*   `SCAN_SUBNETS`: Not present by default in the compose `environment` blocks. You must manually add it if you need to override subnet scanning (e.g., `192.168.1.0/24`).
 
 For a full list of environment variables and configuration options, see the [Customize with Environment Variables](https://docs.netalertx.com/DOCKER_COMPOSE/?h=environmental+variables#customize-with-environmental-variables) section in the documentation.
 

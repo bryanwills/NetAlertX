@@ -23,13 +23,13 @@ services:
         target: /etc/localtime
         read_only: true
     tmpfs:
-      - "/tmp:mode=1700,uid=0,gid=0,rw,noexec,nosuid,nodev,async,noatime,nodiratime"
+      - "/tmp:mode=1777,rw,noexec,nosuid,nodev,async,noatime,nodiratime"
     environment:
       PUID: ${NETALERTX_UID:-20211}
       PGID: ${NETALERTX_GID:-20211}
-      LISTEN_ADDR: ${LISTEN_ADDR:-0.0.0.0}
-      PORT: ${PORT:-20211}
-      GRAPHQL_PORT: ${GRAPHQL_PORT:-20212}
+      LISTEN_ADDR: ${NETALERTX_LISTEN_ADDR:-0.0.0.0}
+      PORT: ${NETALERTX_PORT:-20211}
+      GRAPHQL_PORT: ${NETALERTX_GRAPHQL_PORT:-20212}
     mem_limit: 2048m
     mem_reservation: 1024m
     cpu_shares: 512
