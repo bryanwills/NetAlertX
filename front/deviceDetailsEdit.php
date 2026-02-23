@@ -363,7 +363,7 @@ function getDeviceData() {
 
             generateSimpleForm(relevantSettings);
 
-            toggleNetworkConfiguration(mac == 'Internet')
+            toggleNetworkConfiguration(mac.toLowerCase() == 'internet')
 
             initSelect2();
             initHoverNodeInfo();

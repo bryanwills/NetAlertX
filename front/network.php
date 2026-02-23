@@ -630,7 +630,7 @@ function getHierarchy()
 
   for(i in deviceListGlobal)
   {
-    if(deviceListGlobal[i].devMac == 'Internet')
+    if(deviceListGlobal[i].devMac.toLowerCase() == 'internet')
     {
       internetNode = deviceListGlobal[i];
 
