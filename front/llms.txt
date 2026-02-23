@@ -45,4 +45,4 @@ Once connected, you can:
 ## 4. Important Notes
 - **UI Refresh:** When you modify data, tell the user to click the in-app refresh button (🔄) to see changes.
 - **REST API Fallback:** If MCP is unavailable, use the REST API at `http://<HOST>:<GRAPHQL_PORT>/openapi.json`. All calls must be made with `Authorization: Bearer <API_TOKEN>`. This page API is manual, relies on your abilities, and context-heavy so only use it as a last resort.
-- **Authentication:** The API token is distinct from the UI login password and must be obtained/changed in the frontend /settings.php
+- **Authentication:** The API token is distinct from the UI login password and must be obtained/changed in the frontend /settings.php.
