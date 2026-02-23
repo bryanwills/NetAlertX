@@ -1,5 +1,5 @@
 #!/bin/bash
-# 36-override-loaded-plugins.sh - Applies environment variable overrides to app.conf
+# 36-override-individual-settings.sh - Applies environment variable overrides to app.conf
 
 set -eu
 
