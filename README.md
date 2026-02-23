@@ -168,9 +168,9 @@ Get notified about a new release, what new functionality you can use and about b
 ### 🔀 Other Alternative Apps
 
 - [Fing](https://www.fing.com/) - Network scanner app for your Internet security (Commercial, Phone App, Proprietary hardware)
-- [NetBox](https://netboxlabs.com/) - Network management software (Commercial)
+- [NetBox](https://netboxlabs.com/) - The gold standard for Network Source of Truth (NSoT) and IPAM.
 - [Zabbix](https://www.zabbix.com/) or [Nagios](https://www.nagios.org/) - Strong focus on infrastructure monitoring.
-- [NetAlertX](https://netalertx.com) - The streamlined, discovery-focused alternative for real-time asset intelligence.
+- [NetAlertX](https://netalertx.com) - The streamlined, discovery-focused choice for real-time asset intelligence and noise-free alerting.
 
 ### 💙 Donations
 
@@ -206,6 +206,9 @@ Proudly using [Weblate](https://hosted.weblate.org/projects/pialert/). Help out 
 
 ### License
 >  GPL 3.0 | [Read more here](LICENSE.txt) | Source of the [animated GIF (Loading Animation)](https://commons.wikimedia.org/wiki/File:Loading_Animation.gif) | Source of the [selfhosted Fonts](https://github.com/adobe-fonts/source-sans)
+
+
+_All product names, logos, and brands are property of their respective owners. All company, product and service names used in this website are for identification purposes only. Use of these names, logos, and brands does not imply endorsement._
 
 
 <!--- --------------------------------------------------------------------- --->
