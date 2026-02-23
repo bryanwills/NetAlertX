@@ -3,7 +3,7 @@ To set up MCP access for your AI Agent:
 
 1. Tell it to "Please go here and set up MCP using HOST:BACKEND_PORT <link to this page>"
 -or-
-2. Copy and paste the contents of this page and let it know your 
+2. Copy and paste the contents of this page and let it know your HOST and API token. 
 
 
 
@@ -44,5 +44,5 @@ Once connected, you can:
 
 ## 4. Important Notes
 - **UI Refresh:** When you modify data, tell the user to click the in-app refresh button (🔄) to see changes.
-- **REST API Fallback:** If MCP is unavailable, use the REST API at `http://<HOST>:<GRAPHQL_PORT>/openapi.json`. All calls must be made with `Authorization: Bearer <API_TOKEN>`. This page API is manual, relies on your abilities, and context-heavy so only use it as a last resort.
-- **Authentication:** The API token is distinct from the UI login password and must be obtained/changed in the frontend /settings.php.
+- **REST API Fallback:** If MCP is unavailable, retrieve the OpenAPI spec from `http://<HOST>:<GRAPHQL_PORT>/openapi.json` to discover available endpoints, then call those endpoints with `Authorization: Bearer <API_TOKEN>`. This approach is context-heavy and manual, so use it as a last resort.
+- **Authentication:** The API token is distinct from the UI login password and must be obtained/changed in the frontend /settings.php
