@@ -35,7 +35,7 @@ function initNetworkTopology() {
 
   const apiBase = getApiBase();
   const apiToken = getApiToken();
-  
+
   // Verify token is available before making API call
   if (!apiToken || apiToken.trim() === '') {
     console.error("API_TOKEN not available. Settings may not be loaded yet. Retrying in 500ms...");
@@ -45,7 +45,7 @@ function initNetworkTopology() {
     }, 500);
     return;
   }
-  
+
   const url = `${apiBase}/dbquery/read`;
 
   $.ajax({
@@ -143,7 +143,7 @@ function initNetworkTopology() {
 $(document).ready(function () {
   // show spinning icon
   showSpinner();
-  
+
   // Start loading the network topology
   initNetworkTopology();
 });

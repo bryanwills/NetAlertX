@@ -7,12 +7,12 @@
  */
 function getApiToken() {
   let token = getSetting("API_TOKEN");
-  
+
   // If token is not yet available, log warning
   if (!token || token.trim() === '') {
     console.warn("API_TOKEN not yet loaded from settings");
   }
-  
+
   return token;
 }
 
@@ -54,13 +54,13 @@ function loadNetworkNodes() {
 
   const apiBase = getApiBase();
   const apiToken = getApiToken();
-  
+
   // Verify token is available
   if (!apiToken || apiToken.trim() === '') {
     console.error("API_TOKEN not available. Settings may not be loaded yet.");
     return;
   }
-  
+
   const url = `${apiBase}/dbquery/read`;
 
   $.ajax({
@@ -97,13 +97,13 @@ function loadNetworkNodes() {
 function loadDeviceTable({ sql, containerSelector, tableId, wrapperHtml = null, assignMode = true }) {
   const apiBase = getApiBase();
   const apiToken = getApiToken();
-  
+
   // Verify token is available
   if (!apiToken || apiToken.trim() === '') {
     console.error("API_TOKEN not available. Settings may not be loaded yet.");
     return;
   }
-  
+
   const url = `${apiBase}/dbquery/read`;
 
   $.ajax({
