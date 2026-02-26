@@ -1,7 +1,7 @@
 <?php
 #---------------------------------------------------------------------------------#
 #  NetAlertX                                                                       #
-#  Open Source Network Guard / WIFI & LAN intrusion detector                      #  
+#  Open Source Network Guard / WIFI & LAN intrusion detector                      #
 #                                                                                 #
 #  version.php - Templates module Template to display the current version         #
 #---------------------------------------------------------------------------------#
@@ -23,6 +23,6 @@ if(file_exists($filename)) {
 }
 else {
     echo date('H:i:s') . " - N/A";
-}          
- 
+}
+
 ?>
