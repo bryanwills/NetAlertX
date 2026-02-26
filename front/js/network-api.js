@@ -2,21 +2,6 @@
 // API calls and data loading functions for network topology
 
 /**
- * Get API token, waiting if necessary for settings to load
- * @returns {string} The API token
- */
-function getApiToken() {
-  let token = getSetting("API_TOKEN");
-
-  // If token is not yet available, log warning
-  if (!token || token.trim() === '') {
-    console.warn("API_TOKEN not yet loaded from settings");
-  }
-
-  return token;
-}
-
-/**
  * Load network nodes (network device types)
  * Creates top-level tabs for each network device
  */
@@ -52,8 +37,7 @@ function loadNetworkNodes() {
       ORDER BY parent.devName;
   `;
 
-  const apiBase = getApiBase();
-  const apiToken = getApiToken();
+  const { token: apiToken, apiBase, authHeader } = getAuthContext();
 
   // Verify token is available
   if (!apiToken || apiToken.trim() === '') {
@@ -66,7 +50,7 @@ function loadNetworkNodes() {
   $.ajax({
     url,
     method: "POST",
-    headers: { "Authorization": `Bearer ${apiToken}` },
+    headers: { ...authHeader, "Content-Type": "application/json" },
     data: JSON.stringify({ rawSql: btoa(unescape(encodeURIComponent(rawSql))) }),
     contentType: "application/json",
     success: function(data) {
@@ -95,8 +79,7 @@ function loadNetworkNodes() {
  * @param {boolean} options.assignMode - Whether to show assign/unassign buttons
  */
 function loadDeviceTable({ sql, containerSelector, tableId, wrapperHtml = null, assignMode = true }) {
-  const apiBase = getApiBase();
-  const apiToken = getApiToken();
+  const { token: apiToken, apiBase, authHeader } = getAuthContext();
 
   // Verify token is available
   if (!apiToken || apiToken.trim() === '') {
@@ -109,7 +92,7 @@ function loadDeviceTable({ sql, containerSelector, tableId, wrapperHtml = null, 
   $.ajax({
     url,
     method: "POST",
-    headers: { "Authorization": `Bearer ${apiToken}` },
+    headers: { ...authHeader, "Content-Type": "application/json" },
     data: JSON.stringify({ rawSql: btoa(unescape(encodeURIComponent(sql))) }),
     contentType: "application/json",
     success: function(data) {

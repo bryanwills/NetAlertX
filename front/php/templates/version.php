@@ -18,7 +18,7 @@ if(file_exists($filename)) {
     if(trim($fileContents) === 'Dev') {
         echo date('H:i:s') . " - " . $fileContents;
     } else {
-        echo $fileContents;
+        echo trim($fileContents);
     }
 }
 else {

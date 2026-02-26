@@ -12,8 +12,8 @@ var showOffline = false;
  */
 function initNetworkTopology() {
   networkDeviceTypes = getSetting("NETWORK_DEVICE_TYPES").replace("[", "").replace("]", "");
-  showArchived = getCache('showArchived') === "true";
-  showOffline = getCache('showOffline') === "true";
+  showArchived = getCache(CACHE_KEYS.SHOW_ARCHIVED) === "true";
+  showOffline = getCache(CACHE_KEYS.SHOW_OFFLINE) === "true";
 
   console.log('showArchived:', showArchived);
   console.log('showOffline:', showOffline);
@@ -33,8 +33,7 @@ function initNetworkTopology() {
     FROM Devices a
   `;
 
-  const apiBase = getApiBase();
-  const apiToken = getApiToken();
+  const { token: apiToken, apiBase, authHeader } = getAuthContext();
 
   // Verify token is available before making API call
   if (!apiToken || apiToken.trim() === '') {
@@ -51,7 +50,7 @@ function initNetworkTopology() {
   $.ajax({
     url,
     method: "POST",
-    headers: { "Authorization": `Bearer ${apiToken}` },
+    headers: { ...authHeader, "Content-Type": "application/json" },
     data: JSON.stringify({ rawSql: btoa(unescape(encodeURIComponent(rawSql))) }),
     contentType: "application/json",
     success: function(data) {
@@ -121,7 +120,7 @@ function initNetworkTopology() {
         }
       });
 
-      setCache('devicesListNew', JSON.stringify(devicesSorted));
+      setCache(CACHE_KEYS.DEVICES_TOPOLOGY, JSON.stringify(devicesSorted));
       deviceListGlobal = devicesSorted;
 
       // Render filtered result

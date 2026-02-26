@@ -84,12 +84,12 @@ $(window).on('resize', function () {
  */
 $(document).ready(function () {
   // Restore cached values on load
-  const cachedOffline = getCache('showOffline');
+  const cachedOffline = getCache(CACHE_KEYS.SHOW_OFFLINE);
   if (cachedOffline !== null) {
     $('input[name="showOffline"]').prop('checked', cachedOffline === 'true');
   }
 
-  const cachedArchived = getCache('showArchived');
+  const cachedArchived = getCache(CACHE_KEYS.SHOW_ARCHIVED);
   if (cachedArchived !== null) {
     $('input[name="showArchived"]').prop('checked', cachedArchived === 'true');
   }
@@ -102,7 +102,7 @@ $(document).ready(function () {
     if (!isOfflineChecked) {
       archivedToggle.prop('checked', false);
       archivedToggle.prop('disabled', true);
-      setCache('showArchived', false);
+      setCache(CACHE_KEYS.SHOW_ARCHIVED, false);
     } else {
       archivedToggle.prop('disabled', false);
     }
@@ -115,6 +115,8 @@ $(document).ready(function () {
   $('input[name="showOffline"], input[name="showArchived"]').on('change', function () {
     const name = $(this).attr('name');
     const value = $(this).is(':checked');
+    // setCache(name, value) works because CACHE_KEYS.SHOW_OFFLINE === 'showOffline'
+    // and CACHE_KEYS.SHOW_ARCHIVED === 'showArchived' — matches the DOM input name attr.
     setCache(name, value);
 
     // Update state of showArchived if showOffline changed

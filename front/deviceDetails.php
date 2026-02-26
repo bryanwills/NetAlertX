@@ -419,7 +419,12 @@ async function renderSmallBoxes() {
         const apiToken = getSetting("API_TOKEN");
 
         const apiBaseUrl = getApiBase();
-        const url = `${apiBaseUrl}/device/${getMac()}?period=${encodeURIComponent(period)}`;
+        // Ensure period is a string, not an element
+        let periodValue = period;
+        if (typeof period === 'object' && period !== null && 'value' in period) {
+          periodValue = period.value;
+        }
+        const url = `${apiBaseUrl}/device/${getMac()}?period=${encodeURIComponent(periodValue)}`;
 
         const response = await fetch(url, {
           method: "GET",
@@ -553,20 +558,24 @@ function updateDevicePageName(mac) {
 
 //-----------------------------------------------------------------------------------
 
-// Call renderSmallBoxes, then main
-(async () => {
-      await renderSmallBoxes();
-      main();
-  })();
 
 
-window.onload = function async()
-{
-  mac = getMac()
-  // initializeTabs();
-  updateChevrons(mac);
-  updateDevicePageName(mac);
 
+window.onload = function() {
+  // Always trigger app-init bootstrap
+  if (typeof executeOnce === 'function') {
+    executeOnce();
+  }
+
+  mac = getMac();
+
+  // Wait for app initialization (cache populated) before using cached data
+  callAfterAppInitialized(async () => {
+    updateDevicePageName(mac);
+    updateChevrons(mac);
+    await renderSmallBoxes();
+    main();
+  });
 }
 
 </script>
