@@ -384,25 +384,9 @@ $(document).on('input', 'input:text', function() {
 // -----------------------------------------------------------------------------
 
 function initializeTabs () {
-
-  key ="activeDevicesTab"
-
-  // Activate panel
-  if(!emptyArr.includes(getCache(key)))
-  {
-    selectedTab = getCache(key);
-  }
-
-  $('.nav-tabs a[id='+ selectedTab +']').tab('show');
-
-  // When changed save new current tab
-  $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
-    setCache(key, $(e.target).attr('id'))
-  });
-
-  // events on tab change
-  $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
-    var target = $(e.target).attr("href") // activated tab
+  initializeTabsShared({
+    cacheKey:    'activeDevicesTab',
+    defaultTab:  'tabDetails'
   });
 }
 

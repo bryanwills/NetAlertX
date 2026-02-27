@@ -330,7 +330,13 @@ function generateTabs() {
     }
   });
 
-
+  // Auto-select tab from ?tab= URL param or cache (scoped to plugin nav only)
+  initializeTabsShared({
+    cacheKey:      'activePluginsTab',
+    urlParamName:  'tab',
+    idSuffix:      '_id',
+    tabContainer:  '#tabs-location'
+  });
 
   hideSpinner()
 }

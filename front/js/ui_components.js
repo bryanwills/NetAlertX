@@ -8,6 +8,100 @@
 ----------------------------------------------------------------------------- */
 
 
+// -------------------------------------------------------------------
+// Shared tab initialization utility.
+// Resolves the active tab from URL hash, query param, or cache, then activates it.
+//
+// Options:
+//   cacheKey      (string)   - localStorage key for persisting the active tab (required)
+//   defaultTab    (string)   - fallback tab ID if nothing is found in URL or cache. Optional, defaults to ''.
+//   urlParamName  (string)   - query-string parameter name to read (e.g. 'tab'). Optional.
+//   useHash       (boolean)  - if true, reads window.location.hash as a tab target. Optional.
+//   idSuffix      (string)   - suffix appended to URL-derived targets to form the tab <a> id (e.g. '_id'). Optional.
+//   onTabChange   (function) - callback(targetHref) invoked when a tab is shown. Optional.
+//   delay         (number)   - ms to delay initialization (wraps in setTimeout). Optional. 0 = immediate.
+//   tabContainer  (string)   - CSS selector to scope tab lookups and event binding. Optional. null = whole document.
+//
+// Returns nothing. Activates the resolved tab and binds cache persistence.
+// -------------------------------------------------------------------
+function initializeTabsShared(options) {
+  const {
+    cacheKey,
+    defaultTab = '',
+    urlParamName = null,
+    useHash = false,
+    idSuffix = '',
+    onTabChange = null,
+    delay = 0,
+    tabContainer = null   // CSS selector to scope tab lookups (e.g. '#tabs-location')
+  } = options;
+
+  function run() {
+    let selectedTab = defaultTab;
+
+    // 1. URL hash (e.g. maintenance.php#tab_Logging)
+    if (useHash) {
+      let hashTarget = window.location.hash.substring(1);
+      if (hashTarget.includes('?')) {
+        hashTarget = hashTarget.split('?')[0];
+      }
+      if (hashTarget) {
+        selectedTab = hashTarget.endsWith(idSuffix) ? hashTarget : hashTarget + idSuffix;
+        setCache(cacheKey, selectedTab);
+      }
+    }
+
+    // 2. URL query parameter (e.g. ?tab=WEBMON)
+    if (urlParamName) {
+      const urlParams = new URLSearchParams(window.location.search);
+      const paramVal = urlParams.get(urlParamName);
+      if (paramVal) {
+        selectedTab = paramVal.endsWith(idSuffix) ? paramVal : paramVal + idSuffix;
+        setCache(cacheKey, selectedTab);
+      }
+    }
+
+    // 3. Cached value (may already have been overridden above)
+    const cached = getCache(cacheKey);
+    if (cached && !emptyArr.includes(cached)) {
+      selectedTab = cached;
+    }
+
+    // Resolve scoped vs global selectors
+    const $scope = tabContainer ? $(tabContainer) : $(document);
+
+    // Activate the resolved tab (no-op if selectedTab is empty or not found)
+    if (selectedTab) {
+      $scope.find('a[id="' + selectedTab + '"]').tab('show');
+    }
+
+    // Fire callback for initial tab
+    if (onTabChange && selectedTab) {
+      const initialHref = $scope.find('a[id="' + selectedTab + '"]').attr('href');
+      if (initialHref) {
+        onTabChange(initialHref);
+      }
+    }
+
+    // Persist future tab changes to cache and invoke callback
+    $scope.find('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+      const newTabId = $(e.target).attr('id');
+      setCache(cacheKey, newTabId);
+
+      if (onTabChange) {
+        const newHref = $(e.target).attr('href');
+        onTabChange(newHref);
+      }
+    });
+  }
+
+  if (delay > 0) {
+    setTimeout(run, delay);
+  } else {
+    run();
+  }
+}
+
 
 // -------------------------------------------------------------------
 // Utility function to generate a random API token in the format t_<random string of specified length>
