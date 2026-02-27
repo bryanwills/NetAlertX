@@ -49,7 +49,7 @@ function renderNetworkTabContent(nodes) {
   $('.tab-content').empty();
 
   nodes.forEach((node, i) => {
-    const id = node.node_mac.replace(/:/g, '_');
+    const id = node.node_mac.replace(/:/g, '_').toLowerCase();
 
     const badge = getStatusBadgeParts(
       node.online,

@@ -21,10 +21,12 @@ function initNetworkTopology() {
   // Always get all devices
   const rawSql = `
     SELECT *,
+      LOWER(devMac) AS devMac,
+      LOWER(devParentMAC) AS devParentMAC,
       CASE
-        WHEN devAlertDown != 0 AND devPresentLastScan = 0 THEN "Down"
-        WHEN devPresentLastScan = 1 THEN "On-line"
-        ELSE "Off-line"
+        WHEN devAlertDown != 0 AND devPresentLastScan = 0 THEN 'Down'
+        WHEN devPresentLastScan = 1 THEN 'On-line'
+        ELSE 'Off-line'
       END AS devStatus,
       CASE
         WHEN devType IN (${networkDeviceTypes}) THEN 1
@@ -32,6 +34,7 @@ function initNetworkTopology() {
       END AS devIsNetworkNodeDynamic
     FROM Devices a
   `;
+
 
   const { token: apiToken, apiBase, authHeader } = getAuthContext();
 
