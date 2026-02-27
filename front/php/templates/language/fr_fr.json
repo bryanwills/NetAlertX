@@ -225,6 +225,7 @@
     "Device_TableHead_FQDN": "Nom de domaine FQDN",
     "Device_TableHead_Favorite": "Favori",
     "Device_TableHead_FirstSession": "Première session",
+    "Device_TableHead_Flapping": "",
     "Device_TableHead_GUID": "GUID",
     "Device_TableHead_Group": "Groupe",
     "Device_TableHead_IPv4": "IPv4",

@@ -225,6 +225,7 @@
     "Device_TableHead_FQDN": "FQDN",
     "Device_TableHead_Favorite": "Улюблений",
     "Device_TableHead_FirstSession": "Перша сесія",
+    "Device_TableHead_Flapping": "",
     "Device_TableHead_GUID": "GUID",
     "Device_TableHead_Group": "Група",
     "Device_TableHead_IPv4": "",

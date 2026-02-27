@@ -225,6 +225,7 @@
     "Device_TableHead_FQDN": "اسم النطاق الكامل",
     "Device_TableHead_Favorite": "مفضل",
     "Device_TableHead_FirstSession": "أول جلسة",
+    "Device_TableHead_Flapping": "",
     "Device_TableHead_GUID": "معرف فريد",
     "Device_TableHead_Group": "المجموعة",
     "Device_TableHead_IPv4": "",

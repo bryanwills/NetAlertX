@@ -23,9 +23,10 @@ function loadNetworkNodes() {
           LOWER(parent.devParentMAC) AS parent_mac,
           parent.devIcon AS node_icon,
           parent.devAlertDown AS node_alert,
+          parent.devFlapping AS node_flapping,
           COUNT(child.devMac) AS node_ports_count
-      FROM Devices AS parent
-      LEFT JOIN Devices AS child
+      FROM DevicesView AS parent
+      LEFT JOIN DevicesView AS child
           /* CRITICAL FIX: COLLATE NOCASE ensures the join works
              even if devParentMAC is uppercase and devMac is lowercase
           */
@@ -33,7 +34,7 @@ function loadNetworkNodes() {
       WHERE parent.devType IN (${networkDeviceTypes})
         AND parent.devIsArchived = 0
       GROUP BY parent.devMac, parent.devName, parent.devPresentLastScan,
-               parent.devType, parent.devParentMAC, parent.devIcon, parent.devAlertDown
+               parent.devType, parent.devParentMAC, parent.devIcon, parent.devAlertDown, parent.devFlapping
       ORDER BY parent.devName;
   `;
 
@@ -143,6 +144,7 @@ function loadDeviceTable({ sql, containerSelector, tableId, wrapperHtml = null, 
             const badge = getStatusBadgeParts(
               device.devPresentLastScan,
               device.devAlertDown,
+              device.devFlapping,
               device.devMac,
               device.devStatus
             );
@@ -202,8 +204,8 @@ function loadDeviceTable({ sql, containerSelector, tableId, wrapperHtml = null, 
  */
 function loadUnassignedDevices() {
   const sql = `
-    SELECT devMac, devPresentLastScan, devName, devLastIP, devVendor, devAlertDown, devParentPort
-    FROM Devices
+    SELECT devMac, devPresentLastScan, devName, devLastIP, devVendor, devAlertDown, devParentPort, devFlapping, devStatus
+    FROM DevicesView
     WHERE (devParentMAC IS NULL OR devParentMAC IN ("", " ", "undefined", "null"))
       AND LOWER(devMac) NOT LIKE "%internet%"
       AND devIsArchived = 0
@@ -237,7 +239,7 @@ function loadConnectedDevices(node_mac) {
   const normalized_mac = node_mac.toLowerCase();
 
   const sql = `
-    SELECT devName, devMac, devLastIP, devVendor, devPresentLastScan, devAlertDown, devParentPort, devVlan,
+    SELECT devName, devMac, devLastIP, devVendor, devPresentLastScan, devAlertDown, devParentPort, devVlan, devFlapping,
       CASE
           WHEN devIsNew = 1 THEN 'New'
           WHEN devPresentLastScan = 1 THEN 'On-line'
@@ -246,7 +248,7 @@ function loadConnectedDevices(node_mac) {
           WHEN devPresentLastScan = 0 THEN 'Off-line'
           ELSE 'Unknown status'
       END AS devStatus
-    FROM Devices
+    FROM DevicesView
     /* Using COLLATE NOCASE here solves the 'TEXT' vs 'NOCASE' mismatch */
     WHERE devParentMac = '${normalized_mac}' COLLATE NOCASE`;
 

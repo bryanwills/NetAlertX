@@ -100,7 +100,7 @@ class Device(ObjectType):
     devParentPortSource = String(description="Source tracking for devParentPort (USER, LOCKED, NEWDEV, or plugin prefix)")
     devParentRelTypeSource = String(description="Source tracking for devParentRelType (USER, LOCKED, NEWDEV, or plugin prefix)")
     devVlanSource = String(description="Source tracking for devVlan")
-    devFlapping = String(description="ndicates flapping device (device changing between online/offline states frequently)")
+    devFlapping = Int(description="Indicates flapping device (device changing between online/offline states frequently)")
 
 
 class DeviceResult(ObjectType):

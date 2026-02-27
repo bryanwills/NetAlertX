@@ -547,6 +547,7 @@ function mapColumnIndexToFieldName(index, tableColumnVisible) {
     "devVlan",                 // 30
     "devPrimaryIPv4",          // 31
     "devPrimaryIPv6",          // 32
+    "devFlapping",             // 33
   ];
 
   // console.log("OrderBy: " + columnNames[tableColumnOrder[index]]);
@@ -666,6 +667,7 @@ function initializeDatatable (status) {
                 devVlan
                 devPrimaryIPv4
                 devPrimaryIPv6
+                devFlapping
               }
               count
             }
@@ -753,6 +755,7 @@ function initializeDatatable (status) {
                 device.devVlan || "",
                 device.devPrimaryIPv4 || "",
                 device.devPrimaryIPv6 || "",
+                device.devFlapping || 0,
             ];
 
             const newRow = [];
@@ -821,6 +824,7 @@ function initializeDatatable (status) {
                   data-status="${rowData[mapIndx(10)]}"
                   data-present="${rowData[mapIndx(24)]}"
                   data-alert="${rowData[mapIndx(25)]}"
+                  data-flapping="${rowData[mapIndx(33)]}"
                   data-icon="${rowData[mapIndx(3)]}">
                 ${displayedValue}
                 </a>
@@ -964,12 +968,15 @@ function initializeDatatable (status) {
 
           tmp_devPresentLastScan = rowData[mapIndx(24)]
           tmp_devAlertDown = rowData[mapIndx(25)]
+          tmp_devMac = rowData[mapIndx(11)]
+          tmp_devFlapping = rowData[mapIndx(33)]
 
           const badge = getStatusBadgeParts(
-            rowData[mapIndx(24)],   // tmp_devPresentLastScan
-            rowData[mapIndx(25)],   // tmp_devAlertDown
-            rowData[mapIndx(11)],  // MAC
-            cellData               // optional text
+           tmp_devPresentLastScan,   // tmp_devPresentLastScan
+            tmp_devAlertDown,        // tmp_devAlertDown
+            tmp_devFlapping,         // tmp_devFlapping
+            tmp_devMac,              // MAC
+            cellData                 // optional text
           );
 
           $(td).html (`<a href="${badge.url}" class="badge ${badge.cssClass}">${badge.iconHtml} ${badge.text}</a>`);

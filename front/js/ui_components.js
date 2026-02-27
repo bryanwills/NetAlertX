@@ -765,7 +765,8 @@ function getColumnNameFromLangString(headStringKey) {
     "Device_TableHead_ReqNicsOnline": "devReqNicsOnline",
     "Device_TableHead_Vlan": "devVlan",
     "Device_TableHead_IPv4": "devPrimaryIPv4",
-    "Device_TableHead_IPv6": "devPrimaryIPv6"
+    "Device_TableHead_IPv6": "devPrimaryIPv6",
+    "Device_TableHead_Flapping": "devFlapping"
   };
 
   return columnNameMap[headStringKey] || "";
@@ -773,16 +774,24 @@ function getColumnNameFromLangString(headStringKey) {
 
 //--------------------------------------------------------------
 // Generating the device status chip
-function getStatusBadgeParts(devPresentLastScan, devAlertDown, devMac, statusText = '') {
+function getStatusBadgeParts(devPresentLastScan, devAlertDown, devFlapping, devMac, statusText = '') {
   let css = 'bg-gray text-white statusUnknown';
   let icon = '<i class="fa-solid fa-question"></i>';
   let status = 'unknown';
   let cssText = '';
 
-  if (devPresentLastScan == 1) {
+  console.log(devFlapping);
+
+
+  if (devPresentLastScan == 1 && devFlapping == 0) {
     css = 'bg-green text-white statusOnline';
     cssText = 'text-green';
     icon = '<i class="fa-solid fa-plug"></i>';
+    status = 'online';
+  } else if (devPresentLastScan == 1 && devFlapping == 1) {
+    css = 'bg-yellow text-white statusFlapping';
+    cssText = 'text-yellow';
+    icon = '<i class="fa-solid fa-plug-circle-exclamation"></i>';
     status = 'online';
   } else if (devAlertDown == 1) {
     css = 'bg-red text-white statusDown';
@@ -958,6 +967,7 @@ function renderDeviceLink(data, container, useName = false) {
   const badge = getStatusBadgeParts(
     device.devPresentLastScan,
     device.devAlertDown,
+    device.devFlapping,
     device.devMac
   );
 
@@ -974,6 +984,7 @@ function renderDeviceLink(data, container, useName = false) {
       'data-firstseen': device.devFirstConnection,
       'data-relationship': device.devParentRelType,
       'data-status': device.devStatus,
+      'data-flapping': device.devFlapping,
       'data-present': device.devPresentLastScan,
       'data-alert': device.devAlertDown,
       'data-icon': device.devIcon
@@ -1044,7 +1055,8 @@ function initHoverNodeInfo() {
       const lastseen = $el.data('lastseen') || 'Unknown';
       const firstseen = $el.data('firstseen') || 'Unknown';
       const relationship = $el.data('relationship') || 'Unknown';
-      const badge = getStatusBadgeParts( $el.data('present'),  $el.data('alert'), $el.data('mac'))
+      const flapping = $el.data('flapping') || 0;
+      const badge = getStatusBadgeParts( $el.data('present'),  $el.data('alert'), flapping, $el.data('mac'))
       const status =`<span class="badge ${badge.cssClass}">${badge.iconHtml} ${badge.status}</span>`
 
       const html = `

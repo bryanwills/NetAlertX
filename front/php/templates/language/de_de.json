@@ -229,6 +229,7 @@
     "Device_TableHead_FQDN": "",
     "Device_TableHead_Favorite": "Favorit",
     "Device_TableHead_FirstSession": "Erste Sitzung",
+    "Device_TableHead_Flapping": "",
     "Device_TableHead_GUID": "GUID",
     "Device_TableHead_Group": "Gruppe",
     "Device_TableHead_IPv4": "",

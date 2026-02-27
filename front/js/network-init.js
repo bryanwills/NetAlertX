@@ -32,7 +32,7 @@ function initNetworkTopology() {
         WHEN devType IN (${networkDeviceTypes}) THEN 1
         ELSE 0
       END AS devIsNetworkNodeDynamic
-    FROM Devices a
+    FROM DevicesView a
   `;
 
 

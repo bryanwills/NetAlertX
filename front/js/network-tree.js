@@ -72,6 +72,7 @@ function getChildren(node, list, path, visited = [])
         ip: node.devLastIP,
         status: node.devStatus,
         presentLastScan: node.devPresentLastScan,
+        flapping: node.devFlapping,
         alertDown: node.devAlertDown,
         hasChildren: children.length > 0 || hiddenMacs.includes(node.devMac),
         relType: node.devParentRelType,
@@ -266,7 +267,13 @@ function initTree(myHierarchy)
                                   <i class="fa-solid fa-hard-drive"></i>
                               </span>` : "";
 
-        const badgeConf = getStatusBadgeParts(nodeData.data.presentLastScan, nodeData.data.alertDown, nodeData.data.mac, statusText = '')
+        const badgeConf = getStatusBadgeParts(
+          nodeData.data.presentLastScan,
+          nodeData.data.alertDown,
+          nodeData.data.flapping,
+          nodeData.data.mac,
+          statusText = ''
+        );
 
         return result = `<div
                               class="node-inner hover-node-info box pointer ${highlightedCss} ${cssNodeType}"
@@ -283,6 +290,7 @@ function initTree(myHierarchy)
                               data-lastseen="${nodeData.data.lastseen}"
                               data-firstseen="${nodeData.data.firstseen}"
                               data-relationship="${nodeData.data.relType}"
+                              data-flapping="${nodeData.data.flapping}"
                               data-status="${nodeData.data.status}"
                               data-present="${nodeData.data.presentLastScan}"
                               data-alert="${nodeData.data.alertDown}"

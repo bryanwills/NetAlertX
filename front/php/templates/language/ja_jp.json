@@ -225,6 +225,7 @@
     "Device_TableHead_FQDN": "FQDN",
     "Device_TableHead_Favorite": "お気に入り",
     "Device_TableHead_FirstSession": "初回セッション",
+    "Device_TableHead_Flapping": "",
     "Device_TableHead_GUID": "GUID",
     "Device_TableHead_Group": "グループ",
     "Device_TableHead_IPv4": "IPv4",

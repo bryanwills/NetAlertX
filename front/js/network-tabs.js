@@ -54,6 +54,7 @@ function renderNetworkTabContent(nodes) {
     const badge = getStatusBadgeParts(
       node.online,
       node.node_alert,
+      node.node_flapping,
       node.node_mac
     );
 
