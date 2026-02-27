@@ -17,10 +17,10 @@ function loadNetworkNodes() {
   const rawSql = `
       SELECT
           parent.devName AS node_name,
-          parent.devMac AS node_mac,
+          LOWER(parent.devMac) AS node_mac,
           parent.devPresentLastScan AS online,
           parent.devType AS node_type,
-          parent.devParentMAC AS parent_mac,
+          LOWER(parent.devParentMAC) AS parent_mac,
           parent.devIcon AS node_icon,
           parent.devAlertDown AS node_alert,
           COUNT(child.devMac) AS node_ports_count
@@ -116,6 +116,7 @@ function loadDeviceTable({ sql, containerSelector, tableId, wrapperHtml = null, 
           orderable: false,
           width: '5%',
           render: function (mac) {
+            // mac = mac.toLowerCase()
             const label = assignMode ? 'assign' : 'unassign';
             const btnClass = assignMode ? 'btn-primary' : 'btn-primary bg-red';
             const btnText = assignMode ? getString('Network_ManageAssign') : getString('Network_ManageUnassign');
@@ -204,7 +205,7 @@ function loadUnassignedDevices() {
     SELECT devMac, devPresentLastScan, devName, devLastIP, devVendor, devAlertDown, devParentPort
     FROM Devices
     WHERE (devParentMAC IS NULL OR devParentMAC IN ("", " ", "undefined", "null"))
-      AND devMac NOT LIKE "%internet%"
+      AND LOWER(devMac) NOT LIKE "%internet%"
       AND devIsArchived = 0
     ORDER BY devName ASC`;
 
