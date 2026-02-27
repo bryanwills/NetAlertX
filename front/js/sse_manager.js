@@ -165,6 +165,16 @@ class NetAlertXStateManager {
         .html(displayTime)
         .attr('data-build-time', buildTime);
 
+      // 4. Trigger cache clear if settings were imported after last init
+      if (appState["settingsImported"]) {
+        const importedMs = parseInt(appState["settingsImported"] * 1000);
+        const lastReloaded = parseInt(getCache(CACHE_KEYS.INIT_TIMESTAMP));
+        if (importedMs > lastReloaded) {
+          console.log("[NetAlertX State] Settings changed — clearing cache and reloading");
+          setTimeout(() => clearCache(), 500);
+        }
+      }
+
       // console.log("[NetAlertX State] UI updated via jQuery");
     } catch (e) {
       console.error("[NetAlertX State] Failed to update state display:", e);
