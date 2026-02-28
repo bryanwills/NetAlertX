@@ -109,7 +109,7 @@ function parseDeviceCache(cachedStr) {
 
   // If result is an object with a .data property, extract it (handles legacy format)
   if (parsed && typeof parsed === 'object' && !Array.isArray(parsed) && Array.isArray(parsed.data)) {
-    console.warn('[parseDeviceCache] Extracting .data property from wrapper object');
+    console.debug('[parseDeviceCache] Extracting .data property from wrapper object');
     parsed = parsed.data;
   }
 
@@ -505,6 +505,18 @@ function cacheDevices()
   return new Promise((resolve, reject) => {
     if(getCache(CACHE_KEYS.initFlag('cacheDevices')) === "true")
     {
+      // One-time migration: normalize legacy { data: [...] } wrapper to a plain array.
+      // Old cache entries from prior versions stored the raw API envelope; re-write
+      // them in the flat format so parseDeviceCache never needs the fallback branch.
+      const raw = getCache(CACHE_KEYS.DEVICES_ALL);
+      if (raw) {
+        try {
+          const p = JSON.parse(raw);
+          if (p && typeof p === 'object' && !Array.isArray(p) && Array.isArray(p.data)) {
+            setCache(CACHE_KEYS.DEVICES_ALL, JSON.stringify(p.data));
+          }
+        } catch (e) { /* ignore malformed cache – will be refreshed next init */ }
+      }
       resolve();
       return;
     }
