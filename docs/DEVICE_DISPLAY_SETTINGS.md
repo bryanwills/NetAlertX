@@ -10,13 +10,14 @@ This set of settings allows you to group Devices under different views. The Arch
 
 ![Sattus colors](./img/DEVICE_MANAGEMENT/device_management_status_colors.png)
 
-1. 🔌 Online (Green) = A device that is no longer marked as a "New Device".
-2. 🔌 New (Green) = A newly discovered device that is online and is still marked as a "New Device".
-3. 🔌(❕) Online (Orange) - The device is unstable and flapping (3 status changes in the last hour)
-4. ✖ New (Grey) = Same as No.2 but device is now offline.
-5. ✖ Offline (Grey) = A device that was not detected online in the last scan.
-6. ⚠ Down (Red) = A device that has "Alert Down" marked and has been offline for the time set in the Setting `NTFPRCS_alert_down_time`.
-
+| Icon      | Status                 | Image                                                                 | Description                                                                                   |
+|-----------|------------------------|-----------------------------------------------------------------------|-----------------------------------------------------------------------------------------------|
+| 🔌        | Online (Green)         | ![Status color - online](./img/DEVICE_MANAGEMENT/device_management_status_online.png) | A device that is no longer marked as a "New Device".                                 |
+| 🔌        | New (Green)            | ![Status color - new online](./img/DEVICE_MANAGEMENT/device_management_status_new_online.png) | A newly discovered device that is online and is still marked as a "New Device".  |
+| 🔌 (❕)   | Online (Orange)        | ![Status color - flapping online](./img/DEVICE_MANAGEMENT/device_management_status_flapping_online.png) | The device is online, but unstable and flapping (3 status changes in the last hour).     |
+| ✖        | New (Grey)             | ![Status color - new offline](./img/DEVICE_MANAGEMENT/device_management_status_new_offline.png) | Same as "New (Green)" but the device is now offline.                            |
+| ✖        | Offline (Grey)         | ![Status color - offline](./img/DEVICE_MANAGEMENT/device_management_status_offline.png) | A device that was not detected online in the last scan.                             |
+| ⚠        | Down (Red)             | ![Status color - down](./img/DEVICE_MANAGEMENT/device_management_status_down.png)   | A device marked as "Alert Down" and offline for the duration set in `NTFPRCS_alert_down_time`.|
 
 
 See also [Notification guide](./NOTIFICATIONS.md).
