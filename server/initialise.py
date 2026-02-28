@@ -10,7 +10,7 @@ import uuid
 
 # Register NetAlertX libraries
 import conf
-from const import fullConfPath, fullConfFolder, default_tz
+from const import fullConfPath, fullConfFolder, default_tz, applicationPath
 from helper import getBuildTimeStampAndVersion, collect_lang_strings, updateSubnets, generate_random_string
 from utils.datetime_utils import timeNowUTC
 from app_state import updateState
@@ -20,6 +20,31 @@ from scheduler import schedule_class
 from plugin import plugin_manager, print_plugin_info
 from utils.plugin_utils import get_plugins_configs, get_set_value_for_init
 from messaging.in_app import write_notification
+
+# ===============================================================================
+# Language helpers
+# ===============================================================================
+
+_LANGUAGES_JSON = os.path.join(
+    applicationPath, "front", "php", "templates", "language", "languages.json"
+)
+
+
+def _load_language_display_names():
+    """Return a JSON-serialised list of display names from languages.json.
+
+    Falls back to a hardcoded English-only list on any error so that
+    the settings page is never broken by a missing/corrupt file.
+    """
+    try:
+        with open(_LANGUAGES_JSON, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        names = [entry["display"] for entry in data["languages"]]
+        return json.dumps(names)
+    except Exception as e:
+        mylog("none", [f"[languages] Failed to load languages.json, using fallback: {e}"])
+        return '["English (en_us)"]'
+
 
 # ===============================================================================
 # Initialise user defined values
@@ -401,7 +426,7 @@ def importConfigs(pm, db, all_plugins):
         c_d,
         "Language Interface",
         '{"dataType":"string", "elements": [{"elementType" : "select", "elementOptions" : [] ,"transformers": []}]}',
-        "['English (en_us)', 'Arabic (ar_ar)', 'Catalan (ca_ca)', 'Czech (cs_cz)', 'German (de_de)', 'Spanish (es_es)', 'Farsi (fa_fa)', 'French (fr_fr)', 'Italian (it_it)', 'Japanese (ja_jp)', 'Norwegian (nb_no)', 'Polish (pl_pl)', 'Portuguese (pt_br)', 'Portuguese (pt_pt)', 'Russian (ru_ru)', 'Swedish (sv_sv)', 'Turkish (tr_tr)', 'Ukrainian (uk_ua)', 'Vietnamese (vi_vn)', 'Chinese (zh_cn)']",   # noqa: E501 - inline JSON
+        _load_language_display_names(),  # derived from languages.json
         "UI",
     )
 

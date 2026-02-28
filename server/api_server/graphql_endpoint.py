@@ -545,7 +545,7 @@ class Query(ObjectType):
         language_folder = '/app/front/php/templates/language/'
         if os.path.exists(language_folder):
             for filename in os.listdir(language_folder):
-                if filename.endswith('.json'):
+                if filename.endswith('.json') and filename != 'languages.json':
                     file_lang_code = filename.replace('.json', '')
 
                     # Filter by langCode if provided

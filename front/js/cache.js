@@ -387,78 +387,15 @@ function getString(key) {
 }
 
 // -----------------------------------------------------------------------------
-// Get current language ISO code
-// below has to match exactly the values in /front/php/templates/language/lang.php & /front/js/common.js
+// Get current language ISO code.
+// The UI_LANG setting value is always in the form "Name (code)", e.g. "English (en_us)".
+// Extracting the code with a regex means this function never needs updating when a
+// new language is added — the single source of truth is languages.json.
 function getLangCode() {
-
     UI_LANG = getSetting("UI_LANG");
 
-    let lang_code = 'en_us';
-
-    switch (UI_LANG) {
-      case 'English (en_us)':
-        lang_code = 'en_us';
-        break;
-      case 'Spanish (es_es)':
-        lang_code = 'es_es';
-        break;
-      case 'German (de_de)':
-        lang_code = 'de_de';
-        break;
-      case 'Farsi (fa_fa)':
-        lang_code = 'fa_fa';
-        break;
-      case 'French (fr_fr)':
-        lang_code = 'fr_fr';
-        break;
-      case 'Norwegian (nb_no)':
-        lang_code = 'nb_no';
-        break;
-      case 'Polish (pl_pl)':
-        lang_code = 'pl_pl';
-        break;
-      case 'Portuguese (pt_br)':
-        lang_code = 'pt_br';
-        break;
-      case 'Portuguese (pt_pt)':
-        lang_code = 'pt_pt';
-        break;
-      case 'Turkish (tr_tr)':
-        lang_code = 'tr_tr';
-        break;
-      case 'Swedish (sv_sv)':
-        lang_code = 'sv_sv';
-        break;
-      case 'Italian (it_it)':
-        lang_code = 'it_it';
-        break;
-      case 'Japanese (ja_jp)':
-        lang_code = 'ja_jp';
-        break;
-      case 'Russian (ru_ru)':
-        lang_code = 'ru_ru';
-        break;
-      case 'Chinese (zh_cn)':
-        lang_code = 'zh_cn';
-        break;
-      case 'Czech (cs_cz)':
-        lang_code = 'cs_cz';
-        break;
-      case 'Arabic (ar_ar)':
-        lang_code = 'ar_ar';
-        break;
-      case 'Catalan (ca_ca)':
-        lang_code = 'ca_ca';
-        break;
-      case 'Ukrainian (uk_uk)':
-        lang_code = 'uk_ua';
-        break;
-      case 'Vietnamese (vi_vn)':
-        lang_code = 'vi_vn';
-        break;
-    }
-
-    return lang_code;
+    const match = (UI_LANG || '').match(/\(([a-z]{2}_[a-z]{2})\)\s*$/i);
+    return match ? match[1].toLowerCase() : 'en_us';
 }
 
 // -----------------------------------------------------------------------------

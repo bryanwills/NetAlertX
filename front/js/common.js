@@ -12,17 +12,34 @@ var timerRefreshData = ''
 
 var   emptyArr      = ['undefined', "", undefined, null, 'null'];
 var   UI_LANG       = "English (en_us)";
-const allLanguages  = ["ar_ar","ca_ca","cs_cz","de_de",
-                       "en_us","es_es","fa_fa","fr_fr",
-                       "it_it","ja_jp","nb_no","pl_pl",
-                       "pt_br","pt_pt","ru_ru","sv_sv",
-                       "tr_tr","uk_ua","vi_vn","zh_cn"]; // needs to be same as in lang.php
+// allLanguages is populated at init via fetchAllLanguages() from GET /languages.
+// Do not hardcode this list — add new languages to languages.json instead.
+let   allLanguages  = [];
 var   settingsJSON  = {}
 
 // NAX_CACHE_VERSION and CACHE_KEYS moved to cache.js
 
 
 // getCache, setCache, fetchJson, getAuthContext moved to cache.js
+
+// -----------------------------------------------------------------------------
+// Fetch the canonical language list from GET /languages and populate allLanguages.
+// Must be called after the API token is available (e.g. alongside cacheStrings).
+// -----------------------------------------------------------------------------
+function fetchAllLanguages(apiToken) {
+  return fetch('/languages', {
+    headers: { 'Authorization': 'Bearer ' + apiToken }
+  })
+    .then(function(resp) { return resp.json(); })
+    .then(function(data) {
+      if (data && data.success && Array.isArray(data.languages)) {
+        allLanguages = data.languages.map(function(l) { return l.code; });
+      }
+    })
+    .catch(function(err) {
+      console.warn('[fetchAllLanguages] Failed to load language list:', err);
+    });
+}
 
 
 // -----------------------------------------------------------------------------

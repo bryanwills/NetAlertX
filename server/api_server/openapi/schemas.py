@@ -1032,6 +1032,41 @@ class GetSettingResponse(BaseResponse):
 
 
 # =============================================================================
+# LANGUAGES SCHEMAS
+# =============================================================================
+
+
+class LanguageEntry(BaseModel):
+    """A single supported language entry."""
+    model_config = ConfigDict(extra="allow")
+
+    code: str = Field(..., description="ISO language code (e.g. 'en_us')")
+    display: str = Field(..., description="Human-readable display name (e.g. 'English (en_us)')")
+
+
+class LanguagesResponse(BaseResponse):
+    """Response for GET /languages — the canonical language registry."""
+    model_config = ConfigDict(
+        extra="allow",
+        json_schema_extra={
+            "examples": [{
+                "success": True,
+                "default": "en_us",
+                "count": 20,
+                "languages": [
+                    {"code": "en_us", "display": "English (en_us)"},
+                    {"code": "de_de", "display": "German (de_de)"}
+                ]
+            }]
+        }
+    )
+
+    default: str = Field(..., description="Default/fallback language code")
+    count: int = Field(..., description="Total number of supported languages")
+    languages: List[LanguageEntry] = Field(..., description="All supported languages")
+
+
+# =============================================================================
 # GRAPHQL SCHEMAS
 # =============================================================================
 class GraphQLRequest(BaseModel):
