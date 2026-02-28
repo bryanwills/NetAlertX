@@ -143,6 +143,9 @@
   headersDefaultOrder = [];
   missingNumbers = [];
 
+  // DEVICE_COLUMN_FIELDS, COL, NUMERIC_DEFAULTS, GRAPHQL_EXTRA_FIELDS, COLUMN_NAME_MAP
+  // are all defined in js/device-columns.js — edit that file to add new columns.
+
   // Read parameters & Initialize components
   callAfterAppInitialized(main)
   showSpinner();
@@ -512,47 +515,8 @@ function collectFilters() {
 // -----------------------------------------------------------------------------
 // Map column index to column name for GraphQL query
 function mapColumnIndexToFieldName(index, tableColumnVisible) {
-  // the order is important, don't change it!
-  const columnNames = [
-    "devName",                 // 0
-    "devOwner",                // 1
-    "devType",                 // 2
-    "devIcon",                 // 3
-    "devFavorite",             // 4
-    "devGroup",                // 5
-    "devFirstConnection",      // 6
-    "devLastConnection",       // 7
-    "devLastIP",               // 8
-    "devIsRandomMac",          // 9 resolved on the fly
-    "devStatus",               // 10 resolved on the fly
-    "devMac",                  // 11
-    "devIpLong",               // 12 formatIPlong(device.devLastIP) || "",  // IP orderable
-    "rowid",                   // 13
-    "devParentMAC",            // 14
-    "devParentChildrenCount",  // 15 resolved on the fly
-    "devLocation",             // 16
-    "devVendor",               // 17
-    "devParentPort",           // 18
-    "devGUID",                 // 19
-    "devSyncHubNode",          // 20
-    "devSite",                 // 21
-    "devSSID",                 // 22
-    "devSourcePlugin",         // 23
-    "devPresentLastScan",      // 24
-    "devAlertDown",            // 25
-    "devCustomProps",          // 26
-    "devFQDN",                 // 27
-    "devParentRelType",        // 28
-    "devReqNicsOnline",        // 29
-    "devVlan",                 // 30
-    "devPrimaryIPv4",          // 31
-    "devPrimaryIPv6",          // 32
-    "devFlapping",             // 33
-  ];
-
-  // console.log("OrderBy: " + columnNames[tableColumnOrder[index]]);
-
-  return columnNames[tableColumnOrder[index]] || null;
+  // Derives field name from the authoritative DEVICE_COLUMN_FIELDS constant.
+  return DEVICE_COLUMN_FIELDS[tableColumnOrder[index]] || null;
 }
 
 
@@ -620,54 +584,15 @@ function initializeDatatable (status) {
       "type": "POST",
       "contentType": "application/json",
       "data": function (d) {
-        // Construct GraphQL query with pagination and sorting options
+        // GraphQL fields are derived from DEVICE_COLUMN_FIELDS + GRAPHQL_EXTRA_FIELDS
+        // (both defined in js/device-columns.js). No manual field list to maintain.
+        const _gqlFields = [...new Set([...DEVICE_COLUMN_FIELDS, ...GRAPHQL_EXTRA_FIELDS])]
+          .join('\n                ');
         let graphqlQuery = `
           query devices($options: PageQueryOptionsInput) {
             devices(options: $options) {
               devices {
-                rowid
-                devMac
-                devName
-                devOwner
-                devType
-                devVendor
-                devFavorite
-                devGroup
-                devComments
-                devFirstConnection
-                devLastConnection
-                devLastIP
-                devStaticIP
-                devScan
-                devLogEvents
-                devAlertEvents
-                devAlertDown
-                devSkipRepeated
-                devLastNotification
-                devPresentLastScan
-                devIsNew
-                devIsRandomMac
-                devLocation
-                devIsArchived
-                devParentMAC
-                devParentPort
-                devIcon
-                devGUID
-                devSite
-                devSSID
-                devSyncHubNode
-                devSourcePlugin
-                devStatus
-                devParentChildrenCount
-                devIpLong
-                devCustomProps
-                devFQDN
-                devParentRelType
-                devReqNicsOnline
-                devVlan
-                devPrimaryIPv4
-                devPrimaryIPv6
-                devFlapping
+                ${_gqlFields}
               }
               count
             }
@@ -719,44 +644,13 @@ function initializeDatatable (status) {
 
         // Return only the array of rows for the table
         return json.devices.devices.map(device => {
-            // Convert each device record into the required DataTable row format
-            // Order has to be the same as in the UI_device_columns setting options
-            const originalRow = [
-                device.devName || "",
-                device.devOwner || "",
-                device.devType || "",
-                device.devIcon || "",
-                device.devFavorite || "",
-                device.devGroup || "",
-                device.devFirstConnection || "",
-                device.devLastConnection || "",
-                device.devLastIP || "",
-                device.devIsRandomMac || "",
-                device.devStatus || "",
-                device.devMac || "",
-                device.devIpLong || "",
-                device.rowid || "",
-                device.devParentMAC || "",
-                device.devParentChildrenCount || 0,
-                device.devLocation || "",
-                device.devVendor || "",
-                device.devParentPort || "",
-                device.devGUID || "",
-                device.devSyncHubNode || "",
-                device.devSite || "",
-                device.devSSID || "",
-                device.devSourcePlugin || "",
-                device.devPresentLastScan || "",
-                device.devAlertDown || "",
-                device.devCustomProps || "",
-                device.devFQDN || "",
-                device.devParentRelType || "",
-                device.devReqNicsOnline || 0,
-                device.devVlan || "",
-                device.devPrimaryIPv4 || "",
-                device.devPrimaryIPv6 || "",
-                device.devFlapping || 0,
-            ];
+            // Build positional row directly from DEVICE_COLUMN_FIELDS.
+            // NUMERIC_DEFAULTS controls which fields default to 0 vs "".
+            // Adding a new column: add to DEVICE_COLUMN_FIELDS (and NUMERIC_DEFAULTS
+            // if needed) in js/device-columns.js — nothing to change here.
+            const originalRow = DEVICE_COLUMN_FIELDS.map(
+                field => device[field] ?? (NUMERIC_DEFAULTS.has(field) ? 0 : "")
+            );
 
             const newRow = [];
             // Reorder data based on user-defined columns order
@@ -790,15 +684,15 @@ function initializeDatatable (status) {
 
     'columnDefs'   : [
       {visible:   false,         targets: tableColumnHide },
-      {className: 'text-center', targets: [mapIndx(4), mapIndx(9), mapIndx(10), mapIndx(15), mapIndx(18)] },
-      {className: 'iconColumn text-center',  targets: [mapIndx(3)]},
-      {width:     '80px',        targets: [mapIndx(6), mapIndx(7), mapIndx(15), mapIndx(27)] },
-      {width:     '85px',        targets: [mapIndx(9)] },
-      {width:     '30px',        targets: [mapIndx(3), mapIndx(10), mapIndx(13), mapIndx(18)] },
-      {orderData: [mapIndx(12)],          targets: mapIndx(8) },
+      {className: 'text-center', targets: [mapIndx(COL.devFavorite), mapIndx(COL.devIsRandomMac), mapIndx(COL.devStatus), mapIndx(COL.devParentChildrenCount), mapIndx(COL.devParentPort)] },
+      {className: 'iconColumn text-center',  targets: [mapIndx(COL.devIcon)]},
+      {width:     '80px',        targets: [mapIndx(COL.devFirstConnection), mapIndx(COL.devLastConnection), mapIndx(COL.devParentChildrenCount), mapIndx(COL.devFQDN)] },
+      {width:     '85px',        targets: [mapIndx(COL.devIsRandomMac)] },
+      {width:     '30px',        targets: [mapIndx(COL.devIcon), mapIndx(COL.devStatus), mapIndx(COL.rowid), mapIndx(COL.devParentPort)] },
+      {orderData: [mapIndx(COL.devIpLong)],  targets: mapIndx(COL.devLastIP) },
 
       // Device Name and FQDN
-      {targets: [mapIndx(0), mapIndx(27)],
+      {targets: [mapIndx(COL.devName), mapIndx(COL.devFQDN)],
         'createdCell': function (td, cellData, rowData, row, col) {
 
             // console.log(cellData)
@@ -812,20 +706,20 @@ function initializeDatatable (status) {
             $(td).html (
               `<b class="anonymizeDev "
               >
-                <a href="deviceDetails.php?mac=${rowData[mapIndx(11)]}" class="hover-node-info"
+                <a href="deviceDetails.php?mac=${rowData[mapIndx(COL.devMac)]}" class="hover-node-info"
                   data-name="${displayedValue}"
-                  data-ip="${rowData[mapIndx(8)]}"
-                  data-mac="${rowData[mapIndx(11)]}"
-                  data-vendor="${rowData[mapIndx(17)]}"
-                  data-type="${rowData[mapIndx(2)]}"
-                  data-firstseen="${rowData[mapIndx(6)]}"
-                  data-lastseen="${rowData[mapIndx(7)]}"
-                  data-relationship="${rowData[mapIndx(28)]}"
-                  data-status="${rowData[mapIndx(10)]}"
-                  data-present="${rowData[mapIndx(24)]}"
-                  data-alert="${rowData[mapIndx(25)]}"
-                  data-flapping="${rowData[mapIndx(33)]}"
-                  data-icon="${rowData[mapIndx(3)]}">
+                  data-ip="${rowData[mapIndx(COL.devLastIP)]}"
+                  data-mac="${rowData[mapIndx(COL.devMac)]}"
+                  data-vendor="${rowData[mapIndx(COL.devVendor)]}"
+                  data-type="${rowData[mapIndx(COL.devType)]}"
+                  data-firstseen="${rowData[mapIndx(COL.devFirstConnection)]}"
+                  data-lastseen="${rowData[mapIndx(COL.devLastConnection)]}"
+                  data-relationship="${rowData[mapIndx(COL.devParentRelType)]}"
+                  data-status="${rowData[mapIndx(COL.devStatus)]}"
+                  data-present="${rowData[mapIndx(COL.devPresentLastScan)]}"
+                  data-alert="${rowData[mapIndx(COL.devAlertDown)]}"
+                  data-flapping="${rowData[mapIndx(COL.devFlapping)]}"
+                  data-icon="${rowData[mapIndx(COL.devIcon)]}">
                 ${displayedValue}
                 </a>
               </b>`
@@ -833,12 +727,12 @@ function initializeDatatable (status) {
       } },
 
       // Connected Devices
-      {targets: [mapIndx(15)],
+      {targets: [mapIndx(COL.devParentChildrenCount)],
         'createdCell': function (td, cellData, rowData, row, col) {
           // check if this is a network device
-          if(getSetting("NETWORK_DEVICE_TYPES").includes(`'${rowData[mapIndx(2)]}'`)   )
+          if(getSetting("NETWORK_DEVICE_TYPES").includes(`'${rowData[mapIndx(COL.devType)]}'`)   )
           {
-            $(td).html ('<b><a href="./network.php?mac='+ rowData[mapIndx(11)] +'" class="">'+ cellData +'</a></b>');
+            $(td).html ('<b><a href="./network.php?mac='+ rowData[mapIndx(COL.devMac)] +'" class="">'+ cellData +'</a></b>');
           }
           else
           {
@@ -848,7 +742,7 @@ function initializeDatatable (status) {
       } },
 
       // Icon
-      {targets: [mapIndx(3)],
+      {targets: [mapIndx(COL.devIcon)],
         'createdCell': function (td, cellData, rowData, row, col) {
 
           if (!emptyArr.includes(cellData)){
@@ -859,7 +753,7 @@ function initializeDatatable (status) {
       } },
 
       // Full MAC
-      {targets: [mapIndx(11)],
+      {targets: [mapIndx(COL.devMac)],
         'createdCell': function (td, cellData, rowData, row, col) {
           if (!emptyArr.includes(cellData)){
             $(td).html ('<span class="anonymizeMac">'+cellData+'</span>');
@@ -869,7 +763,7 @@ function initializeDatatable (status) {
       } },
 
       // IP address
-      {targets: [mapIndx(8)],
+      {targets: [mapIndx(COL.devLastIP)],
         'createdCell': function (td, cellData, rowData, row, col) {
             if (!emptyArr.includes(cellData)){
               $(td).html (`<span class="anonymizeIp">
@@ -887,8 +781,8 @@ function initializeDatatable (status) {
             }
         }
       },
-      // IP address (ordeable)
-      {targets: [mapIndx(12)],
+      // IP address (orderable)
+      {targets: [mapIndx(COL.devIpLong)],
         'createdCell': function (td, cellData, rowData, row, col) {
             if (!emptyArr.includes(cellData)){
               $(td).html (`<span class="anonymizeIp">${cellData}<span>`);
@@ -899,10 +793,10 @@ function initializeDatatable (status) {
       },
 
       // Custom Properties
-      {targets: [mapIndx(26)],
+      {targets: [mapIndx(COL.devCustomProps)],
         'createdCell': function (td, cellData, rowData, row, col) {
             if (!emptyArr.includes(cellData)){
-              $(td).html (`<span>${renderCustomProps(cellData, rowData[mapIndx(11)])}</span>`);
+              $(td).html (`<span>${renderCustomProps(cellData, rowData[mapIndx(COL.devMac)])}</span>`);
             } else {
               $(td).html ('');
             }
@@ -910,7 +804,7 @@ function initializeDatatable (status) {
       },
 
       // Favorite
-      {targets: [mapIndx(4)],
+      {targets: [mapIndx(COL.devFavorite)],
         'createdCell': function (td, cellData, rowData, row, col) {
           if (cellData == 1){
             $(td).html ('<i class="fa fa-star text-yellow" style="font-size:16px"></i>');
@@ -920,7 +814,7 @@ function initializeDatatable (status) {
       } },
 
       // Dates
-      {targets: [mapIndx(6), mapIndx(7)],
+      {targets: [mapIndx(COL.devFirstConnection), mapIndx(COL.devLastConnection)],
         'createdCell': function (td, cellData, rowData, row, col) {
           var result = cellData.toString(); // Convert to string
           if (result.includes("+")) { // Check if timezone offset is present
@@ -930,7 +824,7 @@ function initializeDatatable (status) {
       } },
 
       // Random MAC
-      {targets: [mapIndx(9)],
+      {targets: [mapIndx(COL.devIsRandomMac)],
         'createdCell': function (td, cellData, rowData, row, col) {
           // console.log(cellData)
           if (cellData == 1){
@@ -941,7 +835,7 @@ function initializeDatatable (status) {
       } },
 
       // Parent Mac
-      {targets: [mapIndx(14)],
+      {targets: [mapIndx(COL.devParentMAC)],
         'createdCell': function (td, cellData, rowData, row, col) {
           if (!isValidMac(cellData)) {
             $(td).html('');
@@ -963,13 +857,13 @@ function initializeDatatable (status) {
         }
       },
       // Status color
-      {targets: [mapIndx(10)],
+      {targets: [mapIndx(COL.devStatus)],
         'createdCell': function (td, cellData, rowData, row, col) {
 
-          tmp_devPresentLastScan = rowData[mapIndx(24)]
-          tmp_devAlertDown = rowData[mapIndx(25)]
-          tmp_devMac = rowData[mapIndx(11)]
-          tmp_devFlapping = rowData[mapIndx(33)]
+          tmp_devPresentLastScan = rowData[mapIndx(COL.devPresentLastScan)]
+          tmp_devAlertDown      = rowData[mapIndx(COL.devAlertDown)]
+          tmp_devMac            = rowData[mapIndx(COL.devMac)]
+          tmp_devFlapping       = rowData[mapIndx(COL.devFlapping)]
 
           const badge = getStatusBadgeParts(
            tmp_devPresentLastScan,   // tmp_devPresentLastScan
@@ -1044,7 +938,7 @@ function initializeDatatable (status) {
     },
     createdRow: function(row, data, dataIndex) {
         // add devMac to the table row
-        $(row).attr('my-devMac', data[mapIndx(11)]);
+        $(row).attr('my-devMac', data[mapIndx(COL.devMac)]);
 
     }
 
@@ -1090,7 +984,7 @@ function multiEditDevices()
   macs = ""
 
   for (var j = 0; j < selectedDevicesDataTableData.length; j++) {
-    macs += selectedDevicesDataTableData[j][mapIndx(11)] + ",";  // [11] == MAC
+    macs += selectedDevicesDataTableData[j][mapIndx(COL.devMac)] + ",";  // MAC
   }
 
   // redirect to the Maintenance section
@@ -1111,7 +1005,7 @@ function getMacsOfShownDevices() {
   allIndexes.each(function(idx) {
     var rowData = table.row(idx).data();
     if (rowData) {
-      macs.push(rowData[mapIndx(11)]);  // mapIndx(11) == MAC column
+      macs.push(rowData[mapIndx(COL.devMac)]);  // MAC column
     }
   });
 
