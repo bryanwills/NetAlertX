@@ -680,7 +680,7 @@ def importConfigs(pm, db, all_plugins):
             <li> Clear app cache with the <i class="fa-solid fa-rotate"></i> (reload) button in the header</li>\
             <li>Go to Settings and click Save</li> </ol>\
             Check out new features and what has changed in the \
-            <a href="https://github.com/jokob-sk/NetAlertX/releases" target="_blank">📓 release notes</a>.""",
+            <a href="https://github.com/netalertx/NetAlertX/releases" target="_blank">📓 release notes</a>.""",
             'interrupt',
             timeNowUTC()
         )

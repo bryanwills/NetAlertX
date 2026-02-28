@@ -390,7 +390,7 @@ function createTabContent(pluginObj, assignActive) {
       </div>
       <div class='plugins-description'>
         ${getString(`${prefix}_description`)} <!-- Display the plugin description -->
-        <span><a href="https://github.com/jokob-sk/NetAlertX/tree/main/front/plugins/${pluginObj.code_name}" target="_blank">${getString('Gen_ReadDocs')}</a></span> <!-- Link to documentation -->
+        <span><a href="https://github.com/netalertx/NetAlertX/tree/main/front/plugins/${pluginObj.code_name}" target="_blank">${getString('Gen_ReadDocs')}</a></span> <!-- Link to documentation -->
       </div>
     </div>
   `);
