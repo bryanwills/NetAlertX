@@ -744,9 +744,6 @@ function getStatusBadgeParts(devPresentLastScan, devAlertDown, devFlapping, devM
   let status = 'unknown';
   let cssText = '';
 
-  console.log(devFlapping);
-
-
   if (devPresentLastScan == 1 && devFlapping == 0) {
     css = 'bg-green text-white statusOnline';
     cssText = 'text-green';
