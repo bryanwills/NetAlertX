@@ -730,46 +730,10 @@ function showIconSelection(setKey) {
 
 
 // -----------------------------------------------------------------------------
-// Get the correct db column code name based on table header title string
+// Get the correct db column code name based on table header title string.
+// COLUMN_NAME_MAP is defined in device-columns.js, loaded before this file.
 function getColumnNameFromLangString(headStringKey) {
-  columnNameMap = {
-    "Device_TableHead_Name": "devName",
-    "Device_TableHead_Owner": "devOwner",
-    "Device_TableHead_Type": "devType",
-    "Device_TableHead_Icon": "devIcon",
-    "Device_TableHead_Favorite": "devFavorite",
-    "Device_TableHead_Group": "devGroup",
-    "Device_TableHead_FirstSession": "devFirstConnection",
-    "Device_TableHead_LastSession": "devLastConnection",
-    "Device_TableHead_LastIP": "devLastIP",
-    "Device_TableHead_MAC": "devMac",
-    "Device_TableHead_Status": "devStatus",
-    "Device_TableHead_MAC_full": "devMac",
-    "Device_TableHead_LastIPOrder": "devIpLong",
-    "Device_TableHead_Rowid": "rowid",
-    "Device_TableHead_Parent_MAC": "devParentMAC",
-    "Device_TableHead_Connected_Devices": "devParentChildrenCount",
-    "Device_TableHead_Location": "devLocation",
-    "Device_TableHead_Vendor": "devVendor",
-    "Device_TableHead_Port": "devParentPort",
-    "Device_TableHead_GUID": "devGUID",
-    "Device_TableHead_SyncHubNodeName": "devSyncHubNode",
-    "Device_TableHead_NetworkSite": "devSite",
-    "Device_TableHead_SSID": "devSSID",
-    "Device_TableHead_SourcePlugin": "devSourcePlugin",
-    "Device_TableHead_PresentLastScan": "devPresentLastScan",
-    "Device_TableHead_AlertDown": "devAlertDown",
-    "Device_TableHead_CustomProps": "devCustomProps",
-    "Device_TableHead_FQDN": "devFQDN",
-    "Device_TableHead_ParentRelType": "devParentRelType",
-    "Device_TableHead_ReqNicsOnline": "devReqNicsOnline",
-    "Device_TableHead_Vlan": "devVlan",
-    "Device_TableHead_IPv4": "devPrimaryIPv4",
-    "Device_TableHead_IPv6": "devPrimaryIPv6",
-    "Device_TableHead_Flapping": "devFlapping"
-  };
-
-  return columnNameMap[headStringKey] || "";
+  return COLUMN_NAME_MAP[headStringKey] || "";
 }
 
 //--------------------------------------------------------------
