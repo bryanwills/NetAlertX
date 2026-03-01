@@ -292,7 +292,22 @@ function cacheStrings() {
   return new Promise((resolve, reject) => {
     if(getCache(CACHE_KEYS.initFlag('cacheStrings')) === "true")
     {
-      resolve();
+      // Core strings are cached, but plugin strings may have failed silently on
+      // the first load (non-fatal fetch).  Always re-fetch them so that plugin
+      // keys like "CSVBCKP_overwrite_description" are available without needing
+      // a full clearCache().
+      fetchJson('table_plugins_language_strings.json')
+        .catch((pluginError) => {
+          console.warn('[cacheStrings early-return] Plugin language strings unavailable (non-fatal):', pluginError);
+          return [];
+        })
+        .then((data) => {
+          if (!Array.isArray(data)) { data = []; }
+          data.forEach((langString) => {
+            setCache(CACHE_KEYS.langString(langString.String_Key, langString.Language_Code), langString.String_Value);
+          });
+          resolve();
+        });
       return;
     }
 
