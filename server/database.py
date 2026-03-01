@@ -75,10 +75,17 @@ class DB:
             # When temp_store is MEMORY (2) temporary tables and indices
             # are kept as if they were in pure in-memory databases.
             self.sql_connection.execute("PRAGMA temp_store=MEMORY;")
-            # WAL size limit: cap at 10 MB. When approached, SQLite auto-checkpoints
+            # WAL size limit: auto-checkpoint when WAL approaches this size,
             # even if other connections are active. Prevents unbounded WAL growth
             # on systems with multiple long-lived processes (backend, nginx, PHP-FPM).
-            self.sql_connection.execute("PRAGMA journal_size_limit=10000000;")
+            # User-configurable via PRAGMA_JOURNAL_SIZE_LIMIT setting (default 50 MB).
+            try:
+                from helper import get_setting_value
+                wal_limit_mb = int(get_setting_value("PRAGMA_JOURNAL_SIZE_LIMIT", "50"))
+                wal_limit_bytes = wal_limit_mb * 1000000
+            except Exception:
+                wal_limit_bytes = 50000000  # 50 MB fallback
+            self.sql_connection.execute(f"PRAGMA journal_size_limit={wal_limit_bytes};")
 
             self.sql_connection.text_factory = str
             self.sql_connection.row_factory = sqlite3.Row
@@ -334,6 +341,13 @@ def get_temp_db_connection():
     conn = sqlite3.connect(fullDbPath, timeout=5, isolation_level=None)
     conn.execute("PRAGMA journal_mode=WAL;")
     conn.execute("PRAGMA busy_timeout=5000;")  # 5s wait before giving up
-    conn.execute("PRAGMA journal_size_limit=10000000;")  # 10 MB WAL cap with auto-checkpoint
+    # Apply user-configured WAL size limit (default 50 MB in initialise.py)
+    try:
+        from helper import get_setting_value
+        wal_limit_mb = int(get_setting_value("PRAGMA_JOURNAL_SIZE_LIMIT", "50"))
+        wal_limit_bytes = wal_limit_mb * 1000000
+    except Exception:
+        wal_limit_bytes = 50000000  # 50 MB fallback
+    conn.execute(f"PRAGMA journal_size_limit={wal_limit_bytes};")
     conn.row_factory = sqlite3.Row
     return conn

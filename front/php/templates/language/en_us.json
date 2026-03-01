@@ -63,6 +63,8 @@
     "BackDevices_darkmode_enabled": "Darkmode Enabled",
     "CLEAR_NEW_FLAG_description": "If enabled (<code>0</code> is disabled), devices flagged as <b>New Device</b> will be unflagged if the time limit (specified in hours) exceeds their <b>First Session</b> time.",
     "CLEAR_NEW_FLAG_name": "Clear new flag",
+    "PRAGMA_JOURNAL_SIZE_LIMIT_description": "SQLite WAL (Write-Ahead Log) maximum size in MB before triggering automatic checkpoints. Lower values (10-20 MB) reduce disk/storage usage but increase CPU usage during scans. Higher values (50-100 MB) reduce CPU spikes during operations but may use more RAM and disk space. Default <code>50 MB</code> balances both. Useful for resource-constrained systems like NAS devices with SD cards.",
+    "PRAGMA_JOURNAL_SIZE_LIMIT_name": "WAL size limit (MB)",
     "CustProps_cant_remove": "Can't remove, at least one property is needed.",
     "DAYS_TO_KEEP_EVENTS_description": "This is a maintenance setting. This specifies the number of days worth of event entries that will be kept. All older events will be deleted periodically. Also applies on Plugin Events History.",
     "DAYS_TO_KEEP_EVENTS_name": "Delete events older than",

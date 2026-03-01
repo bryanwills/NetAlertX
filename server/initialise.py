@@ -341,6 +341,15 @@ def importConfigs(pm, db, all_plugins):
         "[]",
         "General",
     )
+    conf.PRAGMA_JOURNAL_SIZE_LIMIT = ccd(
+        "PRAGMA_JOURNAL_SIZE_LIMIT",
+        50,
+        c_d,
+        "WAL size limit (MB)",
+        '{"dataType":"integer", "elements": [{"elementType" : "input", "elementOptions" : [{"type": "number"}] ,"transformers": []}]}',
+        "[]",
+        "General",
+    )
     conf.REFRESH_FQDN = ccd(
         "REFRESH_FQDN",
         False,
