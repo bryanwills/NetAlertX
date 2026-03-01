@@ -579,6 +579,8 @@
     "PIALERT_WEB_PROTECTION_name": "Activer la connexion par login",
     "PLUGINS_KEEP_HIST_description": "Combien d'entrées de résultats de scan doivent être conservés dans l'historique des plugins (par plugin, pas par appareil).",
     "PLUGINS_KEEP_HIST_name": "Historique des plugins",
+    "PRAGMA_JOURNAL_SIZE_LIMIT_description": "",
+    "PRAGMA_JOURNAL_SIZE_LIMIT_name": "",
     "Plugins_DeleteAll": "Tout supprimer (ne prend pas en compte les filtres)",
     "Plugins_Filters_Mac": "Filtrer par MAC",
     "Plugins_History": "Historique des événements",

@@ -579,6 +579,8 @@
     "PIALERT_WEB_PROTECTION_name": "Aktiver innlogging",
     "PLUGINS_KEEP_HIST_description": "Hvor mange oppføringer av plugins historie skanneresultater som skal oppbevares (per plugin, og ikke enhetsspesifikt).",
     "PLUGINS_KEEP_HIST_name": "Plugins historie",
+    "PRAGMA_JOURNAL_SIZE_LIMIT_description": "",
+    "PRAGMA_JOURNAL_SIZE_LIMIT_name": "",
     "Plugins_DeleteAll": "Slett alle (filtre blir ignorert)",
     "Plugins_Filters_Mac": "Mac filter",
     "Plugins_History": "Hendelses historikk",

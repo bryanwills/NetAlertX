@@ -579,6 +579,8 @@
     "PIALERT_WEB_PROTECTION_name": "Включить вход",
     "PLUGINS_KEEP_HIST_description": "Сколько записей результатов сканирования истории плагинов следует хранить (для каждого плагина, а не для конкретного устройства).",
     "PLUGINS_KEEP_HIST_name": "История плагинов",
+    "PRAGMA_JOURNAL_SIZE_LIMIT_description": "",
+    "PRAGMA_JOURNAL_SIZE_LIMIT_name": "",
     "Plugins_DeleteAll": "Удалить все (фильтры игнорируются)",
     "Plugins_Filters_Mac": "Фильтр MAC-адреса",
     "Plugins_History": "История событий",

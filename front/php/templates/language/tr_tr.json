@@ -579,6 +579,8 @@
     "PIALERT_WEB_PROTECTION_name": "",
     "PLUGINS_KEEP_HIST_description": "",
     "PLUGINS_KEEP_HIST_name": "",
+    "PRAGMA_JOURNAL_SIZE_LIMIT_description": "",
+    "PRAGMA_JOURNAL_SIZE_LIMIT_name": "",
     "Plugins_DeleteAll": "",
     "Plugins_Filters_Mac": "",
     "Plugins_History": "",

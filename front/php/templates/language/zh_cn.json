@@ -579,6 +579,8 @@
     "PIALERT_WEB_PROTECTION_name": "启用登录",
     "PLUGINS_KEEP_HIST_description": "应保留多少个插件历史扫描结果条目（每个插件，而不是特定于设备）。",
     "PLUGINS_KEEP_HIST_name": "插件历史",
+    "PRAGMA_JOURNAL_SIZE_LIMIT_description": "",
+    "PRAGMA_JOURNAL_SIZE_LIMIT_name": "",
     "Plugins_DeleteAll": "全部删除（忽略过滤器）",
     "Plugins_Filters_Mac": "Mac 过滤器",
     "Plugins_History": "事件历史",

@@ -608,6 +608,8 @@
     "PIALERT_WEB_PROTECTION_name": "Anmeldung aktivieren",
     "PLUGINS_KEEP_HIST_description": "Wie viele Plugin Scanresultate behalten werden (pro Plugin, nicht gerätespezifisch).",
     "PLUGINS_KEEP_HIST_name": "Plugins Verlauf",
+    "PRAGMA_JOURNAL_SIZE_LIMIT_description": "",
+    "PRAGMA_JOURNAL_SIZE_LIMIT_name": "",
     "PUSHSAFER_TOKEN_description": "Your secret Pushsafer API key (token).",
     "PUSHSAFER_TOKEN_name": "Pushsafer token",
     "PUSHSAFER_display_name": "Pushsafer",

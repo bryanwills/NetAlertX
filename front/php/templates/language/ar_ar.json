@@ -579,6 +579,8 @@
     "PIALERT_WEB_PROTECTION_name": "حماية الويب",
     "PLUGINS_KEEP_HIST_description": "الاحتفاظ بسجل المكونات الإضافية",
     "PLUGINS_KEEP_HIST_name": "سجل المكونات الإضافية",
+    "PRAGMA_JOURNAL_SIZE_LIMIT_description": "",
+    "PRAGMA_JOURNAL_SIZE_LIMIT_name": "",
     "Plugins_DeleteAll": "حذف الكل",
     "Plugins_Filters_Mac": "تصفية عنوان MAC",
     "Plugins_History": "السجل",

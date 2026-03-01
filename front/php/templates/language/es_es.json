@@ -606,6 +606,8 @@
     "PIALERT_WEB_PROTECTION_name": "Habilitar inicio de sesión",
     "PLUGINS_KEEP_HIST_description": "¿Cuántas entradas de los resultados del análisis del historial de complementos deben conservarse (globalmente, no específico del dispositivo!).",
     "PLUGINS_KEEP_HIST_name": "Historial de complementos",
+    "PRAGMA_JOURNAL_SIZE_LIMIT_description": "",
+    "PRAGMA_JOURNAL_SIZE_LIMIT_name": "",
     "PUSHSAFER_TOKEN_description": "Su clave secreta de la API de Pushsafer (token).",
     "PUSHSAFER_TOKEN_name": "Token de Pushsafer",
     "PUSHSAFER_display_name": "Pushsafer",
