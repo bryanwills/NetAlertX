@@ -6,14 +6,14 @@ First off, **thank you** for taking the time to contribute! NetAlertX is built a
 
 ## 📂 Issues, Bugs, and Feature Requests
 
-Please use the [GitHub Issue Tracker](https://github.com/jokob-sk/NetAlertX/issues) for:
+Please use the [GitHub Issue Tracker](https://github.com/netalertx/NetAlertX/issues) for:
 - Bug reports 🐞
 - Feature requests 💡
 - Documentation feedback 📖
 
 Before opening a new issue:
 - 🛑 [Check Common Issues & Debug Tips](https://docs.netalertx.com/DEBUG_TIPS#common-issues)
-- 🔍 [Search Closed Issues](https://github.com/jokob-sk/NetAlertX/issues?q=is%3Aissue+is%3Aclosed)
+- 🔍 [Search Closed Issues](https://github.com/netalertx/NetAlertX/issues?q=is%3Aissue+is%3Aclosed)
 
 ---
 

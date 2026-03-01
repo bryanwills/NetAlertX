@@ -1676,7 +1676,7 @@
       "description": [
         {
           "language_code": "en_us",
-          "string": "The name of the Sync Node. Uneditable - Auto-populated via the <a href=\"https://github.com/jokob-sk/NetAlertX/blob/main/front/plugins/sync/README.md\" target=\"_blank\">Sync plugin</a> if enabled. Database column name: <code>devSyncHubNode</code>."
+          "string": "The name of the Sync Node. Uneditable - Auto-populated via the <a href=\"https://github.com/netalertx/NetAlertX/blob/main/front/plugins/sync/README.md\" target=\"_blank\">Sync plugin</a> if enabled. Database column name: <code>devSyncHubNode</code>."
         }
       ]
     },
