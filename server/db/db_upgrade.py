@@ -405,6 +405,14 @@ def ensure_Indexes(sql) -> bool:
             "idx_plugins_plugin_mac_ip",
             "CREATE INDEX idx_plugins_plugin_mac_ip ON Plugins_Objects(Plugin, Object_PrimaryID, Object_SecondaryID)",
         ),  # Issue #1251: Optimize name resolution lookup
+        # Plugins_History: covers both the db_cleanup window function
+        # (PARTITION BY Plugin ORDER BY DateTimeChanged DESC) and the
+        # API query (SELECT * … ORDER BY DateTimeChanged DESC).
+        # Without this, both ops do a full 48k-row table sort on every cycle.
+        (
+            "idx_plugins_history_plugin_dt",
+            "CREATE INDEX idx_plugins_history_plugin_dt ON Plugins_History(Plugin, DateTimeChanged DESC)",
+        ),
     ]
 
     for name, create_sql in indexes:
