@@ -75,6 +75,10 @@ class DB:
             # When temp_store is MEMORY (2) temporary tables and indices
             # are kept as if they were in pure in-memory databases.
             self.sql_connection.execute("PRAGMA temp_store=MEMORY;")
+            # WAL size limit: cap at 10 MB. When approached, SQLite auto-checkpoints
+            # even if other connections are active. Prevents unbounded WAL growth
+            # on systems with multiple long-lived processes (backend, nginx, PHP-FPM).
+            self.sql_connection.execute("PRAGMA journal_size_limit=10000000;")
 
             self.sql_connection.text_factory = str
             self.sql_connection.row_factory = sqlite3.Row
@@ -330,5 +334,6 @@ def get_temp_db_connection():
     conn = sqlite3.connect(fullDbPath, timeout=5, isolation_level=None)
     conn.execute("PRAGMA journal_mode=WAL;")
     conn.execute("PRAGMA busy_timeout=5000;")  # 5s wait before giving up
+    conn.execute("PRAGMA journal_size_limit=10000000;")  # 10 MB WAL cap with auto-checkpoint
     conn.row_factory = sqlite3.Row
     return conn
