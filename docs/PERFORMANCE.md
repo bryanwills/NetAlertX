@@ -56,7 +56,7 @@ The application automatically maintains database performance as data accumulates
 
 The SQLite Write-Ahead Log (WAL) is a temporary file that grows during normal operation. On systems with constrained resources (NAS, Raspberry Pi), controlling WAL size is important.
 
-**Setting:** **Settings → General → "WAL size limit (MB)"** (default: **50 MB**)
+**Setting:** **`PRAGMA_JOURNAL_SIZE_LIMIT`** (default: **50 MB**)
 
 | Setting | Effect | Use Case |
 |---------|--------|----------|
