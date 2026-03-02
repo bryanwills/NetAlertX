@@ -90,3 +90,40 @@ def test_skip_startup_checks_env_var():
     result = _run_entrypoint(env={"SKIP_STARTUP_CHECKS": "mandatory folders"}, check_only=True)
     assert "Creating NetAlertX log directory" not in result.stdout
     assert result.returncode == 0
+
+
+@pytest.mark.docker
+@pytest.mark.feature_complete
+def test_host_optimization_warning_matches_sysctl():
+    """Validate host-optimization warning matches actual host sysctl values."""
+    ignore_proc = subprocess.run(
+        ["sysctl", "-n", "net.ipv4.conf.all.arp_ignore"],
+        capture_output=True,
+        text=True,
+        check=False,
+        timeout=10,
+    )
+    announce_proc = subprocess.run(
+        ["sysctl", "-n", "net.ipv4.conf.all.arp_announce"],
+        capture_output=True,
+        text=True,
+        check=False,
+        timeout=10,
+    )
+
+    if ignore_proc.returncode != 0 or announce_proc.returncode != 0:
+        pytest.skip("sysctl values unavailable on host; skipping host-optimization warning check")
+
+    arp_ignore = ignore_proc.stdout.strip()
+    arp_announce = announce_proc.stdout.strip()
+    expected_warning = not (arp_ignore == "1" and arp_announce == "2")
+
+    result = _run_entrypoint(check_only=True)
+    combined_output = result.stdout + result.stderr
+    warning_present = "WARNING: ARP flux sysctls are not set." in combined_output
+
+    assert warning_present == expected_warning, (
+        "host-optimization warning mismatch: "
+        f"arp_ignore={arp_ignore}, arp_announce={arp_announce}, "
+        f"expected_warning={expected_warning}, warning_present={warning_present}"
+    )

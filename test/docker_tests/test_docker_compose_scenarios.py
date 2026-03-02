@@ -344,6 +344,7 @@ def _write_normal_startup_compose(
 
     service_env = service.setdefault("environment", {})
     service_env.setdefault("NETALERTX_CHECK_ONLY", "1")
+    service_env.setdefault("SKIP_STARTUP_CHECKS", "host optimization")
 
     if env_overrides:
         service_env.update(env_overrides)
@@ -885,9 +886,14 @@ def test_normal_startup_no_warnings_compose(tmp_path: pathlib.Path) -> None:
         f"Unexpected mount row values for /data: {data_parts[2:4]}"
     )
 
+    allowed_warning = "⚠️  WARNING: ARP flux sysctls are not set."
+
     assert "Write permission denied" not in default_output
     assert "CRITICAL" not in default_output
-    assert "⚠️" not in default_output
+    assert all(
+        "⚠️" not in line or allowed_warning in line
+        for line in default_output.splitlines()
+    ), "Unexpected warning found in default output"
 
     custom_http = _select_custom_ports({default_http_port})
     custom_graphql = _select_custom_ports({default_http_port, custom_http})
@@ -922,7 +928,10 @@ def test_normal_startup_no_warnings_compose(tmp_path: pathlib.Path) -> None:
     assert "❌" not in custom_output
     assert "Write permission denied" not in custom_output
     assert "CRITICAL" not in custom_output
-    assert "⚠️" not in custom_output
+    assert all(
+        "⚠️" not in line or allowed_warning in line
+        for line in custom_output.splitlines()
+    ), "Unexpected warning found in custom output"
     lowered_custom = custom_output.lower()
     assert "arning" not in lowered_custom
     assert "rror" not in lowered_custom
