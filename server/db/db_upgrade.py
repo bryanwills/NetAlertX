@@ -273,7 +273,7 @@ def ensure_views(sql) -> bool:
                         IFNULL(devScan, '') AS devScan,
                         IFNULL(devLogEvents, '') AS devLogEvents,
                         IFNULL(devAlertEvents, '') AS devAlertEvents,
-                        IFNULL(devAlertDown, '') AS devAlertDown,
+                        IFNULL(devAlertDown, 0) AS devAlertDown,
                         IFNULL(devCanSleep, 0) AS devCanSleep,
                         IFNULL(devSkipRepeated, '') AS devSkipRepeated,
                         IFNULL(devLastNotification, '') AS devLastNotification,
