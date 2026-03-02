@@ -16,15 +16,16 @@ function loadNetworkNodes() {
   //                          PC (leaf) <------- leafs are not included in this SQL query
   const rawSql = `
       SELECT
-          parent.devName AS node_name,
-          LOWER(parent.devMac) AS node_mac,
-          parent.devPresentLastScan AS online,
-          parent.devType AS node_type,
-          LOWER(parent.devParentMAC) AS parent_mac,
-          parent.devIcon AS node_icon,
-          parent.devAlertDown AS node_alert,
-          parent.devFlapping AS node_flapping,
-          parent.devIsSleeping AS node_sleeping,
+          parent.devName,
+          LOWER(parent.devMac) AS devMac,
+          parent.devPresentLastScan,
+          parent.devType,
+          LOWER(parent.devParentMAC) AS devParentMAC,
+          parent.devIcon,
+          parent.devAlertDown,
+          parent.devFlapping,
+          parent.devIsSleeping,
+          parent.devIsNew,
           COUNT(child.devMac) AS node_ports_count
       FROM DevicesView AS parent
       LEFT JOIN DevicesView AS child
@@ -35,7 +36,7 @@ function loadNetworkNodes() {
       WHERE parent.devType IN (${networkDeviceTypes})
         AND parent.devIsArchived = 0
       GROUP BY parent.devMac, parent.devName, parent.devPresentLastScan,
-               parent.devType, parent.devParentMAC, parent.devIcon, parent.devAlertDown, parent.devFlapping, parent.devIsSleeping
+               parent.devType, parent.devParentMAC, parent.devIcon, parent.devAlertDown, parent.devFlapping, parent.devIsSleeping, parent.devIsNew
       ORDER BY parent.devName;
   `;
 
@@ -142,15 +143,8 @@ function loadDeviceTable({ sql, containerSelector, tableId, wrapperHtml = null, 
           data: 'devStatus',
           width: '15%',
           render: function (_, type, device) {
-            const badge = getStatusBadgeParts(
-              device.devPresentLastScan,
-              device.devAlertDown,
-              device.devFlapping,
-              device.devMac,
-              device.devStatus,
-              device.devIsSleeping || 0
-            );
-            return `<a href="${badge.url}" class="badge ${badge.cssClass}">${badge.iconHtml} ${badge.text}</a>`;
+            const badge = badgeFromDevice(device);
+            return `<a href="${badge.url}" class="badge ${badge.cssClass}">${badge.iconHtml} ${badge.label}</a>`;
           }
         },
         {
@@ -206,7 +200,7 @@ function loadDeviceTable({ sql, containerSelector, tableId, wrapperHtml = null, 
  */
 function loadUnassignedDevices() {
   const sql = `
-    SELECT devMac, devPresentLastScan, devName, devLastIP, devVendor, devAlertDown, devParentPort, devFlapping, devIsSleeping, devStatus
+    SELECT devMac, devPresentLastScan, devName, devLastIP, devVendor, devAlertDown, devParentPort, devFlapping, devIsSleeping, devIsNew, devStatus
     FROM DevicesView
     WHERE (devParentMAC IS NULL OR devParentMAC IN ("", " ", "undefined", "null"))
       AND LOWER(devMac) NOT LIKE "%internet%"
@@ -241,7 +235,7 @@ function loadConnectedDevices(node_mac) {
   const normalized_mac = node_mac.toLowerCase();
 
   const sql = `
-    SELECT devName, devMac, devLastIP, devVendor, devPresentLastScan, devAlertDown, devParentPort, devVlan, devFlapping, devIsSleeping,
+    SELECT devName, devMac, devLastIP, devVendor, devPresentLastScan, devAlertDown, devParentPort, devVlan, devFlapping, devIsSleeping, devIsNew, devIsArchived,
       CASE
           WHEN devIsNew = 1 THEN 'New'
           WHEN devPresentLastScan = 1 THEN 'On-line'

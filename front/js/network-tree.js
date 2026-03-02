@@ -57,26 +57,28 @@ function getChildren(node, list, path, visited = [])
     // console.log(node);
 
     return {
-        name: node.devName,
+        devName: node.devName,
         path: path,
-        mac: node.devMac,
-        port: node.devParentPort,
+        devMac: node.devMac,
+        devParentPort: node.devParentPort,
         id: node.devMac,
-        parentMac: node.devParentMAC,
-        icon: node.devIcon,
-        type: node.devType,
+        devParentMAC: node.devParentMAC,
+        devIcon: node.devIcon,
+        devType: node.devType,
         devIsNetworkNodeDynamic: node.devIsNetworkNodeDynamic,
-        vendor: node.devVendor,
-        lastseen: node.devLastConnection,
-        firstseen: node.devFirstConnection,
-        ip: node.devLastIP,
-        status: node.devStatus,
-        presentLastScan: node.devPresentLastScan,
-        flapping: node.devFlapping,
-        alertDown: node.devAlertDown,
-        sleeping: node.devIsSleeping || 0,
+        devVendor: node.devVendor,
+        devLastConnection: node.devLastConnection,
+        devFirstConnection: node.devFirstConnection,
+        devLastIP: node.devLastIP,
+        devStatus: node.devStatus,
+        devPresentLastScan: node.devPresentLastScan,
+        devFlapping: node.devFlapping,
+        devAlertDown: node.devAlertDown,
+        devIsSleeping: node.devIsSleeping || 0,
+        devIsArchived: node.devIsArchived || 0,
+        devIsNew:      node.devIsNew      || 0,
         hasChildren: children.length > 0 || hiddenMacs.includes(node.devMac),
-        relType: node.devParentRelType,
+        devParentRelType: node.devParentRelType,
         devVlan: node.devVlan,
         devSSID: node.devSSID,
         hiddenChildren: hiddenMacs.includes(node.devMac),
@@ -227,16 +229,16 @@ function initTree(myHierarchy)
       htmlId: "networkTree",
       renderNode:  nodeData =>  {
 
-        (!emptyArr.includes(nodeData.data.port )) ? port =  nodeData.data.port : port = "";
+        (!emptyArr.includes(nodeData.data.devParentPort)) ? port = nodeData.data.devParentPort : port = "";
 
         (port == "" || port == 0 || port == 'None' ) ? portBckgIcon = `<i class="fa fa-wifi"></i>` : portBckgIcon = `<i class="fa fa-ethernet"></i>`;
 
         portHtml = (port == "" || port == 0 || port == 'None' ) ? " &nbsp " : port;
 
         // Build HTML for individual nodes in the network diagram
-        deviceIcon = (!emptyArr.includes(nodeData.data.icon )) ?
+        deviceIcon = (!emptyArr.includes(nodeData.data.devIcon)) ?
                   `<div class="netIcon">
-                        ${atob(nodeData.data.icon)}
+                        ${atob(nodeData.data.devIcon)}
                   </div>` : "";
         devicePort = `<div  class="netPort"
                             style="width:${emSize}em;height:${emSize}em">
@@ -253,13 +255,13 @@ function initTree(myHierarchy)
                       `<div class="netCollapse"
                             style="font-size:${nodeHeightPx/2}px;top:${Math.floor(nodeHeightPx / 4)}px"
                             data-mytreepath="${nodeData.data.path}"
-                            data-mytreemac="${nodeData.data.mac}">
+                            data-mytreemac="${nodeData.data.devMac}">
                         <i class="fa fa-${collapseExpandIcon} pointer"></i>
                       </div>` : "";
 
         selectedNodeMac = $(".nav-tabs-custom .active a").attr('data-mytabmac')
 
-        highlightedCss = nodeData.data.mac == selectedNodeMac ?
+        highlightedCss = nodeData.data.devMac == selectedNodeMac ?
                       " highlightedNode " : "";
         cssNodeType = nodeData.data.devIsNetworkNodeDynamic  ?
                       " node-network-device " : " node-standard-device ";
@@ -268,40 +270,35 @@ function initTree(myHierarchy)
                                   <i class="fa-solid fa-hard-drive"></i>
                               </span>` : "";
 
-        const badgeConf = getStatusBadgeParts(
-          nodeData.data.presentLastScan,
-          nodeData.data.alertDown,
-          nodeData.data.flapping,
-          nodeData.data.mac,
-          '',
-          nodeData.data.sleeping || 0
-        );
+        const badgeConf = badgeFromDevice(nodeData.data);
 
         return result = `<div
                               class="node-inner hover-node-info box pointer ${highlightedCss} ${cssNodeType}"
                               style="height:${nodeHeightPx}px;font-size:${nodeHeightPx-5}px;"
                               onclick="handleNodeClick(this)"
-                              data-mac="${nodeData.data.mac}"
-                              data-parentMac="${nodeData.data.parentMac}"
-                              data-name="${nodeData.data.name}"
-                              data-ip="${nodeData.data.ip}"
-                              data-mac="${nodeData.data.mac}"
-                              data-vendor="${nodeData.data.vendor}"
-                              data-type="${nodeData.data.type}"
+                              data-mac="${nodeData.data.devMac}"
+                              data-parentMac="${nodeData.data.devParentMAC}"
+                              data-name="${nodeData.data.devName}"
+                              data-ip="${nodeData.data.devLastIP}"
+                              data-mac="${nodeData.data.devMac}"
+                              data-vendor="${nodeData.data.devVendor}"
+                              data-type="${nodeData.data.devType}"
                               data-devIsNetworkNodeDynamic="${nodeData.data.devIsNetworkNodeDynamic}"
-                              data-lastseen="${nodeData.data.lastseen}"
-                              data-firstseen="${nodeData.data.firstseen}"
-                              data-relationship="${nodeData.data.relType}"
-                              data-flapping="${nodeData.data.flapping}"
-                              data-sleeping="${nodeData.data.sleeping || 0}"
-                              data-status="${nodeData.data.status}"
-                              data-present="${nodeData.data.presentLastScan}"
-                              data-alert="${nodeData.data.alertDown}"
-                              data-icon="${nodeData.data.icon}"
+                              data-lastseen="${nodeData.data.devLastConnection}"
+                              data-firstseen="${nodeData.data.devFirstConnection}"
+                              data-relationship="${nodeData.data.devParentRelType}"
+                              data-flapping="${nodeData.data.devFlapping}"
+                              data-sleeping="${nodeData.data.devIsSleeping || 0}"
+                              data-archived="${nodeData.data.devIsArchived || 0}"
+                              data-isnew="${nodeData.data.devIsNew || 0}"
+                              data-status="${nodeData.data.devStatus}"
+                              data-present="${nodeData.data.devPresentLastScan}"
+                              data-alertdown="${nodeData.data.devAlertDown}"
+                              data-icon="${nodeData.data.devIcon}"
                           >
                             <div class="netNodeText">
                               <strong><span>${devicePort}  <span class="${badgeConf.cssText}">${deviceIcon}</span></span>
-                                <span class="spanNetworkTree anonymizeDev" style="width:${nodeWidthPx-50}px">${nodeData.data.name}</span>
+                                <span class="spanNetworkTree anonymizeDev" style="width:${nodeWidthPx-50}px">${nodeData.data.devName}</span>
                                 ${networkHardwareIcon}
                               </strong>
                             </div>
@@ -318,7 +315,7 @@ function initTree(myHierarchy)
       hasPan: true,
       marginLeft: '10',
       marginRight: '10',
-      idKey: "mac",
+      idKey: "devMac",
       hasFlatData: false,
       relationnalField: "children",
       linkLabel: {
@@ -339,7 +336,7 @@ function initTree(myHierarchy)
     },
       linkWidth: (nodeData) => 2,
       linkColor: (nodeData) => {
-        relConf = getRelationshipConf(nodeData.data.relType)
+        relConf = getRelationshipConf(nodeData.data.devParentRelType)
         return relConf.color;
       }
       // onNodeClick: (nodeData) => handleNodeClick(nodeData),

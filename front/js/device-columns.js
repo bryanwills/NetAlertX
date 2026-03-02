@@ -75,7 +75,16 @@ const GRAPHQL_EXTRA_FIELDS = [
   "devLastNotification",
   "devIsNew",
   "devIsArchived",
+  "devIsSleeping",
 ];
+
+// Row positions for extra (non-display) fields.
+// In dataSrc, extra fields are appended AFTER the display columns in each row,
+// so their position = DEVICE_COLUMN_FIELDS.length + their index in GRAPHQL_EXTRA_FIELDS.
+// Use COL_EXTRA.fieldName to access them in createdCell rowData.
+const COL_EXTRA = Object.fromEntries(
+  GRAPHQL_EXTRA_FIELDS.map((name, i) => [name, DEVICE_COLUMN_FIELDS.length + i])
+);
 
 // Maps Device_TableHead_* language keys to their GraphQL/DB field names.
 // Used by getColumnNameFromLangString() in ui_components.js and by

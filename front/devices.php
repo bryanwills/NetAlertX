@@ -521,6 +521,22 @@ function mapColumnIndexToFieldName(index, tableColumnVisible) {
 
 
 // ---------------------------------------------------------
+// Status badge helper for DataTables rowData (positional array).
+// Uses mapIndx(COL.*) for reordered display fields and COL_EXTRA.* for extra fields.
+function badgeFromRowData(rowData) {
+  return getStatusBadgeParts(
+    rowData[mapIndx(COL.devPresentLastScan)],
+    rowData[mapIndx(COL.devAlertDown)],
+    rowData[mapIndx(COL.devFlapping)],
+    rowData[mapIndx(COL.devMac)],
+    '',
+    rowData[COL_EXTRA.devIsSleeping] || 0,
+    rowData[COL_EXTRA.devIsArchived] || 0,
+    rowData[COL_EXTRA.devIsNew]      || 0
+  );
+}
+
+// ---------------------------------------------------------
 // Initializes the main devices list datatable
 function initializeDatatable (status) {
 
@@ -657,6 +673,11 @@ function initializeDatatable (status) {
             for (let index = 0; index < tableColumnOrder.length; index++) {
                 newRow.push(originalRow[tableColumnOrder[index]]);
             }
+            // Append extra (non-display) fields after the display columns so
+            // they are accessible in createdCell via COL_EXTRA.*
+            GRAPHQL_EXTRA_FIELDS.forEach(field => {
+                newRow.push(device[field] ?? (NUMERIC_DEFAULTS.has(field) ? 0 : ""));
+            });
             return newRow;
         });
       }
@@ -717,8 +738,11 @@ function initializeDatatable (status) {
                   data-relationship="${rowData[mapIndx(COL.devParentRelType)]}"
                   data-status="${rowData[mapIndx(COL.devStatus)]}"
                   data-present="${rowData[mapIndx(COL.devPresentLastScan)]}"
-                  data-alert="${rowData[mapIndx(COL.devAlertDown)]}"
+                  data-alertdown="${rowData[mapIndx(COL.devAlertDown)]}"
                   data-flapping="${rowData[mapIndx(COL.devFlapping)]}"
+                  data-sleeping="${rowData[COL_EXTRA.devIsSleeping] || 0}"
+                  data-archived="${rowData[COL_EXTRA.devIsArchived] || 0}"
+                  data-isnew="${rowData[COL_EXTRA.devIsNew]    || 0}"
                   data-icon="${rowData[mapIndx(COL.devIcon)]}">
                 ${displayedValue}
                 </a>
@@ -860,20 +884,9 @@ function initializeDatatable (status) {
       {targets: [mapIndx(COL.devStatus)],
         'createdCell': function (td, cellData, rowData, row, col) {
 
-          tmp_devPresentLastScan = rowData[mapIndx(COL.devPresentLastScan)]
-          tmp_devAlertDown      = rowData[mapIndx(COL.devAlertDown)]
-          tmp_devMac            = rowData[mapIndx(COL.devMac)]
-          tmp_devFlapping       = rowData[mapIndx(COL.devFlapping)]
+          const badge = badgeFromRowData(rowData);
 
-          const badge = getStatusBadgeParts(
-           tmp_devPresentLastScan,   // tmp_devPresentLastScan
-            tmp_devAlertDown,        // tmp_devAlertDown
-            tmp_devFlapping,         // tmp_devFlapping
-            tmp_devMac,              // MAC
-            cellData                 // optional text
-          );
-
-          $(td).html (`<a href="${badge.url}" class="badge ${badge.cssClass}">${badge.iconHtml} ${badge.text}</a>`);
+          $(td).html(`<a href="${badge.url}" class="badge ${badge.cssClass}">${badge.iconHtml} ${badge.label}</a>`);
       } },
     ],
 

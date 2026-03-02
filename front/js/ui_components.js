@@ -738,37 +738,54 @@ function getColumnNameFromLangString(headStringKey) {
 
 //--------------------------------------------------------------
 // Generating the device status chip
-function getStatusBadgeParts(devPresentLastScan, devAlertDown, devFlapping, devMac, statusText = '', devIsSleeping = 0) {
-  let css = 'bg-gray text-white statusUnknown';
-  let icon = '<i class="fa-solid fa-question"></i>';
-  let status = 'unknown';
+function getStatusBadgeParts(devPresentLastScan, devAlertDown, devFlapping, devMac, statusText = '', devIsSleeping = 0, devIsArchived = 0, devIsNew = 0) {
+  let css     = 'bg-gray text-white statusUnknown';
+  let icon    = '<i class="fa-solid fa-question"></i>';
+  let status  = 'unknown';
   let cssText = '';
+  let label   = getString('Gen_Offline');
 
   if (devPresentLastScan == 1 && devFlapping == 0) {
-    css = 'bg-green text-white statusOnline';
+    css     = 'bg-green text-white statusOnline';
     cssText = 'text-green';
-    icon = '<i class="fa-solid fa-plug"></i>';
-    status = 'online';
+    icon    = '<i class="fa-solid fa-plug"></i>';
+    status  = 'online';
+    label   = getString('Gen_Online');
   } else if (devPresentLastScan == 1 && devFlapping == 1) {
-    css = 'bg-yellow text-white statusFlapping';
+    css     = 'bg-yellow text-white statusFlapping';
     cssText = 'text-yellow';
-    icon = '<i class="fa-solid fa-plug-circle-exclamation"></i>';
-    status = 'online';
+    icon    = '<i class="fa-solid fa-plug-circle-exclamation"></i>';
+    status  = 'flapping';
+    label   = getString('Gen_Flapping');
   } else if (devIsSleeping == 1) {
-    css = 'bg-aqua text-white statusSleeping';
+    css     = 'bg-aqua text-white statusSleeping';
     cssText = 'text-aqua';
-    icon = '<i class="fa-solid fa-moon"></i>';
-    status = 'sleeping';
-  } else if (devAlertDown == 1) {
-    css = 'bg-red text-white statusDown';
-    cssText = 'text-red';
-    icon = '<i class="fa-solid fa-triangle-exclamation"></i>';
-    status = 'down';
-  } else if (devPresentLastScan != 1) {
-    css = 'bg-gray text-white statusOffline';
+    icon    = '<i class="fa-solid fa-moon"></i>';
+    status  = 'sleeping';
+    label   = getString('Gen_Sleeping');
+  } else if (devIsArchived == 1) {
+    css     = 'bg-gray text-white statusArchived';
     cssText = 'text-gray50';
-    icon = '<i class="fa-solid fa-xmark"></i>';
-    status = 'offline';
+    icon    = '<i class="fa-solid fa-box-archive"></i>';
+    status  = 'archived';
+    label   = getString('Gen_Archived');
+  } else if (devAlertDown == 1) {
+    css     = 'bg-red text-white statusDown';
+    cssText = 'text-red';
+    icon    = '<i class="fa-solid fa-triangle-exclamation"></i>';
+    status  = 'down';
+    label   = getString('Gen_Down');
+  } else if (devPresentLastScan != 1) {
+    css     = 'bg-gray text-white statusOffline';
+    cssText = 'text-gray50';
+    icon    = '<i class="fa-solid fa-xmark"></i>';
+    status  = 'offline';
+    label   = getString('Gen_Offline');
+  }
+
+  // New devices keep the online/offline color & icon but show "New" as label
+  if (devIsNew == 1) {
+    label = getString('Gen_New');
   }
 
   const cleanedText = statusText.replace(/-/g, '');
@@ -776,13 +793,34 @@ function getStatusBadgeParts(devPresentLastScan, devAlertDown, devFlapping, devM
 
   return {
     cssClass: css,
-    cssText: cssText,
+    cssText:  cssText,
     iconHtml: icon,
-    mac: devMac,
-    text: cleanedText,
-    status: status,
-    url: url
+    mac:      devMac,
+    text:     cleanedText,
+    status:   status,
+    label:    label,
+    url:      url
   };
+}
+
+// Convenience wrappers — call getStatusBadgeParts with the right fields
+// for each object shape used across the codebase.
+
+// Any object with devXxx field names (API response, cache, SQL DevicesView row,
+// network-api nodes, network-tree nodeData.data objects)
+function badgeFromDevice(d) {
+  return getStatusBadgeParts(
+    d.devPresentLastScan, d.devAlertDown, d.devFlapping, d.devMac,
+    '', d.devIsSleeping || 0, d.devIsArchived || 0, d.devIsNew || 0
+  );
+}
+
+// hover-box: reads status fields from jQuery data-* attributes on an element
+function badgeFromDataAttrs($el) {
+  return getStatusBadgeParts(
+    $el.data('present'), $el.data('alertdown'), $el.data('flapping') || 0, $el.data('mac'),
+    '', $el.data('sleeping') || 0, $el.data('archived') || 0, $el.data('isnew') || 0
+  );
 }
 
 //--------------------------------------------------------------
@@ -930,14 +968,7 @@ function renderDeviceLink(data, container, useName = false) {
   }
 
   // Build and return badge parts
-  const badge = getStatusBadgeParts(
-    device.devPresentLastScan,
-    device.devAlertDown,
-    device.devFlapping,
-    device.devMac,
-    '',
-    device.devIsSleeping || 0
-  );
+  const badge = badgeFromDevice(device);
 
   // badge class and hover-info class to container
   $(container)
@@ -954,8 +985,10 @@ function renderDeviceLink(data, container, useName = false) {
       'data-status': device.devStatus,
       'data-flapping': device.devFlapping,
       'data-present': device.devPresentLastScan,
-      'data-alert': device.devAlertDown,
+      'data-alertdown': device.devAlertDown,
       'data-sleeping': device.devIsSleeping || 0,
+      'data-archived': device.devIsArchived || 0,
+      'data-isnew':    device.devIsNew       || 0,
       'data-icon': device.devIcon
     });
 
@@ -1024,10 +1057,8 @@ function initHoverNodeInfo() {
       const lastseen = $el.data('lastseen') || 'Unknown';
       const firstseen = $el.data('firstseen') || 'Unknown';
       const relationship = $el.data('relationship') || 'Unknown';
-      const flapping = $el.data('flapping') || 0;
-      const sleeping = $el.data('sleeping') || 0;
-      const badge = getStatusBadgeParts( $el.data('present'),  $el.data('alert'), flapping, $el.data('mac'), '', sleeping)
-      const status =`<span class="badge ${badge.cssClass}">${badge.iconHtml} ${badge.status}</span>`
+      const badge = badgeFromDataAttrs($el);
+      const status =`<span class="badge ${badge.cssClass}">${badge.iconHtml} ${badge.label}</span>`
 
       const html = `
         <div>

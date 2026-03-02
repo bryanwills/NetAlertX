@@ -425,17 +425,22 @@ async function renderSmallBoxes() {
 
         const deviceData = await response.json();
 
+        // Derive status card appearance from shared getStatusBadgeParts —
+        // ensures icon, color, label and lang key are always in sync with the rest of the UI.
+        const statusBadge = badgeFromDevice(deviceData);
+        const statusText = statusBadge.label;
+
         // Prepare custom data
         const customData = [
             {
                 "onclickEvent": "$('#tabDetails').trigger('click')",
-                "color": "bg-aqua",
+                "color": statusBadge.cssClass,
                 "headerId": "deviceStatus",
                 "headerStyle": "margin-left: 0em",
                 "labelLang": "DevDetail_Shortcut_CurrentStatus",
                 "iconId": "deviceStatusIcon",
-                "iconClass": deviceData.devPresentLastScan == 1 ? "fa fa-check text-green" : "fa fa-xmark text-red",
-                "dataValue": deviceData.devPresentLastScan == 1 ? getString("Gen_Online") : getString("Gen_Offline")
+                "iconHtml": statusBadge.iconHtml,
+                "dataValue": statusText
             },
             {
                 "onclickEvent": "$('#tabSessions').trigger('click');",

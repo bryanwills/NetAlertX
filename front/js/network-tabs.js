@@ -8,19 +8,19 @@
 function renderNetworkTabs(nodes) {
   let html = '';
   nodes.forEach((node, i) => {
-    const iconClass = node.online == 1 ? "text-green" :
-                      (node.node_sleeping == 1 ? "text-aqua" :
-                      (node.node_alert == 1 ? "text-red" : "text-gray50"));
+    const iconClass = node.devPresentLastScan == 1 ? "text-green" :
+                      (node.devIsSleeping == 1 ? "text-aqua" :
+                      (node.devAlertDown == 1 ? "text-red" : "text-gray50"));
 
     const portLabel = node.node_ports_count ? ` (${node.node_ports_count})` : '';
-    const icon = atob(node.node_icon);
-    const id = node.node_mac.replace(/:/g, '_');
+    const icon = atob(node.devIcon);
+    const id = node.devMac.replace(/:/g, '_');
 
     html += `
       <li class="networkNodeTabHeaders ${i === 0 ? 'active' : ''}">
-        <a href="#${id}" data-mytabmac="${node.node_mac}" id="${id}_id" data-toggle="tab" title="${node.node_name}">
+        <a href="#${id}" data-mytabmac="${node.devMac}" id="${id}_id" data-toggle="tab" title="${node.devName}">
           <div class="icon ${iconClass}">${icon}</div>
-          <span class="node-name">${node.node_name}</span>${portLabel}
+          <span class="node-name">${node.devName}</span>${portLabel}
         </a>
       </li>`;
   });
@@ -50,21 +50,14 @@ function renderNetworkTabContent(nodes) {
   $('.tab-content').empty();
 
   nodes.forEach((node, i) => {
-    const id = node.node_mac.replace(/:/g, '_').toLowerCase();
+    const id = node.devMac.replace(/:/g, '_').toLowerCase();
 
-    const badge = getStatusBadgeParts(
-      node.online,
-      node.node_alert,
-      node.node_flapping,
-      node.node_mac,
-      '',
-      node.node_sleeping || 0
-    );
+    const badge = badgeFromDevice(node);
 
-    const badgeHtml = `<a href="${badge.url}" class="badge ${badge.cssClass}">${badge.iconHtml} ${badge.status}</a>`;
-    const parentId = node.parent_mac.replace(/:/g, '_');
+    const badgeHtml = `<a href="${badge.url}" class="badge ${badge.cssClass}">${badge.iconHtml} ${badge.label}</a>`;
+    const parentId = node.devParentMAC.replace(/:/g, '_');
 
-    isRootNode = node.parent_mac == "";
+    isRootNode = node.devParentMAC == "";
 
     const paneHtml = `
               <div class="tab-pane box box-aqua box-body ${i === 0 ? 'active' : ''}" id="${id}">
@@ -73,18 +66,18 @@ function renderNetworkTabContent(nodes) {
                 <div class="mb-3 row">
                   <label class="col-sm-3 col-form-label fw-bold">${getString('DevDetail_Tab_Details')}</label>
                   <div class="col-sm-9">
-                    <a href="./deviceDetails.php?mac=${node.node_mac}" target="_blank" class="anonymize">${node.node_name}</a>
+                    <a href="./deviceDetails.php?mac=${node.devMac}" target="_blank" class="anonymize">${node.devName}</a>
                   </div>
                 </div>
 
                 <div class="mb-3 row">
                   <label class="col-sm-3 col-form-label fw-bold">MAC</label>
-                  <div class="col-sm-9 anonymize">${node.node_mac}</div>
+                  <div class="col-sm-9 anonymize">${node.devMac}</div>
                 </div>
 
                 <div class="mb-3 row">
                   <label class="col-sm-3 col-form-label fw-bold">${getString('Device_TableHead_Type')}</label>
-                  <div class="col-sm-9">${node.node_type}</div>
+                  <div class="col-sm-9">${node.devType}</div>
                 </div>
 
                 <div class="mb-3 row">
@@ -96,8 +89,8 @@ function renderNetworkTabContent(nodes) {
                   <label class="col-sm-3 col-form-label fw-bold">${getString('Network_Parent')}</label>
                   <div class="col-sm-9">
                     ${isRootNode ? '' : `<a class="anonymize" href="#">`}
-                      <span my-data-mac="${node.parent_mac}" data-mac="${node.parent_mac}" data-devIsNetworkNodeDynamic="1" onclick="handleNodeClick(this)">
-                        ${isRootNode ? getString('Network_Root') : getDevDataByMac(node.parent_mac, "devName")}
+                      <span my-data-mac="${node.devParentMAC}" data-mac="${node.devParentMAC}" data-devIsNetworkNodeDynamic="1" onclick="handleNodeClick(this)">
+                        ${isRootNode ? getString('Network_Root') : getDevDataByMac(node.devParentMAC, "devName")}
                       </span>
                     ${isRootNode ? '' : `</a>`}
                   </div>
@@ -115,7 +108,7 @@ function renderNetworkTabContent(nodes) {
             `;
 
     $('.tab-content').append(paneHtml);
-    loadConnectedDevices(node.node_mac);
+    loadConnectedDevices(node.devMac);
   });
 }
 
