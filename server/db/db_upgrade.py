@@ -254,7 +254,7 @@ def ensure_views(sql) -> bool:
                     WITH base AS (
                         SELECT
                         rowid,
-                        IFNULL(devMac, '') AS devMac,
+                        LOWER(IFNULL(devMac, '')) AS devMac,
                         IFNULL(devName, '') AS devName,
                         IFNULL(devOwner, '') AS devOwner,
                         IFNULL(devType, '') AS devType,
@@ -281,7 +281,7 @@ def ensure_views(sql) -> bool:
                         IFNULL(devIsNew, '') AS devIsNew,
                         IFNULL(devLocation, '') AS devLocation,
                         IFNULL(devIsArchived, '') AS devIsArchived,
-                        IFNULL(devParentMAC, '') AS devParentMAC,
+                        LOWER(IFNULL(devParentMAC, '')) AS devParentMAC,
                         IFNULL(devParentPort, '') AS devParentPort,
                         IFNULL(devIcon, '') AS devIcon,
                         IFNULL(devGUID, '') AS devGUID,
@@ -316,7 +316,7 @@ def ensure_views(sql) -> bool:
                             WHEN EXISTS (
                                 SELECT 1
                                 FROM Events e
-                                WHERE e.eve_MAC = Devices.devMac
+                                WHERE LOWER(e.eve_MAC) = LOWER(Devices.devMac)
                                 AND e.eve_EventType IN ('Connected','Disconnected','Device Down','Down Reconnected')
                                 AND e.eve_DateTime >= datetime('now', '-{FLAP_WINDOW_HOURS} hours')
                                 GROUP BY e.eve_MAC
