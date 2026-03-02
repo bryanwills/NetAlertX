@@ -9,7 +9,8 @@ function renderNetworkTabs(nodes) {
   let html = '';
   nodes.forEach((node, i) => {
     const iconClass = node.online == 1 ? "text-green" :
-                      (node.node_alert == 1 ? "text-red" : "text-gray50");
+                      (node.node_sleeping == 1 ? "text-aqua" :
+                      (node.node_alert == 1 ? "text-red" : "text-gray50"));
 
     const portLabel = node.node_ports_count ? ` (${node.node_ports_count})` : '';
     const icon = atob(node.node_icon);
@@ -55,7 +56,9 @@ function renderNetworkTabContent(nodes) {
       node.online,
       node.node_alert,
       node.node_flapping,
-      node.node_mac
+      node.node_mac,
+      '',
+      node.node_sleeping || 0
     );
 
     const badgeHtml = `<a href="${badge.url}" class="badge ${badge.cssClass}">${badge.iconHtml} ${badge.status}</a>`;

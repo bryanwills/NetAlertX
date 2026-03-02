@@ -74,6 +74,7 @@ function getChildren(node, list, path, visited = [])
         presentLastScan: node.devPresentLastScan,
         flapping: node.devFlapping,
         alertDown: node.devAlertDown,
+        sleeping: node.devIsSleeping || 0,
         hasChildren: children.length > 0 || hiddenMacs.includes(node.devMac),
         relType: node.devParentRelType,
         devVlan: node.devVlan,
@@ -272,7 +273,8 @@ function initTree(myHierarchy)
           nodeData.data.alertDown,
           nodeData.data.flapping,
           nodeData.data.mac,
-          statusText = ''
+          '',
+          nodeData.data.sleeping || 0
         );
 
         return result = `<div
@@ -291,6 +293,7 @@ function initTree(myHierarchy)
                               data-firstseen="${nodeData.data.firstseen}"
                               data-relationship="${nodeData.data.relType}"
                               data-flapping="${nodeData.data.flapping}"
+                              data-sleeping="${nodeData.data.sleeping || 0}"
                               data-status="${nodeData.data.status}"
                               data-present="${nodeData.data.presentLastScan}"
                               data-alert="${nodeData.data.alertDown}"

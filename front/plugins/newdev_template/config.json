@@ -1192,6 +1192,41 @@
       ]
     },
     {
+      "function": "devCanSleep",
+      "type": {
+        "dataType": "integer",
+        "elements": [
+          {
+            "elementType": "input",
+            "elementOptions": [
+              {
+                "type": "checkbox"
+              }
+            ],
+            "transformers": []
+          }
+        ]
+      },
+      "default_value": 0,
+      "options": [],
+      "localized": [
+        "name",
+        "description"
+      ],
+      "name": [
+        {
+          "language_code": "en_us",
+          "string": "Can Sleep"
+        }
+      ],
+      "description": [
+        {
+          "language_code": "en_us",
+          "string": "When enabled, the device will appear as <em>Sleeping</em> instead of <em>Down</em> or <em>Off-line</em> while it has been absent for less than the <b>Sleep Window</b> (<code>NTFPRCS_sleep_time</code>). Once the sleep window expires the device becomes subject to the normal <code>Alert Down</code> condition. Database column name: <code>devCanSleep</code>."
+        }
+      ]
+    },
+    {
       "function": "devSkipRepeated",
       "type": {
         "dataType": "string",

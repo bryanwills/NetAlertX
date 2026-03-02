@@ -24,8 +24,9 @@ function initNetworkTopology() {
       LOWER(devMac) AS devMac,
       LOWER(devParentMAC) AS devParentMAC,
       CASE
-        WHEN devAlertDown != 0 AND devPresentLastScan = 0 THEN 'Down'
         WHEN devPresentLastScan = 1 THEN 'On-line'
+        WHEN devIsSleeping = 1 THEN 'Sleeping'
+        WHEN devAlertDown != 0 AND devPresentLastScan = 0 THEN 'Down'
         ELSE 'Off-line'
       END AS devStatus,
       CASE

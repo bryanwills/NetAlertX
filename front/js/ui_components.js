@@ -738,7 +738,7 @@ function getColumnNameFromLangString(headStringKey) {
 
 //--------------------------------------------------------------
 // Generating the device status chip
-function getStatusBadgeParts(devPresentLastScan, devAlertDown, devFlapping, devMac, statusText = '') {
+function getStatusBadgeParts(devPresentLastScan, devAlertDown, devFlapping, devMac, statusText = '', devIsSleeping = 0) {
   let css = 'bg-gray text-white statusUnknown';
   let icon = '<i class="fa-solid fa-question"></i>';
   let status = 'unknown';
@@ -754,6 +754,11 @@ function getStatusBadgeParts(devPresentLastScan, devAlertDown, devFlapping, devM
     cssText = 'text-yellow';
     icon = '<i class="fa-solid fa-plug-circle-exclamation"></i>';
     status = 'online';
+  } else if (devIsSleeping == 1) {
+    css = 'bg-aqua text-white statusSleeping';
+    cssText = 'text-aqua';
+    icon = '<i class="fa-solid fa-moon"></i>';
+    status = 'sleeping';
   } else if (devAlertDown == 1) {
     css = 'bg-red text-white statusDown';
     cssText = 'text-red';
@@ -929,7 +934,9 @@ function renderDeviceLink(data, container, useName = false) {
     device.devPresentLastScan,
     device.devAlertDown,
     device.devFlapping,
-    device.devMac
+    device.devMac,
+    '',
+    device.devIsSleeping || 0
   );
 
   // badge class and hover-info class to container
@@ -948,6 +955,7 @@ function renderDeviceLink(data, container, useName = false) {
       'data-flapping': device.devFlapping,
       'data-present': device.devPresentLastScan,
       'data-alert': device.devAlertDown,
+      'data-sleeping': device.devIsSleeping || 0,
       'data-icon': device.devIcon
     });
 
@@ -1017,7 +1025,8 @@ function initHoverNodeInfo() {
       const firstseen = $el.data('firstseen') || 'Unknown';
       const relationship = $el.data('relationship') || 'Unknown';
       const flapping = $el.data('flapping') || 0;
-      const badge = getStatusBadgeParts( $el.data('present'),  $el.data('alert'), flapping, $el.data('mac'))
+      const sleeping = $el.data('sleeping') || 0;
+      const badge = getStatusBadgeParts( $el.data('present'),  $el.data('alert'), flapping, $el.data('mac'), '', sleeping)
       const status =`<span class="badge ${badge.cssClass}">${badge.iconHtml} ${badge.status}</span>`
 
       const html = `

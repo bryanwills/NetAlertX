@@ -11,6 +11,7 @@ import uuid
 # Register NetAlertX libraries
 import conf
 from const import fullConfPath, fullConfFolder, default_tz, applicationPath
+from db.db_upgrade import ensure_views
 from helper import getBuildTimeStampAndVersion, collect_lang_strings, updateSubnets, generate_random_string
 from utils.datetime_utils import timeNowUTC
 from app_state import updateState
@@ -731,6 +732,12 @@ def importConfigs(pm, db, all_plugins):
         conf.mySettingsSQLsafe,
     )
 
+    db.commitDB()
+
+    # Rebuild DevicesView now that settings (including NTFPRCS_sleep_time) are committed.
+    # This is the single call site — initDB() deliberately skips it so the view
+    # always gets the real user value, not an empty-Settings fallback.
+    ensure_views(sql)
     db.commitDB()
 
     #  update only the settings datasource

@@ -175,8 +175,9 @@ def insert_events(db):
                         eve_EventType, eve_AdditionalInfo,
                         eve_PendingAlertEmail)
                     SELECT devMac, devLastIP, '{startTime}', 'Device Down', '', 1
-                    FROM Devices
+                    FROM DevicesView
                     WHERE devAlertDown != 0
+                      AND devIsSleeping = 0
                       AND devPresentLastScan = 1
                       AND NOT EXISTS (SELECT 1 FROM CurrentScan
                                       WHERE devMac = scanMac
@@ -242,8 +243,8 @@ def insertOnlineHistory(db):
         COUNT(*) AS allDevices,
         COALESCE(SUM(CASE WHEN devIsArchived = 1 THEN 1 ELSE 0 END), 0) AS archivedDevices,
         COALESCE(SUM(CASE WHEN devPresentLastScan = 1 THEN 1 ELSE 0 END), 0) AS onlineDevices,
-        COALESCE(SUM(CASE WHEN devPresentLastScan = 0 AND devAlertDown = 1 THEN 1 ELSE 0 END), 0) AS downDevices
-    FROM Devices
+        COALESCE(SUM(CASE WHEN devPresentLastScan = 0 AND devAlertDown = 1 AND devIsSleeping = 0 THEN 1 ELSE 0 END), 0) AS downDevices
+    FROM DevicesView
     """
 
     deviceCounts = db.read(query)[

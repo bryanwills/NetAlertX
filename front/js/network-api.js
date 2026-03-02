@@ -24,6 +24,7 @@ function loadNetworkNodes() {
           parent.devIcon AS node_icon,
           parent.devAlertDown AS node_alert,
           parent.devFlapping AS node_flapping,
+          parent.devIsSleeping AS node_sleeping,
           COUNT(child.devMac) AS node_ports_count
       FROM DevicesView AS parent
       LEFT JOIN DevicesView AS child
@@ -34,7 +35,7 @@ function loadNetworkNodes() {
       WHERE parent.devType IN (${networkDeviceTypes})
         AND parent.devIsArchived = 0
       GROUP BY parent.devMac, parent.devName, parent.devPresentLastScan,
-               parent.devType, parent.devParentMAC, parent.devIcon, parent.devAlertDown, parent.devFlapping
+               parent.devType, parent.devParentMAC, parent.devIcon, parent.devAlertDown, parent.devFlapping, parent.devIsSleeping
       ORDER BY parent.devName;
   `;
 
@@ -146,7 +147,8 @@ function loadDeviceTable({ sql, containerSelector, tableId, wrapperHtml = null, 
               device.devAlertDown,
               device.devFlapping,
               device.devMac,
-              device.devStatus
+              device.devStatus,
+              device.devIsSleeping || 0
             );
             return `<a href="${badge.url}" class="badge ${badge.cssClass}">${badge.iconHtml} ${badge.text}</a>`;
           }
@@ -204,7 +206,7 @@ function loadDeviceTable({ sql, containerSelector, tableId, wrapperHtml = null, 
  */
 function loadUnassignedDevices() {
   const sql = `
-    SELECT devMac, devPresentLastScan, devName, devLastIP, devVendor, devAlertDown, devParentPort, devFlapping, devStatus
+    SELECT devMac, devPresentLastScan, devName, devLastIP, devVendor, devAlertDown, devParentPort, devFlapping, devIsSleeping, devStatus
     FROM DevicesView
     WHERE (devParentMAC IS NULL OR devParentMAC IN ("", " ", "undefined", "null"))
       AND LOWER(devMac) NOT LIKE "%internet%"
@@ -239,10 +241,11 @@ function loadConnectedDevices(node_mac) {
   const normalized_mac = node_mac.toLowerCase();
 
   const sql = `
-    SELECT devName, devMac, devLastIP, devVendor, devPresentLastScan, devAlertDown, devParentPort, devVlan, devFlapping,
+    SELECT devName, devMac, devLastIP, devVendor, devPresentLastScan, devAlertDown, devParentPort, devVlan, devFlapping, devIsSleeping,
       CASE
           WHEN devIsNew = 1 THEN 'New'
           WHEN devPresentLastScan = 1 THEN 'On-line'
+          WHEN devIsSleeping = 1 THEN 'Sleeping'
           WHEN devPresentLastScan = 0 AND devAlertDown != 0 THEN 'Down'
           WHEN devIsArchived = 1 THEN 'Archived'
           WHEN devPresentLastScan = 0 THEN 'Off-line'

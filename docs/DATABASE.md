@@ -23,6 +23,7 @@
 | `devLogEvents`         | Whether events related to the device should be logged. | `0` |
 | `devAlertEvents`       | Whether alerts should be generated for events. | `1` |
 | `devAlertDown`         | Whether an alert should be sent when the device goes down. | `0` |
+| `devCanSleep`          | Whether the device can enter a sleep window. When `1`, offline periods within the `NTFPRCS_sleep_time` window are shown as **Sleeping** instead of **Down** and no down alert is fired. | `0` |
 | `devSkipRepeated`      | Whether to skip repeated alerts for this device. | `1` |
 | `devLastNotification`  | Timestamp of the last notification sent for this device. | `2025-03-22 12:07:26+11:00` |
 | `devPresentLastScan`   | Whether the device was present during the last scan. | `1` |
@@ -41,6 +42,12 @@
 | `devFQDN`              | Fully qualified domain name. | `raspberrypi.local` |
 | `devParentRelType`     | The type of relationship between the current device and it's parent node. By default, selecting `nic` will hide it from lists. | `nic` |
 | `devReqNicsOnline`     | If all NICs are required to be online to mark teh current device online. | `0` |
+
+> [!NOTE]
+> `DevicesView` extends the `Devices` table with two computed fields that are never persisted:
+> - `devIsSleeping` (`1` when `devCanSleep=1`, device is offline, and `devLastConnection` is within the `NTFPRCS_sleep_time` window).
+> - `devFlapping` (`1` when the device has changed state more than the flap threshold times in the trailing window).
+> - `devStatus` — derived string: `On-line`, `Sleeping`, `Down`, or `Off-line`.
 
 
 To understand how values of these fields influuence application behavior, such as Notifications or Network topology, see also: 

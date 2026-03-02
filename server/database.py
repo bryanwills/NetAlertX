@@ -10,7 +10,6 @@ from db.db_helper import get_table_json, json_obj
 from workflows.app_events import AppEvent_obj
 from db.db_upgrade import (
     ensure_column,
-    ensure_views,
     ensure_CurrentScan,
     ensure_plugins_tables,
     ensure_Parameters,
@@ -192,6 +191,8 @@ class DB:
                 raise RuntimeError("ensure_column(devParentRelTypeSource) failed")
             if not ensure_column(self.sql, "Devices", "devVlanSource", "TEXT"):
                 raise RuntimeError("ensure_column(devVlanSource) failed")
+            if not ensure_column(self.sql, "Devices", "devCanSleep", "INTEGER"):
+                raise RuntimeError("ensure_column(devCanSleep) failed")
 
             # Settings table setup
             ensure_Settings(self.sql)
@@ -208,8 +209,9 @@ class DB:
             # CurrentScan table setup
             ensure_CurrentScan(self.sql)
 
-            # Views
-            ensure_views(self.sql)
+            # Views are created in importConfigs() after settings are committed,
+            # so NTFPRCS_sleep_time is available when the view is built.
+            # ensure_views is NOT called here.
 
             # Indexes
             ensure_Indexes(self.sql)

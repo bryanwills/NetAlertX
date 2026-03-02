@@ -101,6 +101,8 @@ class Device(ObjectType):
     devParentRelTypeSource = String(description="Source tracking for devParentRelType (USER, LOCKED, NEWDEV, or plugin prefix)")
     devVlanSource = String(description="Source tracking for devVlan")
     devFlapping = Int(description="Indicates flapping device (device changing between online/offline states frequently)")
+    devCanSleep = Int(description="Can this device sleep? (0 or 1). When enabled, offline periods within NTFPRCS_sleep_time are reported as Sleeping instead of Down.")
+    devIsSleeping = Int(description="Computed: Is device currently in a sleep window? (0 or 1)")
 
 
 class DeviceResult(ObjectType):
@@ -247,7 +249,7 @@ class Query(ObjectType):
                         )
 
                         is_down = (
-                            device["devPresentLastScan"] == 0 and device["devAlertDown"] and "down" in allowed_statuses
+                            device["devPresentLastScan"] == 0 and device["devAlertDown"] and device.get("devIsSleeping", 0) == 0 and "down" in allowed_statuses
                         )
 
                         is_offline = (
@@ -282,11 +284,17 @@ class Query(ObjectType):
                     devices_data = [
                         device for device in devices_data if device["devIsNew"] == 1 and device["devIsArchived"] == 0
                     ]
+                elif status == "sleeping":
+                    devices_data = [
+                        device
+                        for device in devices_data
+                        if device.get("devIsSleeping", 0) == 1 and device["devIsArchived"] == 0
+                    ]
                 elif status == "down":
                     devices_data = [
                         device
                         for device in devices_data
-                        if device["devPresentLastScan"] == 0 and device["devAlertDown"] and device["devIsArchived"] == 0
+                        if device["devPresentLastScan"] == 0 and device["devAlertDown"] and device.get("devIsSleeping", 0) == 0 and device["devIsArchived"] == 0
                     ]
                 elif status == "archived":
                     devices_data = [

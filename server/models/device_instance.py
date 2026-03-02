@@ -61,8 +61,8 @@ class DeviceInstance:
 
     def getDown(self):
         return self._fetchall("""
-            SELECT * FROM Devices
-            WHERE devAlertDown = 1 AND devPresentLastScan = 0
+            SELECT * FROM DevicesView
+            WHERE devAlertDown = 1 AND devPresentLastScan = 0 AND devIsSleeping = 0
         """)
 
     def getOffline(self):
@@ -454,7 +454,9 @@ class DeviceInstance:
                 "devPresenceHours": 0,
                 "devFQDN": "",
                 "devForceStatus" : "dont_force",
-                "devVlan": ""
+                "devVlan": "",
+                "devCanSleep": 0,
+                "devIsSleeping": 0
             }
             return device_data
 
@@ -467,11 +469,6 @@ class DeviceInstance:
                 d.*,
                 LOWER(d.devMac) AS devMac,
                 LOWER(d.devParentMAC) AS devParentMAC,
-                CASE
-                    WHEN d.devAlertDown != 0 AND d.devPresentLastScan = 0 THEN 'Down'
-                    WHEN d.devPresentLastScan = 1 THEN 'On-line'
-                    ELSE 'Off-line'
-                END AS devStatus,
 
                 (SELECT COUNT(*) FROM Sessions
                 WHERE LOWER(ses_MAC) = LOWER(d.devMac) AND (
@@ -501,10 +498,9 @@ class DeviceInstance:
                         OR ses_DateTimeDisconnection >= {period_date_sql} OR ses_StillConnected = 1)
                 ) AS devPresenceHours
 
-            FROM Devices d
+            FROM DevicesView d
             WHERE LOWER(d.devMac) = LOWER(?) OR CAST(d.rowid AS TEXT) = ?
         """
-
 
         conn = get_temp_db_connection()
         cur = conn.cursor()
@@ -571,7 +567,8 @@ class DeviceInstance:
             "devIsArchived",
             "devCustomProps",
             "devForceStatus",
-            "devVlan"
+            "devVlan",
+            "devCanSleep"
         }
 
         # Only mark USER for tracked fields that this method actually updates.
@@ -617,12 +614,12 @@ class DeviceInstance:
                     devMac, devName, devOwner, devType, devVendor, devIcon,
                     devFavorite, devGroup, devLocation, devComments,
                     devParentMAC, devParentPort, devSSID, devSite,
-                    devStaticIP, devScan, devAlertEvents, devAlertDown,
+                    devStaticIP, devScan, devAlertEvents, devAlertDown, devCanSleep,
                     devParentRelType, devReqNicsOnline, devSkipRepeated,
                     devIsNew, devIsArchived, devLastConnection,
                     devFirstConnection, devLastIP, devGUID, devCustomProps,
                     devSourcePlugin, devForceStatus, devVlan
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """
 
                 values = (
@@ -644,6 +641,7 @@ class DeviceInstance:
                     data.get("devScan") or 0,
                     data.get("devAlertEvents") or 0,
                     data.get("devAlertDown") or 0,
+                    data.get("devCanSleep") or 0,
                     data.get("devParentRelType") or "default",
                     data.get("devReqNicsOnline") or 0,
                     data.get("devSkipRepeated") or 0,
@@ -665,7 +663,7 @@ class DeviceInstance:
                     devName=?, devOwner=?, devType=?, devVendor=?, devIcon=?,
                     devFavorite=?, devGroup=?, devLocation=?, devComments=?,
                     devParentMAC=?, devParentPort=?, devSSID=?, devSite=?,
-                    devStaticIP=?, devScan=?, devAlertEvents=?, devAlertDown=?,
+                    devStaticIP=?, devScan=?, devAlertEvents=?, devAlertDown=?, devCanSleep=?,
                     devParentRelType=?, devReqNicsOnline=?, devSkipRepeated=?,
                     devIsNew=?, devIsArchived=?, devCustomProps=?, devForceStatus=?, devVlan=?
                 WHERE devMac=?
@@ -688,6 +686,7 @@ class DeviceInstance:
                     data.get("devScan") or 0,
                     data.get("devAlertEvents") or 0,
                     data.get("devAlertDown") or 0,
+                    data.get("devCanSleep") or 0,
                     data.get("devParentRelType") or "default",
                     data.get("devReqNicsOnline") or 0,
                     data.get("devSkipRepeated") or 0,
@@ -833,7 +832,6 @@ class DeviceInstance:
 
         conn.close()
         return result
-
 
     def lockDeviceField(self, mac, field_name):
         """Lock a device field so it won't be overwritten by plugins."""

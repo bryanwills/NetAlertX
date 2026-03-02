@@ -28,6 +28,7 @@ EXPECTED_DEVICES_COLUMNS = [
     "devLogEvents",
     "devAlertEvents",
     "devAlertDown",
+    "devCanSleep",
     "devSkipRepeated",
     "devLastNotification",
     "devPresentLastScan",
@@ -235,8 +236,22 @@ def ensure_views(sql) -> bool:
     FLAP_THRESHOLD = 3
     FLAP_WINDOW_HOURS = 1
 
+    # Read sleep window from settings; fall back to 30 min if not yet configured.
+    # Uses the same sql cursor (no separate connection) to avoid lock contention.
+    # Note: changing NTFPRCS_sleep_time requires a restart to take effect,
+    # same behaviour as FLAP_THRESHOLD / FLAP_WINDOW_HOURS.
+    try:
+        sql.execute("SELECT setValue FROM Settings WHERE setKey = 'NTFPRCS_sleep_time'")
+        _sleep_row = sql.fetchone()
+        SLEEP_MINUTES = int(_sleep_row[0]) if _sleep_row and _sleep_row[0] else 30
+    except Exception:
+        SLEEP_MINUTES = 30
+
     sql.execute(""" DROP VIEW IF EXISTS DevicesView;""")
     sql.execute(f""" CREATE VIEW DevicesView AS
+                    -- CTE computes devIsSleeping and devFlapping so devStatus can
+                    -- reference them without duplicating the sub-expressions.
+                    WITH base AS (
                         SELECT
                         rowid,
                         IFNULL(devMac, '') AS devMac,
@@ -259,6 +274,7 @@ def ensure_views(sql) -> bool:
                         IFNULL(devLogEvents, '') AS devLogEvents,
                         IFNULL(devAlertEvents, '') AS devAlertEvents,
                         IFNULL(devAlertDown, '') AS devAlertDown,
+                        IFNULL(devCanSleep, 0) AS devCanSleep,
                         IFNULL(devSkipRepeated, '') AS devSkipRepeated,
                         IFNULL(devLastNotification, '') AS devLastNotification,
                         IFNULL(devPresentLastScan, 0) AS devPresentLastScan,
@@ -287,14 +303,15 @@ def ensure_views(sql) -> bool:
                         IFNULL(devParentPortSource, '') AS devParentPortSource,
                         IFNULL(devParentRelTypeSource, '') AS devParentRelTypeSource,
                         IFNULL(devVlanSource, '') AS devVlanSource,
+                        -- devIsSleeping: opted-in, absent, and still within the sleep window
                         CASE
-                            WHEN devIsNew = 1 THEN 'New'
-                            WHEN devPresentLastScan = 1 THEN 'On-line'
-                            WHEN devPresentLastScan = 0 AND devAlertDown != 0 THEN 'Down'
-                            WHEN devIsArchived = 1 THEN 'Archived'
-                            WHEN devPresentLastScan = 0 THEN 'Off-line'
-                            ELSE 'Unknown status'
-                        END AS devStatus,
+                            WHEN devCanSleep = 1
+                             AND devPresentLastScan = 0
+                             AND devLastConnection >= datetime('now', '-{SLEEP_MINUTES} minutes')
+                            THEN 1
+                            ELSE 0
+                        END AS devIsSleeping,
+                        -- devFlapping: toggling online/offline frequently within the flap window
                         CASE
                             WHEN EXISTS (
                                 SELECT 1
@@ -308,8 +325,20 @@ def ensure_views(sql) -> bool:
                             THEN 1
                             ELSE 0
                         END AS devFlapping
-
-                    FROM Devices
+                        FROM Devices
+                    )
+                    SELECT *,
+                        -- devStatus references devIsSleeping from the CTE (no duplication)
+                        CASE
+                            WHEN devIsNew = 1          THEN 'New'
+                            WHEN devPresentLastScan = 1 THEN 'On-line'
+                            WHEN devIsSleeping = 1     THEN 'Sleeping'
+                            WHEN devAlertDown != 0     THEN 'Down'
+                            WHEN devIsArchived = 1     THEN 'Archived'
+                            WHEN devPresentLastScan = 0 THEN 'Off-line'
+                            ELSE 'Unknown status'
+                        END AS devStatus
+                    FROM base
 
                           """)
 
@@ -380,6 +409,10 @@ def ensure_Indexes(sql) -> bool:
         (
             "idx_dev_alertdown",
             "CREATE INDEX idx_dev_alertdown ON Devices(devAlertDown)",
+        ),
+        (
+            "idx_dev_cansleep",
+            "CREATE INDEX idx_dev_cansleep ON Devices(devCanSleep)",
         ),
         ("idx_dev_isnew", "CREATE INDEX idx_dev_isnew ON Devices(devIsNew)"),
         (
