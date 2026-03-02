@@ -207,9 +207,9 @@ def insert_device(
 # ---------------------------------------------------------------------------
 
 def down_event_macs(cur) -> set:
-    """Return the set of MACs that have a 'Device Down' event row."""
+    """Return the set of MACs that have a 'Device Down' event row (lowercased)."""
     cur.execute("SELECT eve_MAC FROM Events WHERE eve_EventType = 'Device Down'")
-    return {r["eve_MAC"] for r in cur.fetchall()}
+    return {r["eve_MAC"].lower() for r in cur.fetchall()}
 
 
 # ---------------------------------------------------------------------------

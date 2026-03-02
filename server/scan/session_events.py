@@ -169,18 +169,37 @@ def insert_events(db):
     sql = db.sql  # TO-DO
     startTime = timeNowUTC()
 
-    # Check device down
-    mylog("debug", "[Events] - 1 - Devices down")
+    # Check device down – non-sleeping devices (immediate on first absence)
+    mylog("debug", "[Events] - 1a - Devices down (non-sleeping)")
     sql.execute(f"""INSERT OR IGNORE INTO Events  (eve_MAC, eve_IP, eve_DateTime,
                         eve_EventType, eve_AdditionalInfo,
                         eve_PendingAlertEmail)
                     SELECT devMac, devLastIP, '{startTime}', 'Device Down', '', 1
                     FROM DevicesView
                     WHERE devAlertDown != 0
-                      AND devIsSleeping = 0
+                      AND devCanSleep = 0
                       AND devPresentLastScan = 1
                       AND NOT EXISTS (SELECT 1 FROM CurrentScan
                                       WHERE devMac = scanMac
+                                         ) """)
+
+    # Check device down – sleeping devices whose sleep window has expired
+    mylog("debug", "[Events] - 1b - Devices down (sleep expired)")
+    sql.execute(f"""INSERT OR IGNORE INTO Events  (eve_MAC, eve_IP, eve_DateTime,
+                        eve_EventType, eve_AdditionalInfo,
+                        eve_PendingAlertEmail)
+                    SELECT devMac, devLastIP, '{startTime}', 'Device Down', '', 1
+                    FROM DevicesView
+                    WHERE devAlertDown != 0
+                      AND devCanSleep = 1
+                      AND devIsSleeping = 0
+                      AND devPresentLastScan = 0
+                      AND NOT EXISTS (SELECT 1 FROM CurrentScan
+                                      WHERE devMac = scanMac)
+                      AND NOT EXISTS (SELECT 1 FROM Events
+                                      WHERE eve_MAC = devMac
+                                        AND eve_EventType = 'Device Down'
+                                        AND eve_DateTime >= devLastConnection
                                          ) """)
 
     # Check new Connections or Down Reconnections

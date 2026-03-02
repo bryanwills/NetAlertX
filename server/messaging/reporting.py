@@ -126,6 +126,8 @@ def get_notifications(db):
           AND eve_MAC IN (SELECT devMac FROM Devices WHERE devAlertDown = 0)
     """)
 
+    alert_down_minutes = int(get_setting_value("NTFPRCS_alert_down_time") or 0)
+
     sections = get_setting_value("NTFPRCS_INCLUDED_SECTIONS") or []
     mylog("verbose", ["[Notification] Included sections: ", sections])
 
@@ -172,7 +174,7 @@ def get_notifications(db):
               AND eve_EventType = 'New Device' {condition}
             ORDER BY eve_DateTime
         """,
-        "down_devices": """
+        "down_devices": f"""
             SELECT
                 devName,
                 eve_MAC,
@@ -183,7 +185,7 @@ def get_notifications(db):
             FROM Events_Devices AS down_events
             WHERE eve_PendingAlertEmail = 1
               AND down_events.eve_EventType = 'Device Down'
-              AND eve_DateTime < datetime('now', '-0 minutes')
+              AND eve_DateTime < datetime('now', '-{alert_down_minutes} minutes')
               AND NOT EXISTS (
                   SELECT 1
                   FROM Events AS connected_events
