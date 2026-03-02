@@ -78,7 +78,8 @@ class TestAlertDownNullCoercion:
             "SELECT devMac FROM DevicesView WHERE devAlertDown != 0 AND devPresentLastScan = 0"
         )
         macs = [r["devMac"] for r in cur.fetchall()]
-        assert "AA:BB:CC:DD:EE:03" in macs
+        # DevicesView returns LOWER(devMac), so compare against lowercase
+        assert "aa:bb:cc:dd:ee:03" in macs
 
     def test_online_device_not_in_down_event_query(self):
         """An online device (devPresentLastScan=1) should never fire a down event."""
@@ -116,7 +117,8 @@ class TestIsSleepingSuppression:
         )
         conn.commit()
 
-        cur.execute("SELECT devIsSleeping FROM DevicesView WHERE devMac = 'BB:BB:BB:BB:BB:01'")
+        # DevicesView returns LOWER(devMac); query must use lowercase
+        cur.execute("SELECT devIsSleeping FROM DevicesView WHERE devMac = 'bb:bb:bb:bb:bb:01'")
         row = cur.fetchone()
         assert row["devIsSleeping"] == 1
 
@@ -138,7 +140,8 @@ class TestIsSleepingSuppression:
               AND devPresentLastScan = 0
         """)
         macs = [r["devMac"] for r in cur.fetchall()]
-        assert "BB:BB:BB:BB:BB:02" not in macs
+        # DevicesView returns LOWER(devMac)
+        assert "bb:bb:bb:bb:bb:02" not in macs
 
     def test_expired_sleep_window_fires_down(self):
         """After the sleep window expires, the device must appear as Down."""
@@ -151,7 +154,8 @@ class TestIsSleepingSuppression:
         )
         conn.commit()
 
-        cur.execute("SELECT devIsSleeping FROM DevicesView WHERE devMac = 'BB:BB:BB:BB:BB:03'")
+        # DevicesView returns LOWER(devMac); query must use lowercase
+        cur.execute("SELECT devIsSleeping FROM DevicesView WHERE devMac = 'bb:bb:bb:bb:bb:03'")
         assert cur.fetchone()["devIsSleeping"] == 0
 
         cur.execute("""
@@ -161,7 +165,7 @@ class TestIsSleepingSuppression:
               AND devPresentLastScan = 0
         """)
         macs = [r["devMac"] for r in cur.fetchall()]
-        assert "BB:BB:BB:BB:BB:03" in macs
+        assert "bb:bb:bb:bb:bb:03" in macs
 
     def test_can_sleep_zero_device_is_not_sleeping(self):
         """devCanSleep=0 device recently offline → devIsSleeping must be 0."""
@@ -174,7 +178,8 @@ class TestIsSleepingSuppression:
         )
         conn.commit()
 
-        cur.execute("SELECT devIsSleeping FROM DevicesView WHERE devMac = 'BB:BB:BB:BB:BB:04'")
+        # DevicesView returns LOWER(devMac); query must use lowercase
+        cur.execute("SELECT devIsSleeping FROM DevicesView WHERE devMac = 'bb:bb:bb:bb:bb:04'")
         assert cur.fetchone()["devIsSleeping"] == 0
 
     def test_devstatus_sleeping(self):
@@ -188,7 +193,8 @@ class TestIsSleepingSuppression:
         )
         conn.commit()
 
-        cur.execute("SELECT devStatus FROM DevicesView WHERE devMac = 'BB:BB:BB:BB:BB:05'")
+        # DevicesView returns LOWER(devMac); query must use lowercase
+        cur.execute("SELECT devStatus FROM DevicesView WHERE devMac = 'bb:bb:bb:bb:bb:05'")
         assert cur.fetchone()["devStatus"] == "Sleeping"
 
     def test_devstatus_down_after_window_expires(self):
@@ -202,5 +208,6 @@ class TestIsSleepingSuppression:
         )
         conn.commit()
 
-        cur.execute("SELECT devStatus FROM DevicesView WHERE devMac = 'BB:BB:BB:BB:BB:06'")
+        # DevicesView returns LOWER(devMac); query must use lowercase
+        cur.execute("SELECT devStatus FROM DevicesView WHERE devMac = 'bb:bb:bb:bb:bb:06'")
         assert cur.fetchone()["devStatus"] == "Down"
