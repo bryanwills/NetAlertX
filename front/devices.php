@@ -577,11 +577,15 @@ var _nextScanTimeAnchor = null;
 var _currentStateAnchor = null;
 var _scanEtaTickerId    = null;
 var _pluginsData        = null;
+var _wasImminent        = false; // true once the countdown displayed "imminent"; gates the Scanning... label
+var _imminentForTime    = null;  // the _nextScanTimeAnchor value that last set _wasImminent
+                                 // prevents re-arming on the same (already-consumed) timestamp
 
 // Returns true when the backend is actively scanning (not idle).
-// States that indicate scanning: Process: Start, Check scan, Scan processed.
+// Uses an exclusion approach — only "Process: Idle" and an empty/null state are non-scanning.
+// This future-proofs against new states added to the scan pipeline (e.g. "Plugin: AVAHISCAN").
 function isScanningState(state) {
-  return ['Process: Start', 'Check scan', 'Scan processed'].indexOf(state) !== -1;
+  return !!state && state !== 'Process: Idle';
 }
 
 // Fetch plugins.json once on page load so we can guard ETA display to device_scanner plugins only.
@@ -603,31 +607,37 @@ function updateScanEtaDisplay(nextScanTime, currentState) {
   _nextScanTimeAnchor = nextScanTime || _nextScanTimeAnchor;
   _currentStateAnchor = currentState || _currentStateAnchor;
 
+  // Reset the imminent gate when the scan finishes back to idle so the next cycle starts clean.
+  if (currentState === 'Process: Idle') { _wasImminent = false; }
+
   // Restart the per-second title-bar ticker
   if (_scanEtaTickerId !== null) { clearInterval(_scanEtaTickerId); }
+
+  function getEtaLabel() {
+    if (!hasEnabledDeviceScanners()) return '';
+    if (isScanningState(_currentStateAnchor) && _wasImminent) return getString('Device_Scanning');
+    var label = computeNextScanLabel(_nextScanTimeAnchor);
+    // Arm _wasImminent only for a NEW next_scan_time anchor — not the already-consumed one.
+    // This prevents the ticker from re-arming immediately after "Process: Idle" resets the flag
+    // while _nextScanTimeAnchor still holds the now-past timestamp.
+    if (label === getString('Device_NextScan_Imminent') && _nextScanTimeAnchor !== _imminentForTime) {
+      _wasImminent = true;
+      _imminentForTime = _nextScanTimeAnchor;
+    }
+    return label;
+  }
 
   function tickTitleBar() {
     var eta = document.getElementById('nextScanEta');
     if (!eta) return;
-    if (!hasEnabledDeviceScanners()) {
-      eta.style.display = 'none';
-      return;
-    }
-    // Show 'Scanning...' when the backend is actively scanning, countdown otherwise.
-    eta.textContent = isScanningState(_currentStateAnchor)
-      ? getString('Device_Scanning')
-      : computeNextScanLabel(_nextScanTimeAnchor);
+    var label = getEtaLabel();
+    if (!label) { eta.style.display = 'none'; return; }
+    eta.textContent = label;
     eta.style.display = '';
   }
 
   // Update DataTables empty message once per SSE event — avoids AJAX spam on server-side tables.
-  // Show 'Scanning...' when active, countdown when idle, nothing when no device_scanner enabled.
-  var label = '';
-  if (hasEnabledDeviceScanners()) {
-    label = isScanningState(_currentStateAnchor)
-      ? getString('Device_Scanning')
-      : computeNextScanLabel(_nextScanTimeAnchor);
-  }
+  var label = getEtaLabel();
   if ($.fn.DataTable.isDataTable('#tableDevices')) {
     var dt = $('#tableDevices').DataTable();
     dt.settings()[0].oLanguage.sEmptyTable = buildEmptyDeviceTableMessage(label);

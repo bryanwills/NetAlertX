@@ -203,7 +203,7 @@
     "Device_MultiEdit_MassActions": "Mass actions:",
     "Device_MultiEdit_No_Devices": "No devices selected.",
     "Device_MultiEdit_Tooltip": "Careful. Clicking this will apply the value on the left to all devices selected above.",
-    "Device_NextScan_Imminent": "imminent",
+    "Device_NextScan_Imminent": "Imminent...",
     "Device_NextScan_In": "Next scan in ",
     "Device_NoData_Help": "If devices don't appear after the scan, check your SCAN_SUBNETS setting and <a href=\"https://docs.netalertx.com/SUBNETS\" target=\"_blank\">documentation</a>.",
     "Device_NoData_Scanning": "Waiting for the first scan - this may take several minutes after the initial setup.",
