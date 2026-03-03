@@ -85,7 +85,7 @@ class Device(ObjectType):
     devStatus = String(description="Online/Offline status")
     devIsRandomMac = Int(description="Calculated: Is MAC address randomized?")
     devParentChildrenCount = Int(description="Calculated: Number of children attached to this parent")
-    devIpLong = Int(description="Calculated: IP address in long format")
+    devIpLong = String(description="Calculated: IP address in long format (returned as string to support the full unsigned 32-bit range)")
     devFilterStatus = String(description="Calculated: Device status for UI filtering")
     devFQDN = String(description="Fully Qualified Domain Name")
     devParentRelType = String(description="Relationship type to parent")
@@ -200,13 +200,26 @@ class Query(ObjectType):
             mylog("none", f"[graphql_schema] Error loading devices data: {e}")
             return DeviceResult(devices=[], count=0)
 
+        # Int fields that may arrive from the DB as empty strings — coerce to None
+        _INT_FIELDS = [
+            "devFavorite", "devStaticIP", "devScan", "devLogEvents", "devAlertEvents",
+            "devAlertDown", "devSkipRepeated", "devPresentLastScan", "devIsNew",
+            "devIsArchived", "devReqNicsOnline", "devFlapping", "devCanSleep", "devIsSleeping",
+        ]
+
         # Add dynamic fields to each device
         for device in devices_data:
             device["devIsRandomMac"] = 1 if is_random_mac(device["devMac"]) else 0
             device["devParentChildrenCount"] = get_number_of_children(
                 device["devMac"], devices_data
             )
-            device["devIpLong"] = format_ip_long(device.get("devLastIP", ""))
+            # Return as string — IPv4 long values can exceed Int's signed 32-bit max (2,147,483,647)
+            device["devIpLong"] = str(format_ip_long(device.get("devLastIP", "")))
+
+            # Coerce empty strings to None so GraphQL Int serialisation doesn't fail
+            for _field in _INT_FIELDS:
+                if device.get(_field) == "":
+                    device[_field] = None
 
         mylog("trace", f"[graphql_schema] devices_data: {devices_data}")
 
