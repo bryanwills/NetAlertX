@@ -175,6 +175,16 @@ class NetAlertXStateManager {
         }
       }
 
+      // 5. Dispatch scan ETA update for pages that display next-scan timing
+      if (appState["last_scan_run"] !== undefined || appState["next_scan_time"] !== undefined) {
+        document.dispatchEvent(new CustomEvent('nax:scanEtaUpdate', {
+          detail: {
+            lastScanRun:   appState["last_scan_run"],
+            nextScanTime:  appState["next_scan_time"]
+          }
+        }));
+      }
+
       // console.log("[NetAlertX State] UI updated via jQuery");
     } catch (e) {
       console.error("[NetAlertX State] Failed to update state display:", e);

@@ -124,8 +124,16 @@ def main():
             # last time any scan or maintenance/upkeep was run
             conf.last_scan_run = loop_start_time
 
-            # Header
-            updateState("Process: Start")
+            # Compute the next scheduled run time across enabled device_scanner plugins
+            scanner_prefixes = {p["unique_prefix"] for p in all_plugins if p.get("plugin_type") == "device_scanner"}
+            scanner_next = [s.last_next_schedule for s in conf.mySchedules if s.service in scanner_prefixes]
+            next_scan_dt = min(scanner_next, default=None)
+            next_scan_time_iso = next_scan_dt.replace(microsecond=0).isoformat() if next_scan_dt else ""
+
+            # Header (also broadcasts last_scan_run + next_scan_time to frontend via SSE / app_state.json)
+            updateState("Process: Start",
+                        last_scan_run=loop_start_time.replace(microsecond=0).isoformat(),
+                        next_scan_time=next_scan_time_iso)
 
             # Timestamp
             startTime = loop_start_time
