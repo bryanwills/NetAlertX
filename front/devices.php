@@ -53,7 +53,12 @@
           <div class="col-md-12">
             <div class="box" id="clients">
               <div class="box-header ">
-                <h3 class="box-title col-md-12"><?= lang('Device_Shortcut_OnlineChart');?> </h3>
+                <h3 class="box-title"><?= lang('Device_Shortcut_OnlineChart');?> </h3>
+                <div class="box-tools pull-right">
+                  <button type="button" class="btn btn-box-tool" data-widget="collapse">
+                    <i class="fa fa-minus"></i>
+                  </button>
+                </div>
               </div>
               <div class="box-body">
                 <div class="chart">
@@ -72,10 +77,15 @@
       <!-- Device Filters ------------------------------------------------------- -->
       <div class="box box-aqua hidden" id="columnFiltersWrap">
         <div class="box-header ">
-          <h3 class="box-title col-md-12"><?= lang('Devices_Filters');?> </h3>
+          <h3 class="box-title"><?= lang('Devices_Filters');?> </h3>
+          <div class="box-tools pull-right">
+            <button type="button" class="btn btn-box-tool" data-widget="collapse">
+              <i class="fa fa-minus"></i>
+            </button>
+          </div>
         </div>
         <!-- Placeholder ------------------------------------------------------- -->
-         <div id="columnFilters" ></div>
+        <div class="box-body" id="columnFilters"></div>
       </div>
 
 <!-- datatable ------------------------------------------------------------- -->
@@ -147,6 +157,20 @@
 
   // DEVICE_COLUMN_FIELDS, COL, NUMERIC_DEFAULTS, GRAPHQL_EXTRA_FIELDS, COLUMN_NAME_MAP
   // are all defined in js/device-columns.js — edit that file to add new columns.
+
+  // Collapse DevicePresence and Filters sections by default on small/mobile screens
+  (function collapseOnMobile() {
+    if (window.innerWidth < 768) {
+      ['#clients', '#columnFiltersWrap'].forEach(function(sel) {
+        var $box = $(sel);
+        if ($box.length) {
+          $box.addClass('collapsed-box');
+          $box.find('.box-body, .box-footer').hide();
+          $box.find('[data-widget="collapse"] i').removeClass('fa-minus').addClass('fa-plus');
+        }
+      });
+    }
+  })();
 
   // Read parameters & Initialize components
   callAfterAppInitialized(main)
