@@ -472,12 +472,9 @@ function renderFilters(customData) {
           // Collect filters
           const columnFilters = collectFilters();
 
-          // Update DataTable with the new filters or search value (if applicable)
-          $('#tableDevices').DataTable().draw();
-
-          // Optionally, apply column filters (if using filters for individual columns)
+          // Apply column filters then draw once (previously drew twice — bug fixed).
           const table = $('#tableDevices').DataTable();
-          table.columnFilters = columnFilters;  // Apply your column filters logic
+          table.columnFilters = columnFilters;
           table.draw();
       });
 
@@ -636,12 +633,19 @@ function updateScanEtaDisplay(nextScanTime, currentState) {
     eta.style.display = '';
   }
 
-  // Update DataTables empty message once per SSE event — avoids AJAX spam on server-side tables.
+  // Update DataTables empty message once per SSE event.
+  // NOTE: Do NOT call dt.draw() here — on page load the SSE queue replays all
+  // accumulated events at once, causing a draw() (= GraphQL AJAX call) per event.
+  // Instead, update the visible empty-state DOM cell directly.
   var label = getEtaLabel();
   if ($.fn.DataTable.isDataTable('#tableDevices')) {
     var dt = $('#tableDevices').DataTable();
-    dt.settings()[0].oLanguage.sEmptyTable = buildEmptyDeviceTableMessage(label);
-    if (dt.page.info().recordsTotal === 0) { dt.draw(false); }
+    var newEmptyMsg = buildEmptyDeviceTableMessage(label);
+    dt.settings()[0].oLanguage.sEmptyTable = newEmptyMsg;
+    if (dt.page.info().recordsTotal === 0) {
+      // Patch the visible cell text without triggering a server-side AJAX reload.
+      $('#tableDevices tbody .dataTables_empty').html(newEmptyMsg);
+    }
   }
 
   tickTitleBar();
