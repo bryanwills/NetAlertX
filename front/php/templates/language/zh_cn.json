@@ -139,7 +139,7 @@
     "DevDetail_SessionTable_Duration": "时长",
     "DevDetail_SessionTable_IP": "IP",
     "DevDetail_SessionTable_Order": "排序",
-    "DevDetail_Shortcut_CurrentStatus": "当前状态",
+    "DevDetail_Shortcut_CurrentStatus": "状态",
     "DevDetail_Shortcut_DownAlerts": "下线警报",
     "DevDetail_Shortcut_Presence": "存在",
     "DevDetail_Shortcut_Sessions": "会话",
