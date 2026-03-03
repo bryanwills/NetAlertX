@@ -140,7 +140,7 @@ def main():
             # Only device_scanner plugins have meaningful next_scan times for user display
             scanner_prefixes = {p["unique_prefix"] for p in all_plugins if p.get("plugin_type") == "device_scanner"}
             scanner_next = [s.last_next_schedule for s in conf.mySchedules if s.service in scanner_prefixes]
-            
+
             # Get the earliest next scan time across all device scanners and broadcast.
             # updateState validates the value is in the future before storing/broadcasting.
             if scanner_next:
