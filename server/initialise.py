@@ -13,7 +13,7 @@ import conf
 from const import fullConfPath, fullConfFolder, default_tz, applicationPath
 from db.db_upgrade import ensure_views
 from helper import getBuildTimeStampAndVersion, collect_lang_strings, updateSubnets, generate_random_string
-from utils.datetime_utils import timeNowUTC
+from utils.datetime_utils import timeNowUTC, ensure_future_datetime
 from app_state import updateState
 from logger import mylog
 from api import update_api
@@ -682,9 +682,12 @@ def importConfigs(pm, db, all_plugins):
             newSchedule = Cron(run_sch).schedule(
                 start_date=timeNowUTC(as_string=False)
             )
+            # Get initial next schedule time, ensuring it's in the future
+            next_schedule_time = ensure_future_datetime(newSchedule, timeNowUTC(as_string=False))
+
             conf.mySchedules.append(
                 schedule_class(
-                    plugin["unique_prefix"], newSchedule, newSchedule.next(), False
+                    plugin["unique_prefix"], newSchedule, next_schedule_time, False
                 )
             )
 

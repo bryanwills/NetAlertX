@@ -4,7 +4,7 @@ import json
 from const import applicationPath, apiPath
 from logger import mylog
 from helper import checkNewVersion
-from utils.datetime_utils import timeNowUTC
+from utils.datetime_utils import timeNowUTC, is_datetime_future, normalizeTimeStamp
 from api_server.sse_broadcast import broadcast_state_update
 
 # Register NetAlertX directories using runtime configuration
@@ -142,7 +142,12 @@ class app_state_class:
         if last_scan_run is not None:
             self.last_scan_run = last_scan_run
         if next_scan_time is not None:
-            self.next_scan_time = next_scan_time
+            # Guard against stale/past timestamps — only store if genuinely in the future.
+            # This enforces correctness regardless of which caller sets next_scan_time.
+            if next_scan_time == "" or is_datetime_future(normalizeTimeStamp(next_scan_time)):
+                self.next_scan_time = next_scan_time
+            else:
+                self.next_scan_time = ""
         # check for new version every hour and if currently not running new version
         if self.isNewVersion is False and self.isNewVersionChecked + 3600 < int(
             timeNowUTC(as_string=False).timestamp()
