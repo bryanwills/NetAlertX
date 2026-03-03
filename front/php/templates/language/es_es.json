@@ -214,6 +214,7 @@
     "Device_Save_Unauthorized": "No autorizado - Token de API inválido",
     "Device_Saved_Success": "Dispositivo guardado exitósamente",
     "Device_Saved_Unexpected": "La actualización del dispositivo retornó una respuesta inesperada",
+    "Device_Scanning": "",
     "Device_Searchbox": "Búsqueda",
     "Device_Shortcut_AllDevices": "Mis dispositivos",
     "Device_Shortcut_AllNodes": "Todos los nodos",

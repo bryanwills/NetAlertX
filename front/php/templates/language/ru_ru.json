@@ -212,6 +212,7 @@
     "Device_Save_Unauthorized": "Не авторизован - недействительный токен API",
     "Device_Saved_Success": "Устройство успешно сохранено",
     "Device_Saved_Unexpected": "Обновление устройства дало неожиданный ответ",
+    "Device_Scanning": "",
     "Device_Searchbox": "Поиск",
     "Device_Shortcut_AllDevices": "Мои устройства",
     "Device_Shortcut_AllNodes": "Все узлы",

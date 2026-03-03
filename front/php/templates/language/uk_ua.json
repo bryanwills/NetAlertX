@@ -212,6 +212,7 @@
     "Device_Save_Unauthorized": "Неавторизовано – недійсний токен API",
     "Device_Saved_Success": "Пристрій успішно збережено",
     "Device_Saved_Unexpected": "Оновлення пристрою повернуло неочікувану відповідь",
+    "Device_Scanning": "",
     "Device_Searchbox": "Пошук",
     "Device_Shortcut_AllDevices": "Мої пристрої",
     "Device_Shortcut_AllNodes": "Усі вузли",

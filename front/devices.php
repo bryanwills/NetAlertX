@@ -572,10 +572,17 @@ function computeNextScanLabel(nextScanTime) {
   return getString('Device_NextScan_In') + secsLeft + 's';
 }
 
-// Anchor for next scheduled scan time, ticker handle, and plugins data — module-level.
+// Anchor for next scheduled scan time, ticker handle, plugins data, and current state — module-level.
 var _nextScanTimeAnchor = null;
+var _currentStateAnchor = null;
 var _scanEtaTickerId    = null;
-var _pluginsData       = null;
+var _pluginsData        = null;
+
+// Returns true when the backend is actively scanning (not idle).
+// States that indicate scanning: Process: Start, Check scan, Scan processed.
+function isScanningState(state) {
+  return ['Process: Start', 'Check scan', 'Scan processed'].indexOf(state) !== -1;
+}
 
 // Fetch plugins.json once on page load so we can guard ETA display to device_scanner plugins only.
 $.get('php/server/query_json.php', { file: 'plugins.json', nocache: Date.now() }, function(res) {
@@ -591,9 +598,10 @@ function hasEnabledDeviceScanners() {
 // ---------------------------------------------------------
 // Update the title-bar ETA subtitle and the DataTables empty-state message.
 // Called on every nax:scanEtaUpdate; the inner ticker keeps the title bar live between events.
-function updateScanEtaDisplay(nextScanTime) {
-  // Prefer the backend-computed next_scan_time; keep previous anchor if not yet received.
+function updateScanEtaDisplay(nextScanTime, currentState) {
+  // Prefer the backend-computed values; keep previous anchors if not yet received.
   _nextScanTimeAnchor = nextScanTime || _nextScanTimeAnchor;
+  _currentStateAnchor = currentState || _currentStateAnchor;
 
   // Restart the per-second title-bar ticker
   if (_scanEtaTickerId !== null) { clearInterval(_scanEtaTickerId); }
@@ -605,13 +613,21 @@ function updateScanEtaDisplay(nextScanTime) {
       eta.style.display = 'none';
       return;
     }
-    eta.textContent = computeNextScanLabel(_nextScanTimeAnchor);
+    // Show 'Scanning...' when the backend is actively scanning, countdown otherwise.
+    eta.textContent = isScanningState(_currentStateAnchor)
+      ? getString('Device_Scanning')
+      : computeNextScanLabel(_nextScanTimeAnchor);
     eta.style.display = '';
   }
 
   // Update DataTables empty message once per SSE event — avoids AJAX spam on server-side tables.
-  // Only show the next-scan ETA line when device_scanner plugins are actually enabled.
-  var label = hasEnabledDeviceScanners() ? computeNextScanLabel(_nextScanTimeAnchor) : '';
+  // Show 'Scanning...' when active, countdown when idle, nothing when no device_scanner enabled.
+  var label = '';
+  if (hasEnabledDeviceScanners()) {
+    label = isScanningState(_currentStateAnchor)
+      ? getString('Device_Scanning')
+      : computeNextScanLabel(_nextScanTimeAnchor);
+  }
   if ($.fn.DataTable.isDataTable('#tableDevices')) {
     var dt = $('#tableDevices').DataTable();
     dt.settings()[0].oLanguage.sEmptyTable = buildEmptyDeviceTableMessage(label);
@@ -624,7 +640,7 @@ function updateScanEtaDisplay(nextScanTime) {
 
 // Listen for scan ETA updates dispatched by sse_manager.js (SSE push or poll fallback)
 document.addEventListener('nax:scanEtaUpdate', function(e) {
-  updateScanEtaDisplay(e.detail.nextScanTime);
+  updateScanEtaDisplay(e.detail.nextScanTime, e.detail.currentState);
 });
 
 // ---------------------------------------------------------

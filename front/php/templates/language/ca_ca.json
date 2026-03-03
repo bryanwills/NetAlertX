@@ -212,6 +212,7 @@
     "Device_Save_Unauthorized": "Token invàlid - No autoritzat",
     "Device_Saved_Success": "S'ha guardat el dispositiu",
     "Device_Saved_Unexpected": "Actualització de dispositiu ha retornat una resposta no esperada",
+    "Device_Scanning": "",
     "Device_Searchbox": "Cerca",
     "Device_Shortcut_AllDevices": "Els meus dispositius",
     "Device_Shortcut_AllNodes": "Tots els nodes",

@@ -212,6 +212,7 @@
     "Device_Save_Unauthorized": "未授权 - API 令牌无效",
     "Device_Saved_Success": "设备保存成功",
     "Device_Saved_Unexpected": "设备更新返回了一个意外的响应",
+    "Device_Scanning": "",
     "Device_Searchbox": "搜索",
     "Device_Shortcut_AllDevices": "我的设备",
     "Device_Shortcut_AllNodes": "全部节点",

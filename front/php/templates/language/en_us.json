@@ -212,6 +212,7 @@
     "Device_Save_Unauthorized": "Unauthorized - invalid API token",
     "Device_Saved_Success": "Device saved successfully",
     "Device_Saved_Unexpected": "Device update returned an unexpected response",
+    "Device_Scanning": "Scanning...",
     "Device_Searchbox": "Search",
     "Device_Shortcut_AllDevices": "My devices",
     "Device_Shortcut_AllNodes": "All Nodes",

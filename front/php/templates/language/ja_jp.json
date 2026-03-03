@@ -212,6 +212,7 @@
     "Device_Save_Unauthorized": "許可されていない - 無効なAPIトークン",
     "Device_Saved_Success": "デバイスが正常に保存されました",
     "Device_Saved_Unexpected": "デバイスの更新で予期せぬ応答がありました",
+    "Device_Scanning": "",
     "Device_Searchbox": "検索",
     "Device_Shortcut_AllDevices": "自分のデバイス",
     "Device_Shortcut_AllNodes": "全ノード",

@@ -180,7 +180,8 @@ class NetAlertXStateManager {
         document.dispatchEvent(new CustomEvent('nax:scanEtaUpdate', {
           detail: {
             lastScanRun:   appState["last_scan_run"],
-            nextScanTime:  appState["next_scan_time"]
+            nextScanTime:  appState["next_scan_time"],
+            currentState:  appState["currentState"]
           }
         }));
       }

@@ -212,6 +212,7 @@
     "Device_Save_Unauthorized": "Non autorisé - Jeton d'API invalide",
     "Device_Saved_Success": "Appareil enregistré avec succès",
     "Device_Saved_Unexpected": "La mise à jour de l'appareil a renvoyé une réponse inattendue",
+    "Device_Scanning": "",
     "Device_Searchbox": "Rechercher",
     "Device_Shortcut_AllDevices": "Mes appareils",
     "Device_Shortcut_AllNodes": "Tous les nœuds",
