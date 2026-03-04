@@ -30,11 +30,21 @@ def create_dummy(client, api_token, test_mac):
         "devType": "Router",
         "devVendor": "TestVendor",
     }
-    client.post(f"/device/{test_mac}", json=payload, headers=auth_headers(api_token))
+    response = client.post(f"/device/{test_mac}", json=payload, headers=auth_headers(api_token))
+    assert response.status_code in [200, 201], (
+        f"Expected status 200/201 for device creation, got {response.status_code}. "
+        f"Response body: {response.get_data(as_text=True)}"
+    )
+    return response
 
 
 def delete_dummy(client, api_token, test_mac):
-    client.delete("/devices", json={"macs": [test_mac]}, headers=auth_headers(api_token))
+    response = client.delete("/devices", json={"macs": [test_mac]}, headers=auth_headers(api_token))
+    assert response.status_code == 200, (
+        f"Expected status 200 for device deletion, got {response.status_code}. "
+        f"Response body: {response.get_data(as_text=True)}"
+    )
+    return response
 
 
 # --- Device Search Tests ---

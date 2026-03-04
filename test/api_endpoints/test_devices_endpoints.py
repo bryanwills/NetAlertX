@@ -195,11 +195,14 @@ def test_devices_by_status(client, api_token, test_mac):
 
         # 3. Check favorite formatting if devFavorite = 1
         # Update dummy device to favorite
-        client.post(
+        update_resp = client.post(
             f"/device/{test_mac}",
             json={"devFavorite": 1},
             headers=auth_headers(api_token)
         )
+        assert update_resp.status_code == 200
+        assert update_resp.json.get("success") is True
+
         resp_fav = client.get("/devices/by-status?status=my", headers=auth_headers(api_token))
         fav_data = next((d for d in resp_fav.json if d["id"] == test_mac), None)
         assert fav_data is not None

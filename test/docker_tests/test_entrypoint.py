@@ -8,6 +8,7 @@ such as environment variable settings and check skipping.
 import subprocess
 import uuid
 import pytest
+import shutil
 
 IMAGE = "netalertx-test"
 
@@ -85,7 +86,7 @@ def test_no_app_conf_override_when_no_graphql_port():
 
 def test_skip_startup_checks_env_var():
     # If SKIP_STARTUP_CHECKS contains the human-readable name of a check (e.g. "mandatory folders"),
-    # the entrypoint should skip that specific check. We check that the "Creating NetAlertX log directory." 
+    # the entrypoint should skip that specific check. We check that the "Creating NetAlertX log directory."
     # message (from the mandatory folders check) is not printed when skipped.
     result = _run_entrypoint(env={"SKIP_STARTUP_CHECKS": "mandatory folders"}, check_only=True)
     assert "Creating NetAlertX log directory" not in result.stdout
@@ -94,8 +95,6 @@ def test_skip_startup_checks_env_var():
 
 @pytest.mark.docker
 @pytest.mark.feature_complete
-def test_host_optimization_warning_matches_sysctl():
-    """Validate host-optimization warning matches actual host sysctl values."""
 def test_host_optimization_warning_matches_sysctl():
     """Validate host-optimization warning matches actual host sysctl values."""
     sysctl_bin = shutil.which("sysctl")
@@ -111,11 +110,6 @@ def test_host_optimization_warning_matches_sysctl():
     )
     announce_proc = subprocess.run(
         [sysctl_bin, "-n", "net.ipv4.conf.all.arp_announce"],
-        capture_output=True,
-        text=True,
-        check=False,
-        timeout=10,
-    )
         capture_output=True,
         text=True,
         check=False,

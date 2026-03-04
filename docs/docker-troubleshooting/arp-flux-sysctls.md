@@ -38,7 +38,8 @@ Set these sysctls at container runtime.
     --sysctl net.ipv4.conf.all.arp_ignore=1 \
     --sysctl net.ipv4.conf.all.arp_announce=2 \
     ghcr.io/netalertx/netalertx:latest
-
+  ```
+  
 > **Note:** Setting `net.ipv4.conf.all.arp_ignore` and `net.ipv4.conf.all.arp_announce` may fail with "operation not permitted" unless the container is run with elevated privileges. To resolve this, you can:
 > - Use `--privileged` with `docker run`.
 > - Use the more restrictive `--cap-add=NET_ADMIN` (or `cap_add: [NET_ADMIN]` in `docker-compose` service definitions) to allow the sysctls to be applied at runtime.
