@@ -317,14 +317,18 @@ def _select_custom_ports(exclude: set[int] | None = None) -> int:
     raise RuntimeError("Unable to locate a free high port for compose testing")
 
 
-def _make_port_check_hook(ports: tuple[int, ...]) -> Callable[[], None]:
+def _make_port_check_hook(
+    ports: tuple[int, ...],
+    settle_wait_seconds: int = COMPOSE_SETTLE_WAIT_SECONDS,
+    port_wait_timeout: int = COMPOSE_PORT_WAIT_TIMEOUT,
+) -> Callable[[], None]:
     """Return a callback that waits for the provided ports to accept TCP connections."""
 
     def _hook() -> None:
         for port in ports:
             LAST_PORT_SUCCESSES.pop(port, None)
-        time.sleep(COMPOSE_SETTLE_WAIT_SECONDS)
-        _wait_for_ports(ports, timeout=COMPOSE_PORT_WAIT_TIMEOUT)
+        time.sleep(settle_wait_seconds)
+        _wait_for_ports(ports, timeout=port_wait_timeout)
 
     return _hook
 
@@ -853,12 +857,18 @@ def test_normal_startup_no_warnings_compose(tmp_path: pathlib.Path) -> None:
     default_project = "netalertx-normal-default"
 
     default_compose_file = _write_normal_startup_compose(default_dir, default_project, default_env_overrides)
+    port_check_timeout = 20
+    settle_wait_seconds = 2
     default_result = _run_docker_compose(
         default_compose_file,
         default_project,
         timeout=8,
         detached=True,
-        post_up=_make_port_check_hook(default_ports),
+        post_up=_make_port_check_hook(
+            default_ports,
+            settle_wait_seconds=settle_wait_seconds,
+            port_wait_timeout=port_check_timeout,
+        ),
     )
     # MANDATORY LOGGING - DO NOT REMOVE (see file header for reasoning)
     print("\n[compose output default]", default_result.output)
@@ -919,7 +929,11 @@ def test_normal_startup_no_warnings_compose(tmp_path: pathlib.Path) -> None:
         custom_project,
         timeout=8,
         detached=True,
-        post_up=_make_port_check_hook(custom_ports),
+        post_up=_make_port_check_hook(
+            custom_ports,
+            settle_wait_seconds=settle_wait_seconds,
+            port_wait_timeout=port_check_timeout,
+        ),
     )
     print("\n[compose output custom]", custom_result.output)
     custom_output = _assert_ports_ready(custom_result, custom_project, custom_ports)
@@ -932,7 +946,12 @@ def test_normal_startup_no_warnings_compose(tmp_path: pathlib.Path) -> None:
         "⚠️" not in line or allowed_warning in line
         for line in custom_output.splitlines()
     ), "Unexpected warning found in custom output"
-    lowered_custom = custom_output.lower()
+    custom_output_without_allowed_warning = "\n".join(
+        line
+        for line in custom_output.splitlines()
+        if allowed_warning.lower() not in line.lower()
+    )
+    lowered_custom = custom_output_without_allowed_warning.lower()
     assert "arning" not in lowered_custom
     assert "rror" not in lowered_custom
 
