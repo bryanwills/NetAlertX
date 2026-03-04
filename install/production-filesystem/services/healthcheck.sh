@@ -48,8 +48,9 @@ else
     log_error "python /app/server is not running"
 fi
 
-# 5. Check port 20211 is open and contains "netalertx"
-[ "${LISTEN_ADDR}" == "0.0.0.0" ] && CHECK_ADDR="127.0.0.1" || CHECK_ADDR="${LISTEN_ADDR}";
+# 5. Check port 20211 is open
+CHECK_ADDR="${LISTEN_ADDR:-127.0.0.1}"
+[ "${CHECK_ADDR}" == "0.0.0.0" ] && CHECK_ADDR="127.0.0.1"
 if timeout 10 bash -c "</dev/tcp/${CHECK_ADDR}/${PORT:-20211}" 2>/dev/null; then
     log_success "Port ${PORT:-20211} is responding"
 else

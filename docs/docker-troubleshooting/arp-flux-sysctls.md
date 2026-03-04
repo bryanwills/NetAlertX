@@ -40,6 +40,10 @@ Set these sysctls at container runtime.
     jokob-sk/netalertx:latest
   ```
 
+> **Note:** Setting `net.ipv4.conf.all.arp_ignore` and `net.ipv4.conf.all.arp_announce` may fail with "operation not permitted" unless the container is run with elevated privileges. To resolve this, you can:
+> - Use `--privileged` with `docker run`.
+> - Use the more restrictive `--cap-add=NET_ADMIN` (or `cap_add: [NET_ADMIN]` in `docker-compose` service definitions) to allow the sysctls to be applied at runtime.
+
 ## Additional Resources
 
 For broader Docker Compose guidance, see:

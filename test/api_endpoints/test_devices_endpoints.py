@@ -168,8 +168,12 @@ def test_devices_totals(client, api_token, test_mac):
         expected_length = len(conditions)
         assert len(data) == expected_length
 
-        # 4. Check that at least 1 device exists
-        assert data[0] >= 1  # 'devices' count includes the dummy device
+        # 4. Check that at least 1 device exists when there are any conditions
+        if expected_length > 0:
+            assert data[0] >= 1  # 'devices' count includes the dummy device
+        else:
+            # no conditions defined; data should be an empty list
+            assert data == []
     finally:
         delete_dummy(client, api_token, test_mac)
 
