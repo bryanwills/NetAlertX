@@ -115,23 +115,18 @@ def is_datetime_future(dt, current_threshold=None):
     return dt > current_threshold
 
 
-def ensure_future_datetime(schedule_obj, current_threshold=None, max_retries=5):
+def ensure_future_datetime(schedule_obj, current_threshold=None):
     """
     Ensure a schedule's next() call returns a datetime strictly in the future.
 
-    This is a defensive utility for cron/schedule libraries that should always return
-    future times but may have edge cases. Validates and retries if needed.
+    Keeps calling .next() until a future time is returned — never raises.
 
     Args:
         schedule_obj: A schedule object with a .next() method (e.g., from croniter/APScheduler)
         current_threshold: datetime to compare against. If None, uses timeNowTZ(as_string=False)
-        max_retries: Maximum times to call .next() if result is not in future (default: 5)
 
     Returns:
         datetime.datetime: A guaranteed future datetime from schedule_obj.next()
-
-    Raises:
-        RuntimeError: If max_retries exceeded without getting a future time
 
     Examples:
         newSchedule = Cron(run_sch).schedule(start_date=timeNowUTC(as_string=False))
@@ -141,17 +136,9 @@ def ensure_future_datetime(schedule_obj, current_threshold=None, max_retries=5):
         current_threshold = timeNowTZ(as_string=False)
 
     next_time = schedule_obj.next()
-    retries = 0
 
-    while next_time <= current_threshold and retries < max_retries:
+    while next_time <= current_threshold:
         next_time = schedule_obj.next()
-        retries += 1
-
-    if next_time <= current_threshold:
-        raise RuntimeError(
-            f"[ensure_future_datetime] Failed to get future time after {max_retries} retries. "
-            f"Last attempt: {next_time}, Current time: {current_threshold}"
-        )
 
     return next_time
 
