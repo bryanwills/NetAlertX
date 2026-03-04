@@ -96,15 +96,26 @@ def test_skip_startup_checks_env_var():
 @pytest.mark.feature_complete
 def test_host_optimization_warning_matches_sysctl():
     """Validate host-optimization warning matches actual host sysctl values."""
+def test_host_optimization_warning_matches_sysctl():
+    """Validate host-optimization warning matches actual host sysctl values."""
+    sysctl_bin = shutil.which("sysctl")
+    if not sysctl_bin:
+        pytest.skip("sysctl binary not found on host; skipping host-optimization warning check")
+
     ignore_proc = subprocess.run(
-        ["sysctl", "-n", "net.ipv4.conf.all.arp_ignore"],
+        [sysctl_bin, "-n", "net.ipv4.conf.all.arp_ignore"],
         capture_output=True,
         text=True,
         check=False,
         timeout=10,
     )
     announce_proc = subprocess.run(
-        ["sysctl", "-n", "net.ipv4.conf.all.arp_announce"],
+        [sysctl_bin, "-n", "net.ipv4.conf.all.arp_announce"],
+        capture_output=True,
+        text=True,
+        check=False,
+        timeout=10,
+    )
         capture_output=True,
         text=True,
         check=False,
