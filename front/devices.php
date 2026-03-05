@@ -624,6 +624,10 @@ function hasEnabledDeviceScanners() {
 // Update the title-bar ETA subtitle and the DataTables empty-state message.
 // Called on every nax:scanEtaUpdate; the inner ticker keeps the title bar live between events.
 function updateScanEtaDisplay(nextScanTime, currentState) {
+  // Detect scan-finished transition BEFORE updating _currentStateAnchor.
+  // justFinishedScanning is true only when the backend transitions scanning → idle.
+  var justFinishedScanning = (currentState === 'Process: Idle') && isScanningState(_currentStateAnchor);
+
   // Prefer the backend-computed values; keep previous anchors if not yet received.
   _nextScanTimeAnchor = nextScanTime || _nextScanTimeAnchor;
   _currentStateAnchor = currentState || _currentStateAnchor;
@@ -669,6 +673,13 @@ function updateScanEtaDisplay(nextScanTime, currentState) {
     if (dt.page.info().recordsTotal === 0) {
       // Patch the visible cell text without triggering a server-side AJAX reload.
       $('#tableDevices tbody .dataTables_empty').html(newEmptyMsg);
+    }
+
+    // When scanning just finished and the table is still empty, reload data so
+    // newly discovered devices appear automatically. Skip reload if there are
+    // already rows — no need to disturb the user's current view.
+    if (justFinishedScanning && dt.page.info().recordsTotal === 0) {
+      dt.ajax.reload(null, false); // false = keep current page position
     }
   }
 
