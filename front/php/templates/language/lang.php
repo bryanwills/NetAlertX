@@ -8,7 +8,7 @@
 $defaultLang = "en_us";
 
 // Load the canonical language list from languages.json — do not hardcode here.
-$_langJsonPath = dirname(__FILE__) . '/languages.json';
+$_langJsonPath = dirname(__FILE__) . '/language_definitions/languages.json';
 $_langJson     = json_decode(file_get_contents($_langJsonPath), true);
 $allLanguages  = array_column($_langJson['languages'], 'code');
 

@@ -27,7 +27,7 @@ from messaging.in_app import write_notification
 # ===============================================================================
 
 _LANGUAGES_JSON = os.path.join(
-    applicationPath, "front", "php", "templates", "language", "languages.json"
+    applicationPath, "front", "php", "templates", "language", "language_definitions" ,"languages.json"
 )
 
 

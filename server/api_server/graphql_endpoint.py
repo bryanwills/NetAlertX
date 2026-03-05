@@ -563,7 +563,7 @@ class Query(ObjectType):
         langStrings = []
 
         # --- CORE JSON FILES ---
-        language_folder = '/app/front/php/templates/language/'
+        language_folder = '/app/front/php/templates/language/language_definitions/'
         if os.path.exists(language_folder):
             for filename in os.listdir(language_folder):
                 if filename.endswith('.json') and filename != 'languages.json':

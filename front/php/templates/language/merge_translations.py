@@ -46,7 +46,7 @@ def load_language_codes(languages_json_path):
 if __name__ == "__main__":
     current_path = os.path.dirname(os.path.abspath(__file__))
     # language codes are loaded from languages.json — add a new language there
-    languages_json = os.path.join(current_path, "languages.json")
+    languages_json = os.path.join(current_path, "language_definitions/languages.json")
     codes = load_language_codes(languages_json)
     file_paths = [os.path.join(current_path, f"{code}.json") for code in codes]
     merge_translations(file_paths[0], file_paths[1:])

@@ -7,7 +7,7 @@ from logger import mylog
 
 INSTALL_PATH = os.getenv("NETALERTX_APP", "/app")
 LANGUAGES_JSON_PATH = os.path.join(
-    INSTALL_PATH, "front", "php", "templates", "language", "languages.json"
+    INSTALL_PATH, "front", "php", "templates", "language", "language_definitions", "languages.json"
 )
 
 
