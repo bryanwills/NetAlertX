@@ -2,6 +2,7 @@
 
 // ###################################
 // ## Languages
+// ## Look-up here: http://www.lingoes.net/en/translator/langcode.htm
 // ###################################
 
 $defaultLang = "en_us";
