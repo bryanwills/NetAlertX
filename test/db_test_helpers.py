@@ -5,7 +5,7 @@ Import from any test subdirectory with:
 
     import sys, os
     sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-    from db_test_helpers import make_db, insert_device, minutes_ago, DummyDB, down_event_macs
+    from db_test_helpers import make_db, insert_device, minutes_ago, DummyDB, down_event_macs, make_device_dict, sync_insert_devices
 """
 
 import sqlite3
@@ -200,6 +200,125 @@ def insert_device(
         (mac, alert_down, present_last_scan, can_sleep,
          last_connection or minutes_ago(60), last_ip),
     )
+
+
+def make_device_dict(mac: str = "aa:bb:cc:dd:ee:ff", **overrides) -> dict:
+    """
+    Return a fully-populated Devices row dict with safe defaults.
+
+    Mirrors every column in CREATE_DEVICES so callers can be inserted
+    directly via sync_insert_devices() or similar helpers.  Pass keyword
+    arguments to override any individual field.
+
+    Computed/view-only columns (devStatus, devIsSleeping, devFlapping,
+    rowid, …) are intentionally absent — tests that need to verify they are
+    dropped should add them after calling this function.
+    """
+    base = {
+        "devMac":                 mac,
+        "devName":                "Test Device",
+        "devOwner":               "",
+        "devType":                "",
+        "devVendor":              "Acme",
+        "devFavorite":            0,
+        "devGroup":               "",
+        "devComments":            "",
+        "devFirstConnection":     "2024-01-01 00:00:00",
+        "devLastConnection":      "2024-01-02 00:00:00",
+        "devLastIP":              "192.168.1.10",
+        "devPrimaryIPv4":         "192.168.1.10",
+        "devPrimaryIPv6":         "",
+        "devVlan":                "",
+        "devForceStatus":         "",
+        "devStaticIP":            "",
+        "devScan":                1,
+        "devLogEvents":           1,
+        "devAlertEvents":         1,
+        "devAlertDown":           1,
+        "devCanSleep":            0,
+        "devSkipRepeated":        0,
+        "devLastNotification":    "",
+        "devPresentLastScan":     1,
+        "devIsNew":               0,
+        "devLocation":            "",
+        "devIsArchived":          0,
+        "devParentMAC":           "",
+        "devParentPort":          "",
+        "devIcon":                "",
+        "devGUID":                "test-guid-1",
+        "devSite":                "",
+        "devSSID":                "",
+        "devSyncHubNode":         "node1",
+        "devSourcePlugin":        "",
+        "devCustomProps":         "",
+        "devFQDN":                "",
+        "devParentRelType":       "",
+        "devReqNicsOnline":       0,
+        "devMacSource":           "",
+        "devNameSource":          "",
+        "devFQDNSource":          "",
+        "devLastIPSource":        "",
+        "devVendorSource":        "",
+        "devSSIDSource":          "",
+        "devParentMACSource":     "",
+        "devParentPortSource":    "",
+        "devParentRelTypeSource": "",
+        "devVlanSource":          "",
+    }
+    base.update(overrides)
+    return base
+
+
+# ---------------------------------------------------------------------------
+# Sync insert helper (shared by test/plugins/test_sync_insert.py and
+# test/plugins/test_sync_protocol.py — mirrors sync.py's insert block)
+# ---------------------------------------------------------------------------
+
+def sync_insert_devices(
+    conn: sqlite3.Connection,
+    device_data: list,
+    existing_macs: set | None = None,
+) -> int:
+    """
+    Schema-aware device INSERT mirroring sync.py's Mode-3 insert block.
+
+    Parameters
+    ----------
+    conn:
+        In-memory (or real) SQLite connection with a Devices table.
+    device_data:
+        List of device dicts as received from table_devices.json or a node log.
+    existing_macs:
+        Set of MAC addresses already present in Devices.  Rows whose devMac is
+        in this set are skipped.  Pass ``None`` (default) to insert everything.
+
+    Returns the number of rows actually inserted.
+    """
+    if not device_data:
+        return 0
+
+    cursor = conn.cursor()
+
+    candidates = (
+        [d for d in device_data if d["devMac"] not in existing_macs]
+        if existing_macs is not None
+        else list(device_data)
+    )
+
+    if not candidates:
+        return 0
+
+    cursor.execute("PRAGMA table_info(Devices)")
+    db_columns = {row[1] for row in cursor.fetchall()}
+
+    insert_cols = [k for k in candidates[0].keys() if k in db_columns]
+    columns = ", ".join(insert_cols)
+    placeholders = ", ".join("?" for _ in insert_cols)
+    sql = f"INSERT INTO Devices ({columns}) VALUES ({placeholders})"
+    values = [tuple(d.get(col) for col in insert_cols) for d in candidates]
+    cursor.executemany(sql, values)
+    conn.commit()
+    return len(values)
 
 
 # ---------------------------------------------------------------------------
