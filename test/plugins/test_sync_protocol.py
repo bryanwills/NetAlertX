@@ -58,7 +58,10 @@ def _get_data(api_token, node_url):
     try:
         response = requests.get(node_url + API_ENDPOINT, headers=headers, timeout=5)
         if response.status_code == 200:
-            return response.json()
+            try:
+                return response.json()
+            except json.JSONDecodeError:
+                pass
     except requests.RequestException:
         pass
     return ""
