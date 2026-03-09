@@ -30,6 +30,14 @@ services:
       - CHOWN                                       # Required for root-entrypoint to chown /data + /tmp before dropping privileges
       - SETUID                                      # Required for root-entrypoint to switch to non-root user
       - SETGID                                      # Required for root-entrypoint to switch to non-root group
+    # --- ARP FLUX MITIGATION ---
+    # Note: If running in `network_mode: host`, modern Docker/runc will correctly
+    # block sysctl overrides via the container configuration to prevent 
+    # unauthorized changes to the host's global kernel settings.
+    # 
+    # If using host networking, REMOVE the sysctls block below and apply 
+    # settings directly on your Host OS instead (sudo sysctl -w ...).
+    # ---------------------------
     sysctls:                                        # ARP flux mitigation (reduces duplicate/ambiguous ARP behavior on host networking)
       net.ipv4.conf.all.arp_ignore: 1
       net.ipv4.conf.all.arp_announce: 2
