@@ -33,7 +33,7 @@ def get_device_conditions():
         "unknown": f"WHERE {base_active} AND devName IN ({NULL_EQUIVALENTS_SQL})",
         "known": f"WHERE {base_active} AND devName NOT IN ({NULL_EQUIVALENTS_SQL})",
         "favorites_offline": f"WHERE {base_active} AND devFavorite=1 AND devPresentLastScan=0",
-        "new_online": f"WHERE {base_active} AND devIsNew=1 AND devPresentLastScan=0",
+        "new_online": f"WHERE {base_active} AND devIsNew=1 AND devPresentLastScan=1",
         "unstable_devices": f"WHERE {base_active} AND devFlapping=1",
         "unstable_favorites": f"WHERE {base_active} AND devFavorite=1 AND devFlapping=1",
         "unstable_network_devices": f"WHERE {base_active} AND devType IN ({network_dev_types}) AND devFlapping=1",
