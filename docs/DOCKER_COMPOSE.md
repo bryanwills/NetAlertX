@@ -31,12 +31,12 @@ services:
       - SETUID                                      # Required for root-entrypoint to switch to non-root user
       - SETGID                                      # Required for root-entrypoint to switch to non-root group
     # --- ARP FLUX MITIGATION ---
-    # Note: If running in `network_mode: host`, modern Docker/runc will correctly
-    # block sysctl overrides via the container configuration to prevent 
-    # unauthorized changes to the host's global kernel settings.
+    # Note: When using `network_mode: host`, these sysctls require the
+    # NET_ADMIN capability to be applied to the host namespace.
     # 
-    # If using host networking, REMOVE the sysctls block below and apply 
-    # settings directly on your Host OS instead (sudo sysctl -w ...).
+    # If your environment restricts capabilities, or you prefer to configure
+    # them on the Host OS, REMOVE the sysctls block below and apply via:
+    # sudo sysctl -w net.ipv4.conf.all.arp_ignore=1 net.ipv4.conf.all.arp_announce=2
     # ---------------------------
     sysctls:                                        # ARP flux mitigation (reduces duplicate/ambiguous ARP behavior on host networking)
       net.ipv4.conf.all.arp_ignore: 1

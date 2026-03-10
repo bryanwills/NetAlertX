@@ -21,9 +21,9 @@ The running environment does not provide the expected kernel sysctl values. This
 
 ## How to Correct the Issue
 
-### Option A: Via Docker (Standard Bridge Networking)
+### Option A: Via Docker (Standard Bridge Networking or `network_mode: host` with `NET_ADMIN`)
 
-If you are using standard bridged networking (default), set these sysctls at container runtime.
+If you are using standard bridged networking, or `network_mode: host` and the container is granted the `NET_ADMIN` capability (as is the default recommendation), set these sysctls at container runtime.
 
 - In `docker-compose.yml` (preferred):
   ```yaml
@@ -46,9 +46,9 @@ If you are using standard bridged networking (default), set these sysctls at con
 > - Use `--privileged` with `docker run`.
 > - Use the more restrictive `--cap-add=NET_ADMIN` (or `cap_add: [NET_ADMIN]` in `docker-compose` service definitions) to allow the sysctls to be applied at runtime.
 
-### Option B: Via Host OS (Required for `network_mode: host`)
+### Option B: Via Host OS (Fallback for `network_mode: host`)
 
-If you are running the container with `network_mode: host`, modern Docker versions (specifically the `runc` runtime) **will not allow** you to set `net.*` sysctls via the container configuration. Attempting to do so will result in an OCI runtime error: `sysctl "net.ipv4.conf.all.arp_announce" not allowed in host network namespace`.
+If you are running the container with `network_mode: host` and cannot grant the `NET_ADMIN` capability, or if your container runtime environment explicitly blocks sysctl overrides, applying these settings via the container configuration will fail. Attempting to do so without sufficient privileges typically results in an OCI runtime error: `sysctl "net.ipv4.conf.all.arp_announce" not allowed in host network namespace`.
 
 In this scenario, you must apply the settings directly on your host operating system:
 

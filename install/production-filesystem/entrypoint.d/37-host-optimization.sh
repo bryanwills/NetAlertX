@@ -22,8 +22,10 @@ if [ "$failed" -eq 1 ]; then
       net.ipv4.conf.all.arp_ignore=1
       net.ipv4.conf.all.arp_announce=2
 
-    Note: If using 'network_mode: host', you cannot set these via docker-compose
-    sysctls. You must configure them directly on your host operating system instead.
+    Note: If using 'network_mode: host', setting these via docker-compose sysctls
+    requires the NET_ADMIN capability. When granted, these sysctls will
+    modify the host namespace. Otherwise, you must configure them directly
+    on your host operating system instead.
 
     Detection accuracy may be reduced until configured.
 
