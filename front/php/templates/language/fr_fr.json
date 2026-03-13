@@ -208,6 +208,7 @@
     "Device_NoData_Help": "Si les appareils n'apparaissent pas après le scan, vérifiez vos paramètres SCAN_SUBNETS et la <a href=\"https://docs.netalertx.com/SUBNETS\" target=\"_blank\">documentation</a>.",
     "Device_NoData_Scanning": "En attente du premier scan - cela peut prendre quelques minutes après le premier paramétrage.",
     "Device_NoData_Title": "Aucun appareil trouvé pour le moment",
+    "Device_NoMatch_Title": "",
     "Device_Save_Failed": "Erreur à l'enregistrement de l'appareil",
     "Device_Save_Unauthorized": "Non autorisé - Jeton d'API invalide",
     "Device_Saved_Success": "Appareil enregistré avec succès",

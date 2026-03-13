@@ -767,6 +767,7 @@ function initializeDatatable (status) {
                 ${_gqlFields}
               }
               count
+              db_count
             }
           }
         `;
@@ -807,9 +808,10 @@ function initializeDatatable (status) {
         console.log("Raw response:", res);
         const json = res["data"];
 
-        // Set the total number of records for pagination at the *root level* so DataTables sees them
-        res.recordsTotal = json.devices.count || 0;
-        res.recordsFiltered = json.devices.count || 0;
+        // recordsTotal = raw DB count (before filters/search) so DataTables uses emptyTable
+        // only when the DB is genuinely empty, and zeroRecords when a filter returns nothing.
+        res.recordsTotal    = json.devices.db_count || 0;
+        res.recordsFiltered = json.devices.count    || 0;
 
         // console.log("recordsTotal:", res.recordsTotal, "recordsFiltered:", res.recordsFiltered);
         // console.log("tableRows:", tableRows);
@@ -1049,7 +1051,8 @@ function initializeDatatable (status) {
     // Processing
     'processing'  : true,
     'language'    : {
-      emptyTable: buildEmptyDeviceTableMessage(getString('Device_NextScan_Imminent')),
+      emptyTable:   buildEmptyDeviceTableMessage(getString('Device_NextScan_Imminent')),
+      zeroRecords:  "<?= lang('Device_NoMatch_Title');?>",
       "lengthMenu": "<?= lang('Device_Tablelenght');?>",
       "search":     "<?= lang('Device_Searchbox');?>: ",
       "paginate": {

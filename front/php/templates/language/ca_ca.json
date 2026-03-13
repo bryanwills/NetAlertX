@@ -208,6 +208,7 @@
     "Device_NoData_Help": "",
     "Device_NoData_Scanning": "",
     "Device_NoData_Title": "",
+    "Device_NoMatch_Title": "",
     "Device_Save_Failed": "Problemes guardant el dispositiu",
     "Device_Save_Unauthorized": "Token invàlid - No autoritzat",
     "Device_Saved_Success": "S'ha guardat el dispositiu",

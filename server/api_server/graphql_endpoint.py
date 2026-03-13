@@ -108,6 +108,7 @@ class Device(ObjectType):
 class DeviceResult(ObjectType):
     devices = List(Device)
     count = Int()
+    db_count = Int(description="Total device count in the database, before any status/filter/search is applied")
 
 
 # --- SETTINGS ---
@@ -198,7 +199,7 @@ class Query(ObjectType):
                 devices_data = json.load(f)["data"]
         except (FileNotFoundError, json.JSONDecodeError) as e:
             mylog("none", f"[graphql_schema] Error loading devices data: {e}")
-            return DeviceResult(devices=[], count=0)
+            return DeviceResult(devices=[], count=0, db_count=0)
 
         # Int fields that may arrive from the DB as empty strings — coerce to None
         _INT_FIELDS = [
@@ -222,6 +223,10 @@ class Query(ObjectType):
                     device[_field] = None
 
         mylog("trace", f"[graphql_schema] devices_data: {devices_data}")
+
+        # Raw DB count — before any status, filter, or search is applied.
+        # Used by the frontend to distinguish "no devices in DB" from "filter returned nothing".
+        db_count = len(devices_data)
 
         # initialize total_count
         total_count = len(devices_data)
@@ -439,7 +444,7 @@ class Query(ObjectType):
         # Convert dict objects to Device instances to enable field resolution
         devices = [Device(**device) for device in devices_data]
 
-        return DeviceResult(devices=devices, count=total_count)
+        return DeviceResult(devices=devices, count=total_count, db_count=db_count)
 
     # --- SETTINGS ---
     settings = Field(SettingResult, filters=List(FilterOptionsInput))

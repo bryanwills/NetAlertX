@@ -208,6 +208,7 @@
     "Device_NoData_Help": "Если устройства не отображаются после сканирования, проверьте настройку SCAN_SUBNETS и <a href=\"https://docs.netalertx.com/SUBNETS\" target=\"_blank\">документацию</a>.",
     "Device_NoData_Scanning": "Ожидание первого сканирования — это может занять несколько минут после первоначальной настройки.",
     "Device_NoData_Title": "Устройства пока не найдены",
+    "Device_NoMatch_Title": "",
     "Device_Save_Failed": "Не удалось сохранить устройство",
     "Device_Save_Unauthorized": "Не авторизован - недействительный токен API",
     "Device_Saved_Success": "Устройство успешно сохранено",

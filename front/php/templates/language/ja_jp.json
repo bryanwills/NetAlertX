@@ -208,6 +208,7 @@
     "Device_NoData_Help": "スキャン後にデバイスが表示されない場合は、SCAN_SUBNETS設定と<a href=\"https://docs.netalertx.com/SUBNETS\" target=\"_blank\">ドキュメント</a>を確認してください。",
     "Device_NoData_Scanning": "最初のスキャンを待機中 - 初期設定後、数分かかる場合があります。",
     "Device_NoData_Title": "デバイスが見つかりません",
+    "Device_NoMatch_Title": "",
     "Device_Save_Failed": "デバイスの保存に失敗しました",
     "Device_Save_Unauthorized": "許可されていない - 無効なAPIトークン",
     "Device_Saved_Success": "デバイスが正常に保存されました",

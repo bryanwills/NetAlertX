@@ -208,6 +208,7 @@
     "Device_NoData_Help": "If devices don't appear after the scan, check your SCAN_SUBNETS setting and <a href=\"https://docs.netalertx.com/SUBNETS\" target=\"_blank\">documentation</a>.",
     "Device_NoData_Scanning": "Waiting for the first scan - this may take several minutes after the initial setup.",
     "Device_NoData_Title": "No devices found yet",
+    "Device_NoMatch_Title": "No devices match the current filter",
     "Device_Save_Failed": "Failed to save device",
     "Device_Save_Unauthorized": "Unauthorized - invalid API token",
     "Device_Saved_Success": "Device saved successfully",
