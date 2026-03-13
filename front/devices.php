@@ -767,7 +767,7 @@ function initializeDatatable (status) {
                 ${_gqlFields}
               }
               count
-              db_count
+              dbCount
             }
           }
         `;
@@ -810,7 +810,7 @@ function initializeDatatable (status) {
 
         // recordsTotal = raw DB count (before filters/search) so DataTables uses emptyTable
         // only when the DB is genuinely empty, and zeroRecords when a filter returns nothing.
-        res.recordsTotal    = json.devices.db_count || 0;
+        res.recordsTotal    = json.devices.dbCount || 0;
         res.recordsFiltered = json.devices.count    || 0;
 
         // console.log("recordsTotal:", res.recordsTotal, "recordsFiltered:", res.recordsFiltered);
