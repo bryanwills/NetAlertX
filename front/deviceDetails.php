@@ -299,7 +299,7 @@ function updateChevrons(currentMac) {
 
     showSpinner();
 
-    cacheDevices().then(() => {
+    cacheDevices(true).then(() => {
       hideSpinner();
 
       // Retry after re-caching
@@ -507,7 +507,7 @@ function updateDevicePageName(mac) {
   if (mac != 'new' && (name === null|| owner === null)) {
     console.warn("Device not found in cache, retrying after re-cache:", mac);
     showSpinner();
-    cacheDevices().then(() => {
+    cacheDevices(true).then(() => {
       hideSpinner();
       // Retry after successful cache
       updateDevicePageName(mac);
