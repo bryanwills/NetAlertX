@@ -1,4 +1,5 @@
 import json
+import re
 import uuid
 import socket
 from yattag import indent
@@ -345,8 +346,16 @@ def construct_notifications(JSON, section):
     build_direction = "TOP_TO_BOTTOM"
     text_line = "{}\t{}\n"
 
+    # Read template settings
+    show_headers = get_setting_value("NTFPRCS_TEXT_SECTION_HEADERS")
+    if show_headers is None or show_headers == "":
+        show_headers = True
+    text_template = get_setting_value(f"NTFPRCS_TEXT_TEMPLATE_{section}") or ""
+
     if len(jsn) > 0:
-        text = tableTitle + "\n---------\n"
+        # Section header (text)
+        if show_headers:
+            text = tableTitle + "\n---------\n"
 
         # Convert a JSON into an HTML table
         html = convert(
@@ -363,13 +372,24 @@ def construct_notifications(JSON, section):
         )
 
         # prepare text-only message
-        for device in jsn:
-            for header in headers:
-                padding = ""
-                if len(header) < 4:
-                    padding = "\t"
-                text += text_line.format(header + ": " + padding, device[header])
-            text += "\n"
+        if text_template:
+            # Custom template: replace {FieldName} placeholders per device
+            for device in jsn:
+                line = re.sub(
+                    r'\{(.+?)\}',
+                    lambda m: str(device.get(m.group(1), m.group(0))),
+                    text_template,
+                )
+                text += line + "\n"
+        else:
+            # Legacy fallback: vertical Header: Value list
+            for device in jsn:
+                for header in headers:
+                    padding = ""
+                    if len(header) < 4:
+                        padding = "\t"
+                    text += text_line.format(header + ": " + padding, device[header])
+                text += "\n"
 
         #  Format HTML table headers
         for header in headers:

@@ -64,7 +64,7 @@ Use timeNowUTC(as_string=False) for datetime operations (scheduling, comparisons
 
 ## String Sanitization
 
-Use sanitizers from `server/helper.py` before storing user input.
+Use sanitizers from `server/helper.py` before storing user input. MAC addresses are always lowercased and normalized. IP addresses should be validated.
 
 ## Devcontainer Constraints
 

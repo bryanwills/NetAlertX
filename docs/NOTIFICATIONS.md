@@ -1,5 +1,8 @@
 # Notifications 📧
 
+> [!TIP]
+> Want to customize how devices appear in text notifications? See [Notification Text Templates](NOTIFICATION_TEMPLATES.md).
+
 There are 4 ways how to influence notifications:
 
 1. On the device itself
