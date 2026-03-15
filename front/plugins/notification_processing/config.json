@@ -152,6 +152,153 @@
           "string": "You can specify a SQL where condition to filter out Events from notifications. For example <code>AND devLastIP NOT LIKE '192.168.3.%'</code> will always exclude any Event notifications for all devices with the IP starting with <code>192.168.3.%</code>."
         }
       ]
+<<<<<<< Updated upstream
+=======
+    },
+    {
+      "function": "TEXT_SECTION_HEADERS",
+      "type": {
+        "dataType": "boolean",
+        "elements": [
+          { "elementType": "input", "elementOptions": [{ "type": "checkbox" }], "transformers": [] }
+        ]
+      },
+      "default_value": true,
+      "options": [],
+      "localized": ["name", "description"],
+      "name": [
+        {
+          "language_code": "en_us",
+          "string": "Text Section Headers"
+        }
+      ],
+      "description": [
+        {
+          "language_code": "en_us",
+          "string": "Enable or disable section titles (e.g. <code>🆕 New devices \\n---------</code>) in text notifications. Enabled by default for backward compatibility."
+        }
+      ]
+    },
+    {
+      "function": "TEXT_TEMPLATE_new_devices",
+      "type": {
+        "dataType": "string",
+        "elements": [
+          { "elementType": "input", "elementOptions": [], "transformers": [] }
+        ]
+      },
+      "default_value": "",
+      "options": [],
+      "localized": ["name", "description"],
+      "name": [
+        {
+          "language_code": "en_us",
+          "string": "Text Template: New Devices"
+        }
+      ],
+      "description": [
+        {
+          "language_code": "en_us",
+          "string": "Custom text template for new device notifications. Use <code>{FieldName}</code> placeholders, e.g. <code>{devName} ({eve_MAC}) - {eve_IP}</code>. Leave empty for default formatting. Available fields: <code>{devName}</code>, <code>{eve_MAC}</code>, <code>{devVendor}</code>, <code>{eve_IP}</code>, <code>{eve_DateTime}</code>, <code>{eve_EventType}</code>, <code>{devComments}</code>."
+        }
+      ]
+    },
+    {
+      "function": "TEXT_TEMPLATE_down_devices",
+      "type": {
+        "dataType": "string",
+        "elements": [
+          { "elementType": "input", "elementOptions": [], "transformers": [] }
+        ]
+      },
+      "default_value": "",
+      "options": [],
+      "localized": ["name", "description"],
+      "name": [
+        {
+          "language_code": "en_us",
+          "string": "Text Template: Down Devices"
+        }
+      ],
+      "description": [
+        {
+          "language_code": "en_us",
+          "string": "Custom text template for down device notifications. Use <code>{FieldName}</code> placeholders, e.g. <code>{devName} ({eve_MAC}) - {eve_IP}</code>. Leave empty for default formatting. Available fields: <code>{devName}</code>, <code>{eve_MAC}</code>, <code>{devVendor}</code>, <code>{eve_IP}</code>, <code>{eve_DateTime}</code>, <code>{eve_EventType}</code>, <code>{devComments}</code>."
+        }
+      ]
+    },
+    {
+      "function": "TEXT_TEMPLATE_down_reconnected",
+      "type": {
+        "dataType": "string",
+        "elements": [
+          { "elementType": "input", "elementOptions": [], "transformers": [] }
+        ]
+      },
+      "default_value": "",
+      "options": [],
+      "localized": ["name", "description"],
+      "name": [
+        {
+          "language_code": "en_us",
+          "string": "Text Template: Reconnected"
+        }
+      ],
+      "description": [
+        {
+          "language_code": "en_us",
+          "string": "Custom text template for reconnected device notifications. Use <code>{FieldName}</code> placeholders, e.g. <code>{devName} ({eve_MAC}) reconnected at {eve_DateTime}</code>. Leave empty for default formatting. Available fields: <code>{devName}</code>, <code>{eve_MAC}</code>, <code>{devVendor}</code>, <code>{eve_IP}</code>, <code>{eve_DateTime}</code>, <code>{eve_EventType}</code>, <code>{devComments}</code>."
+        }
+      ]
+    },
+    {
+      "function": "TEXT_TEMPLATE_events",
+      "type": {
+        "dataType": "string",
+        "elements": [
+          { "elementType": "input", "elementOptions": [], "transformers": [] }
+        ]
+      },
+      "default_value": "",
+      "options": [],
+      "localized": ["name", "description"],
+      "name": [
+        {
+          "language_code": "en_us",
+          "string": "Text Template: Events"
+        }
+      ],
+      "description": [
+        {
+          "language_code": "en_us",
+          "string": "Custom text template for event notifications. Use <code>{FieldName}</code> placeholders, e.g. <code>{devName} ({eve_MAC}) {eve_EventType} at {eve_DateTime}</code>. Leave empty for default formatting. Available fields: <code>{devName}</code>, <code>{eve_MAC}</code>, <code>{devVendor}</code>, <code>{eve_IP}</code>, <code>{eve_DateTime}</code>, <code>{eve_EventType}</code>, <code>{devComments}</code>."
+        }
+      ]
+    },
+    {
+      "function": "TEXT_TEMPLATE_plugins",
+      "type": {
+        "dataType": "string",
+        "elements": [
+          { "elementType": "input", "elementOptions": [], "transformers": [] }
+        ]
+      },
+      "default_value": "",
+      "options": [],
+      "localized": ["name", "description"],
+      "name": [
+        {
+          "language_code": "en_us",
+          "string": "Text Template: Plugins"
+        }
+      ],
+      "description": [
+        {
+          "language_code": "en_us",
+          "string": "Custom text template for plugin event notifications. Use <code>{FieldName}</code> placeholders, e.g. <code>{Plugin}: {Object_PrimaryId} - {Status}</code>. Leave empty for default formatting. Available fields: <code>{Plugin}</code>, <code>{Object_PrimaryId}</code>, <code>{Object_SecondaryId}</code>, <code>{DateTimeChanged}</code>, <code>{Watched_Value1}</code>, <code>{Watched_Value2}</code>, <code>{Watched_Value3}</code>, <code>{Watched_Value4}</code>, <code>{Status}</code>."
+        }
+      ]
+>>>>>>> Stashed changes
     }
   ],
 

@@ -25,19 +25,19 @@ from helper import (  # noqa: E402 [flake8 lint suppression]
 from logger import mylog  # noqa: E402 [flake8 lint suppression]
 from db.sql_safe_builder import create_safe_condition_builder  # noqa: E402 [flake8 lint suppression]
 from utils.datetime_utils import format_date_iso  # noqa: E402 [flake8 lint suppression]
+from messaging.notification_sections import (  # noqa: E402 [flake8 lint suppression]
+    SECTION_ORDER,
+    SECTION_TITLES,
+    DATETIME_FIELDS,
+    SQL_TEMPLATES,
+    SECTIONS_WITH_CONDITIONS,
+    SECTION_CONDITION_MAP,
+)
 import conf  # noqa: E402 [flake8 lint suppression]
 
 # ===============================================================================
 # Timezone conversion
 # ===============================================================================
-
-DATETIME_FIELDS = {
-    "new_devices": ["Datetime"],
-    "down_devices": ["eve_DateTime"],
-    "down_reconnected": ["eve_DateTime"],
-    "events": ["Datetime"],
-    "plugins": ["DateTimeChanged"],
-}
 
 
 def get_datetime_fields_from_columns(column_names):
@@ -155,6 +155,7 @@ def get_notifications(db):
 
         return ""
 
+<<<<<<< Updated upstream
     # -------------------------
     # SQL templates
     # -------------------------
@@ -245,13 +246,17 @@ def get_notifications(db):
 
     # Sections that support dynamic conditions
     sections_with_conditions = {"new_devices", "events"}
+=======
+    # SQL templates with placeholders for runtime values
+    # {condition} and {alert_down_minutes} are formatted at query time
+>>>>>>> Stashed changes
 
     # Initialize final structure
     final_json = {}
-    for section in ["new_devices", "down_devices", "down_reconnected", "events", "plugins"]:
+    for section in SECTION_ORDER:
         final_json[section] = []
         final_json[f"{section}_meta"] = {
-            "title": section_titles.get(section, section),
+            "title": SECTION_TITLES.get(section, section),
             "columnNames": []
         }
 
@@ -260,17 +265,8 @@ def get_notifications(db):
     # -------------------------
     # Main loop
     # -------------------------
-    condition_builder = create_safe_condition_builder()
-
-    SECTION_CONDITION_MAP = {
-        "new_devices": "NTFPRCS_new_dev_condition",
-        "events": "NTFPRCS_event_condition",
-    }
-
-    sections_with_conditions = set(SECTION_CONDITION_MAP.keys())
-
     for section in sections:
-        template = sql_templates.get(section)
+        template = SQL_TEMPLATES.get(section)
 
         if not template:
             mylog("verbose", ["[Notification] Unknown section: ", section])
@@ -280,7 +276,7 @@ def get_notifications(db):
         parameters = {}
 
         try:
-            if section in sections_with_conditions:
+            if section in SECTIONS_WITH_CONDITIONS:
                 condition_key = SECTION_CONDITION_MAP.get(section)
                 condition_setting = get_setting_value(condition_key)
 
@@ -289,11 +285,18 @@ def get_notifications(db):
                         condition_setting
                     )
 
-            sqlQuery = template.format(condition=safe_condition)
+            # Format template with runtime placeholders
+            format_vars = {"condition": safe_condition}
+            if section == "down_devices":
+                format_vars["alert_down_minutes"] = alert_down_minutes
+            sqlQuery = template.format(**format_vars)
 
         except Exception as e:
             mylog("verbose", [f"[Notification] Error building condition for {section}: ", e])
-            sqlQuery = template.format(condition="")
+            fallback_vars = {"condition": ""}
+            if section == "down_devices":
+                fallback_vars["alert_down_minutes"] = alert_down_minutes
+            sqlQuery = template.format(**fallback_vars)
             parameters = {}
 
         mylog("debug", [f"[Notification] {section} SQL query: ", sqlQuery])
@@ -307,7 +310,7 @@ def get_notifications(db):
 
         final_json[section] = json_obj.json.get("data", [])
         final_json[f"{section}_meta"] = {
-            "title": section_titles.get(section, section),
+            "title": SECTION_TITLES.get(section, section),
             "columnNames": getattr(json_obj, "columnNames", [])
         }
 

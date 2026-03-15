@@ -42,8 +42,10 @@ def test_db(test_db_path):
             eve_MAC TEXT,
             eve_DateTime TEXT,
             devLastIP TEXT,
+            eve_IP TEXT,
             eve_EventType TEXT,
             devName TEXT,
+            devVendor TEXT,
             devComments TEXT,
             eve_PendingAlertEmail INTEGER
         )
@@ -84,13 +86,13 @@ def test_db(test_db_path):
 
     # Insert test data
     test_data = [
-        ('aa:bb:cc:dd:ee:ff', '2024-01-01 12:00:00', '192.168.1.100', 'New Device', 'Test Device', 'Test Comment', 1),
-        ('11:22:33:44:55:66', '2024-01-01 12:01:00', '192.168.1.101', 'Connected', 'Test Device 2', 'Another Comment', 1),
-        ('77:88:99:aa:bb:cc', '2024-01-01 12:02:00', '192.168.1.102', 'Disconnected', 'Test Device 3', 'Third Comment', 1),
+        ('aa:bb:cc:dd:ee:ff', '2024-01-01 12:00:00', '192.168.1.100', '192.168.1.100', 'New Device', 'Test Device', 'Apple', 'Test Comment', 1),
+        ('11:22:33:44:55:66', '2024-01-01 12:01:00', '192.168.1.101', '192.168.1.101', 'Connected', 'Test Device 2', 'Dell', 'Another Comment', 1),
+        ('77:88:99:aa:bb:cc', '2024-01-01 12:02:00', '192.168.1.102', '192.168.1.102', 'Disconnected', 'Test Device 3', 'Cisco', 'Third Comment', 1),
     ]
     cur.executemany('''
-        INSERT INTO Events_Devices (eve_MAC, eve_DateTime, devLastIP, eve_EventType, devName, devComments, eve_PendingAlertEmail)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO Events_Devices (eve_MAC, eve_DateTime, devLastIP, eve_IP, eve_EventType, devName, devVendor, devComments, eve_PendingAlertEmail)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     ''', test_data)
 
     conn.commit()
@@ -115,7 +117,7 @@ def test_fresh_install_compatibility(builder):
 def test_existing_db_compatibility():
     mock_db = Mock()
     mock_result = Mock()
-    mock_result.columnNames = ['MAC', 'Datetime', 'IP', 'Event Type', 'Device name', 'Comments']
+    mock_result.columnNames = ['devName', 'eve_MAC', 'devVendor', 'eve_IP', 'eve_DateTime', 'eve_EventType', 'devComments']
     mock_result.json = {'data': []}
     mock_db.get_table_as_json.return_value = mock_result
 
