@@ -85,7 +85,7 @@ class Device(ObjectType):
     devStatus = String(description="Online/Offline status")
     devIsRandomMac = Int(description="Calculated: Is MAC address randomized?")
     devParentChildrenCount = Int(description="Calculated: Number of children attached to this parent")
-    devIpLong = Int(description="Calculated: IP address in long format")
+    devIpLong = String(description="Calculated: IP address in long format (returned as string to support the full unsigned 32-bit range)")
     devFilterStatus = String(description="Calculated: Device status for UI filtering")
     devFQDN = String(description="Fully Qualified Domain Name")
     devParentRelType = String(description="Relationship type to parent")
@@ -100,11 +100,15 @@ class Device(ObjectType):
     devParentPortSource = String(description="Source tracking for devParentPort (USER, LOCKED, NEWDEV, or plugin prefix)")
     devParentRelTypeSource = String(description="Source tracking for devParentRelType (USER, LOCKED, NEWDEV, or plugin prefix)")
     devVlanSource = String(description="Source tracking for devVlan")
+    devFlapping = Int(description="Indicates flapping device (device changing between online/offline states frequently)")
+    devCanSleep = Int(description="Can this device sleep? (0 or 1). When enabled, offline periods within NTFPRCS_sleep_time are reported as Sleeping instead of Down.")
+    devIsSleeping = Int(description="Computed: Is device currently in a sleep window? (0 or 1)")
 
 
 class DeviceResult(ObjectType):
     devices = List(Device)
     count = Int()
+    db_count = Int(description="Total device count in the database, before any status/filter/search is applied")
 
 
 # --- SETTINGS ---
@@ -195,7 +199,14 @@ class Query(ObjectType):
                 devices_data = json.load(f)["data"]
         except (FileNotFoundError, json.JSONDecodeError) as e:
             mylog("none", f"[graphql_schema] Error loading devices data: {e}")
-            return DeviceResult(devices=[], count=0)
+            return DeviceResult(devices=[], count=0, db_count=0)
+
+        # Int fields that may arrive from the DB as empty strings — coerce to None
+        _INT_FIELDS = [
+            "devFavorite", "devStaticIP", "devScan", "devLogEvents", "devAlertEvents",
+            "devAlertDown", "devSkipRepeated", "devPresentLastScan", "devIsNew",
+            "devIsArchived", "devReqNicsOnline", "devFlapping", "devCanSleep", "devIsSleeping",
+        ]
 
         # Add dynamic fields to each device
         for device in devices_data:
@@ -203,9 +214,19 @@ class Query(ObjectType):
             device["devParentChildrenCount"] = get_number_of_children(
                 device["devMac"], devices_data
             )
-            device["devIpLong"] = format_ip_long(device.get("devLastIP", ""))
+            # Return as string — IPv4 long values can exceed Int's signed 32-bit max (2,147,483,647)
+            device["devIpLong"] = str(format_ip_long(device.get("devLastIP", "")))
+
+            # Coerce empty strings to None so GraphQL Int serialisation doesn't fail
+            for _field in _INT_FIELDS:
+                if device.get(_field) == "":
+                    device[_field] = None
 
         mylog("trace", f"[graphql_schema] devices_data: {devices_data}")
+
+        # Raw DB count — before any status, filter, or search is applied.
+        # Used by the frontend to distinguish "no devices in DB" from "filter returned nothing".
+        db_count = len(devices_data)
 
         # initialize total_count
         total_count = len(devices_data)
@@ -246,7 +267,7 @@ class Query(ObjectType):
                         )
 
                         is_down = (
-                            device["devPresentLastScan"] == 0 and device["devAlertDown"] and "down" in allowed_statuses
+                            device["devPresentLastScan"] == 0 and device["devAlertDown"] and device.get("devIsSleeping", 0) == 0 and "down" in allowed_statuses
                         )
 
                         is_offline = (
@@ -266,7 +287,7 @@ class Query(ObjectType):
                             filtered.append(device)
 
                     devices_data = filtered
-                # 🔻 START If you change anything here, also update get_device_condition_by_status
+                # 🔻 START If you change anything here, also update get_device_conditions
                 elif status == "connected":
                     devices_data = [
                         device
@@ -281,11 +302,17 @@ class Query(ObjectType):
                     devices_data = [
                         device for device in devices_data if device["devIsNew"] == 1 and device["devIsArchived"] == 0
                     ]
+                elif status == "sleeping":
+                    devices_data = [
+                        device
+                        for device in devices_data
+                        if device.get("devIsSleeping", 0) == 1 and device["devIsArchived"] == 0
+                    ]
                 elif status == "down":
                     devices_data = [
                         device
                         for device in devices_data
-                        if device["devPresentLastScan"] == 0 and device["devAlertDown"] and device["devIsArchived"] == 0
+                        if device["devPresentLastScan"] == 0 and device["devAlertDown"] and device.get("devIsSleeping", 0) == 0 and device["devIsArchived"] == 0
                     ]
                 elif status == "archived":
                     devices_data = [
@@ -323,7 +350,25 @@ class Query(ObjectType):
                         for device in devices_data
                         if device["devType"] in network_dev_types and device["devPresentLastScan"] == 0 and device["devIsArchived"] == 0
                     ]
-                # 🔺 END If you change anything here, also update get_device_condition_by_status
+                elif status == "unstable_devices":
+                    devices_data = [
+                        device
+                        for device in devices_data
+                        if device["devIsArchived"] == 0 and device["devFlapping"] == 1
+                    ]
+                elif status == "unstable_favorites":
+                    devices_data = [
+                        device
+                        for device in devices_data
+                        if device["devIsArchived"] == 0 and device["devFavorite"] == 1 and device["devFlapping"] == 1
+                    ]
+                elif status == "unstable_network_devices":
+                    devices_data = [
+                        device
+                        for device in devices_data
+                        if device["devIsArchived"] == 0 and device["devType"] in network_dev_types and device["devFlapping"] == 1
+                    ]
+                # 🔺 END If you change anything here, also update get_device_conditions
                 elif status == "all_devices":
                     devices_data = devices_data  # keep all
 
@@ -399,7 +444,7 @@ class Query(ObjectType):
         # Convert dict objects to Device instances to enable field resolution
         devices = [Device(**device) for device in devices_data]
 
-        return DeviceResult(devices=devices, count=total_count)
+        return DeviceResult(devices=devices, count=total_count, db_count=db_count)
 
     # --- SETTINGS ---
     settings = Field(SettingResult, filters=List(FilterOptionsInput))
@@ -526,7 +571,7 @@ class Query(ObjectType):
         language_folder = '/app/front/php/templates/language/'
         if os.path.exists(language_folder):
             for filename in os.listdir(language_folder):
-                if filename.endswith('.json'):
+                if filename.endswith('.json') and filename != 'languages.json':
                     file_lang_code = filename.replace('.json', '')
 
                     # Filter by langCode if provided
