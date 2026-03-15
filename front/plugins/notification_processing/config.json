@@ -106,6 +106,34 @@
       ]
     },
     {
+      "function": "sleep_time",
+      "type": {
+        "dataType": "integer",
+        "elements": [
+          {
+            "elementType": "input",
+            "elementOptions": [{ "type": "number" }],
+            "transformers": []
+          }
+        ]
+      },
+      "default_value": 30,
+      "options": [],
+      "localized": ["name", "description"],
+      "name": [
+        {
+          "language_code": "en_us",
+          "string": "Sleep Window"
+        }
+      ],
+      "description": [
+        {
+          "language_code": "en_us",
+          "string": "How many minutes a device with <code>Can Sleep</code> enabled is shown as <em>Sleeping</em> before it becomes subject to the <code>Alert Down</code> condition. Changes take effect after saving settings."
+        }
+      ]
+    },
+    {
       "function": "new_dev_condition",
       "type": {
         "dataType": "string",
@@ -152,8 +180,6 @@
           "string": "You can specify a SQL where condition to filter out Events from notifications. For example <code>AND devLastIP NOT LIKE '192.168.3.%'</code> will always exclude any Event notifications for all devices with the IP starting with <code>192.168.3.%</code>."
         }
       ]
-<<<<<<< Updated upstream
-=======
     },
     {
       "function": "TEXT_SECTION_HEADERS",
@@ -298,7 +324,6 @@
           "string": "Custom text template for plugin event notifications. Use <code>{FieldName}</code> placeholders, e.g. <code>{Plugin}: {Object_PrimaryId} - {Status}</code>. Leave empty for default formatting. Available fields: <code>{Plugin}</code>, <code>{Object_PrimaryId}</code>, <code>{Object_SecondaryId}</code>, <code>{DateTimeChanged}</code>, <code>{Watched_Value1}</code>, <code>{Watched_Value2}</code>, <code>{Watched_Value3}</code>, <code>{Watched_Value4}</code>, <code>{Status}</code>."
         }
       ]
->>>>>>> Stashed changes
     }
   ],
 

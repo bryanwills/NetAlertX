@@ -42,6 +42,7 @@ from .dbquery_endpoint import read_query, write_query, update_query, delete_quer
 from .sync_endpoint import handle_sync_post, handle_sync_get  # noqa: E402 [flake8 lint suppression]
 from .logs_endpoint import clean_log  # noqa: E402 [flake8 lint suppression]
 from .health_endpoint import get_health_status  # noqa: E402 [flake8 lint suppression]
+from .languages_endpoint import get_languages  # noqa: E402 [flake8 lint suppression]
 from models.user_events_queue_instance import UserEventsQueueInstance  # noqa: E402 [flake8 lint suppression]
 
 from models.event_instance import EventInstance  # noqa: E402 [flake8 lint suppression]
@@ -95,6 +96,7 @@ from .openapi.schemas import (  # noqa: E402 [flake8 lint suppression]
     DbQueryUpdateRequest, DbQueryDeleteRequest,
     AddToQueueRequest, GetSettingResponse,
     RecentEventsRequest, SetDeviceAliasRequest,
+    LanguagesResponse,
 )
 
 from .sse_endpoint import (  # noqa: E402 [flake8 lint suppression]
@@ -1959,6 +1961,34 @@ def check_health(payload=None):
             "success": False,
             "error": "Failed to retrieve health status",
             "message": "Internal server error"
+        }), 500
+
+
+@app.route("/languages", methods=["GET"])
+@validate_request(
+    operation_id="get_languages",
+    summary="Get Supported Languages",
+    description="Returns the canonical list of supported UI languages loaded from languages.json.",
+    response_model=LanguagesResponse,
+    tags=["system", "languages"],
+    auth_callable=is_authorized
+)
+def list_languages(payload=None):
+    """Return the canonical language registry."""
+    try:
+        data = get_languages()
+        return jsonify({"success": True, **data}), 200
+    except FileNotFoundError:
+        return jsonify({
+            "success": False,
+            "error": "languages.json not found",
+            "message": "Language registry file is missing"
+        }), 500
+    except ValueError as e:
+        return jsonify({
+            "success": False,
+            "error": str(e),
+            "message": "Language registry file is malformed"
         }), 500
 
 

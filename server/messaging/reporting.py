@@ -126,6 +126,8 @@ def get_notifications(db):
           AND eve_MAC IN (SELECT devMac FROM Devices WHERE devAlertDown = 0)
     """)
 
+    alert_down_minutes = int(get_setting_value("NTFPRCS_alert_down_time") or 0)
+
     sections = get_setting_value("NTFPRCS_INCLUDED_SECTIONS") or []
     mylog("verbose", ["[Notification] Included sections: ", sections])
 
@@ -155,101 +157,8 @@ def get_notifications(db):
 
         return ""
 
-<<<<<<< Updated upstream
-    # -------------------------
-    # SQL templates
-    # -------------------------
-    sql_templates = {
-        "new_devices": """
-            SELECT
-                eve_MAC as MAC,
-                eve_DateTime as Datetime,
-                devLastIP as IP,
-                eve_EventType as "Event Type",
-                devName as "Device name",
-                devComments as Comments
-            FROM Events_Devices
-            WHERE eve_PendingAlertEmail = 1
-              AND eve_EventType = 'New Device' {condition}
-            ORDER BY eve_DateTime
-        """,
-        "down_devices": """
-            SELECT
-                devName,
-                eve_MAC,
-                devVendor,
-                eve_IP,
-                eve_DateTime,
-                eve_EventType
-            FROM Events_Devices AS down_events
-            WHERE eve_PendingAlertEmail = 1
-              AND down_events.eve_EventType = 'Device Down'
-              AND eve_DateTime < datetime('now', '-0 minutes')
-              AND NOT EXISTS (
-                  SELECT 1
-                  FROM Events AS connected_events
-                  WHERE connected_events.eve_MAC = down_events.eve_MAC
-                    AND connected_events.eve_EventType = 'Connected'
-                    AND connected_events.eve_DateTime > down_events.eve_DateTime
-              )
-            ORDER BY down_events.eve_DateTime
-        """,
-        "down_reconnected": """
-            SELECT
-                devName,
-                eve_MAC,
-                devVendor,
-                eve_IP,
-                eve_DateTime,
-                eve_EventType
-            FROM Events_Devices AS reconnected_devices
-            WHERE reconnected_devices.eve_EventType = 'Down Reconnected'
-              AND reconnected_devices.eve_PendingAlertEmail = 1
-            ORDER BY reconnected_devices.eve_DateTime
-        """,
-        "events": """
-            SELECT
-                eve_MAC as MAC,
-                eve_DateTime as Datetime,
-                devLastIP as IP,
-                eve_EventType as "Event Type",
-                devName as "Device name",
-                devComments as Comments
-            FROM Events_Devices
-            WHERE eve_PendingAlertEmail = 1
-              AND eve_EventType IN ('Connected', 'Down Reconnected', 'Disconnected','IP Changed') {condition}
-            ORDER BY eve_DateTime
-        """,
-        "plugins": """
-            SELECT
-                Plugin,
-                Object_PrimaryId,
-                Object_SecondaryId,
-                DateTimeChanged,
-                Watched_Value1,
-                Watched_Value2,
-                Watched_Value3,
-                Watched_Value4,
-                Status
-            FROM Plugins_Events
-        """
-    }
-
-    # Titles for metadata
-    section_titles = {
-        "new_devices": "🆕 New devices",
-        "down_devices": "🔴 Down devices",
-        "down_reconnected": "🔁 Reconnected down devices",
-        "events": "⚡ Events",
-        "plugins": "🔌 Plugins"
-    }
-
-    # Sections that support dynamic conditions
-    sections_with_conditions = {"new_devices", "events"}
-=======
     # SQL templates with placeholders for runtime values
     # {condition} and {alert_down_minutes} are formatted at query time
->>>>>>> Stashed changes
 
     # Initialize final structure
     final_json = {}

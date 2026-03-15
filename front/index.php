@@ -11,7 +11,7 @@ require_once $_SERVER['DOCUMENT_ROOT'].'/php/templates/security.php';
 //     session_start();
 // }
 
-session_start();
+// session_start();
 
 const DEFAULT_REDIRECT = '/devices.php';
 
