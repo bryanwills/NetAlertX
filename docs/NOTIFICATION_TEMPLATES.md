@@ -10,7 +10,7 @@ HTML email tables are **not affected** by these templates.
 
 1. Go to **Settings → Notification Processing**.
 2. Set a template string for the section you want to customize, e.g.:
-   - **Text Template: New Devices** → `{devName} ({eve_MAC}) - {eve_IP}`
+   - **Text Template: New Devices** → `{devName} ({eveMac}) - {eveIp}`
 3. Save. The next notification will use your format.
 
 **Before (default):**
@@ -18,15 +18,15 @@ HTML email tables are **not affected** by these templates.
 🆕 New devices
 ---------
 devName: 	    MyPhone
-eve_MAC: 	    aa:bb:cc:dd:ee:ff
+eveMac: 	    aa:bb:cc:dd:ee:ff
 devVendor: 	    Apple
-eve_IP: 	    192.168.1.42
-eve_DateTime: 	2025-01-15 10:30:00
-eve_EventType:  New Device
+eveIp: 	    192.168.1.42
+eveDateTime: 	2025-01-15 10:30:00
+eveEventType:  New Device
 devComments:
 ```
 
-**After (with template `{devName} ({eve_MAC}) - {eve_IP}`):**
+**After (with template `{devName} ({eveMac}) - {eveIp}`):**
 ```
 🆕 New devices
 ---------
@@ -51,7 +51,7 @@ When a template is **empty**, the section uses the original vertical `Header: Va
 Use `{FieldName}` to insert a value from the notification data. Field names are **case-sensitive** and must match the column names exactly.
 
 ```
-{devName} ({eve_MAC}) connected at {eve_DateTime}
+{devName} ({eveMac}) connected at {eveDateTime}
 ```
 
 - No loops, conditionals, or nesting — just simple string replacement.
@@ -66,34 +66,34 @@ All four device sections (`new_devices`, `down_devices`, `down_reconnected`, `ev
 | Variable | Description |
 |----------|-------------|
 | `{devName}` | Device display name |
-| `{eve_MAC}` | Device MAC address |
+| `{eveMac}` | Device MAC address |
 | `{devVendor}` | Device vendor/manufacturer |
-| `{eve_IP}` | Device IP address |
-| `{eve_DateTime}` | Event timestamp |
-| `{eve_EventType}` | Type of event (e.g. `New Device`, `Connected`, `Device Down`) |
+| `{eveIp}` | Device IP address |
+| `{eveDateTime}` | Event timestamp |
+| `{eveEventType}` | Type of event (e.g. `New Device`, `Connected`, `Device Down`) |
 | `{devComments}` | Device comments |
 
-**Example (new_devices/events):** `{devName} ({eve_MAC}) - {eve_IP} [{eve_EventType}]`
+**Example (new_devices/events):** `{devName} ({eveMac}) - {eveIp} [{eveEventType}]`
 
-**Example (down_devices):** `{devName} ({eve_MAC}) {devVendor} - went down at {eve_DateTime}`
+**Example (down_devices):** `{devName} ({eveMac}) {devVendor} - went down at {eveDateTime}`
 
-**Example (down_reconnected):** `{devName} ({eve_MAC}) reconnected at {eve_DateTime}`
+**Example (down_reconnected):** `{devName} ({eveMac}) reconnected at {eveDateTime}`
 
 ### `plugins`
 
 | Variable | Description |
 |----------|-------------|
-| `{Plugin}` | Plugin code name |
-| `{Object_PrimaryId}` | Primary identifier of the object |
-| `{Object_SecondaryId}` | Secondary identifier |
-| `{DateTimeChanged}` | Timestamp of change |
-| `{Watched_Value1}` | First watched value |
-| `{Watched_Value2}` | Second watched value |
-| `{Watched_Value3}` | Third watched value |
-| `{Watched_Value4}` | Fourth watched value |
-| `{Status}` | Plugin event status |
+| `{plugin}` | Plugin code name |
+| `{objectPrimaryId}` | Primary identifier of the object |
+| `{objectSecondaryId}` | Secondary identifier |
+| `{dateTimeChanged}` | Timestamp of change |
+| `{watchedValue1}` | First watched value |
+| `{watchedValue2}` | Second watched value |
+| `{watchedValue3}` | Third watched value |
+| `{watchedValue4}` | Fourth watched value |
+| `{status}` | Plugin event status |
 
-**Example:** `{Plugin}: {Object_PrimaryId} - {Status}`
+**Example:** `{plugin}: {objectPrimaryId} - {status}`
 
 ## Section Headers Toggle
 

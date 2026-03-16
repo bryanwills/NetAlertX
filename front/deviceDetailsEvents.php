@@ -38,12 +38,12 @@ function loadEventsData() {
   let { start, end } = getPeriodStartEnd(period);
 
   const rawSql = `
-    SELECT eve_DateTime, eve_EventType, eve_IP, eve_AdditionalInfo
+    SELECT eveDateTime, eveEventType, eveIp, eveAdditionalInfo
     FROM Events
-    WHERE eve_MAC = "${mac}"
-      AND eve_DateTime BETWEEN "${start}" AND "${end}"
+    WHERE eveMac = "${mac}"
+      AND eveDateTime BETWEEN "${start}" AND "${end}"
       AND (
-        (eve_EventType NOT IN ("Connected", "Disconnected", "VOIDED - Connected", "VOIDED - Disconnected"))
+        (eveEventType NOT IN ("Connected", "Disconnected", "VOIDED - Connected", "VOIDED - Disconnected"))
         OR "${hideConnectionsStr}" = "false"
       )
   `;
@@ -66,15 +66,15 @@ function loadEventsData() {
     success: function (data) {
       // assuming read_query returns rows directly
       const rows = data["results"].map(row => {
-        const rawDate = row.eve_DateTime;
+        const rawDate = row.eveDateTime;
         const formattedDate = rawDate ? localizeTimestamp(rawDate) : '-';
 
         return [
           formattedDate,
-          row.eve_DateTime,
-          row.eve_EventType,
-          row.eve_IP,
-          row.eve_AdditionalInfo
+          row.eveDateTime,
+          row.eveEventType,
+          row.eveIp,
+          row.eveAdditionalInfo
         ];
       });
 

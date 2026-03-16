@@ -106,12 +106,12 @@ curl -X DELETE "http://<server_ip>:<GRAPHQL_PORT>/sessions/delete" \
     "success": true,
     "sessions": [
       {
-        "ses_MAC": "AA:BB:CC:DD:EE:FF",
-        "ses_Connection": "2025-08-01 10:00",
-        "ses_Disconnection": "2025-08-01 12:00",
-        "ses_Duration": "2h 0m",
-        "ses_IP": "192.168.1.10",
-        "ses_Info": ""
+        "sesMac": "AA:BB:CC:DD:EE:FF",
+        "sesDateTimeConnection": "2025-08-01 10:00",
+        "sesDateTimeDisconnection": "2025-08-01 12:00",
+        "sesDuration": "2h 0m",
+        "sesIp": "192.168.1.10",
+        "sesAdditionalInfo": ""
       }
     ]
   }
@@ -194,12 +194,12 @@ curl -X GET "http://<server_ip>:<GRAPHQL_PORT>/sessions/calendar?start=2025-08-0
     "success": true,
     "sessions": [
       {
-        "ses_MAC": "AA:BB:CC:DD:EE:FF",
-        "ses_Connection": "2025-08-01 10:00",
-        "ses_Disconnection": "2025-08-01 12:00",
-        "ses_Duration": "2h 0m",
-        "ses_IP": "192.168.1.10",
-        "ses_Info": ""
+        "sesMac": "AA:BB:CC:DD:EE:FF",
+        "sesDateTimeConnection": "2025-08-01 10:00",
+        "sesDateTimeDisconnection": "2025-08-01 12:00",
+        "sesDuration": "2h 0m",
+        "sesIp": "192.168.1.10",
+        "sesAdditionalInfo": ""
       }
     ]
   }

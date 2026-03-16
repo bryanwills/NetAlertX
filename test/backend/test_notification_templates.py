@@ -32,25 +32,25 @@ def _make_json(section, devices, column_names, title="Test Section"):
 SAMPLE_NEW_DEVICES = [
     {
         "devName": "MyPhone",
-        "eve_MAC": "aa:bb:cc:dd:ee:ff",
+        "eveMac": "aa:bb:cc:dd:ee:ff",
         "devVendor": "",
-        "eve_IP": "192.168.1.42",
-        "eve_DateTime": "2025-01-15 10:30:00",
-        "eve_EventType": "New Device",
+        "eveIp": "192.168.1.42",
+        "eveDateTime": "2025-01-15 10:30:00",
+        "eveEventType": "New Device",
         "devComments": "",
     },
     {
         "devName": "Laptop",
-        "eve_MAC": "11:22:33:44:55:66",
+        "eveMac": "11:22:33:44:55:66",
         "devVendor": "Dell",
-        "eve_IP": "192.168.1.99",
-        "eve_DateTime": "2025-01-15 11:00:00",
-        "eve_EventType": "New Device",
+        "eveIp": "192.168.1.99",
+        "eveDateTime": "2025-01-15 11:00:00",
+        "eveEventType": "New Device",
         "devComments": "Office",
     },
 ]
 
-NEW_DEVICE_COLUMNS = ["devName", "eve_MAC", "devVendor", "eve_IP", "eve_DateTime", "eve_EventType", "devComments"]
+NEW_DEVICE_COLUMNS = ["devName", "eveMac", "devVendor", "eveIp", "eveDateTime", "eveEventType", "devComments"]
 
 
 class TestConstructNotificationsTemplates(unittest.TestCase):
@@ -100,7 +100,7 @@ class TestConstructNotificationsTemplates(unittest.TestCase):
         self.assertIn("---------", text)
 
         # Legacy format: each header appears as "Header: \tValue"
-        self.assertIn("eve_MAC:", text)
+        self.assertIn("eveMac:", text)
         self.assertIn("aa:bb:cc:dd:ee:ff", text)
         self.assertIn("devName:", text)
         self.assertIn("MyPhone", text)
@@ -117,7 +117,7 @@ class TestConstructNotificationsTemplates(unittest.TestCase):
 
         mock_setting.side_effect = self._setting_factory({
             "NTFPRCS_TEXT_SECTION_HEADERS": True,
-            "NTFPRCS_TEXT_TEMPLATE_new_devices": "{devName} ({eve_MAC}) - {eve_IP}",
+            "NTFPRCS_TEXT_TEMPLATE_new_devices": "{devName} ({eveMac}) - {eveIp}",
         })
 
         json_data = _make_json(
@@ -157,7 +157,7 @@ class TestConstructNotificationsTemplates(unittest.TestCase):
 
         mock_setting.side_effect = self._setting_factory({
             "NTFPRCS_TEXT_SECTION_HEADERS": False,
-            "NTFPRCS_TEXT_TEMPLATE_new_devices": "{devName} ({eve_MAC})",
+            "NTFPRCS_TEXT_TEMPLATE_new_devices": "{devName} ({eveMac})",
         })
 
         json_data = _make_json(
@@ -198,7 +198,7 @@ class TestConstructNotificationsTemplates(unittest.TestCase):
 
         mock_setting.side_effect = self._setting_factory({
             "NTFPRCS_TEXT_SECTION_HEADERS": True,
-            "NTFPRCS_TEXT_TEMPLATE_new_devices": "{devName} ({BadField}) - {eve_IP}",
+            "NTFPRCS_TEXT_TEMPLATE_new_devices": "{devName} ({BadField}) - {eveIp}",
         })
 
         json_data = _make_json(
@@ -217,21 +217,21 @@ class TestConstructNotificationsTemplates(unittest.TestCase):
 
         mock_setting.side_effect = self._setting_factory({
             "NTFPRCS_TEXT_SECTION_HEADERS": True,
-            "NTFPRCS_TEXT_TEMPLATE_down_devices": "{devName} ({eve_MAC}) down since {eve_DateTime}",
+            "NTFPRCS_TEXT_TEMPLATE_down_devices": "{devName} ({eveMac}) down since {eveDateTime}",
         })
 
         down_devices = [
             {
                 "devName": "Router",
-                "eve_MAC": "ff:ee:dd:cc:bb:aa",
+                "eveMac": "ff:ee:dd:cc:bb:aa",
                 "devVendor": "Cisco",
-                "eve_IP": "10.0.0.1",
-                "eve_DateTime": "2025-01-15 08:00:00",
-                "eve_EventType": "Device Down",
+                "eveIp": "10.0.0.1",
+                "eveDateTime": "2025-01-15 08:00:00",
+                "eveEventType": "Device Down",
                 "devComments": "",
             }
         ]
-        columns = ["devName", "eve_MAC", "devVendor", "eve_IP", "eve_DateTime", "eve_EventType", "devComments"]
+        columns = ["devName", "eveMac", "devVendor", "eveIp", "eveDateTime", "eveEventType", "devComments"]
 
         json_data = _make_json("down_devices", down_devices, columns, "🔴 Down devices")
         _, text = construct_notifications(json_data, "down_devices")

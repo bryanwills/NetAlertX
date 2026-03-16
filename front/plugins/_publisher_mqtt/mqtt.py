@@ -212,14 +212,14 @@ class sensor_config:
         already known. If not, it marks the sensor as new and logs relevant information.
         """
         # Retrieve the plugin object based on the sensor's hash
-        plugObj = getPluginObject({"Plugin": "MQTT", "Watched_Value3": self.hash})
+        plugObj = getPluginObject({"plugin": "MQTT", "watchedValue3": self.hash})
 
         # Check if the plugin object is new
         if not plugObj:
             self.isNew = True
             mylog('verbose', [f"[{pluginName}] New sensor entry (name|mac|hash) : ({self.deviceName}|{self.mac}|{self.hash}"])
         else:
-            device_name = plugObj.get("Watched_Value1", "Unknown")
+            device_name = plugObj.get("watchedValue1", "Unknown")
             mylog('verbose', [f"[{pluginName}] Existing, skip Device Name: {device_name}"])
             self.isNew = False
 

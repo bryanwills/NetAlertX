@@ -25,11 +25,11 @@ SECTION_TITLES = {
 
 # Which column(s) contain datetime values per section (for timezone conversion)
 DATETIME_FIELDS = {
-    "new_devices": ["eve_DateTime"],
-    "down_devices": ["eve_DateTime"],
-    "down_reconnected": ["eve_DateTime"],
-    "events": ["eve_DateTime"],
-    "plugins": ["DateTimeChanged"],
+    "new_devices": ["eveDateTime"],
+    "down_devices": ["eveDateTime"],
+    "down_reconnected": ["eveDateTime"],
+    "events": ["eveDateTime"],
+    "plugins": ["dateTimeChanged"],
 }
 
 # ---------------------------------------------------------------------------
@@ -47,78 +47,78 @@ SQL_TEMPLATES = {
     "new_devices": """
         SELECT
             devName,
-            eve_MAC,
+            eveMac,
             devVendor,
-            devLastIP as eve_IP,
-            eve_DateTime,
-            eve_EventType,
+            devLastIP as eveIp,
+            eveDateTime,
+            eveEventType,
             devComments
         FROM Events_Devices
-        WHERE eve_PendingAlertEmail = 1
-          AND eve_EventType = 'New Device' {condition}
-        ORDER BY eve_DateTime
+        WHERE evePendingAlertEmail = 1
+          AND eveEventType = 'New Device' {condition}
+        ORDER BY eveDateTime
     """,
     "down_devices": """
         SELECT
             devName,
-            eve_MAC,
+            eveMac,
             devVendor,
-            eve_IP,
-            eve_DateTime,
-            eve_EventType,
+            eveIp,
+            eveDateTime,
+            eveEventType,
             devComments
         FROM Events_Devices AS down_events
-        WHERE eve_PendingAlertEmail = 1
-          AND down_events.eve_EventType = 'Device Down'
-          AND eve_DateTime < datetime('now', '-{alert_down_minutes} minutes')
+        WHERE evePendingAlertEmail = 1
+          AND down_events.eveEventType = 'Device Down'
+          AND eveDateTime < datetime('now', '-{alert_down_minutes} minutes')
           AND NOT EXISTS (
               SELECT 1
               FROM Events AS connected_events
-              WHERE connected_events.eve_MAC = down_events.eve_MAC
-                AND connected_events.eve_EventType = 'Connected'
-                AND connected_events.eve_DateTime > down_events.eve_DateTime
+              WHERE connected_events.eveMac = down_events.eveMac
+                AND connected_events.eveEventType = 'Connected'
+                AND connected_events.eveDateTime > down_events.eveDateTime
           )
-        ORDER BY down_events.eve_DateTime
+        ORDER BY down_events.eveDateTime
     """,
     "down_reconnected": """
         SELECT
             devName,
-            eve_MAC,
+            eveMac,
             devVendor,
-            eve_IP,
-            eve_DateTime,
-            eve_EventType,
+            eveIp,
+            eveDateTime,
+            eveEventType,
             devComments
         FROM Events_Devices AS reconnected_devices
-        WHERE reconnected_devices.eve_EventType = 'Down Reconnected'
-          AND reconnected_devices.eve_PendingAlertEmail = 1
-        ORDER BY reconnected_devices.eve_DateTime
+        WHERE reconnected_devices.eveEventType = 'Down Reconnected'
+          AND reconnected_devices.evePendingAlertEmail = 1
+        ORDER BY reconnected_devices.eveDateTime
     """,
     "events": """
         SELECT
             devName,
-            eve_MAC,
+            eveMac,
             devVendor,
-            devLastIP as eve_IP,
-            eve_DateTime,
-            eve_EventType,
+            devLastIP as eveIp,
+            eveDateTime,
+            eveEventType,
             devComments
         FROM Events_Devices
-        WHERE eve_PendingAlertEmail = 1
-          AND eve_EventType IN ('Connected', 'Down Reconnected', 'Disconnected','IP Changed') {condition}
-        ORDER BY eve_DateTime
+        WHERE evePendingAlertEmail = 1
+          AND eveEventType IN ('Connected', 'Down Reconnected', 'Disconnected','IP Changed') {condition}
+        ORDER BY eveDateTime
     """,
     "plugins": """
         SELECT
-            Plugin,
-            Object_PrimaryId,
-            Object_SecondaryId,
-            DateTimeChanged,
-            Watched_Value1,
-            Watched_Value2,
-            Watched_Value3,
-            Watched_Value4,
-            Status
+            plugin,
+            objectPrimaryId,
+            objectSecondaryId,
+            dateTimeChanged,
+            watchedValue1,
+            watchedValue2,
+            watchedValue3,
+            watchedValue4,
+            status
         FROM Plugins_Events
     """,
 }

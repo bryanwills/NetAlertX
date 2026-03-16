@@ -304,7 +304,7 @@ function cacheStrings() {
         .then((data) => {
           if (!Array.isArray(data)) { data = []; }
           data.forEach((langString) => {
-            setCache(CACHE_KEYS.langString(langString.String_Key, langString.Language_Code), langString.String_Value);
+            setCache(CACHE_KEYS.langString(langString.stringKey, langString.languageCode), langString.stringValue);
           });
           resolve();
         });
@@ -347,11 +347,11 @@ function cacheStrings() {
                   if (!Array.isArray(data)) { data = []; }
                   // Store plugin translations
                   data.forEach((langString) => {
-                    setCache(CACHE_KEYS.langString(langString.String_Key, langString.Language_Code), langString.String_Value);
+                    setCache(CACHE_KEYS.langString(langString.stringKey, langString.languageCode), langString.stringValue);
                   });
 
                   // Handle successful completion of language processing
-                  handleSuccess('cacheStrings');
+                  handleSuccess('cacheStrings_v2');
                   resolveLang();
                 });
             })

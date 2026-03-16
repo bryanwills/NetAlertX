@@ -114,16 +114,16 @@ def get_notifications(db):
 
     # Disable events where reporting is disabled
     sql.execute("""
-        UPDATE Events SET eve_PendingAlertEmail = 0
-        WHERE eve_PendingAlertEmail = 1
-          AND eve_EventType NOT IN ('Device Down', 'Down Reconnected', 'New Device')
-          AND eve_MAC IN (SELECT devMac FROM Devices WHERE devAlertEvents = 0)
+        UPDATE Events SET evePendingAlertEmail = 0
+        WHERE evePendingAlertEmail = 1
+          AND eveEventType NOT IN ('Device Down', 'Down Reconnected', 'New Device')
+          AND eveMac IN (SELECT devMac FROM Devices WHERE devAlertEvents = 0)
     """)
     sql.execute("""
-        UPDATE Events SET eve_PendingAlertEmail = 0
-        WHERE eve_PendingAlertEmail = 1
-          AND eve_EventType IN ('Device Down', 'Down Reconnected')
-          AND eve_MAC IN (SELECT devMac FROM Devices WHERE devAlertDown = 0)
+        UPDATE Events SET evePendingAlertEmail = 0
+        WHERE evePendingAlertEmail = 1
+          AND eveEventType IN ('Device Down', 'Down Reconnected')
+          AND eveMac IN (SELECT devMac FROM Devices WHERE devAlertDown = 0)
     """)
 
     alert_down_minutes = int(get_setting_value("NTFPRCS_alert_down_time") or 0)
@@ -233,7 +233,7 @@ def skip_repeated_notifications(db):
     """
     Skips sending alerts for devices recently notified.
 
-    Clears `eve_PendingAlertEmail` for events linked to devices whose last
+    Clears `evePendingAlertEmail` for events linked to devices whose last
     notification time is within their `devSkipRepeated` interval.
 
     Args:
@@ -244,8 +244,8 @@ def skip_repeated_notifications(db):
     # due strfime : Overflow --> use  "strftime / 60"
     mylog("verbose", "[Skip Repeated Notifications] Skip Repeated")
 
-    db.sql.execute("""UPDATE Events SET eve_PendingAlertEmail = 0
-                    WHERE eve_PendingAlertEmail = 1 AND eve_MAC IN
+    db.sql.execute("""UPDATE Events SET evePendingAlertEmail = 0
+                    WHERE evePendingAlertEmail = 1 AND eveMac IN
                         (
                         SELECT devMac FROM Devices
                         WHERE devLastNotification IS NOT NULL

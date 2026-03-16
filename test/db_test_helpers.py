@@ -76,16 +76,16 @@ CREATE_DEVICES = """
     )
 """
 
-# Includes eve_PairEventRowid — required by insert_events().
+# Includes evePairEventRowid — required by insert_events().
 CREATE_EVENTS = """
     CREATE TABLE IF NOT EXISTS Events (
-        eve_MAC               TEXT,
-        eve_IP                TEXT,
-        eve_DateTime          TEXT,
-        eve_EventType         TEXT,
-        eve_AdditionalInfo    TEXT,
-        eve_PendingAlertEmail INTEGER,
-        eve_PairEventRowid    INTEGER
+        eveMac               TEXT,
+        eveIp                TEXT,
+        eveDateTime          TEXT,
+        eveEventType         TEXT,
+        eveAdditionalInfo    TEXT,
+        evePendingAlertEmail INTEGER,
+        evePairEventRowid    INTEGER
     )
 """
 
@@ -327,8 +327,8 @@ def sync_insert_devices(
 
 def down_event_macs(cur) -> set:
     """Return the set of MACs that have a 'Device Down' event row (lowercased)."""
-    cur.execute("SELECT eve_MAC FROM Events WHERE eve_EventType = 'Device Down'")
-    return {r["eve_MAC"].lower() for r in cur.fetchall()}
+    cur.execute("SELECT eveMac FROM Events WHERE eveEventType = 'Device Down'")
+    return {r["eveMac"].lower() for r in cur.fetchall()}
 
 
 # ---------------------------------------------------------------------------

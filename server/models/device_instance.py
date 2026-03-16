@@ -142,17 +142,17 @@ class DeviceInstance:
 
         objs = PluginObjectInstance().getByField(
             plugPrefix='NMAP',
-            matchedColumn='Object_PrimaryID',
+            matchedColumn='objectPrimaryId',
             matchedKey=primary,
-            returnFields=['Object_SecondaryID', 'Watched_Value2']
+            returnFields=['objectSecondaryId', 'watchedValue2']
         )
 
         ports = []
         for o in objs:
 
-            port = int(o.get('Object_SecondaryID') or 0)
+            port = int(o.get('objectSecondaryId') or 0)
 
-            ports.append({"port": port, "service": o.get('Watched_Value2', '')})
+            ports.append({"port": port, "service": o.get('watchedValue2', '')})
 
         return ports
 
@@ -471,31 +471,31 @@ class DeviceInstance:
                 LOWER(d.devParentMAC) AS devParentMAC,
 
                 (SELECT COUNT(*) FROM Sessions
-                WHERE LOWER(ses_MAC) = LOWER(d.devMac) AND (
-                    ses_DateTimeConnection >= {period_date_sql} OR
-                    ses_DateTimeDisconnection >= {period_date_sql} OR
-                    ses_StillConnected = 1
+                WHERE LOWER(sesMac) = LOWER(d.devMac) AND (
+                    sesDateTimeConnection >= {period_date_sql} OR
+                    sesDateTimeDisconnection >= {period_date_sql} OR
+                    sesStillConnected = 1
                 )) AS devSessions,
 
                 (SELECT COUNT(*) FROM Events
-                WHERE LOWER(eve_MAC) = LOWER(d.devMac) AND eve_DateTime >= {period_date_sql}
-                AND eve_EventType NOT IN ('Connected','Disconnected')) AS devEvents,
+                WHERE LOWER(eveMac) = LOWER(d.devMac) AND eveDateTime >= {period_date_sql}
+                AND eveEventType NOT IN ('Connected','Disconnected')) AS devEvents,
 
                 (SELECT COUNT(*) FROM Events
-                WHERE LOWER(eve_MAC) = LOWER(d.devMac) AND eve_DateTime >= {period_date_sql}
-                AND eve_EventType = 'Device Down') AS devDownAlerts,
+                WHERE LOWER(eveMac) = LOWER(d.devMac) AND eveDateTime >= {period_date_sql}
+                AND eveEventType = 'Device Down') AS devDownAlerts,
 
                 (SELECT CAST(MAX(0, SUM(
-                    julianday(IFNULL(ses_DateTimeDisconnection,'{now}')) -
-                    julianday(CASE WHEN ses_DateTimeConnection < {period_date_sql}
-                                THEN {period_date_sql} ELSE ses_DateTimeConnection END)
+                    julianday(IFNULL(sesDateTimeDisconnection,'{now}')) -
+                    julianday(CASE WHEN sesDateTimeConnection < {period_date_sql}
+                                THEN {period_date_sql} ELSE sesDateTimeConnection END)
                 ) * 24) AS INT)
                 FROM Sessions
-                WHERE LOWER(ses_MAC) = LOWER(d.devMac)
-                AND ses_DateTimeConnection IS NOT NULL
-                AND (ses_DateTimeDisconnection IS NOT NULL OR ses_StillConnected = 1)
-                AND (ses_DateTimeConnection >= {period_date_sql}
-                        OR ses_DateTimeDisconnection >= {period_date_sql} OR ses_StillConnected = 1)
+                WHERE LOWER(sesMac) = LOWER(d.devMac)
+                AND sesDateTimeConnection IS NOT NULL
+                AND (sesDateTimeDisconnection IS NOT NULL OR sesStillConnected = 1)
+                AND (sesDateTimeConnection >= {period_date_sql}
+                        OR sesDateTimeDisconnection >= {period_date_sql} OR sesStillConnected = 1)
                 ) AS devPresenceHours
 
             FROM DevicesView d
@@ -797,7 +797,7 @@ class DeviceInstance:
         """Delete all events for a device."""
         conn = get_temp_db_connection()
         cur = conn.cursor()
-        cur.execute("DELETE FROM Events WHERE eve_MAC=?", (mac,))
+        cur.execute("DELETE FROM Events WHERE eveMac=?", (mac,))
         conn.commit()
         conn.close()
         return {"success": True}

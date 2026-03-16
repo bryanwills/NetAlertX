@@ -67,7 +67,7 @@ sql_devices_all =   """
                         FROM DevicesView
                     """
 
-sql_appevents = """select * from AppEvents order by DateTimeCreated desc"""
+sql_appevents = """select * from AppEvents order by dateTimeCreated desc"""
 # The below query calculates counts of devices in various categories:
 #  (connected/online, offline, down, new, archived),
 #  as well as a combined count for devices that match any status listed in the UI_MY_DEVICES setting
@@ -141,32 +141,32 @@ sql_devices_filters = """
 
 sql_devices_stats = f"""
                     SELECT
-                        Online_Devices as online,
-                        Down_Devices as down,
-                        All_Devices as 'all',
-                        Archived_Devices as archived,
+                        onlineDevices as online,
+                        downDevices as down,
+                        allDevices as 'all',
+                        archivedDevices as archived,
                         (SELECT COUNT(*) FROM Devices a WHERE devIsNew = 1) as new,
                         (SELECT COUNT(*) FROM Devices a WHERE devName IN ({NULL_EQUIVALENTS_SQL}) OR devName IS NULL) as unknown
                     FROM Online_History
-                    ORDER BY Scan_Date DESC
+                    ORDER BY scanDate DESC
                     LIMIT 1
                     """
-sql_events_pending_alert = "SELECT  * FROM Events where eve_PendingAlertEmail is not 0"
+sql_events_pending_alert = "SELECT  * FROM Events where evePendingAlertEmail is not 0"
 sql_settings = "SELECT  * FROM Settings"
 sql_plugins_objects = "SELECT  * FROM Plugins_Objects"
 sql_language_strings = "SELECT  * FROM Plugins_Language_Strings"
 sql_notifications_all = "SELECT  * FROM Notifications"
 sql_online_history = "SELECT  * FROM Online_History"
 sql_plugins_events = "SELECT  * FROM Plugins_Events"
-sql_plugins_history = "SELECT  * FROM Plugins_History ORDER BY DateTimeChanged DESC"
+sql_plugins_history = "SELECT  * FROM Plugins_History ORDER BY dateTimeChanged DESC"
 sql_new_devices = """SELECT * FROM (
-                        SELECT eve_IP as devLastIP,
-                               eve_MAC as devMac,
-                               MAX(eve_DateTime) as lastEvent
+                        SELECT eveIp as devLastIP,
+                               eveMac as devMac,
+                               MAX(eveDateTime) as lastEvent
                         FROM Events_Devices
-                        WHERE eve_PendingAlertEmail = 1
-                        AND eve_EventType = 'New Device'
-                        GROUP BY eve_MAC
+                        WHERE evePendingAlertEmail = 1
+                        AND eveEventType = 'New Device'
+                        GROUP BY eveMac
                         ORDER BY lastEvent
                      ) t1
                      LEFT JOIN

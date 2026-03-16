@@ -31,17 +31,17 @@ class NotificationInstance:
 
         # Create Notifications table if missing
         self.db.sql.execute("""CREATE TABLE IF NOT EXISTS "Notifications" (
-            "Index"           INTEGER,
-            "GUID"            TEXT UNIQUE,
-            "DateTimeCreated" TEXT,
-            "DateTimePushed"  TEXT,
-            "Status"          TEXT,
-            "JSON"            TEXT,
-            "Text"            TEXT,
-            "HTML"            TEXT,
-            "PublishedVia"    TEXT,
-            "Extra"           TEXT,
-            PRIMARY KEY("Index" AUTOINCREMENT)
+            "index"           INTEGER,
+            "guid"            TEXT UNIQUE,
+            "dateTimeCreated" TEXT,
+            "dateTimePushed"  TEXT,
+            "status"          TEXT,
+            "json"            TEXT,
+            "text"            TEXT,
+            "html"            TEXT,
+            "publishedVia"    TEXT,
+            "extra"           TEXT,
+            PRIMARY KEY("index" AUTOINCREMENT)
         );
         """)
 
@@ -178,7 +178,7 @@ class NotificationInstance:
     def upsert(self):
         self.db.sql.execute(
             """
-            INSERT OR REPLACE INTO Notifications (GUID, DateTimeCreated, DateTimePushed, Status, JSON, Text, HTML, PublishedVia, Extra)
+            INSERT OR REPLACE INTO Notifications (guid, dateTimeCreated, dateTimePushed, "status", "json", "text", html, publishedVia, extra)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
             (
@@ -202,7 +202,7 @@ class NotificationInstance:
         self.db.sql.execute(
             """
             DELETE FROM Notifications
-            WHERE GUID = ?
+            WHERE guid = ?
         """,
             (GUID,),
         )
@@ -212,7 +212,7 @@ class NotificationInstance:
     def getNew(self):
         self.db.sql.execute("""
             SELECT * FROM Notifications
-            WHERE Status = "new"
+            WHERE "status" = 'new'
         """)
         return self.db.sql.fetchall()
 
@@ -221,8 +221,8 @@ class NotificationInstance:
         # Execute an SQL query to update the status of all notifications
         self.db.sql.execute("""
             UPDATE Notifications
-            SET Status = "processed"
-            WHERE Status = "new"
+            SET "status" = 'processed'
+            WHERE "status" = 'new'
         """)
 
         self.save()
@@ -234,15 +234,15 @@ class NotificationInstance:
         self.db.sql.execute("""
             UPDATE Devices SET devLastNotification = ?
                 WHERE devMac IN (
-                    SELECT eve_MAC FROM Events
-                        WHERE eve_PendingAlertEmail = 1
+                    SELECT eveMac FROM Events
+                        WHERE evePendingAlertEmail = 1
                     )
                 """, (timeNowUTC(),))
 
         self.db.sql.execute("""
-            UPDATE Events SET eve_PendingAlertEmail = 0
-                WHERE eve_PendingAlertEmail = 1
-                AND eve_EventType !='Device Down' """)
+            UPDATE Events SET evePendingAlertEmail = 0
+                WHERE evePendingAlertEmail = 1
+                AND eveEventType !='Device Down' """)
 
         # Clear down events flag after the reporting window passed
         minutes = int(get_setting_value("NTFPRCS_alert_down_time") or 0)
@@ -250,10 +250,10 @@ class NotificationInstance:
         self.db.sql.execute(
             """
             UPDATE Events
-            SET eve_PendingAlertEmail = 0
-            WHERE eve_PendingAlertEmail = 1
-                AND eve_EventType = 'Device Down'
-                AND eve_DateTime < datetime('now', ?, ?)
+            SET evePendingAlertEmail = 0
+            WHERE evePendingAlertEmail = 1
+                AND eveEventType = 'Device Down'
+                AND eveDateTime < datetime('now', ?, ?)
                 """,
             (f"-{minutes} minutes", tz_offset),
         )

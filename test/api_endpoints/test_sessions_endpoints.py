@@ -74,7 +74,7 @@ def test_list_sessions(client, api_token, test_mac):
     assert resp.status_code == 200
     assert resp.json.get("success") is True
     sessions = resp.json.get("sessions")
-    assert any(ses["ses_MAC"] == test_mac for ses in sessions)
+    assert any(ses["sesMac"] == test_mac for ses in sessions)
 
 
 def test_device_sessions_by_period(client, api_token, test_mac):
@@ -105,7 +105,7 @@ def test_device_sessions_by_period(client, api_token, test_mac):
     print(test_mac)
 
     assert isinstance(sessions, list)
-    assert any(s["ses_MAC"] == test_mac for s in sessions)
+    assert any(s["sesMac"] == test_mac for s in sessions)
 
 
 def test_device_session_events(client, api_token, test_mac):
@@ -178,7 +178,7 @@ def test_delete_session(client, api_token, test_mac):
     # Confirm deletion
     resp = client.get(f"/sessions/list?mac={test_mac}", headers=auth_headers(api_token))
     sessions = resp.json.get("sessions")
-    assert not any(ses["ses_MAC"] == test_mac for ses in sessions)
+    assert not any(ses["sesMac"] == test_mac for ses in sessions)
 
 
 def test_get_sessions_calendar(client, api_token, test_mac):

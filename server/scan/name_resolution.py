@@ -24,8 +24,8 @@ class NameResolver:
 
         # Check by MAC
         sql.execute(f"""
-            SELECT Watched_Value2 FROM Plugins_Objects
-            WHERE Plugin = '{plugin}' AND Object_PrimaryID = '{pMAC}'
+            SELECT watchedValue2 FROM Plugins_Objects
+            WHERE plugin = '{plugin}' AND objectPrimaryId = '{pMAC}'
         """)
         result = sql.fetchall()
         # self.db.commitDB() # Issue #1251: Optimize name resolution lookup
@@ -37,8 +37,8 @@ class NameResolver:
         if get_setting_value('NEWDEV_IP_MATCH_NAME'):
 
             sql.execute(f"""
-                SELECT Watched_Value2 FROM Plugins_Objects
-                WHERE Plugin = '{plugin}' AND Object_SecondaryID = '{pIP}'
+                SELECT watchedValue2 FROM Plugins_Objects
+                WHERE plugin = '{plugin}' AND objectSecondaryId = '{pIP}'
             """)
             result = sql.fetchall()
             # self.db.commitDB() # Issue #1251: Optimize name resolution lookup
