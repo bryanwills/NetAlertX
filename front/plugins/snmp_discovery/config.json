@@ -688,7 +688,7 @@
         },
         {
           "language_code": "es_es",
-          "string": "Envíe una notificación si los valores seleccionados cambian. Utilice <code>CTRL + clic</code> para seleccionar/deseleccionar. <ul> <li><code>watchedValue1</code> es el nombre de host (no detectable) </li><li><code>watchedValue2</code> es la IP del enrutador </li><li><code>watchedValue3< /code> no se utiliza </li><li><code>watchedValue4</code> no se utiliza </li></ul>"
+          "string": "Envíe una notificación si los valores seleccionados cambian. Utilice <code>CTRL + clic</code> para seleccionar/deseleccionar. <ul> <li><code>watchedValue1</code> es el nombre de host (no detectable) </li><li><code>watchedValue2</code> es la IP del enrutador </li><li><code>watchedValue3</code> no se utiliza </li><li><code>watchedValue4</code> no se utiliza </li></ul>"
         }
       ]
     },
