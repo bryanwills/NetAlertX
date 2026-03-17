@@ -109,7 +109,7 @@
                                                     </pre>`;
                         break;
                     case 'text':
-                        notificationData.innerHTML = `<pre class="logs" cols="70" rows="10" wrap="off" readonly">${formatData}</pre>`;
+                        notificationData.innerHTML = `<pre class="logs" cols="70" rows="10" wrap="off" readonly="">${formatData}</pre>`;
                         break;
                 }
 

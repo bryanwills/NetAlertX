@@ -862,6 +862,7 @@ _column_replacements = {
     r"\beve_AdditionalInfo\b": "eveAdditionalInfo",
     r"\beve_PendingAlertEmail\b": "evePendingAlertEmail",
     r"\beve_PairEventRowid\b": "evePairEventRowid",
+    r"\beve_PairEventRowID\b": "evePairEventRowid",
     # Session columns
     r"\bses_MAC\b": "sesMac",
     r"\bses_IP\b": "sesIp",

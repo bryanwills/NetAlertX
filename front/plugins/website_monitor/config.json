@@ -605,7 +605,7 @@
       "description": [
         {
           "language_code": "en_us",
-          "string": "Send a notification only on these statuses. <code>new</code> means a new unique (unique combination of PrimaryId and SecondaryId) object was discovered. <code>watched-changed</code> means that selected <code>watchedValueN</code> columns changed."
+          "string": "Send a notification only on these statuses. <code>new</code> means a new unique (unique combination of objectPrimaryId and objectSecondaryId) object was discovered. <code>watched-changed</code> means that selected <code>watchedValueN</code> columns changed."
         },
         {
           "language_code": "es_es",
