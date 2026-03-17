@@ -817,7 +817,7 @@ def migrate_to_camelcase(sql) -> bool:
 
     for table, column_map in _CAMELCASE_COLUMN_MAP.items():
         # Check table exists
-        sql.execute(f"SELECT name FROM sqlite_master WHERE type='table' AND name=?", (table,))
+        sql.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?", (table,))
         if not sql.fetchone():
             mylog("verbose", [f"[db_upgrade] Table '{table}' does not exist — skipping"])
             continue

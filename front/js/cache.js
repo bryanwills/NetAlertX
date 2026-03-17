@@ -290,7 +290,7 @@ function getSetting (key) {
 // -----------------------------------------------------------------------------
 function cacheStrings() {
   return new Promise((resolve, reject) => {
-    if(getCache(CACHE_KEYS.initFlag('cacheStrings')) === "true")
+    if(getCache(CACHE_KEYS.initFlag('cacheStrings_v2')) === "true")
     {
       // Core strings are cached, but plugin strings may have failed silently on
       // the first load (non-fatal fetch).  Always re-fetch them so that plugin
@@ -370,7 +370,7 @@ function cacheStrings() {
         })
         .catch((error) => {
           // Handle failure in any of the language processing
-          handleFailure('cacheStrings');
+          handleFailure('cacheStrings_v2');
           reject(error);
         });
 

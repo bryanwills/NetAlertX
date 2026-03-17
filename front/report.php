@@ -174,7 +174,7 @@
     } else {
 
         // Initial data load
-        updateData('HTML', -1); // Default format to HTML and load the latest report
+        updateData('html', -1); // Default format to HTML and load the latest report
     }
 });
 

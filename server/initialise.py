@@ -865,6 +865,10 @@ _column_replacements = {
     # Session columns
     r"\bses_MAC\b": "sesMac",
     r"\bses_IP\b": "sesIp",
+    r"\bses_DateTimeConnection\b": "sesDateTimeConnection",
+    r"\bses_DateTimeDisconnection\b": "sesDateTimeDisconnection",
+    r"\bses_EventTypeConnection\b": "sesEventTypeConnection",
+    r"\bses_EventTypeDisconnection\b": "sesEventTypeDisconnection",
     r"\bses_StillConnected\b": "sesStillConnected",
     r"\bses_AdditionalInfo\b": "sesAdditionalInfo",
     # Plugin columns (templates + WATCH values)

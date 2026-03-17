@@ -247,21 +247,21 @@ class TestConstructNotificationsTemplates(unittest.TestCase):
 
         mock_setting.side_effect = self._setting_factory({
             "NTFPRCS_TEXT_SECTION_HEADERS": True,
-            "NTFPRCS_TEXT_TEMPLATE_down_reconnected": "{devName} ({eve_MAC}) reconnected at {eve_DateTime}",
+            "NTFPRCS_TEXT_TEMPLATE_down_reconnected": "{devName} ({eveMac}) reconnected at {eveDateTime}",
         })
 
         reconnected = [
             {
                 "devName": "Switch",
-                "eve_MAC": "aa:11:bb:22:cc:33",
+                "eveMac": "aa:11:bb:22:cc:33",
                 "devVendor": "Netgear",
-                "eve_IP": "10.0.0.2",
-                "eve_DateTime": "2025-01-15 09:30:00",
-                "eve_EventType": "Down Reconnected",
+                "eveIp": "10.0.0.2",
+                "eveDateTime": "2025-01-15 09:30:00",
+                "eveEventType": "Down Reconnected",
                 "devComments": "",
             }
         ]
-        columns = ["devName", "eve_MAC", "devVendor", "eve_IP", "eve_DateTime", "eve_EventType", "devComments"]
+        columns = ["devName", "eveMac", "devVendor", "eveIp", "eveDateTime", "eveEventType", "devComments"]
 
         json_data = _make_json("down_reconnected", reconnected, columns, "🔁 Reconnected down devices")
         _, text = construct_notifications(json_data, "down_reconnected")
@@ -288,7 +288,7 @@ class TestConstructNotificationsTemplates(unittest.TestCase):
         # Get HTML with template
         mock_setting.side_effect = self._setting_factory({
             "NTFPRCS_TEXT_SECTION_HEADERS": True,
-            "NTFPRCS_TEXT_TEMPLATE_new_devices": "{devName} ({eve_MAC})",
+            "NTFPRCS_TEXT_TEMPLATE_new_devices": "{devName} ({eveMac})",
         })
         html_with, _ = construct_notifications(json_data, "new_devices")
 
