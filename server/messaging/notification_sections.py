@@ -83,15 +83,22 @@ SQL_TEMPLATES = {
     "down_reconnected": """
         SELECT
             devName,
-            eveMac,
+            reconnected_devices.eveMac,
             devVendor,
-            eveIp,
-            eveDateTime,
-            eveEventType,
+            reconnected_devices.eveIp,
+            reconnected_devices.eveDateTime,
+            reconnected_devices.eveEventType,
             devComments
         FROM Events_Devices AS reconnected_devices
         WHERE reconnected_devices.eveEventType = 'Down Reconnected'
           AND reconnected_devices.evePendingAlertEmail = 1
+          AND NOT EXISTS (
+              SELECT 1 FROM Events AS newer
+              WHERE newer.eveMac = reconnected_devices.eveMac
+                AND newer.eveEventType = 'Down Reconnected'
+                AND newer.evePendingAlertEmail = 1
+                AND newer.eveDateTime > reconnected_devices.eveDateTime
+          )
         ORDER BY reconnected_devices.eveDateTime
     """,
     "events": """
@@ -105,7 +112,7 @@ SQL_TEMPLATES = {
             devComments
         FROM Events_Devices
         WHERE evePendingAlertEmail = 1
-          AND eveEventType IN ('Connected', 'Down Reconnected', 'Disconnected','IP Changed') {condition}
+          AND eveEventType IN ({event_types}) {condition}
         ORDER BY eveDateTime
     """,
     "plugins": """

@@ -198,6 +198,14 @@ def get_notifications(db):
             format_vars = {"condition": safe_condition}
             if section == "down_devices":
                 format_vars["alert_down_minutes"] = alert_down_minutes
+            if section == "events":
+                # 'Down Reconnected' has its own dedicated section; exclude it
+                # from events when that section is also active to prevent the
+                # same device appearing twice with different IP sources.
+                if "down_reconnected" in sections:
+                    format_vars["event_types"] = "'Connected', 'Disconnected','IP Changed'"
+                else:
+                    format_vars["event_types"] = "'Connected', 'Down Reconnected', 'Disconnected','IP Changed'"
             sqlQuery = template.format(**format_vars)
 
         except Exception as e:
@@ -205,6 +213,11 @@ def get_notifications(db):
             fallback_vars = {"condition": ""}
             if section == "down_devices":
                 fallback_vars["alert_down_minutes"] = alert_down_minutes
+            if section == "events":
+                if "down_reconnected" in sections:
+                    fallback_vars["event_types"] = "'Connected', 'Disconnected','IP Changed'"
+                else:
+                    fallback_vars["event_types"] = "'Connected', 'Down Reconnected', 'Disconnected','IP Changed'"
             sqlQuery = template.format(**fallback_vars)
             parameters = {}
 
