@@ -18,9 +18,9 @@ from const import (
     sql_language_strings,
     sql_notifications_all,
     sql_online_history,
-    sql_devices_tiles,
     sql_devices_filters,
 )
+from db.db_helper import get_sql_devices_tiles
 from logger import mylog
 from helper import write_file, get_setting_value
 from utils.datetime_utils import timeNowUTC
@@ -67,7 +67,7 @@ def update_api(
         ["plugins_language_strings", sql_language_strings],
         ["notifications", sql_notifications_all],
         ["online_history", sql_online_history],
-        ["devices_tiles", sql_devices_tiles],
+        ["devices_tiles", get_sql_devices_tiles()],
         ["devices_filters", sql_devices_filters],
         ["custom_endpoint", conf.API_CUSTOM_SQL],
     ]

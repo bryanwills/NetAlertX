@@ -16,7 +16,7 @@
 // -----------------------------------------------------------------------------
 
 var completedCalls = []
-var completedCalls_final = ['cacheApiConfig', 'cacheSettings', 'cacheStrings', 'cacheDevices'];
+var completedCalls_final = ['cacheApiConfig', 'cacheSettings', 'cacheStrings_v2', 'cacheDevices'];
 var lang_completedCalls = 0;
 
 

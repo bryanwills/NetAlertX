@@ -12,6 +12,7 @@ description: NetAlertX coding standards and conventions. Use this when writing c
 - code has to be maintainable, no duplicate code
 - follow DRY principle - maintainability of code is more important than speed of implementation
 - code files should be less than 500 LOC for better maintainability
+- DB columns must not contain underscores, use camelCase instead (e.g., deviceInstanceId, not device_instance_id)
 
 ## File Length
 

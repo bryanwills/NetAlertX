@@ -246,9 +246,9 @@ function genericSaveData (id) {
     headers: { "Authorization": `Bearer ${apiToken}` },
     data: JSON.stringify({
       dbtable: "Plugins_Objects",
-      columnName: "Index",
+      columnName: "index",
       id: index,
-      columns: "UserData",
+      columns: "userData",
       values: columnValue
     }),
     contentType: "application/json",
@@ -413,26 +413,26 @@ function getColumnDefinitions(pluginObj) {
 function getEventData(prefix, colDefinitions, pluginObj) {
   // Extract event data specific to the plugin and format it for DataTables
   return pluginUnprocessedEvents
-    .filter(event => event.Plugin === prefix && shouldBeShown(event, pluginObj)) // Filter events for the specific plugin
+    .filter(event => event.plugin === prefix && shouldBeShown(event, pluginObj)) // Filter events for the specific plugin
     .map(event => colDefinitions.map(colDef => event[colDef.column] || '')); // Map to the defined columns
 }
 
 function getObjectData(prefix, colDefinitions, pluginObj) {
   // Extract object data specific to the plugin and format it for DataTables
   return pluginObjects
-    .filter(object => object.Plugin === prefix && shouldBeShown(object, pluginObj)) // Filter objects for the specific plugin
-    .map(object => colDefinitions.map(colDef => getFormControl(colDef, object[colDef.column], object["Index"], colDefinitions, object))); // Map to the defined columns
+    .filter(object => object.plugin === prefix && shouldBeShown(object, pluginObj)) // Filter objects for the specific plugin
+    .map(object => colDefinitions.map(colDef => getFormControl(colDef, object[colDef.column], object["index"], colDefinitions, object))); // Map to the defined columns
 }
 
 function getHistoryData(prefix, colDefinitions, pluginObj) {
 
   return pluginHistory
-  .filter(history => history.Plugin === prefix && shouldBeShown(history, pluginObj)) // First, filter based on the plugin prefix
-    .sort((a, b) => b.Index - a.Index) // Then, sort by the Index field in descending order
+  .filter(history => history.plugin === prefix && shouldBeShown(history, pluginObj)) // First, filter based on the plugin prefix
+    .sort((a, b) => b.index - a.index) // Then, sort by the Index field in descending order
     .slice(0, 50) // Limit the result to the first 50 entries
     .map(object =>
         colDefinitions.map(colDef =>
-            getFormControl(colDef, object[colDef.column], object["Index"], colDefinitions, object)
+            getFormControl(colDef, object[colDef.column], object["index"], colDefinitions, object)
         )
     );
 }

@@ -225,7 +225,7 @@
       "description": [
         {
           "language_code": "en_us",
-          "string": "Custom text template for new device notifications. Use <code>{FieldName}</code> placeholders, e.g. <code>{Device name} ({MAC}) - {IP}</code>. Leave empty for default formatting. Available fields: <code>{MAC}</code>, <code>{Datetime}</code>, <code>{IP}</code>, <code>{Event Type}</code>, <code>{Device name}</code>, <code>{Comments}</code>."
+          "string": "Custom text template for new device notifications. Use <code>{FieldName}</code> placeholders, e.g. <code>{devName} ({eveMac}) - {eveIp}</code>. Leave empty for default formatting. Available fields: <code>{devName}</code>, <code>{eveMac}</code>, <code>{devVendor}</code>, <code>{eveIp}</code>, <code>{eveDateTime}</code>, <code>{eveEventType}</code>, <code>{devComments}</code>."
         }
       ]
     },
@@ -249,7 +249,7 @@
       "description": [
         {
           "language_code": "en_us",
-          "string": "Custom text template for down device notifications. Use <code>{FieldName}</code> placeholders, e.g. <code>{devName} ({eve_MAC}) - {eve_IP}</code>. Leave empty for default formatting. Available fields: <code>{devName}</code>, <code>{eve_MAC}</code>, <code>{devVendor}</code>, <code>{eve_IP}</code>, <code>{eve_DateTime}</code>, <code>{eve_EventType}</code>."
+          "string": "Custom text template for down device notifications. Use <code>{FieldName}</code> placeholders, e.g. <code>{devName} ({eveMac}) - {eveIp}</code>. Leave empty for default formatting. Available fields: <code>{devName}</code>, <code>{eveMac}</code>, <code>{devVendor}</code>, <code>{eveIp}</code>, <code>{eveDateTime}</code>, <code>{eveEventType}</code>, <code>{devComments}</code>."
         }
       ]
     },
@@ -273,7 +273,7 @@
       "description": [
         {
           "language_code": "en_us",
-          "string": "Custom text template for reconnected device notifications. Use <code>{FieldName}</code> placeholders. Leave empty for default formatting. Available fields: <code>{devName}</code>, <code>{eve_MAC}</code>, <code>{devVendor}</code>, <code>{eve_IP}</code>, <code>{eve_DateTime}</code>, <code>{eve_EventType}</code>."
+          "string": "Custom text template for reconnected device notifications. Use <code>{FieldName}</code> placeholders, e.g. <code>{devName} ({eveMac}) reconnected at {eveDateTime}</code>. Leave empty for default formatting. Available fields: <code>{devName}</code>, <code>{eveMac}</code>, <code>{devVendor}</code>, <code>{eveIp}</code>, <code>{eveDateTime}</code>, <code>{eveEventType}</code>, <code>{devComments}</code>."
         }
       ]
     },
@@ -297,7 +297,7 @@
       "description": [
         {
           "language_code": "en_us",
-          "string": "Custom text template for event notifications. Use <code>{FieldName}</code> placeholders, e.g. <code>{Device name} ({MAC}) {Event Type} at {Datetime}</code>. Leave empty for default formatting. Available fields: <code>{MAC}</code>, <code>{Datetime}</code>, <code>{IP}</code>, <code>{Event Type}</code>, <code>{Device name}</code>, <code>{Comments}</code>."
+          "string": "Custom text template for event notifications. Use <code>{FieldName}</code> placeholders, e.g. <code>{devName} ({eveMac}) {eveEventType} at {eveDateTime}</code>. Leave empty for default formatting. Available fields: <code>{devName}</code>, <code>{eveMac}</code>, <code>{devVendor}</code>, <code>{eveIp}</code>, <code>{eveDateTime}</code>, <code>{eveEventType}</code>, <code>{devComments}</code>."
         }
       ]
     },
@@ -321,7 +321,7 @@
       "description": [
         {
           "language_code": "en_us",
-          "string": "Custom text template for plugin event notifications. Use <code>{FieldName}</code> placeholders, e.g. <code>{Plugin}: {Object_PrimaryId} - {Status}</code>. Leave empty for default formatting. Available fields: <code>{Plugin}</code>, <code>{Object_PrimaryId}</code>, <code>{Object_SecondaryId}</code>, <code>{DateTimeChanged}</code>, <code>{Watched_Value1}</code>, <code>{Watched_Value2}</code>, <code>{Watched_Value3}</code>, <code>{Watched_Value4}</code>, <code>{Status}</code>."
+          "string": "Custom text template for plugin event notifications. Use <code>{FieldName}</code> placeholders, e.g. <code>{plugin}: {objectPrimaryId} - {status}</code>. Leave empty for default formatting. Available fields: <code>{plugin}</code>, <code>{objectPrimaryId}</code>, <code>{objectSecondaryId}</code>, <code>{dateTimeChanged}</code>, <code>{watchedValue1}</code>, <code>{watchedValue2}</code>, <code>{watchedValue3}</code>, <code>{watchedValue4}</code>, <code>{status}</code>."
         }
       ]
     }

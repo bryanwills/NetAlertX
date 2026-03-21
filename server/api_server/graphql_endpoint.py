@@ -154,30 +154,30 @@ class LangStringResult(ObjectType):
 # --- APP EVENTS ---
 
 class AppEvent(ObjectType):
-    Index = Int(description="Internal index")
-    GUID = String(description="Unique event GUID")
-    AppEventProcessed = Int(description="Processing status (0 or 1)")
-    DateTimeCreated = String(description="Event creation timestamp")
+    index = Int(description="Internal index")
+    guid = String(description="Unique event GUID")
+    appEventProcessed = Int(description="Processing status (0 or 1)")
+    dateTimeCreated = String(description="Event creation timestamp")
 
-    ObjectType = String(description="Type of the related object (Device, Setting, etc.)")
-    ObjectGUID = String(description="GUID of the related object")
-    ObjectPlugin = String(description="Plugin associated with the object")
-    ObjectPrimaryID = String(description="Primary identifier of the object")
-    ObjectSecondaryID = String(description="Secondary identifier of the object")
-    ObjectForeignKey = String(description="Foreign key reference")
-    ObjectIndex = Int(description="Object index")
+    objectType = String(description="Type of the related object (Device, Setting, etc.)")
+    objectGuid = String(description="GUID of the related object")
+    objectPlugin = String(description="Plugin associated with the object")
+    objectPrimaryId = String(description="Primary identifier of the object")
+    objectSecondaryId = String(description="Secondary identifier of the object")
+    objectForeignKey = String(description="Foreign key reference")
+    objectIndex = Int(description="Object index")
 
-    ObjectIsNew = Int(description="Is the object new? (0 or 1)")
-    ObjectIsArchived = Int(description="Is the object archived? (0 or 1)")
-    ObjectStatusColumn = String(description="Column used for status")
-    ObjectStatus = String(description="Object status value")
+    objectIsNew = Int(description="Is the object new? (0 or 1)")
+    objectIsArchived = Int(description="Is the object archived? (0 or 1)")
+    objectStatusColumn = String(description="Column used for status")
+    objectStatus = String(description="Object status value")
 
-    AppEventType = String(description="Type of application event")
+    appEventType = String(description="Type of application event")
 
-    Helper1 = String(description="Generic helper field 1")
-    Helper2 = String(description="Generic helper field 2")
-    Helper3 = String(description="Generic helper field 3")
-    Extra = String(description="Additional JSON data")
+    helper1 = String(description="Generic helper field 1")
+    helper2 = String(description="Generic helper field 2")
+    helper3 = String(description="Generic helper field 3")
+    extra = String(description="Additional JSON data")
 
 
 class AppEventResult(ObjectType):
@@ -499,18 +499,18 @@ class Query(ObjectType):
                 search_term = options.search.lower()
 
                 searchable_fields = [
-                    "GUID",
-                    "ObjectType",
-                    "ObjectGUID",
-                    "ObjectPlugin",
-                    "ObjectPrimaryID",
-                    "ObjectSecondaryID",
-                    "ObjectStatus",
-                    "AppEventType",
-                    "Helper1",
-                    "Helper2",
-                    "Helper3",
-                    "Extra",
+                    "guid",
+                    "objectType",
+                    "objectGuid",
+                    "objectPlugin",
+                    "objectPrimaryId",
+                    "objectSecondaryId",
+                    "objectStatus",
+                    "appEventType",
+                    "helper1",
+                    "helper2",
+                    "helper3",
+                    "extra",
                 ]
 
                 events_data = [
@@ -616,9 +616,9 @@ class Query(ObjectType):
                     plugin_data = json.load(f).get("data", [])
                     plugin_list = [
                         LangString(
-                            langCode=entry.get("Language_Code"),
-                            langStringKey=entry.get("String_Key"),
-                            langStringText=entry.get("String_Value")
+                            langCode=entry.get("languageCode"),
+                            langStringKey=entry.get("stringKey"),
+                            langStringText=entry.get("stringValue")
                         ) for entry in plugin_data
                     ]
                     _langstrings_cache[cache_key] = plugin_list

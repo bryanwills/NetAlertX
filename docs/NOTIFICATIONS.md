@@ -36,7 +36,7 @@ The following device properties influence notifications. You can:
 On almost all plugins there are 2 core settings, `<plugin>_WATCH` and `<plugin>_REPORT_ON`.
 
 1. `<plugin>_WATCH` specifies the columns which the app should watch. If watched columns change the device state is considered changed. This changed status is then used to decide to send out notifications based on the `<plugin>_REPORT_ON` setting.
-2. `<plugin>_REPORT_ON` let's you specify on which events the app should notify you. This is related to the `<plugin>_WATCH` setting. So if you select `watched-changed` and in `<plugin>_WATCH` you only select `Watched_Value1`, then a notification is triggered if `Watched_Value1` is changed from the previous value, but no notification is send if `Watched_Value2` changes.
+2. `<plugin>_REPORT_ON` let's you specify on which events the app should notify you. This is related to the `<plugin>_WATCH` setting. So if you select `watched-changed` and in `<plugin>_WATCH` you only select `watchedValue1`, then a notification is triggered if `watchedValue1` is changed from the previous value, but no notification is send if `watchedValue2` changes.
 
 Click the **Read more in the docs.** Link at the top of each plugin to get more details on how the given plugin works.
 

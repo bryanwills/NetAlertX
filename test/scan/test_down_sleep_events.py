@@ -258,8 +258,8 @@ class TestInsertEventsSleepSuppression:
                        can_sleep=1, last_connection=last_conn)
         # Simulate: a Device Down event already exists for this absence
         cur.execute(
-            "INSERT INTO Events (eve_MAC, eve_IP, eve_DateTime, eve_EventType, "
-            "eve_AdditionalInfo, eve_PendingAlertEmail) "
+            "INSERT INTO Events (eveMac, eveIp, eveDateTime, eveEventType, "
+            "eveAdditionalInfo, evePendingAlertEmail) "
             "VALUES (?, '192.168.1.1', ?, 'Device Down', '', 1)",
             ("bb:00:00:00:00:04", _minutes_ago(15)),
         )
@@ -269,7 +269,7 @@ class TestInsertEventsSleepSuppression:
 
         cur.execute(
             "SELECT COUNT(*) as cnt FROM Events "
-            "WHERE eve_MAC = 'bb:00:00:00:00:04' AND eve_EventType = 'Device Down'"
+            "WHERE eveMac = 'bb:00:00:00:00:04' AND eveEventType = 'Device Down'"
         )
         count = cur.fetchone()["cnt"]
         assert count == 1, (
