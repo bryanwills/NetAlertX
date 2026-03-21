@@ -875,8 +875,10 @@ _column_replacements = {
     # Plugin columns (templates + WATCH values)
     r"\bObject_PrimaryID\b": "objectPrimaryId",
     r"\bObject_PrimaryId\b": "objectPrimaryId",
+    r"\bObjectPrimaryID\b": "objectPrimaryId",
     r"\bObject_SecondaryID\b": "objectSecondaryId",
     r"\bObject_SecondaryId\b": "objectSecondaryId",
+    r"\bObjectSecondaryID\b": "objectSecondaryId",
     r"\bWatched_Value1\b": "watchedValue1",
     r"\bWatched_Value2\b": "watchedValue2",
     r"\bWatched_Value3\b": "watchedValue3",
