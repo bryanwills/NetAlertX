@@ -68,41 +68,6 @@ sql_devices_all =   """
                     """
 
 sql_appevents = """select * from AppEvents order by dateTimeCreated desc"""
-# The below query calculates counts of devices in various categories:
-#  (connected/online, offline, down, new, archived),
-#  as well as a combined count for devices that match any status listed in the UI_MY_DEVICES setting
-sql_devices_tiles = """
-                        WITH Statuses AS (
-                            SELECT setValue
-                            FROM Settings
-                            WHERE setKey = 'UI_MY_DEVICES'
-                        ),
-                        MyDevicesFilter AS (
-                            SELECT
-                                -- Build a dynamic filter for devices matching any status in UI_MY_DEVICES
-                                devPresentLastScan, devAlertDown, devIsNew, devIsArchived
-                            FROM Devices
-                            WHERE
-                                (instr((SELECT setValue FROM Statuses), 'online') > 0 AND devPresentLastScan = 1) OR
-                                (instr((SELECT setValue FROM Statuses), 'offline') > 0 AND devPresentLastScan = 0 AND devIsArchived = 0) OR
-                                (instr((SELECT setValue FROM Statuses), 'down') > 0 AND devPresentLastScan = 0 AND devAlertDown = 1) OR
-                                (instr((SELECT setValue FROM Statuses), 'new') > 0 AND devIsNew = 1) OR
-                                (instr((SELECT setValue FROM Statuses), 'archived') > 0 AND devIsArchived = 1)
-                        )
-                        SELECT
-                            -- Counts for each individual status
-                            (SELECT COUNT(*) FROM Devices WHERE devPresentLastScan = 1) AS connected,
-                            (SELECT COUNT(*) FROM Devices WHERE devPresentLastScan = 0) AS offline,
-                            (SELECT COUNT(*) FROM Devices WHERE devPresentLastScan = 0 AND devAlertDown = 1) AS down,
-                            (SELECT COUNT(*) FROM Devices WHERE devIsNew = 1) AS new,
-                            (SELECT COUNT(*) FROM Devices WHERE devIsArchived = 1) AS archived,
-                            (SELECT COUNT(*) FROM Devices WHERE devFavorite = 1) AS favorites,
-                            (SELECT COUNT(*) FROM Devices) AS "all",
-                            (SELECT COUNT(*) FROM Devices) AS "all_devices",
-                            -- My Devices count
-                            (SELECT COUNT(*) FROM MyDevicesFilter) AS my_devices
-                        FROM Statuses;
-                    """
 sql_devices_filters = """
                     SELECT DISTINCT 'devSite' AS columnName, devSite AS columnValue
                         FROM Devices WHERE devSite NOT IN ('', 'null') AND devSite IS NOT NULL
