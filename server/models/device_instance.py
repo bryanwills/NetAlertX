@@ -327,20 +327,30 @@ class DeviceInstance:
         return {"success": True, "inserted": row_count, "skipped_lines": skipped}
 
     def getTotals(self):
-        """Get device totals by status."""
+        """Get device totals by status.
+
+        Returns a list of 6 counts in the documented positional order:
+        [all, connected, favorites, new, down, archived]
+
+        IMPORTANT: This order is a public API contract consumed by:
+          - presence.php (reads indices 0-5)
+          - /devices/totals/named (maps indices 0-5 to named fields)
+          - homepage widget datav2 (reads /devices/totals indices)
+        DO NOT change the order or add/remove fields without a breaking-change release.
+        """
         conn = get_temp_db_connection()
         sql = conn.cursor()
 
-        conditions = get_device_conditions()
+        all_conditions = get_device_conditions()
 
-        # Build sub-selects dynamically for all dictionary entries
-        sub_queries = []
-        for key, condition in conditions.items():
-            # Make sure the alias is SQL-safe (no spaces or special chars)
-            alias = key.replace(" ", "_").lower()
-            sub_queries.append(f'(SELECT COUNT(*) FROM DevicesView {condition}) AS "{alias}"')
+        # Only the 6 public fields, in documented positional order.
+        # DO NOT change this order — it is a stable API contract.
+        keys = ["all", "connected", "favorites", "new", "down", "archived"]
+        sub_queries = [
+            f'(SELECT COUNT(*) FROM DevicesView {all_conditions[key]}) AS "{key}"'
+            for key in keys
+        ]
 
-        # Join all sub-selects with commas
         query = "SELECT\n    " + ",\n    ".join(sub_queries)
         sql.execute(query)
         row = sql.fetchone()
