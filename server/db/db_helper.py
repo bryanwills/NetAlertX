@@ -96,20 +96,20 @@ def get_sql_devices_tiles():
                             WHERE setKey = 'UI_MY_DEVICES'
                         ),
                         MyDevicesFilter AS (
-                            SELECT devMac
-                            FROM Devices
+                            SELECT devMac, devIsSleeping
+                            FROM DevicesView
                             WHERE
                                 {my_devices_clauses}
                         )
                         SELECT
-                            (SELECT COUNT(*) FROM Devices WHERE {f('connected')}) AS connected,
-                            (SELECT COUNT(*) FROM Devices WHERE {f('offline')}) AS offline,
-                            (SELECT COUNT(*) FROM Devices WHERE {f('down')}) AS down,
-                            (SELECT COUNT(*) FROM Devices WHERE {f('new')}) AS new,
-                            (SELECT COUNT(*) FROM Devices WHERE {f('archived')}) AS archived,
-                            (SELECT COUNT(*) FROM Devices WHERE {f('favorites')}) AS favorites,
-                            (SELECT COUNT(*) FROM Devices WHERE {f('all')}) AS "all",
-                            (SELECT COUNT(*) FROM Devices) AS "all_devices",
+                            (SELECT COUNT(*) FROM DevicesView WHERE {f('connected')}) AS connected,
+                            (SELECT COUNT(*) FROM DevicesView WHERE {f('offline')}) AS offline,
+                            (SELECT COUNT(*) FROM DevicesView WHERE {f('down')}) AS down,
+                            (SELECT COUNT(*) FROM DevicesView WHERE {f('new')}) AS new,
+                            (SELECT COUNT(*) FROM DevicesView WHERE {f('archived')}) AS archived,
+                            (SELECT COUNT(*) FROM DevicesView WHERE {f('favorites')}) AS favorites,
+                            (SELECT COUNT(*) FROM DevicesView WHERE {f('all')}) AS "all",
+                            (SELECT COUNT(*) FROM DevicesView) AS "all_devices",
                             (SELECT COUNT(*) FROM MyDevicesFilter) AS my_devices
                         FROM Statuses;
                     """
