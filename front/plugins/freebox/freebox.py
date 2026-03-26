@@ -107,10 +107,10 @@ async def get_device_data(api_version: int, api_address: str, api_port: int):
         await fbx.open(host=api_address, port=str(api_port))
     except NotOpenError as e:
         mylog("verbose", [f"[{pluginName}] Error connecting to freebox: {e}"])
-        return (),()
+        return None, []
     except AuthorizationError as e:
         mylog("verbose", [f"[{pluginName}] Auth error: {str(e)}"])
-        return (),()
+        return None, []
 
     # get also info of the freebox itself
     config = await cast(System, fbx.system).get_config()
@@ -147,16 +147,17 @@ def main():
     mylog("verbose", [freebox])
     mylog("verbose", [hosts])
 
-    plugin_objects.add_object(
-        primaryId=freebox["mac"], # type: ignore
-        secondaryId=freebox["ip"], # type: ignore
-        watched1=freebox["name"], # type: ignore
-        watched2=freebox["operator"], # type: ignore
-        watched3="Gateway",
-        watched4=timeNowUTC(),
-        extra="",
-        foreignKey=freebox["mac"], # type: ignore
-    )
+    if freebox:
+        plugin_objects.add_object(
+            primaryId=freebox["mac"],
+            secondaryId=freebox["ip"],
+            watched1=freebox["name"],
+            watched2=freebox["operator"],
+            watched3="Gateway",
+            watched4=timeNowUTC(),
+            extra="",
+            foreignKey=freebox["mac"],
+        )
     for host in hosts:
         # Check if 'l3connectivities' exists and is a list
         if "l3connectivities" in host and isinstance(host["l3connectivities"], list):
