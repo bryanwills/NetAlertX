@@ -32,51 +32,64 @@
 
 function loadEventsData() {
   const hideConnections = $('#chkHideConnectionEvents')[0].checked;
-  const hideConnectionsStr = hideConnections ? 'true' : 'false';
 
   let period = $("#period").val();
   let { start, end } = getPeriodStartEnd(period);
 
-  const rawSql = `
-    SELECT eveDateTime, eveEventType, eveIp, eveAdditionalInfo
-    FROM Events
-    WHERE eveMac = "${mac}"
-      AND eveDateTime BETWEEN "${start}" AND "${end}"
-      AND (
-        (eveEventType NOT IN ("Connected", "Disconnected", "VOIDED - Connected", "VOIDED - Disconnected"))
-        OR "${hideConnectionsStr}" = "false"
-      )
+  const apiToken  = getSetting("API_TOKEN");
+  const apiBase   = getApiBase();
+  const graphqlUrl = `${apiBase}/graphql`;
+
+  const query = `
+    query Events($options: EventQueryOptionsInput) {
+      events(options: $options) {
+        count
+        entries {
+          eveDateTime
+          eveEventType
+          eveIp
+          eveAdditionalInfo
+        }
+      }
+    }
   `;
 
-  const apiToken = getSetting("API_TOKEN");
-
-  const apiBaseUrl = getApiBase();
-  const url = `${apiBaseUrl}/dbquery/read`;
-
   $.ajax({
-    url: url,
+    url: graphqlUrl,
     method: "POST",
     contentType: "application/json",
     headers: {
       "Authorization": `Bearer ${apiToken}`
     },
     data: JSON.stringify({
-      rawSql: btoa(rawSql)
+      query,
+      variables: {
+        options: {
+          eveMac:   mac,
+          dateFrom: start,
+          dateTo:   end,
+          limit:    500,
+          sort:     [{ field: "eveDateTime", order: "desc" }]
+        }
+      }
     }),
     success: function (data) {
-      // assuming read_query returns rows directly
-      const rows = data["results"].map(row => {
-        const rawDate = row.eveDateTime;
-        const formattedDate = rawDate ? localizeTimestamp(rawDate) : '-';
+      const CONNECTION_TYPES = ["Connected", "Disconnected", "VOIDED - Connected", "VOIDED - Disconnected"];
 
-        return [
-          formattedDate,
-          row.eveDateTime,
-          row.eveEventType,
-          row.eveIp,
-          row.eveAdditionalInfo
-        ];
-      });
+      const rows = data.data.events.entries
+        .filter(row => !hideConnections || !CONNECTION_TYPES.includes(row.eveEventType))
+        .map(row => {
+          const rawDate = row.eveDateTime;
+          const formattedDate = rawDate ? localizeTimestamp(rawDate) : '-';
+
+          return [
+            formattedDate,
+            row.eveDateTime,
+            row.eveEventType,
+            row.eveIp,
+            row.eveAdditionalInfo
+          ];
+        });
 
       const table = $('#tableEvents').DataTable();
       table.clear();

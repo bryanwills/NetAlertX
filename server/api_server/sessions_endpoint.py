@@ -295,10 +295,16 @@ def get_device_sessions(mac, period):
     return jsonify({"success": True, "sessions": sessions})
 
 
-def get_session_events(event_type, period_date):
+def get_session_events(event_type, period_date, page=1, limit=100, search=None, sort_col=0, sort_dir="desc"):
     """
     Fetch events or sessions based on type and period.
+    Supports server-side pagination (page/limit), free-text search, and sorting.
+    Returns { data, total, recordsFiltered } so callers can drive DataTables serverSide mode.
     """
+    _MAX_LIMIT = 1000
+    limit = min(max(1, int(limit)), _MAX_LIMIT)
+    page  = max(1, int(page))
+
     conn = get_temp_db_connection()
     conn.row_factory = sqlite3.Row
     cur = conn.cursor()
@@ -420,4 +426,30 @@ def get_session_events(event_type, period_date):
 
         table_data["data"].append(row)
 
-    return jsonify(table_data)
+    all_rows = table_data["data"]
+
+    # --- Sorting ---
+    num_cols = len(all_rows[0]) if all_rows else 0
+    if 0 <= sort_col < num_cols:
+        reverse = sort_dir.lower() == "desc"
+        all_rows.sort(
+            key=lambda r: (r[sort_col] is None, r[sort_col] if r[sort_col] is not None else ""),
+            reverse=reverse,
+        )
+
+    total = len(all_rows)
+
+    # --- Free-text search (applied after formatting so display values are searchable) ---
+    if search:
+        search_lower = search.strip().lower()
+
+        def _row_matches(r):
+            return any(search_lower in str(v).lower() for v in r if v is not None)
+        all_rows = [r for r in all_rows if _row_matches(r)]
+    records_filtered = len(all_rows)
+
+    # --- Pagination ---
+    offset = (page - 1) * limit
+    paged_rows = all_rows[offset: offset + limit]
+
+    return jsonify({"data": paged_rows, "total": total, "recordsFiltered": records_filtered})

@@ -10,6 +10,7 @@ from const import (
     apiPath,
     sql_appevents,
     sql_devices_all,
+    sql_events_all,
     sql_events_pending_alert,
     sql_settings,
     sql_plugins_events,
@@ -59,6 +60,7 @@ def update_api(
     dataSourcesSQLs = [
         ["appevents", sql_appevents],
         ["devices", sql_devices_all],
+        ["events", sql_events_all],
         ["events_pending_alert", sql_events_pending_alert],
         ["settings", sql_settings],
         ["plugins_events", sql_plugins_events],
