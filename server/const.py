@@ -117,6 +117,7 @@ sql_devices_stats = f"""
                     LIMIT 1
                     """
 sql_events_pending_alert = "SELECT  * FROM Events where evePendingAlertEmail is not 0"
+sql_events_all = "SELECT rowid, * FROM Events ORDER BY eveDateTime DESC"
 sql_settings = "SELECT  * FROM Settings"
 sql_plugins_objects = "SELECT  * FROM Plugins_Objects"
 sql_language_strings = "SELECT  * FROM Plugins_Language_Strings"

@@ -1750,8 +1750,13 @@ def api_device_sessions(mac, payload=None):
     summary="Get Session Events",
     description="Retrieve events associated with sessions.",
     query_params=[
-        {"name": "type", "description": "Event type", "required": False, "schema": {"type": "string", "default": "all"}},
-        {"name": "period", "description": "Time period", "required": False, "schema": {"type": "string", "default": "7 days"}}
+        {"name": "type",   "description": "Event type",   "required": False, "schema": {"type": "string",  "default": "all"}},
+        {"name": "period", "description": "Time period",  "required": False, "schema": {"type": "string",  "default": "7 days"}},
+        {"name": "page",   "description": "Page number (1-based)", "required": False, "schema": {"type": "integer", "default": 1}},
+        {"name": "limit",  "description": "Rows per page (max 1000)", "required": False, "schema": {"type": "integer", "default": 100}},
+        {"name": "search",  "description": "Free-text search filter",  "required": False, "schema": {"type": "string"}},
+        {"name": "sortCol", "description": "Column index to sort by (0-based)", "required": False, "schema": {"type": "integer", "default": 0}},
+        {"name": "sortDir", "description": "Sort direction: asc or desc",       "required": False, "schema": {"type": "string",  "default": "desc"}}
     ],
     tags=["sessions"],
     auth_callable=is_authorized
@@ -1759,7 +1764,12 @@ def api_device_sessions(mac, payload=None):
 def api_get_session_events(payload=None):
     session_event_type = request.args.get("type", "all")
     period = get_date_from_period(request.args.get("period", "7 days"))
-    return get_session_events(session_event_type, period)
+    page     = request.args.get("page",    1,      type=int)
+    limit    = request.args.get("limit",   100,    type=int)
+    search   = request.args.get("search",  None)
+    sort_col = request.args.get("sortCol", 0,      type=int)
+    sort_dir = request.args.get("sortDir", "desc")
+    return get_session_events(session_event_type, period, page=page, limit=limit, search=search, sort_col=sort_col, sort_dir=sort_dir)
 
 
 # --------------------------

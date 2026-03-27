@@ -273,26 +273,14 @@ function genericSaveData (id) {
 
 // -----------------------------------------------------------------------------
 pluginDefinitions = []
-pluginUnprocessedEvents = []
-pluginObjects = []
-pluginHistory = []
 
 async function getData() {
   try {
     showSpinner();
     console.log("Plugins getData called");
 
-    const [plugins, events, objects, history] = await Promise.all([
-      fetchJson('plugins.json'),
-      fetchJson('table_plugins_events.json'),
-      fetchJson('table_plugins_objects.json'),
-      fetchJson('table_plugins_history.json')
-    ]);
-
+    const plugins = await fetchJson('plugins.json');
     pluginDefinitions = plugins.data;
-    pluginUnprocessedEvents = events.data;
-    pluginObjects = objects.data;
-    pluginHistory = history.data;
 
     generateTabs();
   } catch (err) {
@@ -306,6 +294,106 @@ async function fetchJson(filename) {
   return await response.json();
 }
 
+// GraphQL helper — fires a paginated plugin table query and calls back with
+// the DataTables-compatible response plus the raw GraphQL result object.
+function postPluginGraphQL(gqlField, prefix, foreignKey, dtRequest, callback) {
+  const apiToken = getSetting("API_TOKEN");
+  const apiBase  = getApiBase();
+  const page   = Math.floor(dtRequest.start / dtRequest.length) + 1;
+  const limit  = dtRequest.length;
+  const search = dtRequest.search?.value || null;
+
+  let sort = [];
+  if (dtRequest.order?.length > 0) {
+    const order = dtRequest.order[0];
+    sort.push({ field: dtRequest.columns[order.column].data, order: order.dir });
+  }
+
+  const query = `
+    query PluginData($options: PluginQueryOptionsInput) {
+      ${gqlField}(options: $options) {
+        count
+        dbCount
+        entries {
+          index plugin objectPrimaryId objectSecondaryId
+          dateTimeCreated dateTimeChanged
+          watchedValue1 watchedValue2 watchedValue3 watchedValue4
+          status extra userData foreignKey
+          syncHubNodeName helpVal1 helpVal2 helpVal3 helpVal4 objectGuid
+        }
+      }
+    }
+  `;
+
+  $.ajax({
+    method: "POST",
+    url: `${apiBase}/graphql`,
+    headers: { "Authorization": `Bearer ${apiToken}`, "Content-Type": "application/json" },
+    data: JSON.stringify({
+      query,
+      variables: { options: { page, limit, search, sort, plugin: prefix, foreignKey } }
+    }),
+    success: function(response) {
+      if (response.errors) {
+        console.error("[plugins] GraphQL errors:", response.errors);
+        callback({ data: [], recordsTotal: 0, recordsFiltered: 0 });
+        return;
+      }
+      const result = response.data[gqlField];
+      callback({ data: result.entries, recordsTotal: result.dbCount, recordsFiltered: result.count }, result);
+    },
+    error: function() {
+      callback({ data: [], recordsTotal: 0, recordsFiltered: 0 });
+    }
+  });
+}
+
+// Fire a single batched GraphQL request to fetch the Objects dbCount for
+// every plugin and populate the sidebar badges immediately on page load.
+function prefetchPluginBadges() {
+  const apiToken = getSetting("API_TOKEN");
+  const apiBase  = getApiBase();
+  const mac        = $("#txtMacFilter").val();
+  const foreignKey = (mac && mac !== "--") ? mac : null;
+
+  // Build one aliased sub-query per visible plugin
+  const prefixes = pluginDefinitions
+    .filter(p => p.show_ui)
+    .map(p => p.unique_prefix);
+
+  if (prefixes.length === 0) return;
+
+  // GraphQL aliases must be valid identifiers — prefixes already are (A-Z0-9_)
+  const fkOpt = foreignKey ? `, foreignKey: "${foreignKey}"` : '';
+  const fragments = prefixes.map(p => [
+    `${p}_obj: pluginsObjects(options: {plugin: "${p}", page: 1, limit: 1${fkOpt}}) { dbCount }`,
+    `${p}_evt: pluginsEvents(options:  {plugin: "${p}", page: 1, limit: 1${fkOpt}}) { dbCount }`,
+    `${p}_hist: pluginsHistory(options: {plugin: "${p}", page: 1, limit: 1${fkOpt}}) { dbCount }`,
+  ].join('\n    ')).join('\n    ');
+
+  const query = `query BadgeCounts {\n    ${fragments}\n  }`;
+
+  $.ajax({
+    method: "POST",
+    url: `${apiBase}/graphql`,
+    headers: { "Authorization": `Bearer ${apiToken}`, "Content-Type": "application/json" },
+    data: JSON.stringify({ query }),
+    success: function(response) {
+      if (response.errors) {
+        console.error("[plugins] badge prefetch errors:", response.errors);
+        return;
+      }
+      prefixes.forEach(p => {
+        const obj  = response.data[`${p}_obj`];
+        const evt  = response.data[`${p}_evt`];
+        const hist = response.data[`${p}_hist`];
+        if (obj)  { $(`#badge_${p}`).text(obj.dbCount);    $(`#objCount_${p}`).text(obj.dbCount); }
+        if (evt)  { $(`#evtCount_${p}`).text(evt.dbCount); }
+        if (hist) { $(`#histCount_${p}`).text(hist.dbCount); }
+      });
+    }
+  });
+}
 
 function generateTabs() {
 
@@ -315,17 +403,32 @@ function generateTabs() {
   // Sort pluginDefinitions by unique_prefix alphabetically
   pluginDefinitions.sort((a, b) => a.unique_prefix.localeCompare(b.unique_prefix));
 
-  assignActive = true;
+  let assignActive = true;
 
   // Iterate over the sorted pluginDefinitions to create tab headers and content
   pluginDefinitions.forEach(pluginObj => {
     if (pluginObj.show_ui) {
-      stats = createTabContent(pluginObj, assignActive); // Create the content for each tab
+      createTabContent(pluginObj, assignActive);
+      createTabHeader(pluginObj, assignActive);
+      assignActive = false;
+    }
+  });
 
-      if(stats.objectDataCount > 0)
-      {
-        createTabHeader(pluginObj, stats, assignActive); // Create the header for each tab
-        assignActive = false; // only mark first with content active
+  // Now that ALL DOM elements exist (both <a> headers and tab panes),
+  // wire up DataTable initialization: immediate for the active tab,
+  // deferred via shown.bs.tab for the rest.
+  let firstVisible = true;
+  pluginDefinitions.forEach(pluginObj => {
+    if (pluginObj.show_ui) {
+      const prefix = pluginObj.unique_prefix;
+      const colDefinitions = getColumnDefinitions(pluginObj);
+      if (firstVisible) {
+        initializeDataTables(prefix, colDefinitions, pluginObj);
+        firstVisible = false;
+      } else {
+        $(`a[href="#${prefix}"]`).one('shown.bs.tab', function() {
+          initializeDataTables(prefix, colDefinitions, pluginObj);
+        });
       }
     }
   });
@@ -338,6 +441,9 @@ function generateTabs() {
     tabContainer:  '#tabs-location'
   });
 
+  // Pre-fetch badge counts for every plugin in a single batched GraphQL call.
+  prefetchPluginBadges();
+
   hideSpinner()
 }
 
@@ -349,11 +455,11 @@ function resetTabs() {
 
 // ---------------------------------------------------------------
 // left headers
-function createTabHeader(pluginObj, stats, assignActive) {
+function createTabHeader(pluginObj, assignActive) {
   const prefix = pluginObj.unique_prefix; // Get the unique prefix for the plugin
 
   // Determine the active class for the first tab
-  assignActive ? activeClass = "active" : activeClass = "";
+  const activeClass = assignActive ? "active" : "";
 
   // Append the tab header to the tabs location
   $('#tabs-location').append(`
@@ -362,7 +468,7 @@ function createTabHeader(pluginObj, stats, assignActive) {
         ${getString(`${prefix}_icon`)} ${getString(`${prefix}_display_name`)}
 
       </a>
-      ${stats.objectDataCount > 0 ? `<div class="pluginBadgeWrap"><span title="" class="badge pluginBadge" >${stats.objectDataCount}</span></div>` : ""}
+      <div class="pluginBadgeWrap"><span title="" class="badge pluginBadge" id="badge_${prefix}">…</span></div>
     </li>
   `);
 
@@ -374,19 +480,14 @@ function createTabContent(pluginObj, assignActive) {
   const prefix = pluginObj.unique_prefix; // Get the unique prefix for the plugin
   const colDefinitions = getColumnDefinitions(pluginObj); // Get column definitions for DataTables
 
-  // Get data for events, objects, and history related to the plugin
-  const objectData = getObjectData(prefix, colDefinitions, pluginObj);
-  const eventData = getEventData(prefix, colDefinitions, pluginObj);
-  const historyData = getHistoryData(prefix, colDefinitions, pluginObj);
-
   // Append the content structure for the plugin's tab to the content location
   $('#tabs-content-location').append(`
-    <div id="${prefix}" class="tab-pane ${objectData.length > 0 && assignActive? 'active' : ''}">
-      ${generateTabNavigation(prefix, objectData.length, eventData.length, historyData.length)} <!-- Create tab navigation -->
+    <div id="${prefix}" class="tab-pane ${assignActive ? 'active' : ''}">
+      ${generateTabNavigation(prefix)} <!-- Create tab navigation -->
       <div class="tab-content">
-        ${generateDataTable(prefix, 'Objects', objectData, colDefinitions)}
-        ${generateDataTable(prefix, 'Events', eventData, colDefinitions)}
-        ${generateDataTable(prefix, 'History', historyData, colDefinitions)}
+        ${generateDataTable(prefix, 'Objects', colDefinitions)}
+        ${generateDataTable(prefix, 'Events', colDefinitions)}
+        ${generateDataTable(prefix, 'History', colDefinitions)}
       </div>
       <div class='plugins-description'>
         ${getString(`${prefix}_description`)} <!-- Display the plugin description -->
@@ -395,14 +496,7 @@ function createTabContent(pluginObj, assignActive) {
     </div>
   `);
 
-  // Initialize DataTables for the respective sections
-  initializeDataTables(prefix, objectData, eventData, historyData, colDefinitions);
-
-  return {
-            "objectDataCount": objectData.length,
-            "eventDataCount": eventData.length,
-            "historyDataCount": historyData.length
-         }
+  // DataTable init is handled by generateTabs() after all DOM elements exist.
 }
 
 function getColumnDefinitions(pluginObj) {
@@ -410,53 +504,26 @@ function getColumnDefinitions(pluginObj) {
   return pluginObj["database_column_definitions"].filter(colDef => colDef.show);
 }
 
-function getEventData(prefix, colDefinitions, pluginObj) {
-  // Extract event data specific to the plugin and format it for DataTables
-  return pluginUnprocessedEvents
-    .filter(event => event.plugin === prefix && shouldBeShown(event, pluginObj)) // Filter events for the specific plugin
-    .map(event => colDefinitions.map(colDef => event[colDef.column] || '')); // Map to the defined columns
-}
-
-function getObjectData(prefix, colDefinitions, pluginObj) {
-  // Extract object data specific to the plugin and format it for DataTables
-  return pluginObjects
-    .filter(object => object.plugin === prefix && shouldBeShown(object, pluginObj)) // Filter objects for the specific plugin
-    .map(object => colDefinitions.map(colDef => getFormControl(colDef, object[colDef.column], object["index"], colDefinitions, object))); // Map to the defined columns
-}
-
-function getHistoryData(prefix, colDefinitions, pluginObj) {
-
-  return pluginHistory
-  .filter(history => history.plugin === prefix && shouldBeShown(history, pluginObj)) // First, filter based on the plugin prefix
-    .sort((a, b) => b.index - a.index) // Then, sort by the Index field in descending order
-    .slice(0, 50) // Limit the result to the first 50 entries
-    .map(object =>
-        colDefinitions.map(colDef =>
-            getFormControl(colDef, object[colDef.column], object["index"], colDefinitions, object)
-        )
-    );
-}
-
-function generateTabNavigation(prefix, objectCount, eventCount, historyCount) {
+function generateTabNavigation(prefix) {
   // Create navigation tabs for Objects, Unprocessed Events, and History
   return `
     <div class="nav-tabs-custom" style="margin-bottom: 0px">
       <ul class="nav nav-tabs">
         <li class="active">
-          <a href="#objectsTarget_${prefix}" data-toggle="tab"><i class="fa fa-cube"></i> ${getString('Plugins_Objects')} (${objectCount})</a>
+          <a href="#objectsTarget_${prefix}" data-toggle="tab"><i class="fa fa-cube"></i> ${getString('Plugins_Objects')} (<span id="objCount_${prefix}">…</span>)</a>
         </li>
         <li>
-          <a href="#eventsTarget_${prefix}" data-toggle="tab"><i class="fa fa-bolt"></i> ${getString('Plugins_Unprocessed_Events')} (${eventCount})</a>
+          <a href="#eventsTarget_${prefix}" data-toggle="tab"><i class="fa fa-bolt"></i> ${getString('Plugins_Unprocessed_Events')} (<span id="evtCount_${prefix}">…</span>)</a>
         </li>
         <li>
-          <a href="#historyTarget_${prefix}" data-toggle="tab"><i class="fa fa-clock"></i> ${getString('Plugins_History')} (${historyCount})</a>
+          <a href="#historyTarget_${prefix}" data-toggle="tab"><i class="fa fa-clock"></i> ${getString('Plugins_History')} (<span id="histCount_${prefix}">…</span>)</a>
         </li>
       </ul>
     </div>
   `;
 }
 
-function generateDataTable(prefix, tableType, data, colDefinitions) {
+function generateDataTable(prefix, tableType, colDefinitions) {
   // Generate HTML for a DataTable and associated buttons for a given table type
   const headersHtml = colDefinitions.map(colDef => `<th class="${colDef.css_classes}">${getString(`${prefix}_${colDef.column}_name`)}</th>`).join('');
 
@@ -473,34 +540,62 @@ function generateDataTable(prefix, tableType, data, colDefinitions) {
   `;
 }
 
-function initializeDataTables(prefix, objectData, eventData, historyData, colDefinitions) {
-  // Common settings for DataTables initialization
-  const commonDataTableSettings = {
-    orderable: false, // Disable ordering
-    createdRow: function(row, data) {
-      $(row).attr('data-my-index', data[0]); // Set data attribute for indexing
+function initializeDataTables(prefix, colDefinitions, pluginObj) {
+  const mac        = $("#txtMacFilter").val();
+  const foreignKey = (mac && mac !== "--") ? mac : null;
+
+  const tableConfigs = [
+    { tableId: `objectsTable_${prefix}`, gqlField: 'pluginsObjects', countId: `objCount_${prefix}`, badgeId: `badge_${prefix}` },
+    { tableId: `eventsTable_${prefix}`,  gqlField: 'pluginsEvents',  countId: `evtCount_${prefix}`, badgeId: null },
+    { tableId: `historyTable_${prefix}`, gqlField: 'pluginsHistory', countId: `histCount_${prefix}`, badgeId: null },
+  ];
+
+  function buildDT(tableId, gqlField, countId, badgeId) {
+    if ($.fn.DataTable.isDataTable(`#${tableId}`)) {
+      return; // already initialized
     }
-  };
+    $(`#${tableId}`).DataTable({
+      processing: true,
+      serverSide: true,
+      paging:     true,
+      searching:  true,
+      ordering:   false,
+      pageLength: 25,
+      lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
+      createdRow: function(row, data) {
+        $(row).attr('data-my-index', data.index);
+      },
+      ajax: function(dtRequest, callback) {
+        postPluginGraphQL(gqlField, prefix, foreignKey, dtRequest, function(dtResponse, result) {
+          if (result) {
+            $(`#${countId}`).text(result.count);
+            if (badgeId) $(`#${badgeId}`).text(result.dbCount);
+          }
+          callback(dtResponse);
+        });
+      },
+      columns: colDefinitions.map(colDef => ({
+        data:      colDef.column,
+        title:     getString(`${prefix}_${colDef.column}_name`),
+        className: colDef.css_classes || '',
+        createdCell: function(td, cellData, rowData) {
+          $(td).html(getFormControl(colDef, cellData, rowData.index));
+        }
+      }))
+    });
+  }
 
-  // Initialize DataTable for Objects
-  $(`#objectsTable_${prefix}`).DataTable({
-    data: objectData,
-    columns: colDefinitions.map(colDef => ({ title: getString(`${prefix}_${colDef.column}_name`) })), // Column titles
-    ...commonDataTableSettings // Spread common settings
+  // Initialize the Objects table immediately (it is the active/visible sub-tab).
+  // Defer Events and History tables until their sub-tab is first shown.
+  const [objCfg, evtCfg, histCfg] = tableConfigs;
+  buildDT(objCfg.tableId, objCfg.gqlField, objCfg.countId, objCfg.badgeId);
+
+  $(`a[href="#eventsTarget_${prefix}"]`).one('shown.bs.tab', function() {
+    buildDT(evtCfg.tableId, evtCfg.gqlField, evtCfg.countId, evtCfg.badgeId);
   });
 
-  // Initialize DataTable for Unprocessed Events
-  $(`#eventsTable_${prefix}`).DataTable({
-    data: eventData,
-    columns: colDefinitions.map(colDef => ({ title: getString(`${prefix}_${colDef.column}_name`) })), // Column titles
-    ...commonDataTableSettings // Spread common settings
-  });
-
-  // Initialize DataTable for History
-  $(`#historyTable_${prefix}`).DataTable({
-    data: historyData,
-    columns: colDefinitions.map(colDef => ({ title: getString(`${prefix}_${colDef.column}_name`) })), // Column titles
-    ...commonDataTableSettings // Spread common settings
+  $(`a[href="#historyTarget_${prefix}"]`).one('shown.bs.tab', function() {
+    buildDT(histCfg.tableId, histCfg.gqlField, histCfg.countId, histCfg.badgeId);
   });
 }
 

@@ -224,15 +224,33 @@ curl -X GET "http://<server_ip>:<GRAPHQL_PORT>/sessions/AA:BB:CC:DD:EE:FF?period
   * `type` → Event type (`all`, `sessions`, `missing`, `voided`, `new`, `down`)
     Default: `all`
   * `period` → Period to retrieve events (`7 days`, `1 month`, etc.)
+  * `page` → Page number, 1-based (default: `1`)
+  * `limit` → Rows per page, max 1000 (default: `100`)
+  * `search` → Free-text search filter across all columns
+  * `sortCol` → Column index to sort by, 0-based (default: `0`)
+  * `sortDir` → Sort direction: `asc` or `desc` (default: `desc`)
 
   **Example:**
 
   ```
-  /sessions/session-events?type=all&period=7 days
+  /sessions/session-events?type=all&period=7 days&page=1&limit=25&sortCol=3&sortDir=desc
   ```
 
   **Response:**
-  Returns a list of events or sessions with formatted connection, disconnection, duration, and IP information.
+
+  ```json
+  {
+    "data": [...],
+    "total": 150,
+    "recordsFiltered": 150
+  }
+  ```
+
+  | Field             | Type | Description                                       |
+  | ----------------- | ---- | ------------------------------------------------- |
+  | `data`            | list | Paginated rows (each row is a list of values).    |
+  | `total`           | int  | Total rows before search filter.                  |
+  | `recordsFiltered` | int  | Total rows after search filter (before paging).   |
 
 #### `curl` Example
 
