@@ -438,13 +438,14 @@ function autoHideEmptyTabs(counts, prefixes) {
     const $pane = $(`#tabs-content-location > #${prefix}`);
 
     if (total === 0) {
-      // Hide the entire plugin tab
-      $li.hide();
-      $pane.removeClass('active').hide();
+      // Hide the entire plugin tab and strip active from both nav item and pane
+      $li.removeClass('active').hide();
+      $pane.removeClass('active').css('display', '');
     } else {
-      // Ensure visible (in case a previous filter hid it)
+      // Ensure nav item visible (in case a previous filter hid it)
       $li.show();
-      $pane.show();
+      // Clear any inline display override so Bootstrap CSS controls pane visibility via .active
+      $pane.css('display', '');
 
       // Hide inner sub-tabs with zero count
       const subTabs = [
@@ -460,20 +461,19 @@ function autoHideEmptyTabs(counts, prefixes) {
         if (st.count === 0) {
           if ($subLi.hasClass('active')) activeSubHidden = true;
           $subLi.hide();
-          $subPane.removeClass('active').hide();
+          $subPane.removeClass('active').css('display', '');
         } else {
           $subLi.show();
-          $subPane.show();
+          $subPane.css('display', '');
         }
       });
 
       // If the active inner sub-tab was hidden, activate the first visible one
+      // via Bootstrap's tab lifecycle so shown.bs.tab fires for deferred DataTable init
       if (activeSubHidden) {
-        const $firstVisibleSubLi = $pane.find('ul.nav-tabs li:visible').first();
-        if ($firstVisibleSubLi.length) {
-          $firstVisibleSubLi.addClass('active');
-          const target = $firstVisibleSubLi.find('a').attr('href');
-          $pane.find(target).addClass('active');
+        const $firstVisibleSubA = $pane.find('ul.nav-tabs li:visible:first a');
+        if ($firstVisibleSubA.length) {
+          $firstVisibleSubA.tab('show');
         }
       }
     }
