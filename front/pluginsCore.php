@@ -417,8 +417,81 @@ async function prefetchPluginBadges() {
         $(`#histCount_${prefix}`).text(0);
       }
     });
+
+    // Auto-hide tabs with zero results
+    autoHideEmptyTabs(counts, prefixes);
+
   } catch (err) {
     console.error('[plugins] badge prefetch failed:', err);
+  }
+}
+
+// ---------------------------------------------------------------
+// Hide plugin tabs (left-nav + pane) where all three counts are 0.
+// Within visible plugins, hide inner sub-tabs whose count is 0.
+// If the active tab was hidden, activate the first visible one.
+function autoHideEmptyTabs(counts, prefixes) {
+  prefixes.forEach(prefix => {
+    const c = counts[prefix] || { objects: 0, events: 0, history: 0 };
+    const total = c.objects + c.events + c.history;
+    const $li   = $(`#tabs-location li:has(a[href="#${prefix}"])`);
+    const $pane = $(`#tabs-content-location > #${prefix}`);
+
+    if (total === 0) {
+      // Hide the entire plugin tab and strip active from both nav item and pane
+      $li.removeClass('active').hide();
+      $pane.removeClass('active').css('display', '');
+    } else {
+      // Ensure nav item visible (in case a previous filter hid it)
+      $li.show();
+      // Clear any inline display override so Bootstrap CSS controls pane visibility via .active
+      $pane.css('display', '');
+
+      // Hide inner sub-tabs with zero count
+      const subTabs = [
+        { href: `#objectsTarget_${prefix}`, count: c.objects },
+        { href: `#eventsTarget_${prefix}`,  count: c.events },
+        { href: `#historyTarget_${prefix}`, count: c.history },
+      ];
+
+      let activeSubHidden = false;
+      subTabs.forEach(st => {
+        const $subLi = $pane.find(`ul.nav-tabs li:has(a[href="${st.href}"])`);
+        const $subPane = $pane.find(st.href);
+        if (st.count === 0) {
+          if ($subLi.hasClass('active')) activeSubHidden = true;
+          $subLi.hide();
+          $subPane.removeClass('active').css('display', '');
+        } else {
+          $subLi.show();
+          $subPane.css('display', '');
+        }
+      });
+
+      // If the active inner sub-tab was hidden, activate the first visible one
+      // via Bootstrap's tab lifecycle so shown.bs.tab fires for deferred DataTable init
+      if (activeSubHidden) {
+        const $firstVisibleSubA = $pane.find('ul.nav-tabs li:visible:first a');
+        if ($firstVisibleSubA.length) {
+          $firstVisibleSubA.tab('show');
+        }
+      }
+    }
+  });
+
+  // If the active left-nav tab was hidden, activate the first visible one
+  const $activeLi = $(`#tabs-location li.active:visible`);
+  if ($activeLi.length === 0) {
+    const $firstVisibleLi = $(`#tabs-location li:visible`).first();
+    if ($firstVisibleLi.length) {
+      $firstVisibleLi.addClass('active');
+      const targetPrefix = $firstVisibleLi.find('a').attr('href')?.replace('#', '');
+      if (targetPrefix) {
+        $(`#tabs-content-location > #${targetPrefix}`).addClass('active');
+        // Trigger shown.bs.tab so deferred DataTables initialize
+        $firstVisibleLi.find('a').tab('show');
+      }
+    }
   }
 }
 
