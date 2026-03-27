@@ -484,13 +484,10 @@ function autoHideEmptyTabs(counts, prefixes) {
   if ($activeLi.length === 0) {
     const $firstVisibleLi = $(`#tabs-location li:visible`).first();
     if ($firstVisibleLi.length) {
-      $firstVisibleLi.addClass('active');
-      const targetPrefix = $firstVisibleLi.find('a').attr('href')?.replace('#', '');
-      if (targetPrefix) {
-        $(`#tabs-content-location > #${targetPrefix}`).addClass('active');
-        // Trigger shown.bs.tab so deferred DataTables initialize
-        $firstVisibleLi.find('a').tab('show');
-      }
+      // Let Bootstrap's .tab('show') manage the active class on both
+      // the <li> and the pane — adding it manually beforehand causes
+      // Bootstrap to bail out early without firing shown.bs.tab.
+      $firstVisibleLi.find('a').tab('show');
     }
   }
 }
