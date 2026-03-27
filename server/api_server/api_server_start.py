@@ -43,6 +43,7 @@ from .sync_endpoint import handle_sync_post, handle_sync_get  # noqa: E402 [flak
 from .logs_endpoint import clean_log  # noqa: E402 [flake8 lint suppression]
 from .health_endpoint import get_health_status  # noqa: E402 [flake8 lint suppression]
 from .languages_endpoint import get_languages  # noqa: E402 [flake8 lint suppression]
+from models.plugin_object_instance import PluginObjectInstance  # noqa: E402 [flake8 lint suppression]
 from models.user_events_queue_instance import UserEventsQueueInstance  # noqa: E402 [flake8 lint suppression]
 
 from models.event_instance import EventInstance  # noqa: E402 [flake8 lint suppression]
@@ -97,6 +98,7 @@ from .openapi.schemas import (  # noqa: E402 [flake8 lint suppression]
     AddToQueueRequest, GetSettingResponse,
     RecentEventsRequest, SetDeviceAliasRequest,
     LanguagesResponse,
+    PluginStatsResponse,
 )
 
 from .sse_endpoint import (  # noqa: E402 [flake8 lint suppression]
@@ -2000,6 +2002,33 @@ def list_languages(payload=None):
             "error": str(e),
             "message": "Language registry file is malformed"
         }), 500
+
+
+# --------------------------
+# Plugin Stats endpoint
+# --------------------------
+@app.route("/plugins/stats", methods=["GET"])
+@validate_request(
+    operation_id="get_plugin_stats",
+    summary="Get Plugin Row Counts",
+    description="Return per-plugin row counts across Objects, Events, and History tables. Optionally filter by foreignKey (MAC).",
+    response_model=PluginStatsResponse,
+    tags=["plugins"],
+    auth_callable=is_authorized,
+    query_params=[{
+        "name": "foreignKey",
+        "in": "query",
+        "required": False,
+        "description": "Filter counts to rows matching this foreignKey (typically a MAC address)",
+        "schema": {"type": "string"}
+    }]
+)
+def api_plugin_stats(payload=None):
+    """Get per-plugin row counts, optionally filtered by foreignKey."""
+    foreign_key = request.args.get("foreignKey", None)
+    handler = PluginObjectInstance()
+    data = handler.getStats(foreign_key)
+    return jsonify({"success": True, "data": data})
 
 
 # --------------------------

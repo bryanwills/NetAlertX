@@ -101,3 +101,31 @@ class PluginObjectInstance:
             raise ValueError(msg)
 
         self._execute("DELETE FROM Plugins_Objects WHERE objectGuid=?", (ObjectGUID,))
+
+    def getStats(self, foreign_key=None):
+        """Per-plugin row counts across Objects, Events, and History tables.
+        Optionally scoped to a specific foreignKey (e.g. MAC address)."""
+        if foreign_key:
+            sql = """
+                SELECT 'objects' AS tableName, plugin, COUNT(*) AS cnt
+                  FROM Plugins_Objects WHERE foreignKey = ? GROUP BY plugin
+                UNION ALL
+                SELECT 'events', plugin, COUNT(*)
+                  FROM Plugins_Events WHERE foreignKey = ? GROUP BY plugin
+                UNION ALL
+                SELECT 'history', plugin, COUNT(*)
+                  FROM Plugins_History WHERE foreignKey = ? GROUP BY plugin
+            """
+            return self._fetchall(sql, (foreign_key, foreign_key, foreign_key))
+        else:
+            sql = """
+                SELECT 'objects' AS tableName, plugin, COUNT(*) AS cnt
+                  FROM Plugins_Objects GROUP BY plugin
+                UNION ALL
+                SELECT 'events', plugin, COUNT(*)
+                  FROM Plugins_Events GROUP BY plugin
+                UNION ALL
+                SELECT 'history', plugin, COUNT(*)
+                  FROM Plugins_History GROUP BY plugin
+            """
+            return self._fetchall(sql)
