@@ -47,7 +47,8 @@ def apply_common_pagination(data, options):
     # --- PAGINATE ---
     if options.page is not None and options.limit is not None:
         effective_limit = min(options.limit, _MAX_LIMIT)
-        start = (options.page - 1) * effective_limit
+        page = max(1, options.page)
+        start = (page - 1) * effective_limit
         end = start + effective_limit
         data = data[start:end]
 
