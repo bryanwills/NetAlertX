@@ -76,6 +76,13 @@ def update_api(
         ["custom_endpoint", conf.API_CUSTOM_SQL],
     ]
 
+    # plugins_stats is derived from plugins_objects/events/history —
+    # ensure it is refreshed when any of its sources are partially updated.
+    _STATS_SOURCES = {"plugins_objects", "plugins_events", "plugins_history"}
+    if updateOnlyDataSources and _STATS_SOURCES & set(updateOnlyDataSources):
+        if "plugins_stats" not in updateOnlyDataSources:
+            updateOnlyDataSources = list(updateOnlyDataSources) + ["plugins_stats"]
+
     # Save selected database tables
     for dsSQL in dataSourcesSQLs:
         if not updateOnlyDataSources or dsSQL[0] in updateOnlyDataSources:

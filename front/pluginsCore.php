@@ -348,28 +348,68 @@ function postPluginGraphQL(gqlField, prefix, foreignKey, dtRequest, callback) {
   });
 }
 
-// Fetch the lightweight plugins_stats.json (~1KB) and populate all badge
-// and sub-tab counts instantly — no GraphQL, no 250MB file loads.
+// Fetch badge counts for every plugin and populate sidebar + sub-tab counters.
+// Fast path: static JSON (~1KB) when no MAC filter is active.
+// Filtered path: batched GraphQL aliases when a foreignKey (MAC) is set.
 async function prefetchPluginBadges() {
+  const mac        = $("#txtMacFilter").val();
+  const foreignKey = (mac && mac !== "--") ? mac : null;
+
+  const prefixes = pluginDefinitions
+    .filter(p => p.show_ui)
+    .map(p => p.unique_prefix);
+
+  if (prefixes.length === 0) return;
+
   try {
-    const stats = await fetchJson('table_plugins_stats.json');
-    // Build lookup: { ARPSCAN: { objects: 42, events: 3, history: 100 }, ... }
-    const counts = {};
-    for (const row of stats.data) {
-      const p = row.tableName;  // 'objects' | 'events' | 'history'
-      const plugin = row.plugin;
-      if (!counts[plugin]) counts[plugin] = { objects: 0, events: 0, history: 0 };
-      counts[plugin][p] = row.cnt;
+    let counts = {}; // { PREFIX: { objects: N, events: N, history: N } }
+
+    if (!foreignKey) {
+      // ---- FAST PATH: lightweight pre-computed JSON ----
+      const stats = await fetchJson('table_plugins_stats.json');
+      for (const row of stats.data) {
+        const p = row.tableName;   // 'objects' | 'events' | 'history'
+        const plugin = row.plugin;
+        if (!counts[plugin]) counts[plugin] = { objects: 0, events: 0, history: 0 };
+        counts[plugin][p] = row.cnt;
+      }
+    } else {
+      // ---- FILTERED PATH: GraphQL with foreignKey ----
+      const apiToken = getSetting("API_TOKEN");
+      const apiBase  = getApiBase();
+      const fkOpt = `, foreignKey: "${foreignKey}"`;
+      const fragments = prefixes.map(p => [
+        `${p}_obj:  pluginsObjects(options: {plugin: "${p}", page: 1, limit: 1${fkOpt}}) { dbCount }`,
+        `${p}_evt:  pluginsEvents(options:  {plugin: "${p}", page: 1, limit: 1${fkOpt}}) { dbCount }`,
+        `${p}_hist: pluginsHistory(options: {plugin: "${p}", page: 1, limit: 1${fkOpt}}) { dbCount }`,
+      ].join('\n      ')).join('\n      ');
+
+      const query = `query BadgeCounts {\n      ${fragments}\n    }`;
+      const response = await $.ajax({
+        method: "POST",
+        url: `${apiBase}/graphql`,
+        headers: { "Authorization": `Bearer ${apiToken}`, "Content-Type": "application/json" },
+        data: JSON.stringify({ query }),
+      });
+      if (response.errors) { console.error("[plugins] badge GQL errors:", response.errors); return; }
+      for (const p of prefixes) {
+        counts[p] = {
+          objects: response.data[`${p}_obj`]?.dbCount  ?? 0,
+          events:  response.data[`${p}_evt`]?.dbCount  ?? 0,
+          history: response.data[`${p}_hist`]?.dbCount ?? 0,
+        };
+      }
     }
+
+    // Update DOM
     for (const [prefix, c] of Object.entries(counts)) {
       $(`#badge_${prefix}`).text(c.objects);
       $(`#objCount_${prefix}`).text(c.objects);
       $(`#evtCount_${prefix}`).text(c.events);
       $(`#histCount_${prefix}`).text(c.history);
     }
-    // Set 0 for plugins with no rows in any table
-    pluginDefinitions.filter(p => p.show_ui).forEach(p => {
-      const prefix = p.unique_prefix;
+    // Zero out plugins with no rows in any table
+    prefixes.forEach(prefix => {
       if (!counts[prefix]) {
         $(`#badge_${prefix}`).text(0);
         $(`#objCount_${prefix}`).text(0);
