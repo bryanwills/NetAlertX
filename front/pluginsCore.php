@@ -348,51 +348,78 @@ function postPluginGraphQL(gqlField, prefix, foreignKey, dtRequest, callback) {
   });
 }
 
-// Fire a single batched GraphQL request to fetch the Objects dbCount for
-// every plugin and populate the sidebar badges immediately on page load.
-function prefetchPluginBadges() {
-  const apiToken = getSetting("API_TOKEN");
-  const apiBase  = getApiBase();
+// Fetch badge counts for every plugin and populate sidebar + sub-tab counters.
+// Fast path: static JSON (~1KB) when no MAC filter is active.
+// Filtered path: batched GraphQL aliases when a foreignKey (MAC) is set.
+async function prefetchPluginBadges() {
   const mac        = $("#txtMacFilter").val();
   const foreignKey = (mac && mac !== "--") ? mac : null;
 
-  // Build one aliased sub-query per visible plugin
   const prefixes = pluginDefinitions
     .filter(p => p.show_ui)
     .map(p => p.unique_prefix);
 
   if (prefixes.length === 0) return;
 
-  // GraphQL aliases must be valid identifiers — prefixes already are (A-Z0-9_)
-  const fkOpt = foreignKey ? `, foreignKey: "${foreignKey}"` : '';
-  const fragments = prefixes.map(p => [
-    `${p}_obj: pluginsObjects(options: {plugin: "${p}", page: 1, limit: 1${fkOpt}}) { dbCount }`,
-    `${p}_evt: pluginsEvents(options:  {plugin: "${p}", page: 1, limit: 1${fkOpt}}) { dbCount }`,
-    `${p}_hist: pluginsHistory(options: {plugin: "${p}", page: 1, limit: 1${fkOpt}}) { dbCount }`,
-  ].join('\n    ')).join('\n    ');
+  try {
+    let counts = {}; // { PREFIX: { objects: N, events: N, history: N } }
 
-  const query = `query BadgeCounts {\n    ${fragments}\n  }`;
-
-  $.ajax({
-    method: "POST",
-    url: `${apiBase}/graphql`,
-    headers: { "Authorization": `Bearer ${apiToken}`, "Content-Type": "application/json" },
-    data: JSON.stringify({ query }),
-    success: function(response) {
-      if (response.errors) {
-        console.error("[plugins] badge prefetch errors:", response.errors);
-        return;
+    if (!foreignKey) {
+      // ---- FAST PATH: lightweight pre-computed JSON ----
+      const stats = await fetchJson('table_plugins_stats.json');
+      for (const row of stats.data) {
+        const p = row.tableName;   // 'objects' | 'events' | 'history'
+        const plugin = row.plugin;
+        if (!counts[plugin]) counts[plugin] = { objects: 0, events: 0, history: 0 };
+        counts[plugin][p] = row.cnt;
       }
-      prefixes.forEach(p => {
-        const obj  = response.data[`${p}_obj`];
-        const evt  = response.data[`${p}_evt`];
-        const hist = response.data[`${p}_hist`];
-        if (obj)  { $(`#badge_${p}`).text(obj.dbCount);    $(`#objCount_${p}`).text(obj.dbCount); }
-        if (evt)  { $(`#evtCount_${p}`).text(evt.dbCount); }
-        if (hist) { $(`#histCount_${p}`).text(hist.dbCount); }
+    } else {
+      // ---- FILTERED PATH: GraphQL with foreignKey ----
+      const apiToken = getSetting("API_TOKEN");
+      const apiBase  = getApiBase();
+      const fkOpt = `, foreignKey: "${foreignKey}"`;
+      const fragments = prefixes.map(p => [
+        `${p}_obj:  pluginsObjects(options: {plugin: "${p}", page: 1, limit: 1${fkOpt}}) { dbCount }`,
+        `${p}_evt:  pluginsEvents(options:  {plugin: "${p}", page: 1, limit: 1${fkOpt}}) { dbCount }`,
+        `${p}_hist: pluginsHistory(options: {plugin: "${p}", page: 1, limit: 1${fkOpt}}) { dbCount }`,
+      ].join('\n      ')).join('\n      ');
+
+      const query = `query BadgeCounts {\n      ${fragments}\n    }`;
+      const response = await $.ajax({
+        method: "POST",
+        url: `${apiBase}/graphql`,
+        headers: { "Authorization": `Bearer ${apiToken}`, "Content-Type": "application/json" },
+        data: JSON.stringify({ query }),
       });
+      if (response.errors) { console.error("[plugins] badge GQL errors:", response.errors); return; }
+      for (const p of prefixes) {
+        counts[p] = {
+          objects: response.data[`${p}_obj`]?.dbCount  ?? 0,
+          events:  response.data[`${p}_evt`]?.dbCount  ?? 0,
+          history: response.data[`${p}_hist`]?.dbCount ?? 0,
+        };
+      }
     }
-  });
+
+    // Update DOM
+    for (const [prefix, c] of Object.entries(counts)) {
+      $(`#badge_${prefix}`).text(c.objects);
+      $(`#objCount_${prefix}`).text(c.objects);
+      $(`#evtCount_${prefix}`).text(c.events);
+      $(`#histCount_${prefix}`).text(c.history);
+    }
+    // Zero out plugins with no rows in any table
+    prefixes.forEach(prefix => {
+      if (!counts[prefix]) {
+        $(`#badge_${prefix}`).text(0);
+        $(`#objCount_${prefix}`).text(0);
+        $(`#evtCount_${prefix}`).text(0);
+        $(`#histCount_${prefix}`).text(0);
+      }
+    });
+  } catch (err) {
+    console.error('[plugins] badge prefetch failed:', err);
+  }
 }
 
 function generateTabs() {

@@ -16,6 +16,7 @@ from const import (
     sql_plugins_events,
     sql_plugins_history,
     sql_plugins_objects,
+    sql_plugins_stats,
     sql_language_strings,
     sql_notifications_all,
     sql_online_history,
@@ -66,6 +67,7 @@ def update_api(
         ["plugins_events", sql_plugins_events],
         ["plugins_history", sql_plugins_history],
         ["plugins_objects", sql_plugins_objects],
+        ["plugins_stats", sql_plugins_stats],
         ["plugins_language_strings", sql_language_strings],
         ["notifications", sql_notifications_all],
         ["online_history", sql_online_history],
@@ -73,6 +75,13 @@ def update_api(
         ["devices_filters", sql_devices_filters],
         ["custom_endpoint", conf.API_CUSTOM_SQL],
     ]
+
+    # plugins_stats is derived from plugins_objects/events/history —
+    # ensure it is refreshed when any of its sources are partially updated.
+    _STATS_SOURCES = {"plugins_objects", "plugins_events", "plugins_history"}
+    if updateOnlyDataSources and _STATS_SOURCES & set(updateOnlyDataSources):
+        if "plugins_stats" not in updateOnlyDataSources:
+            updateOnlyDataSources = list(updateOnlyDataSources) + ["plugins_stats"]
 
     # Save selected database tables
     for dsSQL in dataSourcesSQLs:
