@@ -274,8 +274,9 @@ function genericSaveData (id) {
 // -----------------------------------------------------------------------------
 pluginDefinitions = []
 
-// Global counts map, populated before tabs are rendered
-let pluginCounts = {};
+// Global counts map, populated before tabs are rendered.
+// null = counts unavailable (fail-open: show all plugins)
+let pluginCounts = null;
 
 async function getData() {
   try {
@@ -285,7 +286,8 @@ async function getData() {
     const plugins = await fetchJson('plugins.json');
     pluginDefinitions = plugins.data;
 
-    // Fetch counts BEFORE rendering tabs so we can skip empty plugins (no flicker)
+    // Fetch counts BEFORE rendering tabs so we can skip empty plugins (no flicker).
+    // fetchPluginCounts never throws — returns null on failure (fail-open).
     const prefixes = pluginDefinitions.filter(p => p.show_ui).map(p => p.unique_prefix);
     pluginCounts = await fetchPluginCounts(prefixes);
 
@@ -355,54 +357,63 @@ function postPluginGraphQL(gqlField, prefix, foreignKey, dtRequest, callback) {
   });
 }
 
-// Fetch counts for all plugins. Returns { PREFIX: { objects, events, history } }.
+// Fetch counts for all plugins. Returns { PREFIX: { objects, events, history } }
+// or null on failure (fail-open so tabs still render).
 // Fast path: static JSON (~1KB) when no MAC filter is active.
 // Filtered path: batched GraphQL aliases when a foreignKey (MAC) is set.
 async function fetchPluginCounts(prefixes) {
   if (prefixes.length === 0) return {};
 
-  const mac        = $("#txtMacFilter").val();
-  const foreignKey = (mac && mac !== "--") ? mac : null;
-  let counts = {};
+  try {
+    const mac        = $("#txtMacFilter").val();
+    const foreignKey = (mac && mac !== "--") ? mac : null;
+    let counts = {};
 
-  if (!foreignKey) {
-    // ---- FAST PATH: lightweight pre-computed JSON ----
-    const stats = await fetchJson('table_plugins_stats.json');
-    for (const row of stats.data) {
-      const p = row.tableName;   // 'objects' | 'events' | 'history'
-      const plugin = row.plugin;
-      if (!counts[plugin]) counts[plugin] = { objects: 0, events: 0, history: 0 };
-      counts[plugin][p] = row.cnt;
-    }
-  } else {
-    // ---- FILTERED PATH: GraphQL with foreignKey ----
-    const apiToken = getSetting("API_TOKEN");
-    const apiBase  = getApiBase();
-    const fkOpt = `, foreignKey: "${foreignKey}"`;
-    const fragments = prefixes.map(p => [
-      `${p}_obj:  pluginsObjects(options: {plugin: "${p}", page: 1, limit: 1${fkOpt}}) { dbCount }`,
-      `${p}_evt:  pluginsEvents(options:  {plugin: "${p}", page: 1, limit: 1${fkOpt}}) { dbCount }`,
-      `${p}_hist: pluginsHistory(options: {plugin: "${p}", page: 1, limit: 1${fkOpt}}) { dbCount }`,
-    ].join('\n      ')).join('\n      ');
+    if (!foreignKey) {
+      // ---- FAST PATH: lightweight pre-computed JSON ----
+      const stats = await fetchJson('table_plugins_stats.json');
+      for (const row of stats.data) {
+        const p = row.tableName;   // 'objects' | 'events' | 'history'
+        const plugin = row.plugin;
+        if (!counts[plugin]) counts[plugin] = { objects: 0, events: 0, history: 0 };
+        counts[plugin][p] = row.cnt;
+      }
+    } else {
+      // ---- FILTERED PATH: GraphQL with foreignKey ----
+      const apiToken = getSetting("API_TOKEN");
+      const apiBase  = getApiBase();
+      const fkOpt = `, foreignKey: "${foreignKey}"`;
+      const fragments = prefixes.map(p => [
+        `${p}_obj:  pluginsObjects(options: {plugin: "${p}", page: 1, limit: 1${fkOpt}}) { dbCount }`,
+        `${p}_evt:  pluginsEvents(options:  {plugin: "${p}", page: 1, limit: 1${fkOpt}}) { dbCount }`,
+        `${p}_hist: pluginsHistory(options: {plugin: "${p}", page: 1, limit: 1${fkOpt}}) { dbCount }`,
+      ].join('\n      ')).join('\n      ');
 
-    const query = `query BadgeCounts {\n      ${fragments}\n    }`;
-    const response = await $.ajax({
-      method: "POST",
-      url: `${apiBase}/graphql`,
-      headers: { "Authorization": `Bearer ${apiToken}`, "Content-Type": "application/json" },
-      data: JSON.stringify({ query }),
-    });
-    if (response.errors) { console.error("[plugins] badge GQL errors:", response.errors); return counts; }
-    for (const p of prefixes) {
-      counts[p] = {
-        objects: response.data[`${p}_obj`]?.dbCount  ?? 0,
-        events:  response.data[`${p}_evt`]?.dbCount  ?? 0,
-        history: response.data[`${p}_hist`]?.dbCount ?? 0,
-      };
+      const query = `query BadgeCounts {\n      ${fragments}\n    }`;
+      const response = await $.ajax({
+        method: "POST",
+        url: `${apiBase}/graphql`,
+        headers: { "Authorization": `Bearer ${apiToken}`, "Content-Type": "application/json" },
+        data: JSON.stringify({ query }),
+      });
+      if (response.errors) {
+        console.error("[plugins] badge GQL errors:", response.errors);
+        return null; // fail-open
+      }
+      for (const p of prefixes) {
+        counts[p] = {
+          objects: response.data[`${p}_obj`]?.dbCount  ?? 0,
+          events:  response.data[`${p}_evt`]?.dbCount  ?? 0,
+          history: response.data[`${p}_hist`]?.dbCount ?? 0,
+        };
+      }
     }
+
+    return counts;
+  } catch (err) {
+    console.error('[plugins] fetchPluginCounts failed (fail-open):', err);
+    return null;
   }
-
-  return counts;
 }
 
 // Apply pre-fetched counts to the DOM badges and hide empty tabs/sub-tabs.
@@ -478,17 +489,20 @@ function generateTabs() {
 
   let assignActive = true;
 
-  // Build list of visible plugins (skip plugins with 0 total count)
+  // When counts are available, skip plugins with 0 total count (no flicker).
+  // When counts are null (fetch failed), show all show_ui plugins (fail-open).
+  const countsAvailable = pluginCounts !== null;
   const visiblePlugins = pluginDefinitions.filter(pluginObj => {
     if (!pluginObj.show_ui) return false;
+    if (!countsAvailable) return true; // fail-open: show all
     const c = pluginCounts[pluginObj.unique_prefix] || { objects: 0, events: 0, history: 0 };
     return (c.objects + c.events + c.history) > 0;
   });
 
-  // Create tab DOM for visible plugins only — no flicker
+  // Create tab DOM for visible plugins only
   visiblePlugins.forEach(pluginObj => {
     const prefix = pluginObj.unique_prefix;
-    const c = pluginCounts[prefix] || { objects: 0, events: 0, history: 0 };
+    const c = countsAvailable ? (pluginCounts[prefix] || { objects: 0, events: 0, history: 0 }) : null;
     createTabContent(pluginObj, assignActive, c);
     createTabHeader(pluginObj, assignActive, c);
     assignActive = false;
@@ -519,9 +533,11 @@ function generateTabs() {
     tabContainer:  '#tabs-location'
   });
 
-  // Apply badge counts to the DOM and hide empty inner sub-tabs
-  const prefixes = visiblePlugins.map(p => p.unique_prefix);
-  applyPluginBadges(pluginCounts, prefixes);
+  // Apply badge counts to the DOM and hide empty inner sub-tabs (only if counts loaded)
+  if (countsAvailable) {
+    const prefixes = visiblePlugins.map(p => p.unique_prefix);
+    applyPluginBadges(pluginCounts, prefixes);
+  }
 
   hideSpinner()
 }
@@ -664,17 +680,27 @@ function initializeDataTables(prefix, colDefinitions, pluginObj) {
     });
   }
 
-  // Initialize the Objects table immediately (it is the active/visible sub-tab).
-  // Defer Events and History tables until their sub-tab is first shown.
+  // Initialize the DataTable for whichever inner sub-tab is currently active
+  // (may not be Objects if autoHideEmptyTabs switched it).
+  // Defer the remaining sub-tabs until their shown.bs.tab fires.
   const [objCfg, evtCfg, histCfg] = tableConfigs;
-  buildDT(objCfg.tableId, objCfg.gqlField, objCfg.countId, objCfg.badgeId);
+  const allCfgs = [
+    { cfg: objCfg,  href: `#objectsTarget_${prefix}` },
+    { cfg: evtCfg,  href: `#eventsTarget_${prefix}` },
+    { cfg: histCfg, href: `#historyTarget_${prefix}` },
+  ];
 
-  $(`a[href="#eventsTarget_${prefix}"]`).one('shown.bs.tab', function() {
-    buildDT(evtCfg.tableId, evtCfg.gqlField, evtCfg.countId, evtCfg.badgeId);
-  });
-
-  $(`a[href="#historyTarget_${prefix}"]`).one('shown.bs.tab', function() {
-    buildDT(histCfg.tableId, histCfg.gqlField, histCfg.countId, histCfg.badgeId);
+  allCfgs.forEach(({ cfg, href }) => {
+    const $subPane = $(href);
+    if ($subPane.hasClass('active') && $subPane.is(':visible')) {
+      // This sub-tab is the currently active one — initialize immediately
+      buildDT(cfg.tableId, cfg.gqlField, cfg.countId, cfg.badgeId);
+    } else if ($subPane.closest('.tab-pane').length) {
+      // Defer until shown
+      $(`a[href="${href}"]`).one('shown.bs.tab', function() {
+        buildDT(cfg.tableId, cfg.gqlField, cfg.countId, cfg.badgeId);
+      });
+    }
   });
 }
 
