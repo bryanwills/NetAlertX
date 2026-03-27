@@ -274,6 +274,10 @@ function genericSaveData (id) {
 // -----------------------------------------------------------------------------
 pluginDefinitions = []
 
+// Global counts map, populated before tabs are rendered.
+// null = counts unavailable (fail-open: show all plugins)
+let pluginCounts = null;
+
 async function getData() {
   try {
     showSpinner();
@@ -281,6 +285,11 @@ async function getData() {
 
     const plugins = await fetchJson('plugins.json');
     pluginDefinitions = plugins.data;
+
+    // Fetch counts BEFORE rendering tabs so we can skip empty plugins (no flicker).
+    // fetchPluginCounts never throws — returns null on failure (fail-open).
+    const prefixes = pluginDefinitions.filter(p => p.show_ui).map(p => p.unique_prefix);
+    pluginCounts = await fetchPluginCounts(prefixes);
 
     generateTabs();
   } catch (err) {
@@ -348,21 +357,17 @@ function postPluginGraphQL(gqlField, prefix, foreignKey, dtRequest, callback) {
   });
 }
 
-// Fetch badge counts for every plugin and populate sidebar + sub-tab counters.
+// Fetch counts for all plugins. Returns { PREFIX: { objects, events, history } }
+// or null on failure (fail-open so tabs still render).
 // Fast path: static JSON (~1KB) when no MAC filter is active.
 // Filtered path: batched GraphQL aliases when a foreignKey (MAC) is set.
-async function prefetchPluginBadges() {
-  const mac        = $("#txtMacFilter").val();
-  const foreignKey = (mac && mac !== "--") ? mac : null;
-
-  const prefixes = pluginDefinitions
-    .filter(p => p.show_ui)
-    .map(p => p.unique_prefix);
-
-  if (prefixes.length === 0) return;
+async function fetchPluginCounts(prefixes) {
+  if (prefixes.length === 0) return {};
 
   try {
-    let counts = {}; // { PREFIX: { objects: N, events: N, history: N } }
+    const mac        = $("#txtMacFilter").val();
+    const foreignKey = (mac && mac !== "--") ? mac : null;
+    let counts = {};
 
     if (!foreignKey) {
       // ---- FAST PATH: lightweight pre-computed JSON ----
@@ -391,7 +396,10 @@ async function prefetchPluginBadges() {
         headers: { "Authorization": `Bearer ${apiToken}`, "Content-Type": "application/json" },
         data: JSON.stringify({ query }),
       });
-      if (response.errors) { console.error("[plugins] badge GQL errors:", response.errors); return; }
+      if (response.errors) {
+        console.error("[plugins] badge GQL errors:", response.errors);
+        return null; // fail-open
+      }
       for (const p of prefixes) {
         counts[p] = {
           objects: response.data[`${p}_obj`]?.dbCount  ?? 0,
@@ -401,95 +409,74 @@ async function prefetchPluginBadges() {
       }
     }
 
-    // Update DOM
-    for (const [prefix, c] of Object.entries(counts)) {
-      $(`#badge_${prefix}`).text(c.objects);
-      $(`#objCount_${prefix}`).text(c.objects);
-      $(`#evtCount_${prefix}`).text(c.events);
-      $(`#histCount_${prefix}`).text(c.history);
-    }
-    // Zero out plugins with no rows in any table
-    prefixes.forEach(prefix => {
-      if (!counts[prefix]) {
-        $(`#badge_${prefix}`).text(0);
-        $(`#objCount_${prefix}`).text(0);
-        $(`#evtCount_${prefix}`).text(0);
-        $(`#histCount_${prefix}`).text(0);
-      }
-    });
-
-    // Auto-hide tabs with zero results
-    autoHideEmptyTabs(counts, prefixes);
-
+    return counts;
   } catch (err) {
-    console.error('[plugins] badge prefetch failed:', err);
+    console.error('[plugins] fetchPluginCounts failed (fail-open):', err);
+    return null;
   }
 }
 
-// ---------------------------------------------------------------
-// Hide plugin tabs (left-nav + pane) where all three counts are 0.
-// Within visible plugins, hide inner sub-tabs whose count is 0.
-// If the active tab was hidden, activate the first visible one.
-function autoHideEmptyTabs(counts, prefixes) {
+// Apply pre-fetched counts to the DOM badges and hide empty tabs/sub-tabs.
+function applyPluginBadges(counts, prefixes) {
+  // Update DOM badges
+  for (const [prefix, c] of Object.entries(counts)) {
+    $(`#badge_${prefix}`).text(c.objects);
+    $(`#objCount_${prefix}`).text(c.objects);
+    $(`#evtCount_${prefix}`).text(c.events);
+    $(`#histCount_${prefix}`).text(c.history);
+  }
+  // Zero out plugins with no rows in any table
   prefixes.forEach(prefix => {
-    const c = counts[prefix] || { objects: 0, events: 0, history: 0 };
-    const total = c.objects + c.events + c.history;
-    const $li   = $(`#tabs-location li:has(a[href="#${prefix}"])`);
-    const $pane = $(`#tabs-content-location > #${prefix}`);
-
-    if (total === 0) {
-      // Hide the entire plugin tab and strip active from both nav item and pane
-      $li.removeClass('active').hide();
-      $pane.removeClass('active').css('display', '');
-    } else {
-      // Ensure nav item visible (in case a previous filter hid it)
-      $li.show();
-      // Clear any inline display override so Bootstrap CSS controls pane visibility via .active
-      $pane.css('display', '');
-
-      // Hide inner sub-tabs with zero count
-      const subTabs = [
-        { href: `#objectsTarget_${prefix}`, count: c.objects },
-        { href: `#eventsTarget_${prefix}`,  count: c.events },
-        { href: `#historyTarget_${prefix}`, count: c.history },
-      ];
-
-      let activeSubHidden = false;
-      subTabs.forEach(st => {
-        const $subLi = $pane.find(`ul.nav-tabs li:has(a[href="${st.href}"])`);
-        const $subPane = $pane.find(st.href);
-        if (st.count === 0) {
-          if ($subLi.hasClass('active')) activeSubHidden = true;
-          $subLi.hide();
-          $subPane.removeClass('active').css('display', '');
-        } else {
-          $subLi.show();
-          $subPane.css('display', '');
-        }
-      });
-
-      // If the active inner sub-tab was hidden, activate the first visible one
-      // via Bootstrap's tab lifecycle so shown.bs.tab fires for deferred DataTable init
-      if (activeSubHidden) {
-        const $firstVisibleSubA = $pane.find('ul.nav-tabs li:visible:first a');
-        if ($firstVisibleSubA.length) {
-          $firstVisibleSubA.tab('show');
-        }
-      }
+    if (!counts[prefix]) {
+      $(`#badge_${prefix}`).text(0);
+      $(`#objCount_${prefix}`).text(0);
+      $(`#evtCount_${prefix}`).text(0);
+      $(`#histCount_${prefix}`).text(0);
     }
   });
 
-  // If the active left-nav tab was hidden, activate the first visible one
-  const $activeLi = $(`#tabs-location li.active:visible`);
-  if ($activeLi.length === 0) {
-    const $firstVisibleLi = $(`#tabs-location li:visible`).first();
-    if ($firstVisibleLi.length) {
-      // Let Bootstrap's .tab('show') manage the active class on both
-      // the <li> and the pane — adding it manually beforehand causes
-      // Bootstrap to bail out early without firing shown.bs.tab.
-      $firstVisibleLi.find('a').tab('show');
+  // Auto-hide sub-tabs with zero results (outer tabs already excluded during creation)
+  autoHideEmptyTabs(counts, prefixes);
+}
+
+// ---------------------------------------------------------------
+// Within visible plugins, hide inner sub-tabs (Objects/Events/History) whose count is 0.
+// Outer plugin tabs with zero total are already excluded during tab creation.
+function autoHideEmptyTabs(counts, prefixes) {
+  prefixes.forEach(prefix => {
+    const c = counts[prefix] || { objects: 0, events: 0, history: 0 };
+    const $pane = $(`#tabs-content-location > #${prefix}`);
+
+    // Hide inner sub-tabs with zero count
+    const subTabs = [
+      { href: `#objectsTarget_${prefix}`, count: c.objects },
+      { href: `#eventsTarget_${prefix}`,  count: c.events },
+      { href: `#historyTarget_${prefix}`, count: c.history },
+    ];
+
+    let activeSubHidden = false;
+    subTabs.forEach(st => {
+      const $subLi = $pane.find(`ul.nav-tabs li:has(a[href="${st.href}"])`);
+      const $subPane = $pane.find(st.href);
+      if (st.count === 0) {
+        if ($subLi.hasClass('active')) activeSubHidden = true;
+        $subLi.hide();
+        $subPane.removeClass('active').css('display', '');
+      } else {
+        $subLi.show();
+        $subPane.css('display', '');
+      }
+    });
+
+    // If the active inner sub-tab was hidden, activate the first visible one
+    // via Bootstrap's tab lifecycle so shown.bs.tab fires for deferred DataTable init
+    if (activeSubHidden) {
+      const $firstVisibleSubA = $pane.find('ul.nav-tabs li:visible:first a');
+      if ($firstVisibleSubA.length) {
+        $firstVisibleSubA.tab('show');
+      }
     }
-  }
+  });
 }
 
 function generateTabs() {
@@ -502,31 +489,39 @@ function generateTabs() {
 
   let assignActive = true;
 
-  // Iterate over the sorted pluginDefinitions to create tab headers and content
-  pluginDefinitions.forEach(pluginObj => {
-    if (pluginObj.show_ui) {
-      createTabContent(pluginObj, assignActive);
-      createTabHeader(pluginObj, assignActive);
-      assignActive = false;
-    }
+  // When counts are available, skip plugins with 0 total count (no flicker).
+  // When counts are null (fetch failed), show all show_ui plugins (fail-open).
+  const countsAvailable = pluginCounts !== null;
+  const visiblePlugins = pluginDefinitions.filter(pluginObj => {
+    if (!pluginObj.show_ui) return false;
+    if (!countsAvailable) return true; // fail-open: show all
+    const c = pluginCounts[pluginObj.unique_prefix] || { objects: 0, events: 0, history: 0 };
+    return (c.objects + c.events + c.history) > 0;
+  });
+
+  // Create tab DOM for visible plugins only
+  visiblePlugins.forEach(pluginObj => {
+    const prefix = pluginObj.unique_prefix;
+    const c = countsAvailable ? (pluginCounts[prefix] || { objects: 0, events: 0, history: 0 }) : null;
+    createTabContent(pluginObj, assignActive, c);
+    createTabHeader(pluginObj, assignActive, c);
+    assignActive = false;
   });
 
   // Now that ALL DOM elements exist (both <a> headers and tab panes),
   // wire up DataTable initialization: immediate for the active tab,
   // deferred via shown.bs.tab for the rest.
   let firstVisible = true;
-  pluginDefinitions.forEach(pluginObj => {
-    if (pluginObj.show_ui) {
-      const prefix = pluginObj.unique_prefix;
-      const colDefinitions = getColumnDefinitions(pluginObj);
-      if (firstVisible) {
+  visiblePlugins.forEach(pluginObj => {
+    const prefix = pluginObj.unique_prefix;
+    const colDefinitions = getColumnDefinitions(pluginObj);
+    if (firstVisible) {
+      initializeDataTables(prefix, colDefinitions, pluginObj);
+      firstVisible = false;
+    } else {
+      $(`a[href="#${prefix}"]`).one('shown.bs.tab', function() {
         initializeDataTables(prefix, colDefinitions, pluginObj);
-        firstVisible = false;
-      } else {
-        $(`a[href="#${prefix}"]`).one('shown.bs.tab', function() {
-          initializeDataTables(prefix, colDefinitions, pluginObj);
-        });
-      }
+      });
     }
   });
 
@@ -538,8 +533,11 @@ function generateTabs() {
     tabContainer:  '#tabs-location'
   });
 
-  // Pre-fetch badge counts for every plugin in a single batched GraphQL call.
-  prefetchPluginBadges();
+  // Apply badge counts to the DOM and hide empty inner sub-tabs (only if counts loaded)
+  if (countsAvailable) {
+    const prefixes = visiblePlugins.map(p => p.unique_prefix);
+    applyPluginBadges(pluginCounts, prefixes);
+  }
 
   hideSpinner()
 }
@@ -552,20 +550,18 @@ function resetTabs() {
 
 // ---------------------------------------------------------------
 // left headers
-function createTabHeader(pluginObj, assignActive) {
-  const prefix = pluginObj.unique_prefix; // Get the unique prefix for the plugin
-
-  // Determine the active class for the first tab
+function createTabHeader(pluginObj, assignActive, counts) {
+  const prefix = pluginObj.unique_prefix;
   const activeClass = assignActive ? "active" : "";
+  const badgeText = counts ? counts.objects : '…';
 
-  // Append the tab header to the tabs location
   $('#tabs-location').append(`
     <li class="left-nav ${activeClass} ">
       <a class="col-sm-12 textOverflow" href="#${prefix}" data-plugin-prefix="${prefix}" id="${prefix}_id" data-toggle="tab">
         ${getString(`${prefix}_icon`)} ${getString(`${prefix}_display_name`)}
 
       </a>
-      <div class="pluginBadgeWrap"><span title="" class="badge pluginBadge" id="badge_${prefix}">…</span></div>
+      <div class="pluginBadgeWrap"><span title="" class="badge pluginBadge" id="badge_${prefix}">${badgeText}</span></div>
     </li>
   `);
 
@@ -573,14 +569,13 @@ function createTabHeader(pluginObj, assignActive) {
 
 // ---------------------------------------------------------------
 // Content of selected plugin (header)
-function createTabContent(pluginObj, assignActive) {
-  const prefix = pluginObj.unique_prefix; // Get the unique prefix for the plugin
-  const colDefinitions = getColumnDefinitions(pluginObj); // Get column definitions for DataTables
+function createTabContent(pluginObj, assignActive, counts) {
+  const prefix = pluginObj.unique_prefix;
+  const colDefinitions = getColumnDefinitions(pluginObj);
 
-  // Append the content structure for the plugin's tab to the content location
   $('#tabs-content-location').append(`
     <div id="${prefix}" class="tab-pane ${assignActive ? 'active' : ''}">
-      ${generateTabNavigation(prefix)} <!-- Create tab navigation -->
+      ${generateTabNavigation(prefix, counts)} <!-- Create tab navigation -->
       <div class="tab-content">
         ${generateDataTable(prefix, 'Objects', colDefinitions)}
         ${generateDataTable(prefix, 'Events', colDefinitions)}
@@ -601,19 +596,22 @@ function getColumnDefinitions(pluginObj) {
   return pluginObj["database_column_definitions"].filter(colDef => colDef.show);
 }
 
-function generateTabNavigation(prefix) {
-  // Create navigation tabs for Objects, Unprocessed Events, and History
+function generateTabNavigation(prefix, counts) {
+  const objCount  = counts ? counts.objects  : '…';
+  const evtCount  = counts ? counts.events   : '…';
+  const histCount = counts ? counts.history  : '…';
+
   return `
     <div class="nav-tabs-custom" style="margin-bottom: 0px">
       <ul class="nav nav-tabs">
         <li class="active">
-          <a href="#objectsTarget_${prefix}" data-toggle="tab"><i class="fa fa-cube"></i> ${getString('Plugins_Objects')} (<span id="objCount_${prefix}">…</span>)</a>
+          <a href="#objectsTarget_${prefix}" data-toggle="tab"><i class="fa fa-cube"></i> ${getString('Plugins_Objects')} (<span id="objCount_${prefix}">${objCount}</span>)</a>
         </li>
         <li>
-          <a href="#eventsTarget_${prefix}" data-toggle="tab"><i class="fa fa-bolt"></i> ${getString('Plugins_Unprocessed_Events')} (<span id="evtCount_${prefix}">…</span>)</a>
+          <a href="#eventsTarget_${prefix}" data-toggle="tab"><i class="fa fa-bolt"></i> ${getString('Plugins_Unprocessed_Events')} (<span id="evtCount_${prefix}">${evtCount}</span>)</a>
         </li>
         <li>
-          <a href="#historyTarget_${prefix}" data-toggle="tab"><i class="fa fa-clock"></i> ${getString('Plugins_History')} (<span id="histCount_${prefix}">…</span>)</a>
+          <a href="#historyTarget_${prefix}" data-toggle="tab"><i class="fa fa-clock"></i> ${getString('Plugins_History')} (<span id="histCount_${prefix}">${histCount}</span>)</a>
         </li>
       </ul>
     </div>
@@ -682,17 +680,27 @@ function initializeDataTables(prefix, colDefinitions, pluginObj) {
     });
   }
 
-  // Initialize the Objects table immediately (it is the active/visible sub-tab).
-  // Defer Events and History tables until their sub-tab is first shown.
+  // Initialize the DataTable for whichever inner sub-tab is currently active
+  // (may not be Objects if autoHideEmptyTabs switched it).
+  // Defer the remaining sub-tabs until their shown.bs.tab fires.
   const [objCfg, evtCfg, histCfg] = tableConfigs;
-  buildDT(objCfg.tableId, objCfg.gqlField, objCfg.countId, objCfg.badgeId);
+  const allCfgs = [
+    { cfg: objCfg,  href: `#objectsTarget_${prefix}` },
+    { cfg: evtCfg,  href: `#eventsTarget_${prefix}` },
+    { cfg: histCfg, href: `#historyTarget_${prefix}` },
+  ];
 
-  $(`a[href="#eventsTarget_${prefix}"]`).one('shown.bs.tab', function() {
-    buildDT(evtCfg.tableId, evtCfg.gqlField, evtCfg.countId, evtCfg.badgeId);
-  });
-
-  $(`a[href="#historyTarget_${prefix}"]`).one('shown.bs.tab', function() {
-    buildDT(histCfg.tableId, histCfg.gqlField, histCfg.countId, histCfg.badgeId);
+  allCfgs.forEach(({ cfg, href }) => {
+    const $subPane = $(href);
+    if ($subPane.hasClass('active') && $subPane.is(':visible')) {
+      // This sub-tab is the currently active one — initialize immediately
+      buildDT(cfg.tableId, cfg.gqlField, cfg.countId, cfg.badgeId);
+    } else if ($subPane.closest('.tab-pane').length) {
+      // Defer until shown
+      $(`a[href="${href}"]`).one('shown.bs.tab', function() {
+        buildDT(cfg.tableId, cfg.gqlField, cfg.countId, cfg.badgeId);
+      });
+    }
   });
 }
 
