@@ -120,6 +120,11 @@ sql_events_pending_alert = "SELECT  * FROM Events where evePendingAlertEmail is 
 sql_events_all = "SELECT rowid, * FROM Events ORDER BY eveDateTime DESC"
 sql_settings = "SELECT  * FROM Settings"
 sql_plugins_objects = "SELECT  * FROM Plugins_Objects"
+sql_plugins_stats = """SELECT 'objects' AS tableName, plugin, COUNT(*) AS cnt FROM Plugins_Objects GROUP BY plugin
+                       UNION ALL
+                       SELECT 'events',  plugin, COUNT(*) FROM Plugins_Events  GROUP BY plugin
+                       UNION ALL
+                       SELECT 'history', plugin, COUNT(*) FROM Plugins_History  GROUP BY plugin"""
 sql_language_strings = "SELECT  * FROM Plugins_Language_Strings"
 sql_notifications_all = "SELECT  * FROM Notifications"
 sql_online_history = "SELECT  * FROM Online_History"

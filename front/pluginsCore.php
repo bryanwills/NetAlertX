@@ -348,51 +348,38 @@ function postPluginGraphQL(gqlField, prefix, foreignKey, dtRequest, callback) {
   });
 }
 
-// Fire a single batched GraphQL request to fetch the Objects dbCount for
-// every plugin and populate the sidebar badges immediately on page load.
-function prefetchPluginBadges() {
-  const apiToken = getSetting("API_TOKEN");
-  const apiBase  = getApiBase();
-  const mac        = $("#txtMacFilter").val();
-  const foreignKey = (mac && mac !== "--") ? mac : null;
-
-  // Build one aliased sub-query per visible plugin
-  const prefixes = pluginDefinitions
-    .filter(p => p.show_ui)
-    .map(p => p.unique_prefix);
-
-  if (prefixes.length === 0) return;
-
-  // GraphQL aliases must be valid identifiers — prefixes already are (A-Z0-9_)
-  const fkOpt = foreignKey ? `, foreignKey: "${foreignKey}"` : '';
-  const fragments = prefixes.map(p => [
-    `${p}_obj: pluginsObjects(options: {plugin: "${p}", page: 1, limit: 1${fkOpt}}) { dbCount }`,
-    `${p}_evt: pluginsEvents(options:  {plugin: "${p}", page: 1, limit: 1${fkOpt}}) { dbCount }`,
-    `${p}_hist: pluginsHistory(options: {plugin: "${p}", page: 1, limit: 1${fkOpt}}) { dbCount }`,
-  ].join('\n    ')).join('\n    ');
-
-  const query = `query BadgeCounts {\n    ${fragments}\n  }`;
-
-  $.ajax({
-    method: "POST",
-    url: `${apiBase}/graphql`,
-    headers: { "Authorization": `Bearer ${apiToken}`, "Content-Type": "application/json" },
-    data: JSON.stringify({ query }),
-    success: function(response) {
-      if (response.errors) {
-        console.error("[plugins] badge prefetch errors:", response.errors);
-        return;
-      }
-      prefixes.forEach(p => {
-        const obj  = response.data[`${p}_obj`];
-        const evt  = response.data[`${p}_evt`];
-        const hist = response.data[`${p}_hist`];
-        if (obj)  { $(`#badge_${p}`).text(obj.dbCount);    $(`#objCount_${p}`).text(obj.dbCount); }
-        if (evt)  { $(`#evtCount_${p}`).text(evt.dbCount); }
-        if (hist) { $(`#histCount_${p}`).text(hist.dbCount); }
-      });
+// Fetch the lightweight plugins_stats.json (~1KB) and populate all badge
+// and sub-tab counts instantly — no GraphQL, no 250MB file loads.
+async function prefetchPluginBadges() {
+  try {
+    const stats = await fetchJson('table_plugins_stats.json');
+    // Build lookup: { ARPSCAN: { objects: 42, events: 3, history: 100 }, ... }
+    const counts = {};
+    for (const row of stats.data) {
+      const p = row.tableName;  // 'objects' | 'events' | 'history'
+      const plugin = row.plugin;
+      if (!counts[plugin]) counts[plugin] = { objects: 0, events: 0, history: 0 };
+      counts[plugin][p] = row.cnt;
     }
-  });
+    for (const [prefix, c] of Object.entries(counts)) {
+      $(`#badge_${prefix}`).text(c.objects);
+      $(`#objCount_${prefix}`).text(c.objects);
+      $(`#evtCount_${prefix}`).text(c.events);
+      $(`#histCount_${prefix}`).text(c.history);
+    }
+    // Set 0 for plugins with no rows in any table
+    pluginDefinitions.filter(p => p.show_ui).forEach(p => {
+      const prefix = p.unique_prefix;
+      if (!counts[prefix]) {
+        $(`#badge_${prefix}`).text(0);
+        $(`#objCount_${prefix}`).text(0);
+        $(`#evtCount_${prefix}`).text(0);
+        $(`#histCount_${prefix}`).text(0);
+      }
+    });
+  } catch (err) {
+    console.error('[plugins] badge prefetch failed:', err);
+  }
 }
 
 function generateTabs() {
