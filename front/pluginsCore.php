@@ -359,56 +359,44 @@ function postPluginGraphQL(gqlField, prefix, foreignKey, dtRequest, callback) {
 
 // Fetch counts for all plugins. Returns { PREFIX: { objects, events, history } }
 // or null on failure (fail-open so tabs still render).
-// Fast path: static JSON (~1KB) when no MAC filter is active.
-// Filtered path: batched GraphQL aliases when a foreignKey (MAC) is set.
+// Unfiltered: static JSON (~1KB pre-computed).
+// MAC-filtered: lightweight REST endpoint (single SQL query).
 async function fetchPluginCounts(prefixes) {
   if (prefixes.length === 0) return {};
 
+  const mac        = $("#txtMacFilter").val();
+  const foreignKey = (mac && mac !== "--") ? mac : null;
+
   try {
-    const mac        = $("#txtMacFilter").val();
-    const foreignKey = (mac && mac !== "--") ? mac : null;
     let counts = {};
+    let rows;
 
     if (!foreignKey) {
-      // ---- FAST PATH: lightweight pre-computed JSON ----
+      // ---- FAST PATH: pre-computed static JSON ----
       const stats = await fetchJson('table_plugins_stats.json');
-      for (const row of stats.data) {
-        const p = row.tableName;   // 'objects' | 'events' | 'history'
-        const plugin = row.plugin;
-        if (!counts[plugin]) counts[plugin] = { objects: 0, events: 0, history: 0 };
-        counts[plugin][p] = row.cnt;
-      }
+      rows = stats.data;
     } else {
-      // ---- FILTERED PATH: GraphQL with foreignKey ----
+      // ---- MAC-FILTERED PATH: single SQL via REST endpoint ----
       const apiToken = getSetting("API_TOKEN");
       const apiBase  = getApiBase();
-      const fkOpt = `, foreignKey: "${foreignKey}"`;
-      const fragments = prefixes.map(p => [
-        `${p}_obj:  pluginsObjects(options: {plugin: "${p}", page: 1, limit: 1${fkOpt}}) { dbCount }`,
-        `${p}_evt:  pluginsEvents(options:  {plugin: "${p}", page: 1, limit: 1${fkOpt}}) { dbCount }`,
-        `${p}_hist: pluginsHistory(options: {plugin: "${p}", page: 1, limit: 1${fkOpt}}) { dbCount }`,
-      ].join('\n      ')).join('\n      ');
-
-      const query = `query BadgeCounts {\n      ${fragments}\n    }`;
       const response = await $.ajax({
-        method: "POST",
-        url: `${apiBase}/graphql`,
-        headers: { "Authorization": `Bearer ${apiToken}`, "Content-Type": "application/json" },
-        data: JSON.stringify({ query }),
+        method: "GET",
+        url: `${apiBase}/plugins/stats?foreignKey=${encodeURIComponent(foreignKey)}`,
+        headers: { "Authorization": `Bearer ${apiToken}` },
       });
-      if (response.errors) {
-        console.error("[plugins] badge GQL errors:", response.errors);
-        return null; // fail-open
+      if (!response.success) {
+        console.error("[plugins] /plugins/stats error:", response.error);
+        return null;
       }
-      for (const p of prefixes) {
-        counts[p] = {
-          objects: response.data[`${p}_obj`]?.dbCount  ?? 0,
-          events:  response.data[`${p}_evt`]?.dbCount  ?? 0,
-          history: response.data[`${p}_hist`]?.dbCount ?? 0,
-        };
-      }
+      rows = response.data;
     }
 
+    for (const row of rows) {
+      const p = row.tableName;   // 'objects' | 'events' | 'history'
+      const plugin = row.plugin;
+      if (!counts[plugin]) counts[plugin] = { objects: 0, events: 0, history: 0 };
+      counts[plugin][p] = row.cnt;
+    }
     return counts;
   } catch (err) {
     console.error('[plugins] fetchPluginCounts failed (fail-open):', err);

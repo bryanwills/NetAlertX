@@ -1084,3 +1084,32 @@ class GraphQLRequest(BaseModel):
     """Request payload for GraphQL queries."""
     query: str = Field(..., description="GraphQL query string", json_schema_extra={"examples": ["{ devices { devMac devName } }"]})
     variables: Optional[Dict[str, Any]] = Field(None, description="Variables for the GraphQL query")
+
+
+# =============================================================================
+# PLUGIN SCHEMAS
+# =============================================================================
+class PluginStatsEntry(BaseModel):
+    """Per-plugin row count for one table."""
+    tableName: str = Field(..., description="Table category: objects, events, or history")
+    plugin: str = Field(..., description="Plugin unique prefix")
+    cnt: int = Field(..., ge=0, description="Row count")
+
+
+class PluginStatsResponse(BaseResponse):
+    """Response for GET /plugins/stats — per-plugin row counts."""
+    model_config = ConfigDict(
+        extra="allow",
+        json_schema_extra={
+            "examples": [{
+                "success": True,
+                "data": [
+                    {"tableName": "objects", "plugin": "ARPSCAN", "cnt": 42},
+                    {"tableName": "events", "plugin": "ARPSCAN", "cnt": 5},
+                    {"tableName": "history", "plugin": "ARPSCAN", "cnt": 100}
+                ]
+            }]
+        }
+    )
+
+    data: List[PluginStatsEntry] = Field(default_factory=list, description="Per-plugin row counts")
