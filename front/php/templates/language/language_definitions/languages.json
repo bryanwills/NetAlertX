@@ -1,11 +1,11 @@
 {
     "default": "en_us",
     "languages": [
+        { "code": "en_us", "display": "English (en_us)" },
         { "code": "ar_ar", "display": "Arabic (ar_ar)" },
         { "code": "ca_ca", "display": "Catalan (ca_ca)" },
         { "code": "cs_cz", "display": "Czech (cs_cz)" },
         { "code": "de_de", "display": "German (de_de)" },
-        { "code": "en_us", "display": "English (en_us)" },
         { "code": "es_es", "display": "Spanish (es_es)" },
         { "code": "fa_fa", "display": "Farsi (fa_fa)" },
         { "code": "id_id", "display": "Indonesian (id_id)" },
