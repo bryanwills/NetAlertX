@@ -1463,7 +1463,7 @@
         "elements": [
           {
             "elementType": "select",
-            "elementOptions": [{ "ordeable": "true"}],
+            "elementOptions": [{ "orderable": "true"}],
             "transformers": ["deviceRelType"]
           }
         ]
@@ -1528,7 +1528,7 @@
         "elements": [
           {
             "elementType": "select",
-            "elementOptions": [{ "multiple": "true", "ordeable": "true", "readonly": "true" }],
+            "elementOptions": [{ "multiple": "true", "orderable": "true", "readonly": "true" }],
             "transformers": ["deviceChip"]
           }
         ]
@@ -1899,7 +1899,7 @@
         "elements": [
           {
             "elementType": "select",
-            "elementOptions": [{ "multiple": "true", "ordeable": "true", "readonly": "true" }],
+            "elementOptions": [{ "multiple": "true", "orderable": "true", "readonly": "true" }],
             "transformers": ["deviceChip"]
           }
         ]
