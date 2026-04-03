@@ -13,6 +13,7 @@ description: NetAlertX coding standards and conventions. Use this when writing c
 - follow DRY principle - maintainability of code is more important than speed of implementation
 - code files should be less than 500 LOC for better maintainability
 - DB columns must not contain underscores, use camelCase instead (e.g., deviceInstanceId, not device_instance_id)
+- treat DB as temporary storage for stats, long term configuration should be stored in the /config folder, the /config folder should allow you to restore most of your functionality (excluding historical data)
 
 ## File Length
 
