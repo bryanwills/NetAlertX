@@ -187,9 +187,10 @@ def main():
                     with open(file_path, 'r') as f:
                         data = json.load(f)
                         for device in data['data']:
-                            if device['devMac'] not in unique_mac_addresses:
+                            device['devMac'] = str(device['devMac']).lower()
+                            if device['devMac'].lower() not in unique_mac_addresses:
                                 device['devSyncHubNode'] = syncHubNodeName
-                                unique_mac_addresses.add(device['devMac'])
+                                unique_mac_addresses.add(device['devMac'].lower())
                                 device_data.append(device)
 
                     # Rename the file to "processed_" + current name
@@ -206,7 +207,7 @@ def main():
             # Retrieve existing devMac values from the Devices table
             placeholders = ', '.join('?' for _ in unique_mac_addresses)
             cursor.execute(f'SELECT devMac FROM Devices WHERE devMac IN ({placeholders})', tuple(unique_mac_addresses))
-            existing_mac_addresses = set(row[0] for row in cursor.fetchall())
+            existing_mac_addresses = set(row[0].lower() for row in cursor.fetchall())
 
             # insert devices into the last_result.log and thus CurrentScan table to manage state
             for device in device_data:
@@ -229,7 +230,10 @@ def main():
             db_columns = {row[1] for row in cursor.fetchall()}
 
             # Filter out existing devices
-            new_devices = [device for device in device_data if device['devMac'] not in existing_mac_addresses]
+            new_devices = [
+                device for device in device_data
+                if device['devMac'].lower() not in existing_mac_addresses
+            ]
 
             mylog('verbose', [f'[{pluginName}] All devices: "{len(device_data)}"'])
             mylog('verbose', [f'[{pluginName}] New devices: "{len(new_devices)}"'])

@@ -136,7 +136,7 @@
                     inputType,
                     readOnly,
                     isMultiSelect,
-                    isOrdeable,
+                    isOrderable,
                     cssClasses,
                     placeholder,
                     suffix,

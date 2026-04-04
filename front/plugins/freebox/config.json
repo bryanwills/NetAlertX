@@ -311,7 +311,7 @@
         "elements": [
           {
             "elementType": "select",
-            "elementOptions": [{ "multiple": "true", "ordeable": "true" }],
+            "elementOptions": [{ "multiple": "true", "orderable": "true" }],
             "transformers": []
           }
         ]
@@ -345,7 +345,7 @@
         "elements": [
           {
             "elementType": "select",
-            "elementOptions": [{ "multiple": "true", "ordeable": "true" }],
+            "elementOptions": [{ "multiple": "true", "orderable": "true" }],
             "transformers": []
           }
         ]
