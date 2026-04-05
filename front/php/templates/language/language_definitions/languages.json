@@ -10,6 +10,7 @@
         { "code": "fa_fa", "display": "Farsi (fa_fa)" },
         { "code": "id_id", "display": "Indonesian (id_id)" },
         { "code": "fr_fr", "display": "French (fr_fr)" },
+        { "code": "he_il", "display": "Hebrew (he_il)" },
         { "code": "it_it", "display": "Italian (it_it)" },
         { "code": "ja_jp", "display": "Japanese (ja_jp)" },
         { "code": "nb_no", "display": "Norwegian (nb_no)" },

@@ -7,7 +7,7 @@ hide:
 
 <div class="hero-wrapper">
   <div class="hero-content">
-    <h1>NetAlertX</h1>
+    <h2>NetAlertX</h2>
     <p class="hero-subheading">
       Centralized network visibility and continuous asset discovery.
     </p>
