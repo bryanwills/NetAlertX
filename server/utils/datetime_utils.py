@@ -6,7 +6,7 @@ import datetime
 import re
 import pytz
 from typing import Union, Optional
-from zoneinfo import ZoneInfo
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 import email.utils
 import conf
 # from const import *
@@ -214,7 +214,7 @@ def format_date_iso(date_val: str) -> Optional[str]:
             # Resolve target timezone; fall back to UTC if conf.tz is missing/invalid
             try:
                 target_tz = conf.tz if isinstance(conf.tz, datetime.tzinfo) else ZoneInfo(conf.tz)
-            except Exception:
+            except (ZoneInfoNotFoundError, ValueError, TypeError):
                 target_tz = datetime.UTC
             dt = dt.astimezone(target_tz)
 
