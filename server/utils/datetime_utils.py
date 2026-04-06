@@ -6,7 +6,7 @@ import datetime
 import re
 import pytz
 from typing import Union, Optional
-from zoneinfo import ZoneInfo
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 import email.utils
 import conf
 # from const import *
@@ -209,10 +209,13 @@ def format_date_iso(date_val: str) -> Optional[str]:
         # 2. If it has no timezone, assume it's UTC (our DB storage format)
         #    then CONVERT to user's configured timezone
         if dt.tzinfo is None:
-            # Mark as UTC first
+            # Mark as UTC first — critical: localize() would label without converting
             dt = dt.replace(tzinfo=datetime.UTC)
-            # Convert to user's timezone
-            target_tz = conf.tz if isinstance(conf.tz, datetime.tzinfo) else ZoneInfo(conf.tz)
+            # Resolve target timezone; fall back to UTC if conf.tz is missing/invalid
+            try:
+                target_tz = conf.tz if isinstance(conf.tz, datetime.tzinfo) else ZoneInfo(conf.tz)
+            except (ZoneInfoNotFoundError, ValueError, TypeError):
+                target_tz = datetime.UTC
             dt = dt.astimezone(target_tz)
 
         # 3. Return the string. .isoformat() will now include the +11:00 or +10:00
