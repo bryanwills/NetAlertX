@@ -69,7 +69,7 @@ class UpdateFieldAction(Action):
 
         mylog("none", f"[WF] Unsupported object format: {obj}")
 
-        return obj
+        return None
 
 
 class DeleteObjectAction(Action):
@@ -104,7 +104,7 @@ class DeleteObjectAction(Action):
 
         mylog("none", f"[WF] Unsupported object format: {obj}")
 
-        return obj
+        return None
 
 
 class RunPluginAction(Action):
