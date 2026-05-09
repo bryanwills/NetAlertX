@@ -157,7 +157,7 @@ Check the [GitHub Issues](https://github.com/netalertx/NetAlertX/issues) for the
 ## Everything else
 <!--- --------------------------------------------------------------------- --->
 
-<a href="https://trendshift.io/repositories/12670" target="_blank"><img src="https://trendshift.io/api/badge/repositories/12670" alt="jokob-sk%2FNetAlertX | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
+<a href="https://trendshift.io/repositories/19712" target="_blank"><img src="https://trendshift.io/api/badge/repositories/19712" alt="jokob-sk%2FNetAlertX | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
 
 ### 📧 Get notified what's new
 
