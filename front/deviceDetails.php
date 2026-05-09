@@ -540,7 +540,7 @@ async function updateDevicePageName(mac) {
   let owner = getDevDataByMac(mac, "devOwner");
 
   // Stage 2: one re-cache attempt
-  if (mac !== 'new' && (name === null || owner === null)) {
+  if (mac !== 'new' && name === null) {
     console.warn("Device not in cache, attempting re-cache:", mac);
     showSpinner();
     try {
@@ -555,7 +555,7 @@ async function updateDevicePageName(mac) {
   }
 
   // Stage 3: REST fallback — same endpoint renderSmallBoxes uses, always DB-direct
-  if (mac !== 'new' && (name === null || owner === null)) {
+  if (mac !== 'new' && name === null) {
     console.warn("Device not found in cache after re-cache, falling back to REST API:", mac);
     try {
       const { apiBase, authHeader } = getAuthContext();
