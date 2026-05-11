@@ -10,8 +10,8 @@ from plugin_helper import Plugin_Objects, mylog, handleEmpty, is_mac
 from helper import get_setting_value
 from const import logPath
 
-pluginName = "KEALSS"
-LOG_PATH = logPath + "/plugins"
+pluginName = 'KEALSS'
+LOG_PATH = logPath + '/plugins'
 LOG_FILE = os.path.join(LOG_PATH, f'script.{pluginName}.log')
 RESULT_FILE = os.path.join(LOG_PATH, f'last_result.{pluginName}.log')
 
@@ -34,19 +34,20 @@ def main():
 
         count = 0
         for entry in data:
+            text = entry.get('text', '[API provided no text]');
             # Result: 0 (success), 1 (error), or 3 (empty).
-            if entry.get("result") == 0:
-                leases = entry["arguments"].get("leases", [])
-                for l in leases:
-                    mac = l['hw-address']                    
-                    state = l['state']
+            if entry['result'] == 0:
+                leases = entry['arguments']['leases']
+                for lease in leases:
+                    mac = lease['hw-address']                    
+                    state = lease['state']
                     if is_mac(mac):
                         plugin_objects.add_object(
                             primaryId   = mac,
-                            secondaryId = l['ip-address'],
-                            # Active or not, similar to watched 1 of DHCPLSS plugin
+                            secondaryId = lease['ip-address'],
+                            # Active or not, similar to watched1 of DHCPLSS plugin
                             watched1    = state == 0, 
-                            watched2    = l['hostname'],
+                            watched2    = lease['hostname'],
                             watched3    = None,
                             # Default (or assigned) (0), declined (1), expired-reclaimed (2), released (3), and registered (4)).
                             watched4    = state,
@@ -54,12 +55,15 @@ def main():
                             foreignKey  = mac
                         )
                         count += 1
-            elif entry.get("result") == 1:
-                mylog('none', [f'[{pluginName}] ⚠ ERROR: Kea API indicated error'])
+                plugin_objects.write_result_file()
 
-        plugin_objects.write_result_file()
+                mylog('verbose', [f'[{pluginName}] Kea API response: {text}'])
+                mylog('verbose', [f'[{pluginName}] Successfully imported {count} devices reported by Kea API'])
+            elif entry['result'] == 1:
+                mylog('none', [f'[{pluginName}] ⚠ ERROR: Kea API indicated error: {text}'])
+            elif entry['result'] == 3:
+                mylog('verbose', [f'[{pluginName}] Kea API indicates no entries found: {text}'])
 
-        mylog('verbose', [f'[{pluginName}] Successfully imported {count} devices reported by Kea API'])
 
     except Exception as e:
         mylog('none', [f'[{pluginName}] ⚠ ERROR: {str(e)}'])
