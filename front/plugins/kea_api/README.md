@@ -85,3 +85,15 @@ These settings are required, besides the common device scanner settings:
 - **Basic Auth Password** (`KEALSS_PASS`): The password to use for authenticating with the Kea API. 
   - This mirrors what you set up in the kea-ctrl-agent configuration.
   - When using a password file, it should be the content of the password file.
+
+
+### Notes
+
+- This was tested on a basic Debian 13 install.
+- When you install kea-ctrl-agent, it should ask you about creating a password.
+- It's possible to run kea-ctrl-agent without password, but it's not recommended and at the moment we don't support that.
+- I may provide some minimal support, if you ask nicely :)
+
+- Version: 1.0.0
+- Author: `void-spark`
+- Release Date: `11/05/2026`
