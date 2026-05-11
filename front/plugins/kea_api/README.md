@@ -68,3 +68,20 @@ And you need to install kea-ctrl-agent, with a config that looks something like 
 ```
 
 You will need to configure the plugin with the URL to the API, and the username and password configured above (from kea-api-password file in the example)
+
+
+#### Required Settings
+
+These settings are required, besides the common device scanner settings:
+
+- **Kea Control Agent URL** (`KEALSS_URL`): The full URL, including port number, to the Kea API.
+  - Default: `http://127.0.0.1:8000`
+  - This mirrors what you set up in the kea-ctrl-agent configuration.
+
+- **Basic Auth Username** (`KEALSS_USER`): The user to use for authenticating with the Kea API. 
+  - Default: `kea-api`
+  - This mirrors what you set up in the kea-ctrl-agent configuration.
+
+- **Basic Auth Password** (`KEALSS_PASS`): The password to use for authenticating with the Kea API. 
+  - This mirrors what you set up in the kea-ctrl-agent configuration.
+  - When using a password file, it should be the content of the password file.
