@@ -23,12 +23,13 @@ def main():
         url = get_setting_value(f'{pluginName}_URL')
         user = get_setting_value(f'{pluginName}_USER')
         password = get_setting_value(f'{pluginName}_PASS')
+        timeout = get_setting_value(f'{pluginName}_RUN_TIMEOUT')
 
         mylog('verbose', [f'[{pluginName}] Querying Kea API at {url}'])
 
         payload = {'command': 'lease4-get-all', 'service': ['dhcp4']}
 
-        response = requests.post(url, json=payload, auth=(user, password), timeout=10)
+        response = requests.post(url, json=payload, auth=(user, password), timeout=max(1, timeout - 1))
         response.raise_for_status()
         data = response.json()
 
