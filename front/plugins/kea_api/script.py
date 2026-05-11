@@ -35,7 +35,7 @@ def main():
 
         count = 0
         for entry in data:
-            text = entry.get('text', '[API provided no text]');
+            text = entry.get('text', '[API provided no text]')
             # Result: 0 (success), 1 (error), or 3 (empty).
             if entry['result'] == 0:
                 leases = entry['arguments']['leases']
