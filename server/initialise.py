@@ -488,7 +488,7 @@ def importConfigs(pm, db, all_plugins):
     # Plugins START
     # -----------------
 
-    # necessary_plugins = ['UI', 'CUSTPROP', 'CLOUD' ,'DBCLNP', 'INTRNT','MAINT','NEWDEV', 'SETPWD', 'SYNC', 'VNDRPDT', 'WORKFLOWS']
+    # necessary_plugins = ['UI', 'CUSTPROP', 'HEARTBEAT' ,'DBCLNP', 'INTRNT','MAINT','NEWDEV', 'SETPWD', 'SYNC', 'VNDRPDT', 'WORKFLOWS']
     necessary_plugins = [
         "UI",
         "CUSTPROP",
