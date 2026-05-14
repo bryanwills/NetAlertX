@@ -218,7 +218,7 @@ def execute_fping(timeout, args, all_devices, plugin_objects, subnets, interface
             cmd.insert(1, "-6")  # insert -6 after "fping"
 
         if interfaces:
-            cmd += ["-I", ",".join(interfaces)]
+            cmd += ["-I", " ".join(interfaces)]
 
         mylog("verbose", [f"[{pluginName}] fping cmd: {' '.join(cmd)}"])
 
