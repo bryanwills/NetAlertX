@@ -213,78 +213,79 @@ def execute_fping(timeout, args, all_devices, plugin_objects, subnets, interface
         if not targets:
             return []
 
-        is_ipv6 = any(':' in t for t in targets)
+        ipv4_targets = [t for t in targets if ':' not in t]
+        ipv6_targets = [t for t in targets if ':' in t]
 
-        # If no interfaces specified, run once normally
-        interface_list = interfaces if interfaces else [None]
+        def run_family(family_targets, ipv6=False):
+            if not family_targets:
+                return []
 
-        all_results = []
-        seen_ips = set()
+            interface_list = interfaces if interfaces else [None]
 
-        for interface in interface_list:
+            all_results = []
+            seen_ips = set()
 
-            cmd = ["fping", "-a"]
+            for interface in interface_list:
 
-            if is_ipv6:
-                cmd.append("-6")
+                cmd = ["fping", "-a"]
 
-            cmd += args.split()
+                if ipv6:
+                    cmd.append("-6")
 
-            if interface:
-                cmd += ["-I", interface]
+                cmd += args.split()
 
-            cmd += targets
+                if interface:
+                    cmd += ["-I", interface]
 
-            mylog("verbose", [f"[{pluginName}] fping cmd: {' '.join(cmd)}"])
+                cmd += family_targets
 
-            try:
-                output = subprocess.check_output(
-                    cmd,
-                    stderr=subprocess.DEVNULL,
-                    timeout=timeout,
-                    text=True
-                )
+                mylog("verbose", [f"[{pluginName}] fping cmd: {' '.join(cmd)}"])
 
-            except subprocess.CalledProcessError as e:
-                output = e.output
-                mylog("none", [f"[{pluginName}] fping returned non-zero exit code on interface {interface}, reading alive hosts anyway"])
+                try:
+                    output = subprocess.check_output(
+                        cmd,
+                        stderr=subprocess.DEVNULL,
+                        timeout=timeout,
+                        text=True
+                    )
 
-            except subprocess.TimeoutExpired:
-                mylog("none", [f"[{pluginName}] fping timeout on interface {interface}"])
-                continue
+                except subprocess.CalledProcessError as e:
+                    output = e.output
+                    mylog("none", [
+                        f"[{pluginName}] fping returned non-zero exit code "
+                        f"on interface {interface}, reading alive hosts anyway"
+                    ])
 
-            for line in output.splitlines():
-                line = line.strip()
-                if not line:
+                except subprocess.TimeoutExpired:
+                    mylog("none", [
+                        f"[{pluginName}] fping timeout on interface {interface}"
+                    ])
                     continue
 
-                lower_line = line.lower()
-
-                # Skip unreachable / failed responses
-                if "unreachable" in lower_line or "timed out" in lower_line or "100% loss" in lower_line:
-                    mylog("debug", [f"[{pluginName}] fping skipping {line}"])
-                    continue
-
-                match = ip_regex.search(line)
-
-                if match:
-
-                    ip = match.group(0)
-
-                    # Deduplicate results across interfaces
-                    if ip in seen_ips:
+                for line in output.splitlines():
+                    line = line.strip()
+                    if not line:
                         continue
 
-                    seen_ips.add(ip)
+                    lower_line = line.lower()
 
-                    mylog("debug", [f"[{pluginName}] adding {ip} from interface {interface}: {line}"])
+                    if "unreachable" in lower_line or "timed out" in lower_line or "100% loss" in lower_line:
+                        continue
 
-                    all_results.append((ip, line))
+                    match = ip_regex.search(line)
 
-                else:
-                    mylog("verbose", [f"[{pluginName}] fping non-parseable {line}"])
+                    if match:
+                        ip = match.group(0)
 
-        return all_results
+                        if ip in seen_ips:
+                            continue
+
+                        seen_ips.add(ip)
+                        all_results.append((ip, line))
+
+            return all_results
+
+        return run_family(ipv4_targets, ipv6=False) + run_family(ipv6_targets, ipv6=True)
 
     # Scan subnets
     mylog("verbose", [f"[{pluginName}] run_fping: subnets {subnets}"])
