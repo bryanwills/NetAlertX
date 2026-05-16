@@ -228,7 +228,19 @@ def get_notifications(db):
             json_obj = db.get_table_as_json(sqlQuery, parameters)
             data = apply_timezone_to_json(json_obj, section)
         except Exception as e:
-            mylog("minimal", [f"[Notification] DB error in section {section}: ", e])
+            mylog("none", [f"[Notification] apply_timezone failed for section {section}: ", e])
+
+            # fallback: preserve raw DB payload instead of dropping section
+            try:
+                data = json_obj.json.get("data", [])
+            except Exception:
+                data = []
+
+            final_json[section] = data
+            final_json[f"{section}_meta"] = {
+                "title": SECTION_TITLES.get(section, section),
+                "columnNames": getattr(json_obj, "columnNames", [])
+            }
             continue
 
         final_json[section] = data
