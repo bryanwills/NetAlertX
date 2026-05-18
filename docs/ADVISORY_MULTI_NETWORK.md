@@ -12,20 +12,25 @@ Effective multi-network monitoring starts with understanding how NetAlertX "sees
 * **Manual Entry:** For static assets where only ICMP (ping) status is needed.
 
 > [!TIP]
-> Explore the [remote networks](./REMOTE_NETWORKS.md) documentation for more details on how to set up the approaches menationed above.
+> Explore the [remote networks](./REMOTE_NETWORKS.md) documentation for more details on how to set up the approaches mentioned above.
 
 ---
 
 ### 2. Automating IT Asset Inventory with Workflows
 
-[Workflows](./WORKFLOWS.md) are the "engine" of NetAlertX, reducing manual overhead as your device list grows.
+[Workflows](./WORKFLOWS.md) are the "engine" of NetAlertX, reducing manual overhead as your device list grows. See some examples below.:
 
-* **A. Logical Ownership & VLAN Tagging:** Create a workflow triggered on **Device Creation** to:
+#### A. Logical Ownership & VLAN Tagging
+
+Create a workflow triggered on **Device Creation** to:
+
 1. Inspect the IP/Subnet.
 2. Set `devVlan` or `devOwner` custom fields automatically.
 
+#### B. Auto-Grouping:
 
-* **B. Auto-Grouping:** Use conditional logic to categorize devices.
+Use conditional logic to categorize devices.
+
 * *Example:* If `devLastIP == 10.10.20.*`, then `Set devLocation = "BranchOffice"`.
 
 ```json
@@ -56,9 +61,9 @@ Effective multi-network monitoring starts with understanding how NetAlertX "sees
   ]
 }
 ```
+#### C. Sync Node Tracking
 
-
-* **C. Sync Node Tracking:** When using multiple instances, ensure all synchub nodes have a descriptive `SYNC_node_name` name to distinguish between sites.
+When using multiple instances, ensure all synchub nodes have a descriptive `SYNC_node_name` name to distinguish between sites.
 
 > [!TIP]
 > Always test new workflows in a "Staging" instance. A misconfigured workflow can trigger thousands of unintended updates across your database.
@@ -107,6 +112,7 @@ As your environment grows, tuning the underlying engine is vital to maintain a s
 * **Plugin Scheduling:** Avoid "Scan Storms" by staggering plugin execution. Running intensive tasks like `NMAP` or `MASS_DNS` simultaneously can spike CPU and cause database locks.
 * **Database Health:** Large-scale monitoring generates massive event logs. Use the **[DBCLNP (Database Cleanup)](https://www.google.com/search?q=https://docs.netalertx.com/PLUGINS/%23dbclnp)** plugin to prune old records and keep the SQLite database performant.
 * **Resource Management:** For high-device counts, consider increasing the memory limit for the container and utilizing `tmpfs` for temporary files to reduce SD card/disk I/O bottlenecks.
+* Enable the `DEEP_SLEEP` setting.
 
 > [!IMPORTANT]
 > For a deep dive into hardware requirements, database vacuuming, and specific environment variables for high-load instances, refer to the full **[Performance Optimization Guide](https://docs.netalertx.com/PERFORMANCE/)**.
