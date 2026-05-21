@@ -18,7 +18,7 @@ Effective multi-network monitoring starts with understanding how NetAlertX "sees
 
 ### 2. Automating IT Asset Inventory with Workflows
 
-[Workflows](./WORKFLOWS.md) are the "engine" of NetAlertX, reducing manual overhead as your device list grows. See some examples below.:
+[Workflows](./WORKFLOWS.md) are the "engine" of NetAlertX, reducing manual overhead as your device list grows. See some examples below:
 
 #### A. Logical Ownership & VLAN Tagging
 
@@ -63,7 +63,7 @@ Use conditional logic to categorize devices.
 ```
 #### C. Sync Node Tracking
 
-When using multiple instances, ensure all synchub nodes have a descriptive `SYNC_node_name` name to distinguish between sites.
+When using multiple instances, ensure all sync hub nodes have a descriptive `SYNC_node_name` name to distinguish between sites.
 
 > [!TIP]
 > Always test new workflows in a "Staging" instance. A misconfigured workflow can trigger thousands of unintended updates across your database.

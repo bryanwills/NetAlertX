@@ -126,18 +126,37 @@ def _delete_xss_device(token: str):
     )
 
 
-def _reset_canary(driver):
-    """Inject canary reset so we start each navigation clean."""
-    driver.execute_script("window.__xss_canary = false;")
-
-
 def _read_canary(driver) -> bool:
     """Return True if the XSS canary was tripped."""
     return bool(driver.execute_script("return window.__xss_canary || false;"))
 
 
+def _navigate_with_canary(driver, url, timeout=15):
+    """Navigate to *url* with window.__xss_canary pre-initialised to false.
+
+    Uses CDP Page.addScriptToEvaluateOnNewDocument so the canary is set
+    *before* any page script runs.  If we reset it after driver.get() instead,
+    a payload that fires during page load would set the canary and we would
+    immediately clear the evidence.
+    """
+    result = driver.execute_cdp_cmd(
+        "Page.addScriptToEvaluateOnNewDocument",
+        {"source": "window.__xss_canary = false;"},
+    )
+    script_id = result.get("identifier")
+    try:
+        driver.get(url)
+        wait_for_page_load(driver, timeout=timeout)
+    finally:
+        if script_id:
+            driver.execute_cdp_cmd(
+                "Page.removeScriptToEvaluateOnNewDocument",
+                {"identifier": script_id},
+            )
+
+
 def _force_cache_refresh(driver):
-    """Navigate to /devices.php once to warm the localStorage cache, then go back."""
+    """Clear localStorage to force a fresh device-list fetch on next page load."""
     driver.execute_script("if(window.localStorage){ localStorage.clear(); }")
 
 
@@ -198,10 +217,9 @@ def test_devname_xss_not_executed(xss_driver, path, description):
     """
     driver = xss_driver
 
-    # Navigate and reset canary before the page runs any JS
-    driver.get(f"{BASE_URL}{path}")
-    _reset_canary(driver)          # reset AFTER page load (page may have set it)
-    wait_for_page_load(driver, timeout=15)
+    # Pre-initialise canary via CDP so it is false before any page JS runs.
+    # Resetting after driver.get() would erase evidence of early-firing payloads.
+    _navigate_with_canary(driver, f"{BASE_URL}{path}")
 
     # Give async JS (DataTables, FullCalendar, network tree) time to render
     time.sleep(ASYNC_WAIT_S)
@@ -261,10 +279,11 @@ def test_devname_xss_device_shows_as_escaped_text(xss_driver):
 
     # The body text should contain the literal payload characters as plain text
     body_text = driver.find_element(By.TAG_NAME, "body").text
-    # If the device name is visible at all, it must show as text, not fire XSS
     if "onerror" in body_text:
-        # Good: the word 'onerror' appears as visible text, not as an attribute
-        assert "window.__xss_canary" not in driver.execute_script("return ''") or True
+        # Payload is visible as literal text — confirm it was not also executed
+        assert not driver.execute_script("return window.__xss_canary || false"), (
+            "XSS canary fired even though payload appeared as visible text on devices.php"
+        )
 
     # No <img> with src=x should have been injected by the XSS payload
     injected_imgs = driver.find_elements(By.CSS_SELECTOR, "img[src='x']")
@@ -297,14 +316,8 @@ def test_devname_attribute_break_xss_not_executed(xss_driver, xss_token):
         if resp.status_code not in (200, 201):
             pytest.skip(f"Could not create attribute-break XSS device (HTTP {resp.status_code})")
 
-        # Warm cache
-        xss_driver.get(f"{BASE_URL}/devices.php")
-        wait_for_page_load(driver=xss_driver, timeout=15)
-        time.sleep(ASYNC_WAIT_S)
-
-        _reset_canary(xss_driver)
-        xss_driver.get(f"{BASE_URL}/devices.php")
-        wait_for_page_load(driver=xss_driver, timeout=15)
+        # Pre-set canary via CDP, then navigate — same pattern as main tests.
+        _navigate_with_canary(xss_driver, f"{BASE_URL}/devices.php")
         time.sleep(ASYNC_WAIT_S)
 
         fired = _read_canary(xss_driver)

@@ -333,7 +333,7 @@ function getDeviceData() {
                   // XSS prevention - encode special characters for string fields, but not for arrays (like children dynamic)
                   // Don't move above the handle devChildrenDynamic block because it relies on the original fieldData to generate options
                   fieldData = encodeSpecialChars(fieldData);
-                  console.log(fieldData);
+                  // console.log(fieldData);
 
                   // Generate the input field HTML
                   const inputFormHtml = `<div class="form-group col-xs-12">
