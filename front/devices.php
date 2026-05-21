@@ -883,40 +883,41 @@ function initializeDatatable (status) {
       {orderData: [mapIndx(COL.devIpLong)],  targets: mapIndx(COL.devLastIP) },
 
       // Device Name and FQDN
+      // Use `render` (not `createdCell`) so the HTML is built before DataTables
+      // sets td.innerHTML – preventing raw cellData from being parsed as HTML.
       {targets: [mapIndx(COL.devName), mapIndx(COL.devFQDN)],
-        'createdCell': function (td, cellData, rowData, row, col) {
-
-            // console.log(cellData)
-
-            var displayedValue = cellData;
-
-            if(isEmpty(displayedValue))
-            {
-              displayedValue = "N/A"
+        'render': function (data, type, row) {
+            if (type !== 'display') {
+                return data; // raw value for sort / filter / type detection
             }
-            $(td).html (
-              `<b class="anonymizeDev "
-              >
-                <a href="deviceDetails.php?mac=${rowData[mapIndx(COL.devMac)]}" class="hover-node-info"
-                  data-name="${displayedValue}"
-                  data-ip="${rowData[mapIndx(COL.devLastIP)]}"
-                  data-mac="${rowData[mapIndx(COL.devMac)]}"
-                  data-vendor="${rowData[mapIndx(COL.devVendor)]}"
-                  data-type="${rowData[mapIndx(COL.devType)]}"
-                  data-firstseen="${rowData[mapIndx(COL.devFirstConnection)]}"
-                  data-lastseen="${rowData[mapIndx(COL.devLastConnection)]}"
-                  data-relationship="${rowData[mapIndx(COL.devParentRelType)]}"
-                  data-status="${rowData[mapIndx(COL.devStatus)]}"
-                  data-present="${rowData[mapIndx(COL.devPresentLastScan)]}"
-                  data-alertdown="${rowData[mapIndx(COL.devAlertDown)]}"
-                  data-flapping="${rowData[mapIndx(COL.devFlapping)]}"
-                  data-sleeping="${rowData[COL_EXTRA.devIsSleeping] || 0}"
-                  data-archived="${rowData[COL_EXTRA.devIsArchived] || 0}"
-                  data-isnew="${rowData[COL_EXTRA.devIsNew]    || 0}"
-                  data-icon="${rowData[mapIndx(COL.devIcon)]}">
-                ${displayedValue}
-                </a>
-              </b>`
+
+            var displayedValue = encodeSpecialChars(data);
+
+            if (isEmpty(displayedValue)) {
+                displayedValue = "N/A";
+            }
+
+            return (
+              `<b class="anonymizeDev ">` +
+                `<a href="deviceDetails.php?mac=${row[mapIndx(COL.devMac)]}" class="hover-node-info"` +
+                  ` data-name="${displayedValue}"` +
+                  ` data-ip="${row[mapIndx(COL.devLastIP)]}"` +
+                  ` data-mac="${row[mapIndx(COL.devMac)]}"` +
+                  ` data-vendor="${row[mapIndx(COL.devVendor)]}"` +
+                  ` data-type="${row[mapIndx(COL.devType)]}"` +
+                  ` data-firstseen="${row[mapIndx(COL.devFirstConnection)]}"` +
+                  ` data-lastseen="${row[mapIndx(COL.devLastConnection)]}"` +
+                  ` data-relationship="${row[mapIndx(COL.devParentRelType)]}"` +
+                  ` data-status="${row[mapIndx(COL.devStatus)]}"` +
+                  ` data-present="${row[mapIndx(COL.devPresentLastScan)]}"` +
+                  ` data-alertdown="${row[mapIndx(COL.devAlertDown)]}"` +
+                  ` data-flapping="${row[mapIndx(COL.devFlapping)]}"` +
+                  ` data-sleeping="${row[COL_EXTRA.devIsSleeping] || 0}"` +
+                  ` data-archived="${row[COL_EXTRA.devIsArchived] || 0}"` +
+                  ` data-isnew="${row[COL_EXTRA.devIsNew] || 0}"` +
+                  ` data-icon="${row[mapIndx(COL.devIcon)]}"` +
+                `>${displayedValue}</a>` +
+              `</b>`
             );
       } },
 

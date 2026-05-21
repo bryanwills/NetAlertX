@@ -770,7 +770,7 @@ function reverseTransformers(val, transformers) {
         break;
       case "deviceChip":
         mac = val  // value is mac
-        val =  `${getDevDataByMac(mac, "devName")}`
+        val =  encodeSpecialChars(getDevDataByMac(mac, "devName"))
         break;
       case "deviceRelType":
         val =  val; // nothing to do
@@ -961,7 +961,7 @@ function generateOptions(options, valuesArray, targetField, transformers, placeh
     // Always include selected if options are used as a source
     let selected = options.length !== 0 && valuesArray.includes(item.id) ? 'selected' : '';
 
-    optionsHtml += `<option class="${cssClass}" value="${item.id}" ${selected}>${labelName}</option>`;
+    optionsHtml += `<option class="${cssClass}" value="${encodeSpecialChars(item.id)}" ${selected}>${encodeSpecialChars(labelName)}</option>`;
   });
 
 

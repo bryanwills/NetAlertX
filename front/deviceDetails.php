@@ -517,11 +517,11 @@ function applyDevicePageTitle(mac, name, owner) {
       );
       $('#devicePageInfoPlc').show();
   } else if (!owner || (name && name.toString().includes(owner))) {
-      pageTitleText = name ?? getString("DevDetail_EveandAl_NewDevice");
+      pageTitleText = encodeSpecialChars(name ?? getString("DevDetail_EveandAl_NewDevice"));
       $('#pageTitle').html(pageTitleText);
       $('#devicePageInfoPlc').hide();
   } else {
-      pageTitleText = `${name ?? getString("DevDetail_EveandAl_NewDevice")} (${owner})`;
+      pageTitleText = `${encodeSpecialChars(name ?? getString("DevDetail_EveandAl_NewDevice"))} (${encodeSpecialChars(owner)})`;
       $('#pageTitle').html(pageTitleText);
       $('#devicePageInfoPlc').hide();
   }
