@@ -971,7 +971,7 @@ def update_devices_names(pm):
         (resolver.resolve_nbtlookup, "NBTSCAN"),
     ]
 
-    def resolve_devices(devices, resolve_both_name_and_fqdn=True):
+    def resolve_devices(devices, resolve_both_name_and_fqdn=True, active_labels=None):
         """
         Attempts to resolve device names and/or FQDNs using available strategies.
 
@@ -979,6 +979,10 @@ def update_devices_names(pm):
             devices (list): List of devices to resolve.
             resolve_both_name_and_fqdn (bool): If True, resolves both name and FQDN.
                                                If False, resolves only FQDN.
+            active_labels (set|None): If provided, only strategies whose label is in
+                                      this set are tried. Used by Step 1b to prevent
+                                      non-SET_ALWAYS plugins from short-circuiting
+                                      SET_ALWAYS ones.
 
         Returns:
             recordsToUpdate (list): List of
@@ -997,6 +1001,8 @@ def update_devices_names(pm):
 
             # Attempt each resolution strategy in order
             for resolve_fn, label in strategies:
+                if active_labels is not None and label not in active_labels:
+                    continue
                 resolved = resolve_fn(device["devMac"], device["devLastIP"])
 
                 # Extract values
@@ -1111,7 +1117,7 @@ def update_devices_names(pm):
         mylog("debug", f"[Update Device Name] SET_ALWAYS re-resolve: active plugins={set_always_plugins}, candidate devices={len(resolvableDevices)}")
 
         if resolvableDevices:
-            recordsToUpdate, _, fs, notFound = resolve_devices(resolvableDevices)
+            recordsToUpdate, _, fs, notFound = resolve_devices(resolvableDevices, active_labels=set(set_always_plugins))
 
             res_string = f"{fs['DIGSCAN']}/{fs['AVAHISCAN']}/{fs['NSLOOKUP']}/{fs['NBTSCAN']}"
             mylog("verbose", f"[Update Device Name] SET_ALWAYS re-resolve - Found (DIG/AVAHI/NSL/NBT): {len(recordsToUpdate)} ({res_string}), Not Found: {notFound}")
