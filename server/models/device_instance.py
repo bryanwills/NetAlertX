@@ -53,6 +53,15 @@ class DeviceInstance:
             WHERE devName IN ("(unknown)", "(name not found)", "")
         """)
 
+    def getResolvable(self):
+        """Return devices that have a name already set but are not USER/LOCKED protected.
+        Used by SET_ALWAYS name-resolution plugins to re-resolve existing names."""
+        return self._fetchall("""
+            SELECT * FROM Devices
+            WHERE devName NOT IN ("(unknown)", "(name not found)", "")
+              AND COALESCE(devNameSource, '') NOT IN ('USER', 'LOCKED')
+        """)
+
     def getValueWithMac(self, column_name, devMac):
         row = self._fetchone(f"""
             SELECT {column_name} FROM Devices WHERE devMac = ?

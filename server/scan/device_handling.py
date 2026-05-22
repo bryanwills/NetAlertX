@@ -1090,6 +1090,71 @@ def update_devices_names(pm):
                 plugin_records,
             )
 
+    # --- Step 1b: Re-resolve already-named devices for SET_ALWAYS plugins ---
+    # If any name-resolution plugin declares devName in SET_ALWAYS, it should be
+    # able to overwrite names set by lower-priority plugins.  Step 1 only covers
+    # unknown devices, so we run a second pass here limited to devices that:
+    #   - already have a name (not unknown/empty), AND
+    #   - are not USER/LOCKED protected
+    # recordsNotFound is intentionally discarded: if resolution fails, the
+    # existing name is kept as-is.
+    name_resolution_plugins = [label for _, label in strategies]
+    set_always_plugins = [
+        p for p in name_resolution_plugins
+        if "devName" in get_plugin_authoritative_settings(p).get("set_always", [])
+    ]
+
+    if not set_always_plugins:
+        mylog("debug", "[Update Device Name] SET_ALWAYS re-resolve: skipped (no name-resolution plugin has devName in SET_ALWAYS)")
+    else:
+        resolvableDevices = device_handler.getResolvable()
+        mylog("debug", f"[Update Device Name] SET_ALWAYS re-resolve: active plugins={set_always_plugins}, candidate devices={len(resolvableDevices)}")
+
+        if resolvableDevices:
+            recordsToUpdate, _, fs, notFound = resolve_devices(resolvableDevices)
+
+            res_string = f"{fs['DIGSCAN']}/{fs['AVAHISCAN']}/{fs['NSLOOKUP']}/{fs['NBTSCAN']}"
+            mylog("verbose", f"[Update Device Name] SET_ALWAYS re-resolve - Found (DIG/AVAHI/NSL/NBT): {len(recordsToUpdate)} ({res_string}), Not Found: {notFound}")
+
+            records_by_plugin = {}
+            for entry in recordsToUpdate:
+                records_by_plugin.setdefault(entry[1], []).append(entry)
+
+            total_updated = 0
+            for plugin_label, plugin_records in records_by_plugin.items():
+                plugin_settings = get_plugin_authoritative_settings(plugin_label)
+                name_clause = get_overwrite_sql_clause(
+                    "devName", "devNameSource", plugin_settings
+                )
+                fqdn_clause = get_overwrite_sql_clause(
+                    "devFQDN", "devFQDNSource", plugin_settings
+                )
+
+                sql.executemany(
+                    f"""UPDATE Devices
+                        SET devName = CASE
+                            WHEN {name_clause} THEN ?
+                            ELSE devName
+                        END,
+                            devNameSource = CASE
+                            WHEN {name_clause} THEN ?
+                            ELSE devNameSource
+                        END,
+                            devFQDN = CASE
+                            WHEN {fqdn_clause} THEN ?
+                            ELSE devFQDN
+                        END,
+                            devFQDNSource = CASE
+                            WHEN {fqdn_clause} THEN ?
+                            ELSE devFQDNSource
+                        END
+                        WHERE devMac = ?""",
+                    plugin_records,
+                )
+                total_updated += sql.rowcount
+
+            mylog("verbose", f"[Update Device Name] SET_ALWAYS re-resolve - DB rows updated: {total_updated}")
+
     # --- Step 2: Optionally refresh FQDN for all devices ---
     if get_setting_value("REFRESH_FQDN"):
         allDevices = device_handler.getAll()
