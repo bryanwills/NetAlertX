@@ -43,7 +43,7 @@ Device types set in NetAlertX (e.g. `Smartphone`, `Laptop`, `NAS`) are automatic
 |---|---|---|
 | `ADGUARDEXP_RUN` | `disabled` | When to run: `disabled`, `once`, or `schedule` |
 | `ADGUARDEXP_RUN_SCHD` | `0 * * * *` | Cron schedule (default: hourly) |
-| `ADGUARDEXP_URL` | `http://192.168.11.1:3000` | Base URL of AdGuard Home web UI |
+| `ADGUARDEXP_URL` | `http://localhost:3000` | Base URL of AdGuard Home web UI |
 | `ADGUARDEXP_USER` | `admin` | AdGuard Home username |
 | `ADGUARDEXP_PASSWORD` | *(empty)* | AdGuard Home password |
 | `ADGUARDEXP_VERIFYSSL` | `true` | Verify TLS cert; set `false` for self-signed certs |
@@ -93,7 +93,7 @@ Devices with an unrecognised or empty type are exported without a tag.
 
 When `ADGUARDEXP_DELETE=true`, the plugin only removes clients it previously created — it will never delete clients you added manually in AdGuard Home. Ownership is tracked in a local state file at:
 
-```
+```text
 /app/db/state.ADGUARDEXP.json
 ```
 
@@ -103,13 +103,13 @@ When `ADGUARDEXP_DELETE=true`, the plugin only removes clients it previously cre
 
 Plugin logs are written to:
 
-```
+```text
 /tmp/log/plugins/script.ADGUARDEXP.log
 ```
 
 Result rows (used by the NetAlertX UI) are written to:
 
-```
+```text
 /tmp/log/plugins/last_result.ADGUARDEXP.log
 ```
 
@@ -133,8 +133,8 @@ Result rows (used by the NetAlertX UI) are written to:
 
 ---
 
-## Notes
+### Other info
 
 - Version: 1.0.0
-- Author: [natecj](https://github.com/natecj)
-- Release Date: 2026-05-10
+- Maintainer: [natecj](https://github.com/natecj)
+- Release Date: 10-May-2026

@@ -346,6 +346,20 @@ class TestSyncToAdguard:
             sync_to_adguard(agrd, [], use_mac=True, delete_missing=True)
         agrd.delete_client.assert_not_called()
 
+    def test_manual_client_matched_by_id_not_adopted(self, tmp_path):
+        # A manually-created AdGuard client whose IP matches a NetAlertX device
+        # must not be added to managed_names — so DELETE=true won't touch it later.
+        state = tmp_path / "state.json"
+        state.write_text(json.dumps({"managed": []}))
+        existing = [{"name": "Manual Client", "ids": ["10.0.0.5"], "tags": []}]
+        agrd = _mock_agrd(existing=existing)
+        device = {"mac": "", "name": "Manual Client", "last_ip": "10.0.0.5", "dev_type": ""}
+        with patch("script.STATE_FILE", str(state)):
+            sync_to_adguard(agrd, [device], use_mac=True, delete_missing=True)
+            loaded = load_managed_names()
+        assert "Manual Client" not in loaded
+        agrd.delete_client.assert_not_called()
+
     def test_device_with_no_usable_id_is_skipped(self, tmp_path):
         agrd = _mock_agrd(existing=[])
         device = {"mac": "00:00:00:00:00:00", "name": "Ghost", "last_ip": "0.0.0.0", "dev_type": ""}

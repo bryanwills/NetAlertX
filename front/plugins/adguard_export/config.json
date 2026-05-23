@@ -340,6 +340,7 @@
     {
       "column": "Object_PrimaryID",
       "mapped_to_column": "cur_MAC",
+      "show": true,
       "type": {
         "dataType": "string",
         "elements": [
@@ -366,6 +367,7 @@
     {
       "column": "Object_SecondaryID",
       "mapped_to_column": "cur_IP",
+      "show": true,
       "type": {
         "dataType": "string",
         "elements": [
@@ -387,6 +389,7 @@
     {
       "column": "Watched_Value1",
       "mapped_to_column": "cur_Name",
+      "show": true,
       "type": {
         "dataType": "string",
         "elements": [
@@ -407,6 +410,7 @@
     },
     {
       "column": "Watched_Value2",
+      "show": true,
       "type": {
         "dataType": "string",
         "elements": [
@@ -427,6 +431,7 @@
     },
     {
       "column": "Watched_Value3",
+      "show": true,
       "type": {
         "dataType": "string",
         "elements": [
@@ -447,6 +452,7 @@
     },
     {
       "column": "Watched_Value4",
+      "show": true,
       "type": {
         "dataType": "string",
         "elements": [
@@ -486,6 +492,7 @@
     },
     {
       "column": "Extra",
+      "show": true,
       "type": {
         "dataType": "string",
         "elements": [
@@ -512,6 +519,7 @@
     {
       "column": "ForeignKey",
       "mapped_to_column": "dev_MAC",
+      "show": true,
       "type": {
         "dataType": "string",
         "elements": [

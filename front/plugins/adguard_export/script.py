@@ -330,15 +330,18 @@ def sync_to_adguard(
                 try:
                     agrd.update_client(old_name, merged_data)
                     mylog("verbose", [f"[{pluginName}]   UPDATE  {old_name!r} → {device['name']!r}  ids={client_data['ids']}"])
-                    managed_names.discard(old_name)
-                    managed_names.add(device["name"])
+                    # Only track the rename for clients we already own — never adopt a manually-created client.
+                    if old_name in managed_names:
+                        managed_names.discard(old_name)
+                        managed_names.add(device["name"])
                     updated += 1
                 except requests.HTTPError as exc:
                     mylog("verbose", [f"[{pluginName}]   ERROR updating {device['name']!r}: {exc}"])
                     skipped += 1
             else:
                 mylog("verbose", [f"[{pluginName}]   SKIP (no change)  {device['name']!r}"])
-                managed_names.add(device["name"])
+                # No managed_names update: if we created this client it's already in the state
+                # file; if it's a manually-created client we must not claim ownership of it.
                 skipped += 1
         else:
             try:
