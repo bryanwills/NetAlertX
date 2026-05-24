@@ -175,23 +175,35 @@ def main():
             if file_name != 'last_result.log':
                 mylog('verbose', [f'[{pluginName}] Processing: "{file_name}"'])
 
-                # make sure the file has the correct name (e.g last_result.encoded.Node_1.1.log) to skip any otehr plugin files
-                if len(file_name.split('.')) > 2:
-                    # Extract node name from either last_result.decoded.Node_1.1.log or last_result.Node_1.log
-                    parts = file_name.split('.')
-                    # If decoded/encoded file, node name is at index 2; otherwise at index 1
-                    syncHubNodeName = parts[2] if 'decoded' in file_name or 'encoded' in file_name else parts[1]
+                # Only process sync artifacts:
+                #   PUSH mode (decoded): last_result.PLUGIN.decoded.NodeName.N.log (6 parts)
+                #   PULL mode:           last_result.NodeName.log                  (3 parts, valid JSON)
+                # Local plugin result files (last_result.ARPSCAN.log) are also 3 parts but
+                # are pipe-delimited — catch and skip them via the JSONDecodeError guard below.
+                parts = file_name.split('.')
+                if len(parts) > 2:
+                    # Extract node name:
+                    #   decoded/encoded: last_result.PLUGIN.decoded.NodeName.N.log → parts[3]
+                    #   pull mode:       last_result.NodeName.log                  → parts[1]
+                    if 'decoded' in file_name or 'encoded' in file_name:
+                        syncHubNodeName = parts[3]
+                    else:
+                        syncHubNodeName = parts[1]
 
                     file_path = f"{LOG_PATH}/{file_name}"
 
-                    with open(file_path, 'r') as f:
-                        data = json.load(f)
+                    try:
+                        with open(file_path, 'r') as f:
+                            data = json.load(f)
                         for device in data['data']:
                             device['devMac'] = str(device['devMac']).lower()
                             if device['devMac'].lower() not in unique_mac_addresses:
                                 device['devSyncHubNode'] = syncHubNodeName
                                 unique_mac_addresses.add(device['devMac'].lower())
                                 device_data.append(device)
+                    except (json.JSONDecodeError, KeyError):
+                        mylog('verbose', [f'[{pluginName}] Skipping "{file_name}" - not a valid sync JSON payload'])
+                        continue
 
                     # Rename the file to "processed_" + current name
                     new_file_name = f"processed_{file_name}"
