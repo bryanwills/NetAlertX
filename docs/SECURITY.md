@@ -8,7 +8,7 @@ This includes (but is not limited to):
 - Running NetAlertX only on networks where you have legal authorization
 - Keeping your deployment up to date with the latest patches
 
-> NetAlertX is not responsible for misuse, misconfiguration, or unsecure deployments. Always test and secure your setup before exposing it to the outside world.
+> NetAlertX is not responsible for misuse, misconfiguration, or insecure deployments. Always test and secure your setup before exposing it to the outside world. Users interacting with the UI are treated as trusted actors within the deployment model. Always properly secure and isolate your deployment before exposing it externally.
 
 # 🔐 Securing Your NetAlertX Instance
 
