@@ -6,7 +6,7 @@ import datetime
 import re
 import pytz
 from typing import Union, Optional
-from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
+from zoneinfo import ZoneInfo
 import email.utils
 import conf
 # from const import *

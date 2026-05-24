@@ -824,8 +824,7 @@ def process_plugin_events(db, plugin, plugEventsArr):
                         # find corresponding object for the event and merge
                         if plugObj.idsHash == tmpObjFromEvent.idsHash:
                             if (
-                                plugObj.status == "missing-in-last-scan"
-                                or tmpObjFromEvent.status == "watched-changed"
+                                plugObj.status == "missing-in-last-scan" or tmpObjFromEvent.status == "watched-changed"
                             ):
                                 changed_this_cycle.add(tmpObjFromEvent.idsHash)
                             pluginObjects[index] = combine_plugin_objects(
