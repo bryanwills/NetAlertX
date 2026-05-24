@@ -194,8 +194,7 @@ def main():
                     #   last_result.office.encoded.lab.log
                     # from being incorrectly parsed as PUSH artifacts.
                     is_push_artifact = (
-                        ('.decoded.' in file_name or '.encoded.' in file_name)
-                        and file_name.rsplit('.', 2)[1].isdigit()
+                        ('.decoded.' in file_name or '.encoded.' in file_name) and file_name.rsplit('.', 2)[1].isdigit()
                     )
 
                     if is_push_artifact:

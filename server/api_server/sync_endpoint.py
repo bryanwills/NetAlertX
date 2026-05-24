@@ -1,3 +1,4 @@
+import json
 import os
 import base64
 from flask import jsonify, request
@@ -6,8 +7,6 @@ from helper import get_setting_value
 from utils.datetime_utils import timeNowUTC
 from messaging.in_app import write_notification
 
-INSTALL_PATH = os.getenv("NETALERTX_APP", "/app")
-
 # Make sure log level is initialized correctly
 lggr = Logger(get_setting_value('LOG_LEVEL'))
 
@@ -15,7 +14,7 @@ lggr = Logger(get_setting_value('LOG_LEVEL'))
 def handle_sync_get():
     """Handle GET requests for SYNC (NODE → HUB)."""
 
-    # get all dwevices from the api endpoint
+    # get all devices from the api endpoint
     api_path = os.environ.get('NETALERTX_API', '/tmp/api')
 
     file_path = f"/{api_path}/table_devices.json"
@@ -48,7 +47,7 @@ def handle_sync_get():
 def handle_sync_post():
     """Handle POST requests for SYNC (HUB receiving from NODE)."""
 
-    mylog("verbose", [
+    mylog("debug", [
         "[SYNC API] ENTER handle_sync_post",
         f"method={request.method}",
         f"content_type={request.content_type}",
@@ -59,20 +58,22 @@ def handle_sync_post():
     # ---- RAW BODY (critical for debugging encoding / encryption issues)
     try:
         raw = request.get_data(cache=False)
-        mylog("verbose", [
-            f"[SYNC API] raw_bytes_len={len(raw)}",
-            f"[SYNC API] raw_preview={raw[:200]}"
+        mylog("debug", [
+            f"[SYNC API] raw_bytes_len={len(raw)} raw_preview={raw[:200]}"
         ])
     except Exception as e:
         mylog("none", [f"[SYNC API] FAILED reading raw body: {e}"])
+        write_notification("[SYNC API] FAILED reading raw body - see app.log", 'alert', timeNowUTC())
         return jsonify({"error": "failed reading body"}), 400
 
-    # ---- JSON PARSE (this is a very common failure point)
+    # ---- JSON PARSE (from already-read raw bytes to avoid empty-stream re-read)
     try:
-        body = request.get_json(force=False, silent=False)
-        mylog("verbose", [f"[SYNC API] parsed_json={body}"])
+        body = json.loads(raw)
+        mylog("debug", [f"[SYNC API] parsed_json={body}"])
     except Exception as e:
-        mylog("none", [f"[SYNC API] JSON_PARSE_FAILED={e}"])
+        msg = f"[SYNC API] JSON_PARSE_FAILED={e}"
+        mylog("none", [msg])
+        write_notification(msg, 'alert', timeNowUTC())
         return jsonify({"error": "invalid json"}), 400
 
     # ---- EXTRACT FIELDS
@@ -80,20 +81,19 @@ def handle_sync_post():
     node_name = body.get("node_name", "")
     plugin = body.get("plugin", "")
 
-    mylog("verbose", [
-        f"[SYNC API] node_name={repr(node_name)}",
-        f"[SYNC API] plugin={repr(plugin)}",
-        f"[SYNC API] data_type={type(data).__name__}",
-        f"[SYNC API] data_len={len(data) if isinstance(data, str) else 'non-string'}"
+    mylog("debug", [
+        f"[SYNC API] node_name={repr(node_name)} plugin={repr(plugin)} data_type={type(data).__name__} data_len={len(data) if isinstance(data, str) else 'non-string'}"
     ])
 
-    storage_path = INSTALL_PATH + "/log/plugins"
+    storage_path = os.getenv("NETALERTX_PLUGINS_LOG", "/tmp/log/plugins")
 
     try:
         os.makedirs(storage_path, exist_ok=True)
-        mylog("verbose", [f"[SYNC API] storage_path_ready={storage_path}"])
+        mylog("debug", [f"[SYNC API] storage_path_ready={storage_path}"])
     except Exception as e:
-        mylog("none", [f"[SYNC API] MKDIR_FAILED={e}"])
+        msg = f"[SYNC API] MKDIR_FAILED={e}"
+        mylog("none", [msg])
+        write_notification(msg, 'alert', timeNowUTC())
         return jsonify({"error": "storage path error"}), 500
 
     # ---- FILE COUNT LOGIC
@@ -108,13 +108,11 @@ def handle_sync_post():
         ]
         file_count = len(encoded_files + decoded_files) + 1
 
-        mylog("verbose", [
-            f"[SYNC API] encoded_files={len(encoded_files)}",
-            f"[SYNC API] decoded_files={len(decoded_files)}",
-            f"[SYNC API] file_count={file_count}"
-        ])
+        mylog("debug", [f"[SYNC API] encoded_files={len(encoded_files)} decoded_files={len(decoded_files)} file_count={file_count}"])
     except Exception as e:
-        mylog("none", [f"[SYNC API] LISTDIR_FAILED={e}"])
+        msg = f"[SYNC API] LISTDIR_FAILED={e}"
+        mylog("none", [msg])
+        write_notification(msg, 'alert', timeNowUTC())
         return jsonify({"error": "listdir failed"}), 500
 
     # ---- FILE PATH
@@ -125,7 +123,6 @@ def handle_sync_post():
 
     mylog("verbose", [f"[SYNC API] file_path_new={file_path_new}"])
 
-    # ---- WRITE FILE (final critical point)
     try:
         if not isinstance(data, str):
             data = str(data)
@@ -134,15 +131,15 @@ def handle_sync_post():
             f.write(data)
 
     except Exception as e:
-        import traceback
-        mylog("none", [
-            f"[SYNC API] WRITE_FAILED={e}",
-            traceback.format_exc()
-        ])
+
+        msg = f"[Plugin: SYNC] Data write failed ({file_path_new}): {e}"
+        mylog("none", [msg])
+        write_notification(msg, 'alert', timeNowUTC())
         return jsonify({"error": str(e)}), 500
 
     msg = f"[Plugin: SYNC] Data received ({file_path_new})"
-    write_notification(msg, "info", timeNowUTC())
+    if lggr.isAbove('verbose'):
+        write_notification(msg, 'info', timeNowUTC())
     mylog("verbose", [msg])
 
     return jsonify({"message": "Data received and stored successfully"}), 200
