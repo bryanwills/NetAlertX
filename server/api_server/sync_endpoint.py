@@ -11,6 +11,7 @@ INSTALL_PATH = os.getenv("NETALERTX_APP", "/app")
 # Make sure log level is initialized correctly
 lggr = Logger(get_setting_value('LOG_LEVEL'))
 
+
 def handle_sync_get():
     """Handle GET requests for SYNC (NODE → HUB)."""
 

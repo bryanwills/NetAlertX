@@ -543,10 +543,12 @@ def execute_plugin(db, all_plugins, plugin):
                     # Append the final parameters to sqlParams
                     sqlParams.append(tuple(base_params))
 
-            # keep current instance log file, delete all from other nodes
-            if filename != "last_result.log" and os.path.exists(full_path):
-                os.remove(full_path)  # DEBUG:TODO uncomment 🐛
-                mylog("verbose", f"[Plugins] Processed and deleted file: {full_path} ")
+            # Delete only files received from other nodes (identified by .encoded. or .decoded. in the name).
+            # Local result files (e.g. last_result.ARPSCAN.log) are overwritten each cycle and must
+            # survive so the SYNC plugin can read and forward them to the hub.
+            if (".encoded." in filename or ".decoded." in filename) and os.path.exists(full_path):
+                os.remove(full_path)
+                mylog("verbose", f"[Plugins] Processed and deleted node-sync file: {full_path}")
 
     # app-db-query
     if plugin["data_source"] == "app-db-query":
