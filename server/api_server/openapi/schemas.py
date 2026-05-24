@@ -893,9 +893,10 @@ class CreateNotificationRequest(BaseModel):
 
 class SyncPushRequest(BaseModel):
     """Request to push data to sync."""
-    data: dict = Field(..., description="Data to sync")
+    data: str = Field(..., description="Encrypted data payload (ciphertext string)")
     node_name: str = Field(..., description="Name of the node sending data")
     plugin: str = Field(..., description="Plugin identifier")
+    file_path: Optional[str] = Field(None, description="Source file path on the node")
 
 
 class SyncPullResponse(BaseResponse):

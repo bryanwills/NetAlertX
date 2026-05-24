@@ -47,9 +47,10 @@ def handle_sync_get():
 
 def handle_sync_post():
     """Handle POST requests for SYNC (HUB receiving from NODE)."""
-    data = request.form.get("data", "")
-    node_name = request.form.get("node_name", "")
-    plugin = request.form.get("plugin", "")
+    body = request.get_json(silent=True) or {}
+    data = body.get("data", "")
+    node_name = body.get("node_name", "")
+    plugin = body.get("plugin", "")
 
     storage_path = INSTALL_PATH + "/log/plugins"
     os.makedirs(storage_path, exist_ok=True)

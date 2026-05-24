@@ -46,7 +46,7 @@ def _send_data(api_token, file_content, encryption_key, file_path, node_name, pr
     }
     headers = {"Authorization": f"Bearer {api_token}"}
     try:
-        response = requests.post(hub_url + API_ENDPOINT, data=data, headers=headers, timeout=5)
+        response = requests.post(hub_url + API_ENDPOINT, json=data, headers=headers, timeout=5)
         return response.status_code == 200
     except requests.RequestException:
         return False
@@ -71,6 +71,16 @@ def _node_name_from_filename(file_name: str) -> str:
     """Mirror of the node-name extraction in sync.main()."""
     parts = file_name.split(".")
     return parts[2] if ("decoded" in file_name or "encoded" in file_name) else parts[1]
+
+
+def _should_delete_after_process(filename: str) -> bool:
+    """Mirror of the delete-after-process condition in execute_plugin() (server/plugin.py).
+
+    Only node-sync intermediary files (.encoded. / .decoded.) are removed after
+    processing.  Local plugin result files (last_result.ARPSCAN.log etc.) must
+    survive so SYNC Mode 1 can read and forward them to the hub.
+    """
+    return ".encoded." in filename or ".decoded." in filename
 
 
 def _determine_mode(hub_url: str, send_devices: bool, plugins_to_sync: list, pull_nodes: list):
@@ -205,7 +215,7 @@ class TestSendData:
         with patch("requests.post", return_value=resp) as mock_post:
             _send_data(API_TOKEN, '{"data":[]}', ENCRYPTION_KEY,
                        "/tmp/file.log", "node1", "SYNC", HUB_URL)
-        payload = mock_post.call_args[1]["data"]
+        payload = mock_post.call_args[1]["json"]
         assert "data" in payload          # encrypted blob
         assert payload["file_path"] == "/tmp/file.log"
         assert payload["plugin"] == "SYNC"
@@ -219,7 +229,7 @@ class TestSendData:
         with patch("requests.post", return_value=resp) as mock_post:
             _send_data(API_TOKEN, plaintext, ENCRYPTION_KEY,
                        "/tmp/file.log", "node1", "SYNC", HUB_URL)
-        transmitted = mock_post.call_args[1]["data"]["data"]
+        transmitted = mock_post.call_args[1]["json"]["data"]
         assert transmitted != plaintext
         # Verify it round-trips correctly
         assert decrypt_data(transmitted, ENCRYPTION_KEY) == plaintext
@@ -408,6 +418,50 @@ class TestReceiveInsert:
         # Must not raise OperationalError
         inserted = sync_insert_devices(conn, [device], existing_macs=set())
         assert inserted == 1
+
+
+# ===========================================================================
+# Plugin result file retention (regression for execute_plugin delete bug)
+# ===========================================================================
+
+class TestPluginFileRetention:
+    """Regression for the execute_plugin() delete-condition bug (server/plugin.py).
+
+    Before the fix the condition was ``filename != "last_result.log"``.  No
+    plugin ever writes to that literal name — all write ``last_result.ARPSCAN.log``
+    etc. — so every local result file was deleted immediately after processing,
+    before SYNC Mode 1 had a chance to read and forward it to the hub.
+
+    The corrected condition deletes ONLY ``.encoded.`` / ``.decoded.``
+    node-sync intermediary files.  Local plugin result files must survive.
+    """
+
+    def test_local_result_file_not_flagged_for_deletion(self):
+        assert _should_delete_after_process("last_result.ARPSCAN.log") is False
+
+    def test_local_result_files_for_common_plugins_not_flagged(self):
+        for plugin in ("NMAP", "PIHOLE", "SYNC", "DHCPLEASES", "ARPSCAN"):
+            fname = f"last_result.{plugin}.log"
+            assert _should_delete_after_process(fname) is False, \
+                f"{fname} must NOT be deleted — SYNC Mode 1 still needs it"
+
+    def test_encoded_node_sync_file_flagged_for_deletion(self):
+        assert _should_delete_after_process("last_result.ARPSCAN.encoded.Node1.1.log") is True
+
+    def test_decoded_node_sync_file_flagged_for_deletion(self):
+        assert _should_delete_after_process("last_result.ARPSCAN.decoded.Node1.1.log") is True
+
+    def test_encoded_files_with_various_node_names_flagged(self):
+        for node in ("Node1", "Home_Hub", "Site_B", "OfficeNode"):
+            fname = f"last_result.ARPSCAN.encoded.{node}.1.log"
+            assert _should_delete_after_process(fname) is True, \
+                f"{fname} should be deleted after processing"
+
+    def test_decoded_files_with_various_node_names_flagged(self):
+        for node in ("Node1", "Home_Hub", "Site_B"):
+            fname = f"last_result.ARPSCAN.decoded.{node}.2.log"
+            assert _should_delete_after_process(fname) is True, \
+                f"{fname} should be deleted after processing"
 
     def test_empty_device_list_returns_zero(self, conn):
         assert sync_insert_devices(conn, [], existing_macs=set()) == 0
