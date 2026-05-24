@@ -493,9 +493,8 @@ def _parse_sync_payload(file_path: str) -> list:
     Returns the list of device dicts on success, or raises nothing on invalid
     input — callers should catch JSONDecodeError / KeyError and skip the file.
     """
-    import json as _json
     with open(file_path, "r") as f:
-        data = _json.load(f)
+        data = json.load(f)
     return data["data"]
 
 
@@ -509,7 +508,6 @@ class TestMode3JsonSkip:
     """
 
     def test_valid_sync_payload_is_parsed(self, tmp_path):
-        import json
         payload = {"data": [{"devMac": "aa:bb:cc:dd:ee:01", "devName": "TestDevice"}]}
         f = tmp_path / "last_result.ARPSCAN.decoded.Node1.1.log"
         f.write_text(json.dumps(payload))
@@ -526,7 +524,6 @@ class TestMode3JsonSkip:
 
     def test_json_without_data_key_raises_key_error(self, tmp_path):
         """JSON that lacks the 'data' key must raise KeyError so callers can skip it."""
-        import json
         f = tmp_path / "last_result.UNKNOWN.log"
         f.write_text(json.dumps({"result": []}))
         with pytest.raises(KeyError):
