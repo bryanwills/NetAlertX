@@ -182,13 +182,16 @@ def main():
                 # are pipe-delimited — catch and skip them via the JSONDecodeError guard below.
                 parts = file_name.split('.')
                 if len(parts) > 2:
-                    # Extract node name:
-                    #   decoded/encoded: last_result.PLUGIN.decoded.NodeName.N.log → parts[3]
-                    #   pull mode:       last_result.NodeName.log                  → parts[1]
-                    if 'decoded' in file_name or 'encoded' in file_name:
-                        syncHubNodeName = parts[3]
+                    # Extract node name robustly, handling dots in plugin/node identifiers.
+                    # PUSH (decoded/encoded): split on the '.decoded.'/.encoded.' marker;
+                    #   strip the trailing .N.log counter with rsplit from the right.
+                    # PULL: strip the known 'last_result.' prefix and '.log' suffix.
+                    if '.decoded.' in file_name or '.encoded.' in file_name:
+                        _marker = '.decoded.' if '.decoded.' in file_name else '.encoded.'
+                        _, _after = file_name.split(_marker, 1)
+                        syncHubNodeName = _after.rsplit('.', 2)[0]
                     else:
-                        syncHubNodeName = parts[1]
+                        syncHubNodeName = file_name[len('last_result.'):-len('.log')]
 
                     file_path = f"{LOG_PATH}/{file_name}"
 

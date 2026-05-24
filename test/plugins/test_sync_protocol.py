@@ -71,11 +71,18 @@ def _node_name_from_filename(file_name: str) -> str:
     """Mirror of the node-name extraction in sync.main() (Mode 3).
 
     Real file formats produced by the system:
-      PUSH (post-decode): last_result.PLUGIN.decoded.NodeName.N.log  → parts[3]
-      PULL:               last_result.NodeName.log                   → parts[1]
+      PUSH (post-decode): last_result.PLUGIN.decoded.NodeName.N.log
+        — split on '.decoded.' marker, strip .N.log with rsplit from the right
+      PULL:               last_result.NodeName.log
+        — strip 'last_result.' prefix and '.log' suffix
+
+    Both forms handle dots anywhere in PLUGIN or NodeName.
     """
-    parts = file_name.split(".")
-    return parts[3] if ("decoded" in file_name or "encoded" in file_name) else parts[1]
+    if '.decoded.' in file_name or '.encoded.' in file_name:
+        marker = '.decoded.' if '.decoded.' in file_name else '.encoded.'
+        _, after = file_name.split(marker, 1)
+        return after.rsplit('.', 2)[0]
+    return file_name[len('last_result.'):-len('.log')]
 
 
 def _should_delete_after_process(filename: str) -> bool:
@@ -338,6 +345,26 @@ class TestNodeNameExtraction:
             fname = f"last_result.{plugin}.decoded.HubNode.1.log"
             assert _node_name_from_filename(fname) == "HubNode", \
                 f"Expected 'HubNode' from {fname}"
+
+    # --- dot-in-identifier regression (fragile parts[3] fix) ---
+
+    def test_pull_node_name_with_dots(self):
+        # PULL mode: node name set to e.g. "node.home" or an IP like "192.168.1.82"
+        assert _node_name_from_filename("last_result.node.home.log") == "node.home"
+        assert _node_name_from_filename("last_result.192.168.1.82.log") == "192.168.1.82"
+
+    def test_push_decoded_node_name_with_dots(self):
+        # Node name "Node.Vlan01" must survive the filename round-trip intact
+        assert _node_name_from_filename("last_result.ARPSCAN.decoded.Node.Vlan01.1.log") == "Node.Vlan01"
+
+    def test_push_decoded_plugin_name_with_dots(self):
+        # Hypothetical plugin with a dot in its name must not shift the node index
+        assert _node_name_from_filename("last_result.MY.PLUGIN.decoded.NodeA.1.log") == "NodeA"
+
+    def test_push_both_identifiers_with_dots(self):
+        assert _node_name_from_filename(
+            "last_result.A.B.decoded.x.y.z.1.log"
+        ) == "x.y.z"
 
 
 # ===========================================================================
