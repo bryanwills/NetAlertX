@@ -167,9 +167,11 @@ function initializeDatatable() {
       { targets: [0,5,6,7,8,10,11,12,13], visible: false },
       { targets: [7], orderData: [8] },
       { targets: [9], orderData: [10] },
-      { targets: [1], createdCell: (td, cellData, rowData) => {
-          // Device column as link
-          $(td).html(`<b><a href="deviceDetails.php?mac=${rowData[13]}">${cellData}</a></b>`);
+      // Use `render` (not `createdCell`) so encodeSpecialChars runs before
+      // DataTables sets td.innerHTML, preventing devName XSS execution.
+      { targets: [1], render: function (data, type, row) {
+          if (type !== 'display') { return data; }
+          return `<b><a href="deviceDetails.php?mac=${row[13]}">${encodeSpecialChars(data)}</a></b>`;
       }},
       { targets: [3], createdCell: (td, cellData) => $(td).html(localizeTimestamp(cellData)) },
       { targets: [4,5,6,7], createdCell: (td, cellData) => $(td).html(translateHTMLcodes(cellData)) }

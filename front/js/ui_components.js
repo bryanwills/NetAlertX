@@ -997,7 +997,7 @@ function renderDeviceLink(data, container, useName = false) {
     <a href="${badge.url}" target="_blank">
       <span class="custom-chip">
         <span class="iconPreview">${atob(device.devIcon)}</span>
-        ${useName ? device.devName : data.text}
+        ${useName ? encodeSpecialChars(device.devName) : data.text}
         <span>
           (${badge.iconHtml})
         </span>
@@ -1063,7 +1063,7 @@ function initHoverNodeInfo() {
 
       const html = `
         <div>
-          <b> <div class="iconPreview">${atob(icon)}</div> </b><b class="devName"> ${name}</b><br>
+          <b> <div class="iconPreview">${atob(icon)}</div> </b><b class="devName"> ${encodeSpecialChars(name)}</b><br>
         </div>
         <hr/>
         <div class="line">

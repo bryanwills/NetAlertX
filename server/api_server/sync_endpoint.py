@@ -1,12 +1,15 @@
 import os
 import base64
 from flask import jsonify, request
-from logger import mylog
+from logger import mylog, Logger
 from helper import get_setting_value
 from utils.datetime_utils import timeNowUTC
 from messaging.in_app import write_notification
 
 INSTALL_PATH = os.getenv("NETALERTX_APP", "/app")
+
+# Make sure log level is initialized correctly
+lggr = Logger(get_setting_value('LOG_LEVEL'))
 
 
 def handle_sync_get():
@@ -28,7 +31,11 @@ def handle_sync_get():
 
     response_data = base64.b64encode(raw_data).decode("utf-8")
 
-    write_notification("[Plugin: SYNC] Data sent", "info", timeNowUTC())
+    message = "[Plugin: SYNC] Data sent"
+    mylog('verbose', [message])
+    if lggr.isAbove('verbose'):
+        write_notification(message, 'info', timeNowUTC())
+
     return jsonify({
         "node_name": get_setting_value("SYNC_node_name"),
         "status": 200,
@@ -40,9 +47,10 @@ def handle_sync_get():
 
 def handle_sync_post():
     """Handle POST requests for SYNC (HUB receiving from NODE)."""
-    data = request.form.get("data", "")
-    node_name = request.form.get("node_name", "")
-    plugin = request.form.get("plugin", "")
+    body = request.get_json(silent=True) or {}
+    data = body.get("data", "")
+    node_name = body.get("node_name", "")
+    plugin = body.get("plugin", "")
 
     storage_path = INSTALL_PATH + "/log/plugins"
     os.makedirs(storage_path, exist_ok=True)

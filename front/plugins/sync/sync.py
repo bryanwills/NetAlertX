@@ -298,7 +298,7 @@ def send_data(api_token, file_content, encryption_key, file_path, node_name, pre
         final_endpoint = hub_url + endpoint
 
         try:
-            response = requests.post(final_endpoint, data=data, headers=headers, timeout=5)
+            response = requests.post(final_endpoint, json=data, headers=headers, timeout=5)
             mylog('verbose', [f'[{pluginName}] Tried endpoint: {final_endpoint}, status: {response.status_code}'])
 
             if response.status_code == 200:
