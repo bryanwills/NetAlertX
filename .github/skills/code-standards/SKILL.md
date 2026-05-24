@@ -13,7 +13,7 @@ description: NetAlertX coding standards and conventions. Use this when writing c
 - follow DRY principle - maintainability of code is more important than speed of implementation
 - code files should be less than 500 LOC for better maintainability
 - DB columns must not contain underscores, use camelCase instead (e.g., deviceInstanceId, not device_instance_id)
-- treat DB as temporary storage for stats, long term configuration should be stored in the `/config` folder, the `/config` folder should allow you to restore most of your functionality (excluding historical data)
+- treat DB as temporary storage for stats, long-term configuration should be stored in the `/config` folder, the `/config` folder should allow you to restore most of your functionality (excluding historical data)
 - never access DB directly from application layers, always use helper functions in `server/db/db_helper.py` and implement new functionality in handlers (e.g., `DeviceInstance` in `server/models/device_instance.py`)
 - always validate and normalize MAC addresses before writing to DB (use `normalize_mac` from `plugin_helper.py`)
 - all subprocess calls must set explicit timeouts

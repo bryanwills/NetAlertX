@@ -40,7 +40,7 @@ def auth_headers(token):
 
 
 # ========================================================================
-# POST /sync – authentication
+# POST /sync - authentication
 # ========================================================================
 
 def test_sync_post_no_token_is_forbidden(client):
@@ -54,7 +54,7 @@ def test_sync_post_invalid_token_is_forbidden(client):
 
 
 # ========================================================================
-# POST /sync – content-type enforcement
+# POST /sync - content-type enforcement
 # Regression: node used to send data= (form-encoded); validation rejects it.
 # ========================================================================
 
@@ -111,7 +111,7 @@ def test_sync_post_json_body_writes_encoded_file(client, api_token, tmp_path):
 
 
 # ========================================================================
-# GET /sync – authentication
+# GET /sync - authentication
 # ========================================================================
 
 def test_sync_get_no_token_is_forbidden(client):
