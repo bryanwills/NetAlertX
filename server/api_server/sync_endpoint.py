@@ -6,8 +6,6 @@ from helper import get_setting_value
 from utils.datetime_utils import timeNowUTC
 from messaging.in_app import write_notification
 
-INSTALL_PATH = os.getenv("NETALERTX_APP", "/app")
-
 # Make sure log level is initialized correctly
 lggr = Logger(get_setting_value('LOG_LEVEL'))
 
@@ -52,7 +50,7 @@ def handle_sync_post():
     node_name = body.get("node_name", "")
     plugin = body.get("plugin", "")
 
-    storage_path = INSTALL_PATH + "/log/plugins"
+    storage_path = os.getenv("NETALERTX_PLUGINS_LOG", "/tmp/log/plugins")
     os.makedirs(storage_path, exist_ok=True)
 
     encoded_files = [
