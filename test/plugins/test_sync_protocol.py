@@ -70,15 +70,17 @@ def _get_data(api_token, node_url):
 def _node_name_from_filename(file_name: str) -> str:
     """Mirror of the node-name extraction in sync.main() (Mode 3).
 
-    Real file formats produced by the system:
-      PUSH (post-decode): last_result.PLUGIN.decoded.NodeName.N.log
-        — split on '.decoded.' marker, strip .N.log with rsplit from the right
-      PULL:               last_result.NodeName.log
-        — strip 'last_result.' prefix and '.log' suffix
+    PUSH shape: last_result.PLUGIN.(decoded|encoded).NodeName.N.log
+      — marker present AND the second-to-last segment (before .log) is a digit
+    PULL shape: last_result.NodeName.log
+      — no marker, or marker present but no digit counter
+        (e.g. node name is 'office.encoded.lab')
 
     Both forms handle dots anywhere in PLUGIN or NodeName.
     """
-    if '.decoded.' in file_name or '.encoded.' in file_name:
+    marker_present = '.decoded.' in file_name or '.encoded.' in file_name
+    is_push = marker_present and file_name.rsplit('.', 2)[1].isdigit()
+    if is_push:
         marker = '.decoded.' if '.decoded.' in file_name else '.encoded.'
         _, after = file_name.split(marker, 1)
         return after.rsplit('.', 2)[0]
@@ -365,6 +367,12 @@ class TestNodeNameExtraction:
         assert _node_name_from_filename(
             "last_result.A.B.decoded.x.y.z.1.log"
         ) == "x.y.z"
+
+    def test_pull_with_encoded_in_node_name(self):
+        # Regression: PULL file whose node name contains '.encoded.' must NOT
+        # be mis-classified as a PUSH artifact (no digit counter → PULL branch).
+        assert _node_name_from_filename("last_result.office.encoded.lab.log") == "office.encoded.lab"
+        assert _node_name_from_filename("last_result.site.decoded.backup.log") == "site.decoded.backup"
 
 
 # ===========================================================================
