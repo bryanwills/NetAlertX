@@ -182,13 +182,29 @@ def main():
                 # are pipe-delimited — catch and skip them via the JSONDecodeError guard below.
                 parts = file_name.split('.')
                 if len(parts) > 2:
-                    # Extract node name:
-                    #   decoded/encoded: last_result.PLUGIN.decoded.NodeName.N.log → parts[3]
-                    #   pull mode:       last_result.NodeName.log                  → parts[1]
-                    if 'decoded' in file_name or 'encoded' in file_name:
-                        syncHubNodeName = parts[3]
+                    # PUSH artifacts:
+                    #   last_result.PLUGIN.decoded.NodeName.N.log
+                    #   last_result.PLUGIN.encoded.NodeName.N.log
+                    #
+                    # Require BOTH:
+                    #   1. decoded/encoded marker
+                    #   2. trailing ".<counter>.log" shape
+                    #
+                    # This prevents PULL filenames like:
+                    #   last_result.office.encoded.lab.log
+                    # from being incorrectly parsed as PUSH artifacts.
+                    is_push_artifact = (
+                        ('.decoded.' in file_name or '.encoded.' in file_name) and file_name.rsplit('.', 2)[1].isdigit()
+                    )
+
+                    if is_push_artifact:
+                        _marker = '.decoded.' if '.decoded.' in file_name else '.encoded.'
+                        _, _after = file_name.split(_marker, 1)
+                        syncHubNodeName = _after.rsplit('.', 2)[0]
                     else:
-                        syncHubNodeName = parts[1]
+                        # PULL artifact:
+                        #   last_result.NodeName.log
+                        syncHubNodeName = file_name[len('last_result.'):-len('.log')]
 
                     file_path = f"{LOG_PATH}/{file_name}"
 
@@ -284,7 +300,6 @@ def main():
     return 0
 
 
-# ------------------------------------------------------------------
 # Data retrieval methods
 api_endpoints = [
     "/sync",  # New Python-based endpoint
@@ -293,39 +308,87 @@ api_endpoints = [
 
 # send data to the HUB
 def send_data(api_token, file_content, encryption_key, file_path, node_name, pref, hub_url):
-    """Send encrypted data to HUB, preferring /sync endpoint and falling back to PHP version."""
-    encrypted_data = encrypt_data(file_content, encryption_key)
-    mylog('verbose', [f'[{pluginName}] Sending encrypted_data: "{encrypted_data}"'])
+    """
+    Sends encrypted plugin output from NODE → HUB.
 
+    Flow:
+    1. Encrypt plugin output locally
+    2. Build payload (data + metadata)
+    3. Try each configured HUB endpoint in order
+    4. On success (200) → stop immediately
+    5. On failure → log HUB response + continue fallback
+    6. If all endpoints fail → alert user
+    """
+
+    # STEP 1: Encrypt raw plugin output before transmission
+    encrypted_data = encrypt_data(file_content, encryption_key)
+
+    mylog('verbose', [f"[{pluginName}] Encrypted payload prepared type={type(encrypted_data).__name__}"])
+
+    # STEP 2: Build request payload for HUB sync API
     data = {
         'data': encrypted_data,
         'file_path': file_path,
         'plugin': pref,
         'node_name': node_name
     }
-    headers = {'Authorization': f'Bearer {api_token}'}
 
+    headers = {
+        'Authorization': f'Bearer {api_token}'
+    }
+
+    # STEP 3: Attempt delivery to each configured endpoint
     for endpoint in api_endpoints:
 
         final_endpoint = hub_url + endpoint
 
         try:
-            response = requests.post(final_endpoint, json=data, headers=headers, timeout=5)
-            mylog('verbose', [f'[{pluginName}] Tried endpoint: {final_endpoint}, status: {response.status_code}'])
 
+            # STEP 4: Send request to HUB sync endpoint
+            response = requests.post(
+                final_endpoint,
+                json=data,
+                headers=headers,
+                timeout=5
+            )
+
+            # STEP 5a: Success path (HUB accepted payload)
             if response.status_code == 200:
-                message = f'[{pluginName}] Data for "{file_path}" sent successfully via {final_endpoint}'
+                message = (f'[{pluginName}] Sync success for "{file_path}" via {final_endpoint}')
                 mylog('verbose', [message])
                 write_notification(message, 'info', timeNowUTC())
                 return True
 
-        except requests.RequestException as e:
-            mylog('verbose', [f'[{pluginName}] Error calling {final_endpoint}: {e}'])
+            # STEP 5b: HUB returned error (e.g. 500, 400)
+            try:
+                response_json = response.json()
+            except Exception:
+                response_json = {}
 
-    # If all endpoints fail
-    message = f'[{pluginName}] Failed to send data for "{file_path}" via all endpoints'
-    mylog('verbose', [message])
+            # Extract best available error message
+            error_msg = (
+                response_json.get("error") or response_json.get("message") or response.text
+            )
+
+            msg = (f'[{pluginName}] HUB error on {final_endpoint} [{response.status_code}]: {error_msg}')
+
+            mylog('none', [msg])
+            write_notification(msg, 'alert', timeNowUTC())
+
+            mylog('verbose', [f'[{pluginName}] Endpoint attempted: {final_endpoint} status={response.status_code}'])
+
+        except requests.RequestException as e:
+            # STEP 5c: Network-level failure (timeout, DNS, etc.)
+            mylog('verbose', [f'[{pluginName}] Request exception calling {final_endpoint} error={type(e).__name__}: {e}'])
+
+    # STEP 6: All endpoints failed → final fallback alert
+    message = (
+        f'[{pluginName}] All HUB endpoints failed for "{file_path}"'
+    )
+
+    mylog('none', [message])
     write_notification(message, 'alert', timeNowUTC())
+
     return False
 
 
