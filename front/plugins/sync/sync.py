@@ -5,6 +5,7 @@ import sys
 import requests
 import json
 import base64
+import binascii
 
 
 # Define the installation path and extend the system path for plugin imports
@@ -139,7 +140,11 @@ def main():
             data_base64 = response_json.get('data_base64', '')
 
             # Decode base64 data
-            decoded_data = base64.b64decode(data_base64)
+            try:
+                decoded_data = base64.b64decode(data_base64)
+            except (binascii.Error, ValueError, TypeError) as e:
+                mylog('none', [f'[{pluginName}] Skipping node "{node_name}": base64 decode failed for data_base64="{data_base64}": {e}'])
+                continue
 
             # Create log file name using node name
             log_file_name = f'{file_prefix}.{node_name}.log'
