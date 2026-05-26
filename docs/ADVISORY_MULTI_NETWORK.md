@@ -8,7 +8,7 @@ Effective multi-network monitoring starts with understanding how NetAlertX "sees
 * **B. Plan Subnet & Scan Interfaces:** Explicitly configure each accessible segment in `SCAN_SUBNETS` with the corresponding interfaces.
 * **C. Remote & Inaccessible Networks:** For networks unreachable via ARP, use these strategies:
 * **Alternate Plugins:** Supplement discovery with [SNMPDSC](SNMPDSC) or [DHCP lease imports](https://docs.netalertx.com/PLUGINS/?h=DHCPLSS#available-plugins).
-* **Centralized Multi-Tenant Management using Sync Nodes:** Run secondary NetAlertX instances on isolated networks and aggregate data using the **SYNC plugin**.
+* **Centralized Multi-Tenant Management using Sync Nodes:** Run secondary NetAlertX instances on isolated networks and aggregate data using the **SYNC plugin**. Use the [`SYNC_BEHAVIOR`](../front/plugins/sync/README.md#hub-device-write-behavior-sync_behavior) setting on the hub to control whether the hub inherits device config from nodes or manages it independently.
 * **Manual Entry:** For static assets where only ICMP (ping) status is needed.
 
 > [!TIP]

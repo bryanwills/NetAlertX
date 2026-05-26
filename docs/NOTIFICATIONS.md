@@ -63,5 +63,3 @@ You can completely ignore detected devices globally. This could be because your 
 
 1. Ignored MACs (`NEWDEV_ignored_MACs`) - List of MACs to ignore.
 2. Ignored IPs (`NEWDEV_ignored_IPs`) - List of IPs to ignore.
-
-

@@ -257,7 +257,7 @@ def main():
             cursor.execute("PRAGMA table_info(Devices)")
             db_columns = {row[1] for row in cursor.fetchall()}
 
-            # Filter out existing devices
+            # Filter new devices (MACs not yet known on hub).
             new_devices = [
                 device for device in device_data
                 if device['devMac'].lower() not in existing_mac_addresses
@@ -266,29 +266,80 @@ def main():
             mylog('verbose', [f'[{pluginName}] All devices: "{len(device_data)}"'])
             mylog('verbose', [f'[{pluginName}] New devices: "{len(new_devices)}"'])
 
-            # Prepare the insert statement
-            if new_devices:
+            # Determine which devices to write and how, based on SYNC_BEHAVIOR.
+            #
+            #   copy-new     (default) — INSERT new devices only, using node config.
+            #                            Subsequent node changes only update empty hub fields.
+            #
+            #   carbon-copy            — UPSERT all devices every sync.
+            #                            Node is authoritative; overwrites hub values except
+            #                            USER/LOCKED-sourced fields (enforced by the
+            #                            update_devices_data_from_scan pipeline, not here).
+            #
+            #   hub-defaults           — Skip direct INSERT entirely.
+            #                            Hub creates new devices via create_new_devices()
+            #                            with its own NEWDEV defaults.
+            #
+            # For copy-new/carbon-copy we insert them here (before the Devices INSERT
+            # would pre-seed the table and block create_new_devices()).
+            # For hub-defaults, create_new_devices() handles it naturally.
 
-                # Only keep keys that are real columns in the target DB; computed
-                # or unknown fields are silently dropped regardless of source schema.
-                insert_cols = [k for k in new_devices[0].keys() if k in db_columns]
-                columns = ', '.join(insert_cols)
-                placeholders = ', '.join('?' for _ in insert_cols)
-                sql = f'INSERT INTO Devices ({columns}) VALUES ({placeholders})'
+            sync_behavior = get_setting_value('SYNC_BEHAVIOR') or 'copy-new'
+            mylog('verbose', [f'[{pluginName}] SYNC_BEHAVIOR: "{sync_behavior}"'])
 
-                # Extract only the whitelisted column values for each device
-                values = [tuple(device.get(col) for col in insert_cols) for device in new_devices]
+            if sync_behavior == 'hub-defaults':
+                mylog('verbose', [f'[{pluginName}] hub-defaults: skipping direct Devices write; hub pipeline handles new devices and events'])
 
-                mylog('verbose', [f'[{pluginName}] Inserting Devices SQL   : "{sql}"'])
-                mylog('verbose', [f'[{pluginName}] Inserting Devices VALUES: "{values}"'])
+            else:
+                # Fire "New Device" events for genuinely new MACs before the Devices
+                # INSERT pre-seeds the table (which would block create_new_devices()).
+                if new_devices:
+                    now = timeNowUTC()
+                    cursor.executemany(
+                        """INSERT OR IGNORE INTO Events
+                           (eveMac, eveIp, eveDateTime, eveEventType, eveAdditionalInfo, evePendingAlertEmail)
+                           VALUES (?, ?, ?, 'New Device', ?, 1)""",
+                        [(d['devMac'], d.get('devLastIP', ''), now, d.get('devVendor', ''))
+                         for d in new_devices]
+                    )
+                    mylog('verbose', [f'[{pluginName}] Queued "New Device" events for {len(new_devices)} device(s)'])
 
-                # Use executemany for batch insertion
-                cursor.executemany(sql, values)
+                devices_to_write = new_devices if sync_behavior == 'copy-new' else device_data
 
-                message = f'[{pluginName}] Inserted "{len(new_devices)}" new devices'
+                if devices_to_write:
+                    # Only keep keys that are real DB columns; computed or unknown
+                    # fields are silently dropped regardless of the source schema.
+                    insert_cols = [k for k in devices_to_write[0].keys() if k in db_columns]
+                    columns     = ', '.join(insert_cols)
+                    placeholders = ', '.join('?' for _ in insert_cols)
 
-                mylog('verbose', [message])
-                write_notification(message, 'info', timeNowUTC())
+                    if sync_behavior == 'carbon-copy':
+                        # UPSERT: on MAC conflict update all columns except devMac.
+                        # devMac is the PRIMARY KEY so it is excluded from the SET clause.
+                        # NOTE: this raw SQL bypasses can_overwrite_field() — ALL fields
+                        # including USER/LOCKED-sourced ones are overwritten. Node is fully
+                        # authoritative in this mode.
+                        update_cols   = [col for col in insert_cols if col != 'devMac']
+                        update_clause = ', '.join(f'{col}=excluded.{col}' for col in update_cols)
+                        sql = (
+                            f'INSERT INTO Devices ({columns}) VALUES ({placeholders}) '
+                            f'ON CONFLICT(devMac) DO UPDATE SET {update_clause}'
+                        )
+                    else:
+                        # copy-new: skip silently if MAC already exists (race-condition safety).
+                        sql = f'INSERT OR IGNORE INTO Devices ({columns}) VALUES ({placeholders})'
+
+                    values = [tuple(device.get(col) for col in insert_cols) for device in devices_to_write]
+
+                    mylog('verbose', [f'[{pluginName}] Devices SQL   : "{sql}"'])
+                    mylog('verbose', [f'[{pluginName}] Devices VALUES: "{values}"'])
+
+                    cursor.executemany(sql, values)
+
+                    write_count = len(new_devices) if sync_behavior == 'copy-new' else len(devices_to_write)
+                    message = f'[{pluginName}] {sync_behavior}: wrote "{write_count}" device(s) to Devices'
+                    mylog('verbose', [message])
+                    write_notification(message, 'info', timeNowUTC())
 
         # Commit and close the connection
         conn.commit()

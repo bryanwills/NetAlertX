@@ -569,3 +569,210 @@ class TestMode3JsonSkip:
         f.write_text("")
         with pytest.raises(json.JSONDecodeError):
             _parse_sync_payload(str(f))
+
+
+# ===========================================================================
+# SYNC_BEHAVIOR — three hub device-write modes (Mode 3 – RECEIVE)
+# ===========================================================================
+
+class TestSyncBehavior:
+    """Covers the three SYNC_BEHAVIOR modes for hub-side device writes.
+
+    copy-new     (default) — INSERT new MACs only, skip existing.
+    carbon-copy            — UPSERT all MACs; node values overwrite hub values.
+    hub-defaults           — skip direct write; let hub pipeline handle it.
+    """
+
+    # ------------------------------------------------------------------
+    # copy-new (default – backward compatible)
+    # ------------------------------------------------------------------
+
+    def test_copy_new_inserts_new_device(self, conn):
+        device = make_device_dict(mac="aa:bb:cc:dd:ee:01")
+        written = sync_insert_devices(conn, [device], existing_macs=set(), behavior="copy-new")
+        assert written == 1
+        cur = conn.cursor()
+        cur.execute("SELECT devMac FROM Devices WHERE devMac = ?", ("aa:bb:cc:dd:ee:01",))
+        assert cur.fetchone() is not None
+
+    def test_copy_new_skips_existing_device(self, conn):
+        cur = conn.cursor()
+        cur.execute("INSERT INTO Devices (devMac, devName) VALUES (?, ?)", ("aa:bb:cc:dd:ee:01", "Original"))
+        conn.commit()
+
+        device = make_device_dict(mac="aa:bb:cc:dd:ee:01", devName="Updated")
+        written = sync_insert_devices(conn, [device], existing_macs={"aa:bb:cc:dd:ee:01"}, behavior="copy-new")
+        assert written == 0
+        cur.execute("SELECT devName FROM Devices WHERE devMac = ?", ("aa:bb:cc:dd:ee:01",))
+        assert cur.fetchone()["devName"] == "Original"
+
+    def test_copy_new_only_new_in_mixed_batch(self, conn):
+        cur = conn.cursor()
+        cur.execute("INSERT INTO Devices (devMac, devName) VALUES (?, ?)", ("aa:bb:cc:dd:ee:existing", "Existing"))
+        conn.commit()
+
+        devices = [
+            make_device_dict(mac="aa:bb:cc:dd:ee:existing"),
+            make_device_dict(mac="aa:bb:cc:dd:ee:new1"),
+            make_device_dict(mac="aa:bb:cc:dd:ee:new2"),
+        ]
+        written = sync_insert_devices(conn, devices, existing_macs={"aa:bb:cc:dd:ee:existing"}, behavior="copy-new")
+        assert written == 2
+
+    # ------------------------------------------------------------------
+    # carbon-copy — UPSERT, node is authoritative
+    # ------------------------------------------------------------------
+
+    def test_carbon_copy_inserts_new_device(self, conn):
+        device = make_device_dict(mac="aa:bb:cc:dd:ee:01")
+        written = sync_insert_devices(conn, [device], behavior="carbon-copy")
+        assert written == 1
+        cur = conn.cursor()
+        cur.execute("SELECT devMac FROM Devices WHERE devMac = ?", ("aa:bb:cc:dd:ee:01",))
+        assert cur.fetchone() is not None
+
+    def test_carbon_copy_overwrites_existing_device(self, conn):
+        cur = conn.cursor()
+        cur.execute("INSERT INTO Devices (devMac, devName) VALUES (?, ?)", ("aa:bb:cc:dd:ee:01", "OldName"))
+        conn.commit()
+
+        device = make_device_dict(mac="aa:bb:cc:dd:ee:01", devName="NewName")
+        written = sync_insert_devices(conn, [device], behavior="carbon-copy")
+        assert written == 1
+        cur.execute("SELECT devName FROM Devices WHERE devMac = ?", ("aa:bb:cc:dd:ee:01",))
+        assert cur.fetchone()["devName"] == "NewName"
+
+    def test_carbon_copy_processes_all_devices_in_batch(self, conn):
+        cur = conn.cursor()
+        cur.execute("INSERT INTO Devices (devMac, devName) VALUES (?, ?)", ("aa:bb:cc:dd:ee:01", "OldName"))
+        conn.commit()
+
+        devices = [
+            make_device_dict(mac="aa:bb:cc:dd:ee:01", devName="UpdatedName"),
+            make_device_dict(mac="aa:bb:cc:dd:ee:02"),
+        ]
+        written = sync_insert_devices(conn, devices, behavior="carbon-copy")
+        assert written == 2
+
+        cur.execute("SELECT devName FROM Devices WHERE devMac = ?", ("aa:bb:cc:dd:ee:01",))
+        assert cur.fetchone()["devName"] == "UpdatedName"
+
+    def test_carbon_copy_does_not_duplicate_existing_device(self, conn):
+        cur = conn.cursor()
+        cur.execute("INSERT INTO Devices (devMac, devName) VALUES (?, ?)", ("aa:bb:cc:dd:ee:01", "Original"))
+        conn.commit()
+
+        device = make_device_dict(mac="aa:bb:cc:dd:ee:01", devName="Updated")
+        sync_insert_devices(conn, [device], behavior="carbon-copy")
+
+        cur.execute("SELECT COUNT(*) AS cnt FROM Devices WHERE devMac = ?", ("aa:bb:cc:dd:ee:01",))
+        assert cur.fetchone()["cnt"] == 1
+
+    # ------------------------------------------------------------------
+    # hub-defaults — no direct write, hub pipeline handles it
+    # ------------------------------------------------------------------
+
+    def test_hub_defaults_writes_nothing(self, conn):
+        device = make_device_dict(mac="aa:bb:cc:dd:ee:01")
+        written = sync_insert_devices(conn, [device], behavior="hub-defaults")
+        assert written == 0
+
+    def test_hub_defaults_leaves_db_empty(self, conn):
+        devices = [make_device_dict(mac=f"aa:bb:cc:dd:ee:0{i}") for i in range(3)]
+        sync_insert_devices(conn, devices, behavior="hub-defaults")
+        cur = conn.cursor()
+        cur.execute("SELECT COUNT(*) AS cnt FROM Devices")
+        assert cur.fetchone()["cnt"] == 0
+
+    def test_hub_defaults_returns_zero_for_empty_input(self, conn):
+        assert sync_insert_devices(conn, [], behavior="hub-defaults") == 0
+
+    # ------------------------------------------------------------------
+    # "New Device" events — copy-new and carbon-copy must fire; hub-defaults must not
+    # ------------------------------------------------------------------
+
+    def test_copy_new_fires_new_device_event(self, conn):
+        device = make_device_dict(mac="aa:bb:cc:dd:ee:01")
+        sync_insert_devices(conn, [device], existing_macs=set(), behavior="copy-new")
+        cur = conn.cursor()
+        cur.execute("SELECT COUNT(*) AS cnt FROM Events WHERE eveEventType='New Device' AND eveMac=?", ("aa:bb:cc:dd:ee:01",))
+        assert cur.fetchone()["cnt"] == 1
+
+    def test_copy_new_does_not_fire_event_for_existing_device(self, conn):
+        cur = conn.cursor()
+        cur.execute("INSERT INTO Devices (devMac) VALUES (?)", ("aa:bb:cc:dd:ee:01",))
+        conn.commit()
+        device = make_device_dict(mac="aa:bb:cc:dd:ee:01")
+        sync_insert_devices(conn, [device], existing_macs={"aa:bb:cc:dd:ee:01"}, behavior="copy-new")
+        cur.execute("SELECT COUNT(*) AS cnt FROM Events WHERE eveEventType='New Device'")
+        assert cur.fetchone()["cnt"] == 0
+
+    def test_carbon_copy_fires_new_device_event_for_new_mac(self, conn):
+        device = make_device_dict(mac="aa:bb:cc:dd:ee:01")
+        sync_insert_devices(conn, [device], existing_macs=set(), behavior="carbon-copy")
+        cur = conn.cursor()
+        cur.execute("SELECT COUNT(*) AS cnt FROM Events WHERE eveEventType='New Device' AND eveMac=?", ("aa:bb:cc:dd:ee:01",))
+        assert cur.fetchone()["cnt"] == 1
+
+    def test_carbon_copy_does_not_fire_event_for_existing_mac(self, conn):
+        cur = conn.cursor()
+        cur.execute("INSERT INTO Devices (devMac) VALUES (?)", ("aa:bb:cc:dd:ee:01",))
+        conn.commit()
+        device = make_device_dict(mac="aa:bb:cc:dd:ee:01", devName="Updated")
+        sync_insert_devices(conn, [device], existing_macs={"aa:bb:cc:dd:ee:01"}, behavior="carbon-copy")
+        cur.execute("SELECT COUNT(*) AS cnt FROM Events WHERE eveEventType='New Device'")
+        assert cur.fetchone()["cnt"] == 0
+
+    def test_hub_defaults_fires_no_events_directly(self, conn):
+        devices = [make_device_dict(mac=f"aa:bb:cc:dd:ee:0{i}") for i in range(3)]
+        sync_insert_devices(conn, devices, existing_macs=set(), behavior="hub-defaults")
+        cur = conn.cursor()
+        cur.execute("SELECT COUNT(*) AS cnt FROM Events WHERE eveEventType='New Device'")
+        assert cur.fetchone()["cnt"] == 0
+
+    def test_copy_new_fires_events_only_for_new_macs_in_mixed_batch(self, conn):
+        cur = conn.cursor()
+        cur.execute("INSERT INTO Devices (devMac) VALUES (?)", ("aa:bb:cc:dd:ee:existing",))
+        conn.commit()
+
+        devices = [
+            make_device_dict(mac="aa:bb:cc:dd:ee:existing"),
+            make_device_dict(mac="aa:bb:cc:dd:ee:new1"),
+            make_device_dict(mac="aa:bb:cc:dd:ee:new2"),
+        ]
+        sync_insert_devices(conn, devices, existing_macs={"aa:bb:cc:dd:ee:existing"}, behavior="copy-new")
+
+        cur.execute("SELECT eveMac FROM Events WHERE eveEventType='New Device'")
+        event_macs = {r["eveMac"] for r in cur.fetchall()}
+        assert event_macs == {"aa:bb:cc:dd:ee:new1", "aa:bb:cc:dd:ee:new2"}
+
+    def test_carbon_copy_fires_events_only_for_new_macs_in_mixed_batch(self, conn):
+        cur = conn.cursor()
+        cur.execute("INSERT INTO Devices (devMac, devName) VALUES (?, ?)", ("aa:bb:cc:dd:ee:existing", "Old"))
+        conn.commit()
+
+        devices = [
+            make_device_dict(mac="aa:bb:cc:dd:ee:existing", devName="Updated"),
+            make_device_dict(mac="aa:bb:cc:dd:ee:new1"),
+        ]
+        sync_insert_devices(conn, devices, existing_macs={"aa:bb:cc:dd:ee:existing"}, behavior="carbon-copy")
+
+        cur.execute("SELECT eveMac FROM Events WHERE eveEventType='New Device'")
+        event_macs = {r["eveMac"] for r in cur.fetchall()}
+        assert event_macs == {"aa:bb:cc:dd:ee:new1"}
+
+    def test_new_device_event_fields_are_correct(self, conn):
+        device = make_device_dict(mac="aa:bb:cc:dd:ee:01", devLastIP="10.0.0.1", devVendor="Acme")
+        sync_insert_devices(conn, [device], existing_macs=set(), behavior="copy-new")
+        cur = conn.cursor()
+        cur.execute(
+            "SELECT * FROM Events WHERE eveEventType='New Device' AND eveMac=?",
+            ("aa:bb:cc:dd:ee:01",),
+        )
+        row = cur.fetchone()
+        assert row is not None
+        assert row["eveMac"] == "aa:bb:cc:dd:ee:01"
+        assert row["eveIp"] == "10.0.0.1"
+        assert row["eveAdditionalInfo"] == "Acme"
+        assert row["evePendingAlertEmail"] == 1
+        assert cur.fetchone()["cnt"] == 0
