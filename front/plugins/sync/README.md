@@ -1,4 +1,4 @@
-## Overview
+## Overview: Sync Hub for MSP & Multi-Site Deployments
 
 The synchronization plugin is designed to synchronize data across multiple instances of the app. It supports the following data synchronization modes:
 
@@ -53,7 +53,7 @@ The plugin operates in three different modes based on the configuration settings
 - **Schedule** `[n,h]`: `SYNC_RUN_SCHD`
 - **Encryption Key** `[n,h]`: `SYNC_encryption_key`
 - **Nodes to Pull From** `[h]`: `SYNC_nodes` + `GRAPHQL_PORT` of the source nodes
-- **Hub Behavior** `[h]`: `SYNC_BEHAVIOR` — controls how the hub writes devices received from nodes (see [below](#hub-device-write-behavior-sync_behavior))
+- **Hub Behavior** `[h]`: `SYNC_BEHAVIOR` - controls how the hub writes devices received from nodes (see [below](#hub-device-write-behavior-sync_behavior))
 
 ### Usage
 
@@ -73,7 +73,7 @@ The plugin operates in three different modes based on the configuration settings
 
 ### Hub Device-Write Behavior (`SYNC_BEHAVIOR`)
 
-The `SYNC_BEHAVIOR` setting — configured on the **hub only** — controls how the hub writes devices received from nodes.
+The `SYNC_BEHAVIOR` setting - configured on the **hub only** - controls how the hub writes devices received from nodes.
 
 | Value | Default? | Devices written | Source of truth | Recommended when |
 |---|---|---|---|---|

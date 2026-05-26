@@ -625,7 +625,7 @@
       "description": [
         {
           "language_code": "en_us",
-          "string": "Controls how the hub handles devices received from nodes.<br><br><b>copy-new</b> (default): New devices are inserted using the node's existing configuration (name, alert settings, etc.). Subsequent node-side changes only update empty fields on the hub. Recommended: customize devices on the hub after first discovery.<br><br><b>carbon-copy</b>: All devices are upserted on every sync — the node is fully authoritative and its values overwrite <i>all</i> hub fields on every sync, including fields with <code>USER</code> or <code>LOCKED</code> source. Do not customize devices on the hub.<br><br><b>hub-defaults</b>: The hub skips the direct INSERT and creates new devices through its own pipeline, applying NEWDEV defaults. The hub is the source of truth; nodes contribute presence data only. Recommended: manage all device settings on the hub."
+          "string": "Controls how the hub handles devices from nodes.<br><br><b>copy-new</b> (default): New devices inherit settings from the node. Later syncs only fill empty hub fields.<br><i>Recommended: manage devices on the hub after first sync.</i><br><br><b>carbon-copy</b>: Node settings overwrite all hub fields on every sync.<br><i>Recommended: do not customize devices on the hub.</i><br><br><b>hub-defaults</b>: Nodes only report device presence. The hub applies its own defaults and settings.<br><i>Recommended: manage devices on the hub.</i>"
         }
       ]
     },

@@ -9,8 +9,6 @@ Covers:
 
 import os
 import sys
-from unittest.mock import patch
-
 import pytest
 
 INSTALL_PATH = os.getenv("NETALERTX_APP", "/app")
@@ -18,7 +16,6 @@ sys.path.extend([f"{INSTALL_PATH}/front/plugins", f"{INSTALL_PATH}/server"])
 
 from helper import get_setting_value  # noqa: E402
 from api_server.api_server_start import app  # noqa: E402
-import api_server.sync_endpoint as sync_endpoint  # noqa: E402
 
 
 @pytest.fixture(scope="session")
@@ -75,17 +72,17 @@ def test_sync_post_form_encoded_returns_415(client, api_token):
     assert resp.status_code == 415
 
 
-def test_sync_post_json_body_is_accepted(client, api_token, tmp_path):
+def test_sync_post_json_body_is_accepted(client, api_token, tmp_path, monkeypatch):
     """JSON body must pass validation and return 200."""
     plugins_dir = tmp_path / "log" / "plugins"
     plugins_dir.mkdir(parents=True)
 
-    with patch.object(sync_endpoint, "INSTALL_PATH", str(tmp_path)):
-        resp = client.post(
-            "/sync",
-            headers=auth_headers(api_token),
-            json={"data": "test_payload", "plugin": "TESTPLUGIN", "node_name": "TestNode"},
-        )
+    monkeypatch.setenv("NETALERTX_PLUGINS_LOG", str(plugins_dir))
+    resp = client.post(
+        "/sync",
+        headers=auth_headers(api_token),
+        json={"data": "test_payload", "plugin": "TESTPLUGIN", "node_name": "TestNode"},
+    )
 
     assert resp.status_code == 200
     data = resp.get_json()
@@ -93,17 +90,17 @@ def test_sync_post_json_body_is_accepted(client, api_token, tmp_path):
     assert "message" in data
 
 
-def test_sync_post_json_body_writes_encoded_file(client, api_token, tmp_path):
+def test_sync_post_json_body_writes_encoded_file(client, api_token, tmp_path, monkeypatch):
     """A successful POST must persist an encoded file in the plugins log dir."""
     plugins_dir = tmp_path / "log" / "plugins"
     plugins_dir.mkdir(parents=True)
 
-    with patch.object(sync_endpoint, "INSTALL_PATH", str(tmp_path)):
-        client.post(
-            "/sync",
-            headers=auth_headers(api_token),
-            json={"data": "encrypted_blob", "plugin": "ARPSCAN", "node_name": "Node1"},
-        )
+    monkeypatch.setenv("NETALERTX_PLUGINS_LOG", str(plugins_dir))
+    client.post(
+        "/sync",
+        headers=auth_headers(api_token),
+        json={"data": "encrypted_blob", "plugin": "ARPSCAN", "node_name": "Node1"},
+    )
 
     written = list(plugins_dir.glob("last_result.ARPSCAN.encoded.Node1.*.log"))
     assert len(written) == 1

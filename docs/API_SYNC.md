@@ -135,5 +135,5 @@ The `SYNC_BEHAVIOR` setting controls how the hub writes devices received from no
 | `carbon-copy` | | All MACs every sync (UPSERT) |
 | `hub-defaults` | | None — hub pipeline handles it |
 
-For full details and per-mode behaviour, see [SYNC plugin README — Hub Device-Write Behavior](../front/plugins/sync/README.md#hub-device-write-behavior-sync_behavior).
+For full details and per-mode behaviour, see [SYNC plugin README — Hub Device-Write Behavior](https://github.com/netalertx/NetAlertX/tree/main/front/plugins/sync/README.md#hub-device-write-behavior-sync_behavior).
 
