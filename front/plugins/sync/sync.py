@@ -130,6 +130,10 @@ def main():
         for node_url in pull_nodes:
             response_json = get_data(api_token, node_url)
 
+            if not isinstance(response_json, dict):
+                mylog('none', [f'[{pluginName}] Skipping node "{node_url}" due to failed or invalid response'])
+                continue
+
             # Extract node_name and base64 data
             node_name = response_json.get('node_name', 'unknown_node')
             data_base64 = response_json.get('data_base64', '')
