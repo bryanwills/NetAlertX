@@ -85,7 +85,7 @@ The `SYNC_BEHAVIOR` setting — configured on the **hub only** — controls how 
 
 New devices are inserted using all available column values from the node's existing record (name, alert settings, vendor, etc.). If the device already exists on the hub, the INSERT is silently skipped.
 
-Subsequent syncs update only empty/unknown fields on the hub (e.g., if the hub's `devName` is `(unknown)` and the node now has a resolved name, it propagates). Fields customized by a user on the hub (fileds with source set to `USER` or `LOCKED`) are never overwritten.
+Subsequent syncs update only empty/unknown fields on the hub (e.g., if the hub's `devName` is `(unknown)` and the node now has a resolved name, it propagates). Fields customized by a user on the hub (fields with source set to `USER` or `LOCKED`) are never overwritten.
 
 ```
 First sync:  INSERT with node's full config

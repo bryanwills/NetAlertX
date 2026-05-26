@@ -272,9 +272,12 @@ def main():
             #                            Subsequent node changes only update empty hub fields.
             #
             #   carbon-copy            — UPSERT all devices every sync.
-            #                            Node is authoritative; overwrites hub values except
-            #                            USER/LOCKED-sourced fields (enforced by the
-            #                            update_devices_data_from_scan pipeline, not here).
+            #                            Node is fully authoritative; raw SQL bypasses
+            #                            can_overwrite_field(), so ALL hub fields are
+            #                            overwritten on every sync, including USER/LOCKED-
+            #                            sourced fields. (update_devices_data_from_scan
+            #                            respects field locks but is not invoked here;
+            #                            see README "carbon-copy" for the contract.)
             #
             #   hub-defaults           — Skip direct INSERT entirely.
             #                            Hub creates new devices via create_new_devices()

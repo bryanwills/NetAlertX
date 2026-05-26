@@ -572,7 +572,7 @@ class TestMode3JsonSkip:
 
 
 # ===========================================================================
-# SYNC_BEHAVIOR — three hub device-write modes (Mode 3 – RECEIVE)
+# SYNC_BEHAVIOR - three hub device-write modes (Mode 3 - RECEIVE)
 # ===========================================================================
 
 class TestSyncBehavior:
@@ -775,4 +775,9 @@ class TestSyncBehavior:
         assert row["eveIp"] == "10.0.0.1"
         assert row["eveAdditionalInfo"] == "Acme"
         assert row["evePendingAlertEmail"] == 1
-        assert cur.fetchone()["cnt"] == 0
+        # Confirm exactly one event was inserted (no duplicates).
+        cur.execute(
+            "SELECT COUNT(*) AS cnt FROM Events WHERE eveEventType='New Device' AND eveMac=?",
+            ("aa:bb:cc:dd:ee:01",),
+        )
+        assert cur.fetchone()["cnt"] == 1
