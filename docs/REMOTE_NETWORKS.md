@@ -46,7 +46,7 @@ You can use supplementary plugins that employ alternate methods. Protocols used 
 If you have servers in different networks, you can set up separate NetAlertX instances on those subnets and synchronize the results into one instance using the [`SYNC` plugin](https://github.com/netalertx/NetAlertX/tree/main/front/plugins/sync).
 
 > [!TIP]
-> The [`SYNC_BEHAVIOR`](../front/plugins/sync/README.md#hub-device-write-behavior-sync_behavior) setting controls how the hub handles newly discovered devices from nodes - whether it inherits node config, overwrites on every sync, or applies its own NEWDEV defaults.
+> The [`SYNC_BEHAVIOR`](https://github.com/netalertx/NetAlertX/tree/main/front/plugins/sync/README.md#hub-device-write-behavior-sync_behavior) setting controls how the hub handles newly discovered devices from nodes - whether it inherits node config, overwrites on every sync, or applies its own NEWDEV defaults.
 
 ### Manual Entry
 
