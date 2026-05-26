@@ -79,10 +79,10 @@ def test_sync_post_json_body_is_accepted(client, api_token, tmp_path, monkeypatc
 
     monkeypatch.setenv("NETALERTX_PLUGINS_LOG", str(plugins_dir))
     resp = client.post(
-            "/sync",
-            headers=auth_headers(api_token),
-            json={"data": "test_payload", "plugin": "TESTPLUGIN", "node_name": "TestNode"},
-        )
+        "/sync",
+        headers=auth_headers(api_token),
+        json={"data": "test_payload", "plugin": "TESTPLUGIN", "node_name": "TestNode"},
+    )
 
     assert resp.status_code == 200
     data = resp.get_json()
@@ -97,10 +97,10 @@ def test_sync_post_json_body_writes_encoded_file(client, api_token, tmp_path, mo
 
     monkeypatch.setenv("NETALERTX_PLUGINS_LOG", str(plugins_dir))
     client.post(
-            "/sync",
-            headers=auth_headers(api_token),
-            json={"data": "encrypted_blob", "plugin": "ARPSCAN", "node_name": "Node1"},
-        )
+        "/sync",
+        headers=auth_headers(api_token),
+        json={"data": "encrypted_blob", "plugin": "ARPSCAN", "node_name": "Node1"},
+    )
 
     written = list(plugins_dir.glob("last_result.ARPSCAN.encoded.Node1.*.log"))
     assert len(written) == 1
