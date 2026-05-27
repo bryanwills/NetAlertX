@@ -884,6 +884,7 @@ function initializeDatatable (status) {
       {className: 'iconColumn text-center',  targets: [mapIndx(COL.devIcon)]},
       {width:     '80px',        targets: [mapIndx(COL.devFirstConnection), mapIndx(COL.devLastConnection), mapIndx(COL.devParentChildrenCount), mapIndx(COL.devFQDN)] },
       {width:     '85px',        targets: [mapIndx(COL.devIsRandomMac)] },
+      {width:     '130px',       targets: [mapIndx(COL.devLastIp), mapIndx(COL.devIpLong)] },
       {width:     '30px',        targets: [mapIndx(COL.devIcon), mapIndx(COL.devStatus), mapIndx(COL.rowid), mapIndx(COL.devParentPort)] },
       {orderData: [mapIndx(COL.devIpLong)],  targets: mapIndx(COL.devLastIP) },
 
@@ -966,16 +967,14 @@ function initializeDatatable (status) {
       {targets: [mapIndx(COL.devLastIP)],
         'createdCell': function (td, cellData, rowData, row, col) {
             if (!emptyArr.includes(cellData)){
-              $(td).html (`<span class="anonymizeIp">
-                            <a href="http://${cellData}" class="pointer" target="_blank">
-                                ${cellData}
-                            </a>
-                            <span class="alignRight lockIcon">
+              $(td).html (`<div class="anonymizeIp alignRight">
+                              <a href="http://${cellData}" class="pointer" target="_blank">
+                                  ${cellData}
+                              </a>
                               <a href="https://${cellData}" class="pointer" target="_blank">
                                 <i class="fa fa-lock "></i>
                               </a>
-                            <span>
-                          <span>`);
+                          <div>`);
             } else {
               $(td).html ('');
             }

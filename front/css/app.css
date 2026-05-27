@@ -34,15 +34,15 @@ h5
 a[target="_blank"] {
     position: relative;
     display: inline-block; /* Needed for positioning */
-    padding-right: 0.6em;    /* Space for the icon */
+    padding-right: 0.55em;    /* Space for the icon */
   }
 
   a[target="_blank"]::after {
     content: '↗';
     position: absolute;
     top: 0;
-    right: 0;
-    font-size: 0.75em;
+    right: 0.3em;
+    font-size: 0.6em;
     line-height: 1;
   }
 
