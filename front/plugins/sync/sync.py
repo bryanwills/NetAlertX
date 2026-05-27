@@ -351,7 +351,8 @@ def main():
                     write_count = len(new_devices) if sync_behavior == 'copy-new' else len(devices_to_write)
                     message = f'[{pluginName}] {sync_behavior}: wrote "{write_count}" device(s) to Devices'
                     mylog('verbose', [message])
-                    write_notification(message, 'info', timeNowUTC())
+                    if lggr.isAbove('verbose'):
+                        write_notification(message, 'info', timeNowUTC())
 
         # Commit and close the connection
         conn.commit()
@@ -419,7 +420,8 @@ def send_data(api_token, file_content, encryption_key, file_path, node_name, pre
             if response.status_code == 200:
                 message = (f'[{pluginName}] Sync success for "{file_path}" via {final_endpoint}')
                 mylog('verbose', [message])
-                write_notification(message, 'info', timeNowUTC())
+                if lggr.isAbove('verbose'):
+                    write_notification(message, 'info', timeNowUTC())
                 return True
 
             # STEP 5b: HUB returned error (e.g. 500, 400)

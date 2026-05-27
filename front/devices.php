@@ -97,6 +97,11 @@
             <div class="box-header">
               <div class=" col-sm-8 ">
                 <h3 id="tableDevicesTitle" class="box-title text-gray "></h3>
+                <span class="helpIconSmallTopRight">
+                  <a target="_blank" href="https://docs.netalertx.com/DEVICE_FILTERS">
+                    <i class="fa fa-circle-question"></i>
+                  </a>
+                </span>
               <!-- Next scan ETA — populated by sse_manager.js via nax:scanEtaUpdate -->
               <small id="nextScanEta" class="text-muted" style="display:none;margin-left:8px;font-weight:normal;font-size:0.75em;"></small>
               </div>

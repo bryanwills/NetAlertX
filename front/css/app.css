@@ -1546,6 +1546,11 @@ textarea[readonly],
     height: 1.5em;
 }
 
+#nextScanEta
+{
+    padding-left: 1.5em;
+}
+
 .info-icon-nav
 {
     top: -6px;
