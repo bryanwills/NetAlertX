@@ -45,7 +45,7 @@ Sometimes devices are manually archived (e.g., no longer expected on the network
   ],
   "enabled": "Yes"
 }
-````
+```
 
 ### 🔍 Explanation
 
