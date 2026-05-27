@@ -10,7 +10,6 @@ automatically before the script is imported.
 
 import json
 import os
-import sqlite3
 import sys
 import tempfile
 import types
@@ -40,6 +39,8 @@ _stub("const", dataPath=_tmp_log, logPath=_tmp_log, fullDbPath=os.path.join(_tmp
 _stub("plugin_helper", Plugin_Objects=MagicMock)
 _stub("logger", mylog=lambda *a: None, Logger=MagicMock)
 _stub("helper", get_setting_value=lambda k: "")
+_stub("models", )
+_stub("models.device_instance", DeviceInstance=MagicMock)
 
 # Stub requests only when it isn't installed (e.g. bare system Python locally).
 # In the container and CI, the real package is present and will be used.
@@ -74,37 +75,18 @@ from script import (  # noqa: E402
 # Helpers
 # ---------------------------------------------------------------------------
 
-def _make_db(path: str, rows: list[dict]) -> None:
-    """Create a minimal Devices table and populate it with *rows*."""
-    conn = sqlite3.connect(path)
-    conn.execute(
-        """
-        CREATE TABLE IF NOT EXISTS Devices (
-            devMac             TEXT,
-            devName            TEXT,
-            devLastIP          TEXT,
-            devType            TEXT,
-            devIsArchived      INTEGER DEFAULT 0,
-            devPresentLastScan INTEGER DEFAULT 1,
-            devIsNew           INTEGER DEFAULT 0
-        )
-        """
-    )
-    for row in rows:
-        conn.execute(
-            "INSERT INTO Devices VALUES (?,?,?,?,?,?,?)",
-            (
-                row.get("devMac", ""),
-                row.get("devName", ""),
-                row.get("devLastIP", ""),
-                row.get("devType", ""),
-                row.get("devIsArchived", 0),
-                row.get("devPresentLastScan", 1),
-                row.get("devIsNew", 0),
-            ),
-        )
-    conn.commit()
-    conn.close()
+def _raw_device(**overrides) -> dict:
+    """Build a raw DeviceInstance.getAll() style dict."""
+    base = {
+        "devMac": "AA:BB:CC:00:00:01",
+        "devName": "PC",
+        "devLastIP": "10.0.0.1",
+        "devType": "desktop",
+        "devIsArchived": 0,
+        "devPresentLastScan": 1,
+        "devIsNew": 0,
+    }
+    return {**base, **overrides}
 
 
 def _mock_agrd(existing=None) -> MagicMock:
@@ -229,59 +211,53 @@ class TestManagedNames:
 
 
 class TestGetNetalertxDevices:
-    def test_basic_query(self, tmp_path):
-        db = str(tmp_path / "na.db")
-        _make_db(db, [{"devMac": "AA:BB:CC:00:00:01", "devName": "PC", "devLastIP": "10.0.0.1", "devType": "desktop"}])
-        result = get_netalertx_devices(db, include_offline=True, include_new=True)
+    def _call(self, rows, include_offline=True, include_new=True):
+        with patch("script.DeviceInstance") as mock_di:
+            mock_di.return_value.getAll.return_value = rows
+            return get_netalertx_devices(include_offline=include_offline, include_new=include_new)
+
+    def test_basic_query(self):
+        result = self._call([_raw_device()])
         assert len(result) == 1
         assert result[0]["name"] == "PC"
         assert result[0]["mac"] == "AA:BB:CC:00:00:01"
 
-    def test_archived_devices_excluded(self, tmp_path):
-        db = str(tmp_path / "na.db")
-        _make_db(db, [
-            {"devMac": "AA:00:00:00:00:01", "devName": "Active", "devLastIP": "10.0.0.1", "devIsArchived": 0},
-            {"devMac": "AA:00:00:00:00:02", "devName": "Archived", "devLastIP": "10.0.0.2", "devIsArchived": 1},
+    def test_archived_devices_excluded(self):
+        result = self._call([
+            _raw_device(devMac="AA:00:00:00:00:01", devName="Active", devIsArchived=0),
+            _raw_device(devMac="AA:00:00:00:00:02", devName="Archived", devIsArchived=1),
         ])
-        result = get_netalertx_devices(db, include_offline=True, include_new=True)
         assert len(result) == 1
         assert result[0]["name"] == "Active"
 
-    def test_offline_excluded_when_flag_false(self, tmp_path):
-        db = str(tmp_path / "na.db")
-        _make_db(db, [
-            {"devMac": "AA:00:00:00:00:01", "devName": "Online", "devLastIP": "10.0.0.1", "devPresentLastScan": 1},
-            {"devMac": "AA:00:00:00:00:02", "devName": "Offline", "devLastIP": "10.0.0.2", "devPresentLastScan": 0},
-        ])
-        result = get_netalertx_devices(db, include_offline=False, include_new=True)
+    def test_offline_excluded_when_flag_false(self):
+        result = self._call([
+            _raw_device(devMac="AA:00:00:00:00:01", devName="Online", devPresentLastScan=1),
+            _raw_device(devMac="AA:00:00:00:00:02", devName="Offline", devPresentLastScan=0),
+        ], include_offline=False)
         assert len(result) == 1
         assert result[0]["name"] == "Online"
 
-    def test_new_devices_excluded_when_flag_false(self, tmp_path):
-        db = str(tmp_path / "na.db")
-        _make_db(db, [
-            {"devMac": "AA:00:00:00:00:01", "devName": "Known", "devLastIP": "10.0.0.1", "devIsNew": 0},
-            {"devMac": "AA:00:00:00:00:02", "devName": "Unknown", "devLastIP": "10.0.0.2", "devIsNew": 1},
-        ])
-        result = get_netalertx_devices(db, include_offline=True, include_new=False)
+    def test_new_devices_excluded_when_flag_false(self):
+        result = self._call([
+            _raw_device(devMac="AA:00:00:00:00:01", devName="Known", devIsNew=0),
+            _raw_device(devMac="AA:00:00:00:00:02", devName="Unknown", devIsNew=1),
+        ], include_new=False)
         assert len(result) == 1
         assert result[0]["name"] == "Known"
 
-    def test_nameless_device_falls_back_to_mac(self, tmp_path):
-        db = str(tmp_path / "na.db")
-        _make_db(db, [{"devMac": "BB:CC:DD:EE:FF:00", "devName": "", "devLastIP": "10.0.0.5"}])
-        result = get_netalertx_devices(db, include_offline=True, include_new=True)
+    def test_nameless_device_falls_back_to_mac(self):
+        result = self._call([_raw_device(devMac="BB:CC:DD:EE:FF:00", devName="", devLastIP="10.0.0.5")])
         assert result[0]["name"] == "BB:CC:DD:EE:FF:00"
 
-    def test_row_with_no_mac_and_no_ip_skipped(self, tmp_path):
-        db = str(tmp_path / "na.db")
-        _make_db(db, [{"devMac": "", "devName": "Ghost", "devLastIP": ""}])
-        result = get_netalertx_devices(db, include_offline=True, include_new=True)
+    def test_row_with_no_mac_and_no_ip_skipped(self):
+        result = self._call([_raw_device(devMac="", devName="Ghost", devLastIP="")])
         assert result == []
 
-    def test_missing_db_returns_empty_list(self, tmp_path):
-        result = get_netalertx_devices(str(tmp_path / "missing.db"), True, True)
-        assert result == []
+    def test_exception_returns_empty_list(self):
+        with patch("script.DeviceInstance") as mock_di:
+            mock_di.return_value.getAll.side_effect = Exception("db error")
+            assert get_netalertx_devices(True, True) == []
 
 
 # ---------------------------------------------------------------------------

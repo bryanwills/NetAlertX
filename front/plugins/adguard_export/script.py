@@ -16,17 +16,17 @@ import sys
 import json
 import requests
 from pytz import timezone
-import sqlite3
 from typing import Dict, List, Optional, Set, Tuple
 
 # Define the installation path and extend the system path for plugin imports
 INSTALL_PATH = os.getenv('NETALERTX_APP', '/app')
 sys.path.extend([f"{INSTALL_PATH}/front/plugins", f"{INSTALL_PATH}/server"])
 
-from const import dataPath, logPath, fullDbPath  # noqa: E402, E261
+from const import dataPath, logPath  # noqa: E402, E261
 from plugin_helper import Plugin_Objects  # noqa: E402, E261
 from logger import mylog, Logger  # noqa: E402, E261
 from helper import get_setting_value  # noqa: E402, E261
+from models.device_instance import DeviceInstance  # noqa: E402, E261
 import conf  # noqa: E402, E261
 
 # ----------------------------
@@ -164,57 +164,35 @@ class AdGuardClient:
 # ---------------------------------------------------------------------------
 # Database helpers
 # ---------------------------------------------------------------------------
-def get_netalertx_devices(db_path: str, include_offline: bool, include_new: bool) -> List[dict]:
+def get_netalertx_devices(include_offline: bool, include_new: bool) -> List[dict]:
     """
-    Query NetAlertX's Devices table and return a list of dicts with the
-    fields we care about:  mac, name, last_ip, dev_type
+    Return filtered devices from NetAlertX using the DeviceInstance model.
+    Fields returned per device: mac, name, last_ip, dev_type
     """
     devices = []
-    conn = None
     try:
-        conn = sqlite3.connect(db_path)
-        conn.row_factory = sqlite3.Row
-        cur  = conn.cursor()
-
-        clauses = ["devIsArchived = 0"]
-        if not include_offline:
-            clauses.append("devPresentLastScan = 1")
-        if not include_new:
-            clauses.append("devIsNew = 0")
-        where = "WHERE " + " AND ".join(clauses)
-
-        cur.execute(
-            f"""
-            SELECT devMac      AS mac,
-                   devName     AS name,
-                   devLastIP   AS last_ip,
-                   devType     AS dev_type
-            FROM   Devices
-            {where}
-            ORDER BY devMac
-            """
-        )
-        for row in cur.fetchall():
-            mac      = (row["mac"]      or "").strip()
-            name     = (row["name"]     or "").strip()
-            last_ip  = (row["last_ip"]  or "").strip()
-            dev_type = (row["dev_type"] or "").strip()
-
-            # Skip completely empty rows
-            if not mac and not last_ip:
+        for d in DeviceInstance().getAll():
+            if d.get("devIsArchived", 0):
+                continue
+            if not include_offline and not d.get("devPresentLastScan", 1):
+                continue
+            if not include_new and d.get("devIsNew", 0):
                 continue
 
-            # Fall back to MAC as name when no friendly name is set
+            mac      = (d.get("devMac",    "") or "").strip()
+            last_ip  = (d.get("devLastIP", "") or "").strip()
+            name     = (d.get("devName",   "") or "").strip()
+            dev_type = (d.get("devType",   "") or "").strip()
+
+            if not mac and not last_ip:
+                continue
             if not name:
                 name = mac or last_ip
 
             devices.append({"mac": mac, "name": name, "last_ip": last_ip, "dev_type": dev_type})
 
-    except sqlite3.Error as exc:
-        mylog("verbose", [f"[{pluginName}] ERROR reading NetAlertX database: {exc}"])
-    finally:
-        if conn:
-            conn.close()
+    except Exception as exc:
+        mylog("verbose", [f"[{pluginName}] ERROR reading devices: {exc}"])
 
     return devices
 
@@ -408,7 +386,7 @@ def main():
     # ------------------------------------------------------------------
     # Load devices from NetAlertX
     # ------------------------------------------------------------------
-    devices = get_netalertx_devices(fullDbPath, include_offline, include_new)
+    devices = get_netalertx_devices(include_offline, include_new)
     mylog("verbose", [f"[{pluginName}] Loaded {len(devices)} device(s) from NetAlertX database."])
 
     if not devices:
