@@ -668,6 +668,36 @@ class TestSyncBehavior:
         cur.execute("SELECT COUNT(*) AS cnt FROM Devices WHERE devMac = ?", ("aa:bb:cc:dd:ee:01",))
         assert cur.fetchone()["cnt"] == 1
 
+    def test_carbon_copy_does_not_overwrite_devPresentLastScan(self, conn):
+        """Regression: carbon-copy must NOT clobber devPresentLastScan.
+
+        Scenario: device is online on the hub (devPresentLastScan=1) but the
+        node reports it as offline (devPresentLastScan=0).  Without the fix the
+        UPSERT would flip presence to 0, triggering a Device Down event on the
+        next scan cycle and a Connected event on the scan after that, causing
+        the device to accumulate enough churn events to be flagged as Flapping.
+        """
+        cur = conn.cursor()
+        # Hub already knows this device and currently sees it as online.
+        cur.execute(
+            "INSERT INTO Devices (devMac, devName, devPresentLastScan) VALUES (?, ?, ?)",
+            ("aa:bb:cc:dd:ee:01", "HubDevice", 1),
+        )
+        conn.commit()
+
+        # Node reports same MAC as offline.
+        device = make_device_dict(mac="aa:bb:cc:dd:ee:01", devPresentLastScan=0)
+        sync_insert_devices(conn, [device], behavior="carbon-copy")
+
+        cur.execute(
+            "SELECT devPresentLastScan FROM Devices WHERE devMac = ?",
+            ("aa:bb:cc:dd:ee:01",),
+        )
+        row = cur.fetchone()
+        assert row["devPresentLastScan"] == 1, (
+            "carbon-copy must not overwrite devPresentLastScan with a node's offline value"
+        )
+
     # ------------------------------------------------------------------
     # hub-defaults — no direct write, hub pipeline handles it
     # ------------------------------------------------------------------
