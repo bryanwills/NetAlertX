@@ -884,7 +884,7 @@ function initializeDatatable (status) {
       {className: 'iconColumn text-center',  targets: [mapIndx(COL.devIcon)]},
       {width:     '80px',        targets: [mapIndx(COL.devFirstConnection), mapIndx(COL.devLastConnection), mapIndx(COL.devParentChildrenCount), mapIndx(COL.devFQDN)] },
       {width:     '85px',        targets: [mapIndx(COL.devIsRandomMac)] },
-      {width:     '130px',       targets: [mapIndx(COL.devLastIp), mapIndx(COL.devIpLong)] },
+      {width:     '130px',       targets: [mapIndx(COL.devLastIP), mapIndx(COL.devIpLong)] },
       {width:     '30px',        targets: [mapIndx(COL.devIcon), mapIndx(COL.devStatus), mapIndx(COL.rowid), mapIndx(COL.devParentPort)] },
       {orderData: [mapIndx(COL.devIpLong)],  targets: mapIndx(COL.devLastIP) },
 
@@ -974,7 +974,7 @@ function initializeDatatable (status) {
                               <a href="https://${cellData}" class="pointer" target="_blank">
                                 <i class="fa fa-lock "></i>
                               </a>
-                          <div>`);
+                          </div>`);
             } else {
               $(td).html ('');
             }

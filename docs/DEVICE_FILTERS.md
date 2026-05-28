@@ -30,7 +30,7 @@ Clear filters first, then reload the page and check again.
 
 ### Check global filters
 
-You can select devices of what statuses should be displayed in the My Devices view. This can be adjusted in the _Settings_ section - search for the `UI_MY_DEVICES` setting and verify that the statuses you want to show are selected. 
+You can select devices of what statuses should be displayed in the My Devices view. This can be adjusted in the _Settings_ section - search for the `UI_MY_DEVICES` setting and verify that the statuses you want to show are selected.
 
 ---
 
@@ -41,7 +41,7 @@ Some devices may be excluded from normal views depending on configuration.
 Examples include:
 
 * Archived devices
-* Devices marked as ignored (`NEWDEV_ignored_IPs` and `NEWDEV_ignored_IPs` settings)
+* Devices marked as ignored (`NEWDEV_ignored_IPs` and `NEWDEV_ignored_MACs` settings)
 * Virtual or relationship-only devices excluded from display (setting `UI_hide_rel_types`)
 * Devices assigned to another user view or group
 
