@@ -351,7 +351,8 @@ def sync_insert_devices(
     placeholders = ", ".join("?" for _ in insert_cols)
 
     if behavior == "carbon-copy":
-        update_cols   = [col for col in insert_cols if col != "devMac"]
+        _CARBON_COPY_SKIP = {"devMac", "devPresentLastScan"}
+        update_cols   = [col for col in insert_cols if col not in _CARBON_COPY_SKIP]
         update_clause = ", ".join(f"{col}=excluded.{col}" for col in update_cols)
         sql = (
             f"INSERT INTO Devices ({columns}) VALUES ({placeholders}) "

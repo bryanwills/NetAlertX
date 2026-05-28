@@ -302,44 +302,7 @@ Plugin results are displayed in the web interface using various component types.
 
 ### Common Display Types
 
-**Read settings in your Python script:**
-
-```python
-from helper import get_setting_value
-
-# Read a setting by code name (prefix + function)
-api_url = get_setting_value('MYPLN_API_URL')
-api_key = get_setting_value('MYPLN_API_KEY')
-watch_columns = get_setting_value('MYPLN_WATCH')
-
-print(f"Connecting to {api_url}")
-```
-
-**Pass settings as command parameters:**
-
-Define `params` in config to pass settings as script arguments:
-
-```json
-{
-  "params": [
-    {
-      "name": "api_url",
-      "type": "setting",
-      "value": "MYPLN_API_URL"
-    }
-  ]
-}
-```
-
-Then use in `CMD`: `python3 script.py --url={api_url}`
-
 See [PLUGINS_DEV_SETTINGS.md](PLUGINS_DEV_SETTINGS.md) for complete settings documentation, and [PLUGINS_DEV_DATASOURCES.md](PLUGINS_DEV_DATASOURCES.md) for data source details.
-
-[screen1]: https://raw.githubusercontent.com/jokob-sk/NetAlertX/main/docs/img/plugins.png                    "Screen 1"
-[screen2]: https://raw.githubusercontent.com/jokob-sk/NetAlertX/main/docs/img/plugins_settings.png           "Screen 2"
-[screen3]: https://raw.githubusercontent.com/jokob-sk/NetAlertX/main/docs/img/plugins_json_settings.png      "Screen 3"
-[screen4]: https://raw.githubusercontent.com/jokob-sk/NetAlertX/main/docs/img/plugins_json_ui.png            "Screen 4"
-[screen5]: https://raw.githubusercontent.com/jokob-sk/NetAlertX/main/docs/img/plugins_device_details.png     "Screen 5"
 
 ## Quick Reference: Key Concepts
 
@@ -394,3 +357,8 @@ See: [UI Components](PLUGINS_DEV_UI_COMPONENTS.md)
 ---
 
 
+[screen1]: https://raw.githubusercontent.com/jokob-sk/NetAlertX/main/docs/img/plugins.png                    "Screen 1"
+[screen2]: https://raw.githubusercontent.com/jokob-sk/NetAlertX/main/docs/img/plugins_settings.png           "Screen 2"
+[screen3]: https://raw.githubusercontent.com/jokob-sk/NetAlertX/main/docs/img/plugins_json_settings.png      "Screen 3"
+[screen4]: https://raw.githubusercontent.com/jokob-sk/NetAlertX/main/docs/img/plugins_json_ui.png            "Screen 4"
+[screen5]: https://raw.githubusercontent.com/jokob-sk/NetAlertX/main/docs/img/plugins_device_details.png     "Screen 5"

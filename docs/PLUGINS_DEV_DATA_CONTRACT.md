@@ -15,6 +15,46 @@ Plugins communicate with NetAlertX by writing results to a **pipe-delimited log 
 
 **Required Columns:** 9 (mandatory) + up to 4 optional helper columns = 13 total
 
+
+## Using `plugin_helper.py`
+
+The easiest way to ensure correct output is to use the [`plugin_helper.py`](../front/plugins/plugin_helper.py) library:
+
+```python
+from plugin_helper import Plugin_Objects
+
+# Initialize with your plugin's prefix
+plugin_objects = Plugin_Objects("YOURPREFIX")
+
+# Add objects
+plugin_objects.add_object(
+    objectPrimaryId="device_id",
+    objectSecondaryId="192.168.1.1",
+    DateTime="2023-01-02 15:56:30",
+    watchedValue1="online",
+    watchedValue2=None,
+    watchedValue3=None,
+    watchedValue4=None,
+    Extra="Additional data",
+    ForeignKey="aa:bb:cc:dd:ee:ff",
+    helpVal1=None,
+    helpVal2=None,
+    helpVal3=None,
+    helpVal4=None
+)
+
+# Write results (handles formatting, sanitization, and file creation)
+plugin_objects.write_result_file()
+```
+
+The library automatically:
+
+- Validates data types
+- Sanitizes string values
+- Normalizes MAC addresses
+- Writes to the correct file location
+- Creates the file in `/tmp/log/plugins/last_result.<PREFIX>.log`
+
 ## Column Specification
 
 > [!NOTE]
@@ -134,45 +174,6 @@ device|null|2023-01-02 15:56:30|status|null|null|null|null|null|h1|h2|h3|h4
 device|null|2023-01-02 15:56:30|status|null|null|null|null|null
 ```
 
-## Using `plugin_helper.py`
-
-The easiest way to ensure correct output is to use the [`plugin_helper.py`](../front/plugins/plugin_helper.py) library:
-
-```python
-from plugin_helper import Plugin_Objects
-
-# Initialize with your plugin's prefix
-plugin_objects = Plugin_Objects("YOURPREFIX")
-
-# Add objects
-plugin_objects.add_object(
-    objectPrimaryId="device_id",
-    objectSecondaryId="192.168.1.1",
-    DateTime="2023-01-02 15:56:30",
-    watchedValue1="online",
-    watchedValue2=None,
-    watchedValue3=None,
-    watchedValue4=None,
-    Extra="Additional data",
-    ForeignKey="aa:bb:cc:dd:ee:ff",
-    helpVal1=None,
-    helpVal2=None,
-    helpVal3=None,
-    helpVal4=None
-)
-
-# Write results (handles formatting, sanitization, and file creation)
-plugin_objects.write_result_file()
-```
-
-The library automatically:
-
-- Validates data types
-- Sanitizes string values
-- Normalizes MAC addresses
-- Writes to the correct file location
-- Creates the file in `/tmp/log/plugins/last_result.<PREFIX>.log`
-
 ## De-duplication
 
 The core runs **de-duplication once per hour** on the `Plugins_Objects` table:
@@ -186,6 +187,7 @@ The core runs **de-duplication once per hour** on the `Plugins_Objects` table:
 **Required Format:** `YYYY-MM-DD HH:MM:SS`
 
 **Examples:**
+
 - `2023-01-02 15:56:30` ✅
 - `2023-1-2 15:56:30` ❌ (missing leading zeros)
 - `2023-01-02T15:56:30` ❌ (wrong separator)

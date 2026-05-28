@@ -97,6 +97,11 @@
             <div class="box-header">
               <div class=" col-sm-8 ">
                 <h3 id="tableDevicesTitle" class="box-title text-gray "></h3>
+                <span class="helpIconSmallTopRight">
+                  <a target="_blank" href="https://docs.netalertx.com/DEVICE_FILTERS">
+                    <i class="fa fa-circle-question"></i>
+                  </a>
+                </span>
               <!-- Next scan ETA — populated by sse_manager.js via nax:scanEtaUpdate -->
               <small id="nextScanEta" class="text-muted" style="display:none;margin-left:8px;font-weight:normal;font-size:0.75em;"></small>
               </div>
@@ -879,6 +884,7 @@ function initializeDatatable (status) {
       {className: 'iconColumn text-center',  targets: [mapIndx(COL.devIcon)]},
       {width:     '80px',        targets: [mapIndx(COL.devFirstConnection), mapIndx(COL.devLastConnection), mapIndx(COL.devParentChildrenCount), mapIndx(COL.devFQDN)] },
       {width:     '85px',        targets: [mapIndx(COL.devIsRandomMac)] },
+      {width:     '130px',       targets: [mapIndx(COL.devLastIP), mapIndx(COL.devIpLong)] },
       {width:     '30px',        targets: [mapIndx(COL.devIcon), mapIndx(COL.devStatus), mapIndx(COL.rowid), mapIndx(COL.devParentPort)] },
       {orderData: [mapIndx(COL.devIpLong)],  targets: mapIndx(COL.devLastIP) },
 
@@ -961,16 +967,14 @@ function initializeDatatable (status) {
       {targets: [mapIndx(COL.devLastIP)],
         'createdCell': function (td, cellData, rowData, row, col) {
             if (!emptyArr.includes(cellData)){
-              $(td).html (`<span class="anonymizeIp">
-                            <a href="http://${cellData}" class="pointer" target="_blank">
-                                ${cellData}
-                            </a>
-                            <span class="alignRight lockIcon">
+              $(td).html (`<div class="anonymizeIp alignRight">
+                              <a href="http://${cellData}" class="pointer" target="_blank">
+                                  ${cellData}
+                              </a>
                               <a href="https://${cellData}" class="pointer" target="_blank">
                                 <i class="fa fa-lock "></i>
                               </a>
-                            <span>
-                          <span>`);
+                          </div>`);
             } else {
               $(td).html ('');
             }

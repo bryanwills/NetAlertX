@@ -326,12 +326,22 @@ def main():
                     placeholders = ', '.join('?' for _ in insert_cols)
 
                     if sync_behavior == 'carbon-copy':
-                        # UPSERT: on MAC conflict update all columns except devMac.
+                        # UPSERT: on MAC conflict update all columns except devMac and
+                        # devPresentLastScan.
                         # devMac is the PRIMARY KEY so it is excluded from the SET clause.
-                        # NOTE: this raw SQL bypasses can_overwrite_field() — ALL fields
+                        # devPresentLastScan is excluded to prevent a node's offline report
+                        # from clobbering the hub's own scan result: if a device is online
+                        # on the hub network but offline on a node, the raw UPSERT would
+                        # flip devPresentLastScan = 0 every sync cycle, triggering
+                        # Connected/Disconnected events on each scan and causing the device
+                        # to be flagged as Flapping.  Presence is owned by
+                        # update_presence_from_CurrentScan(); the carbon-copy path respects
+                        # that contract by leaving devPresentLastScan to the normal pipeline.
+                        # NOTE: this raw SQL bypasses can_overwrite_field() — ALL other fields
                         # including USER/LOCKED-sourced ones are overwritten. Node is fully
                         # authoritative in this mode.
-                        update_cols   = [col for col in insert_cols if col != 'devMac']
+                        _CARBON_COPY_SKIP = {'devMac', 'devPresentLastScan'}
+                        update_cols   = [col for col in insert_cols if col not in _CARBON_COPY_SKIP]
                         update_clause = ', '.join(f'{col}=excluded.{col}' for col in update_cols)
                         sql = (
                             f'INSERT INTO Devices ({columns}) VALUES ({placeholders}) '
@@ -351,7 +361,8 @@ def main():
                     write_count = len(new_devices) if sync_behavior == 'copy-new' else len(devices_to_write)
                     message = f'[{pluginName}] {sync_behavior}: wrote "{write_count}" device(s) to Devices'
                     mylog('verbose', [message])
-                    write_notification(message, 'info', timeNowUTC())
+                    if lggr.isAbove('verbose'):
+                        write_notification(message, 'info', timeNowUTC())
 
         # Commit and close the connection
         conn.commit()
@@ -419,7 +430,8 @@ def send_data(api_token, file_content, encryption_key, file_path, node_name, pre
             if response.status_code == 200:
                 message = (f'[{pluginName}] Sync success for "{file_path}" via {final_endpoint}')
                 mylog('verbose', [message])
-                write_notification(message, 'info', timeNowUTC())
+                if lggr.isAbove('verbose'):
+                    write_notification(message, 'info', timeNowUTC())
                 return True
 
             # STEP 5b: HUB returned error (e.g. 500, 400)
