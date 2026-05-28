@@ -78,6 +78,7 @@ nav:
         - Bulk Editing: DEVICES_BULK_EDITING.md
         - Custom Properties: CUSTOM_PROPERTIES.md
         - Device Display Settings: DEVICE_DISPLAY_SETTINGS.md
+        - Device Views Filtering: DEVICE_FILTERS.md
         - Session Info: SESSION_INFO.md
         - Field Lock/Unlock: DEVICE_FIELD_LOCK.md
         - Device Source Fields: DEVICE_SOURCE_FIELDS.md
