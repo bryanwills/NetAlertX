@@ -31,24 +31,26 @@ def _make_json(section, devices, column_names, title="Test Section"):
 
 SAMPLE_NEW_DEVICES = [
     {
-        "MAC": "AA:BB:CC:DD:EE:FF",
-        "Datetime": "2025-01-15 10:30:00",
-        "IP": "192.168.1.42",
-        "Event Type": "New Device",
-        "Device name": "MyPhone",
-        "Comments": "",
+        "devName": "MyPhone",
+        "eveMac": "aa:bb:cc:dd:ee:ff",
+        "devVendor": "",
+        "eveIp": "192.168.1.42",
+        "eveDateTime": "2025-01-15 10:30:00",
+        "eveEventType": "New Device",
+        "devComments": "",
     },
     {
-        "MAC": "11:22:33:44:55:66",
-        "Datetime": "2025-01-15 11:00:00",
-        "IP": "192.168.1.99",
-        "Event Type": "New Device",
-        "Device name": "Laptop",
-        "Comments": "Office",
+        "devName": "Laptop",
+        "eveMac": "11:22:33:44:55:66",
+        "devVendor": "Dell",
+        "eveIp": "192.168.1.99",
+        "eveDateTime": "2025-01-15 11:00:00",
+        "eveEventType": "New Device",
+        "devComments": "Office",
     },
 ]
 
-NEW_DEVICE_COLUMNS = ["MAC", "Datetime", "IP", "Event Type", "Device name", "Comments"]
+NEW_DEVICE_COLUMNS = ["devName", "eveMac", "devVendor", "eveIp", "eveDateTime", "eveEventType", "devComments"]
 
 
 class TestConstructNotificationsTemplates(unittest.TestCase):
@@ -98,9 +100,9 @@ class TestConstructNotificationsTemplates(unittest.TestCase):
         self.assertIn("---------", text)
 
         # Legacy format: each header appears as "Header: \tValue"
-        self.assertIn("MAC:", text)
-        self.assertIn("AA:BB:CC:DD:EE:FF", text)
-        self.assertIn("Device name:", text)
+        self.assertIn("eveMac:", text)
+        self.assertIn("aa:bb:cc:dd:ee:ff", text)
+        self.assertIn("devName:", text)
         self.assertIn("MyPhone", text)
 
         # HTML must still be generated
@@ -115,7 +117,7 @@ class TestConstructNotificationsTemplates(unittest.TestCase):
 
         mock_setting.side_effect = self._setting_factory({
             "NTFPRCS_TEXT_SECTION_HEADERS": True,
-            "NTFPRCS_TEXT_TEMPLATE_new_devices": "{Device name} ({MAC}) - {IP}",
+            "NTFPRCS_TEXT_TEMPLATE_new_devices": "{devName} ({eveMac}) - {eveIp}",
         })
 
         json_data = _make_json(
@@ -123,7 +125,7 @@ class TestConstructNotificationsTemplates(unittest.TestCase):
         )
         _, text = construct_notifications(json_data, "new_devices")
 
-        self.assertIn("MyPhone (AA:BB:CC:DD:EE:FF) - 192.168.1.42", text)
+        self.assertIn("MyPhone (aa:bb:cc:dd:ee:ff) - 192.168.1.42", text)
         self.assertIn("Laptop (11:22:33:44:55:66) - 192.168.1.99", text)
 
     # -----------------------------------------------------------------
@@ -135,7 +137,7 @@ class TestConstructNotificationsTemplates(unittest.TestCase):
 
         mock_setting.side_effect = self._setting_factory({
             "NTFPRCS_TEXT_SECTION_HEADERS": True,
-            "NTFPRCS_TEXT_TEMPLATE_new_devices": "{Device name} - {NonExistent}",
+            "NTFPRCS_TEXT_TEMPLATE_new_devices": "{devName} - {NonExistent}",
         })
 
         json_data = _make_json(
@@ -155,7 +157,7 @@ class TestConstructNotificationsTemplates(unittest.TestCase):
 
         mock_setting.side_effect = self._setting_factory({
             "NTFPRCS_TEXT_SECTION_HEADERS": False,
-            "NTFPRCS_TEXT_TEMPLATE_new_devices": "{Device name} ({MAC})",
+            "NTFPRCS_TEXT_TEMPLATE_new_devices": "{devName} ({eveMac})",
         })
 
         json_data = _make_json(
@@ -166,7 +168,7 @@ class TestConstructNotificationsTemplates(unittest.TestCase):
         self.assertNotIn("🆕 New devices", text)
         self.assertNotIn("---------", text)
         # Template output still present
-        self.assertIn("MyPhone (AA:BB:CC:DD:EE:FF)", text)
+        self.assertIn("MyPhone (aa:bb:cc:dd:ee:ff)", text)
 
     # -----------------------------------------------------------------
     # Section headers enabled (default when setting absent/empty)
@@ -196,7 +198,7 @@ class TestConstructNotificationsTemplates(unittest.TestCase):
 
         mock_setting.side_effect = self._setting_factory({
             "NTFPRCS_TEXT_SECTION_HEADERS": True,
-            "NTFPRCS_TEXT_TEMPLATE_new_devices": "{Device name} ({BadField}) - {IP}",
+            "NTFPRCS_TEXT_TEMPLATE_new_devices": "{devName} ({BadField}) - {eveIp}",
         })
 
         json_data = _make_json(
@@ -207,7 +209,7 @@ class TestConstructNotificationsTemplates(unittest.TestCase):
         self.assertIn("MyPhone ({BadField}) - 192.168.1.42", text)
 
     # -----------------------------------------------------------------
-    # Down devices section uses different column names
+    # Down devices section uses same column names as all other sections
     # -----------------------------------------------------------------
     @patch("models.notification_instance.get_setting_value")
     def test_down_devices_template(self, mock_setting):
@@ -215,25 +217,56 @@ class TestConstructNotificationsTemplates(unittest.TestCase):
 
         mock_setting.side_effect = self._setting_factory({
             "NTFPRCS_TEXT_SECTION_HEADERS": True,
-            "NTFPRCS_TEXT_TEMPLATE_down_devices": "{devName} ({eve_MAC}) down since {eve_DateTime}",
+            "NTFPRCS_TEXT_TEMPLATE_down_devices": "{devName} ({eveMac}) down since {eveDateTime}",
         })
 
         down_devices = [
             {
                 "devName": "Router",
-                "eve_MAC": "FF:EE:DD:CC:BB:AA",
+                "eveMac": "ff:ee:dd:cc:bb:aa",
                 "devVendor": "Cisco",
-                "eve_IP": "10.0.0.1",
-                "eve_DateTime": "2025-01-15 08:00:00",
-                "eve_EventType": "Device Down",
+                "eveIp": "10.0.0.1",
+                "eveDateTime": "2025-01-15 08:00:00",
+                "eveEventType": "Device Down",
+                "devComments": "",
             }
         ]
-        columns = ["devName", "eve_MAC", "devVendor", "eve_IP", "eve_DateTime", "eve_EventType"]
+        columns = ["devName", "eveMac", "devVendor", "eveIp", "eveDateTime", "eveEventType", "devComments"]
 
         json_data = _make_json("down_devices", down_devices, columns, "🔴 Down devices")
         _, text = construct_notifications(json_data, "down_devices")
 
-        self.assertIn("Router (FF:EE:DD:CC:BB:AA) down since 2025-01-15 08:00:00", text)
+        self.assertIn("Router (ff:ee:dd:cc:bb:aa) down since 2025-01-15 08:00:00", text)
+
+    # -----------------------------------------------------------------
+    # Down reconnected section uses same unified column names
+    # -----------------------------------------------------------------
+    @patch("models.notification_instance.get_setting_value")
+    def test_down_reconnected_template(self, mock_setting):
+        from models.notification_instance import construct_notifications
+
+        mock_setting.side_effect = self._setting_factory({
+            "NTFPRCS_TEXT_SECTION_HEADERS": True,
+            "NTFPRCS_TEXT_TEMPLATE_down_reconnected": "{devName} ({eveMac}) reconnected at {eveDateTime}",
+        })
+
+        reconnected = [
+            {
+                "devName": "Switch",
+                "eveMac": "aa:11:bb:22:cc:33",
+                "devVendor": "Netgear",
+                "eveIp": "10.0.0.2",
+                "eveDateTime": "2025-01-15 09:30:00",
+                "eveEventType": "Down Reconnected",
+                "devComments": "",
+            }
+        ]
+        columns = ["devName", "eveMac", "devVendor", "eveIp", "eveDateTime", "eveEventType", "devComments"]
+
+        json_data = _make_json("down_reconnected", reconnected, columns, "🔁 Reconnected down devices")
+        _, text = construct_notifications(json_data, "down_reconnected")
+
+        self.assertIn("Switch (aa:11:bb:22:cc:33) reconnected at 2025-01-15 09:30:00", text)
 
     # -----------------------------------------------------------------
     # HTML output is unchanged regardless of template config
@@ -255,7 +288,7 @@ class TestConstructNotificationsTemplates(unittest.TestCase):
         # Get HTML with template
         mock_setting.side_effect = self._setting_factory({
             "NTFPRCS_TEXT_SECTION_HEADERS": True,
-            "NTFPRCS_TEXT_TEMPLATE_new_devices": "{Device name} ({MAC})",
+            "NTFPRCS_TEXT_TEMPLATE_new_devices": "{devName} ({eveMac})",
         })
         html_with, _ = construct_notifications(json_data, "new_devices")
 

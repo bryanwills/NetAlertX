@@ -290,7 +290,7 @@ function getSetting (key) {
 // -----------------------------------------------------------------------------
 function cacheStrings() {
   return new Promise((resolve, reject) => {
-    if(getCache(CACHE_KEYS.initFlag('cacheStrings')) === "true")
+    if(getCache(CACHE_KEYS.initFlag('cacheStrings_v2')) === "true")
     {
       // Core strings are cached, but plugin strings may have failed silently on
       // the first load (non-fatal fetch).  Always re-fetch them so that plugin
@@ -304,7 +304,7 @@ function cacheStrings() {
         .then((data) => {
           if (!Array.isArray(data)) { data = []; }
           data.forEach((langString) => {
-            setCache(CACHE_KEYS.langString(langString.String_Key, langString.Language_Code), langString.String_Value);
+            setCache(CACHE_KEYS.langString(langString.stringKey, langString.languageCode), langString.stringValue);
           });
           resolve();
         });
@@ -347,11 +347,11 @@ function cacheStrings() {
                   if (!Array.isArray(data)) { data = []; }
                   // Store plugin translations
                   data.forEach((langString) => {
-                    setCache(CACHE_KEYS.langString(langString.String_Key, langString.Language_Code), langString.String_Value);
+                    setCache(CACHE_KEYS.langString(langString.stringKey, langString.languageCode), langString.stringValue);
                   });
 
                   // Handle successful completion of language processing
-                  handleSuccess('cacheStrings');
+                  handleSuccess('cacheStrings_v2');
                   resolveLang();
                 });
             })
@@ -370,7 +370,7 @@ function cacheStrings() {
         })
         .catch((error) => {
           // Handle failure in any of the language processing
-          handleFailure('cacheStrings');
+          handleFailure('cacheStrings_v2');
           reject(error);
         });
 

@@ -10,22 +10,23 @@ HTML email tables are **not affected** by these templates.
 
 1. Go to **Settings → Notification Processing**.
 2. Set a template string for the section you want to customize, e.g.:
-   - **Text Template: New Devices** → `{Device name} ({MAC}) - {IP}`
+   - **Text Template: New Devices** → `{devName} ({eveMac}) - {eveIp}`
 3. Save. The next notification will use your format.
 
 **Before (default):**
 ```
 🆕 New devices
 ---------
-MAC: 	    aa:bb:cc:dd:ee:ff
-Datetime: 	2025-01-15 10:30:00
-IP: 	    192.168.1.42
-Event Type: New Device
-Device name: MyPhone
-Comments:
+devName: 	    MyPhone
+eveMac: 	    aa:bb:cc:dd:ee:ff
+devVendor: 	    Apple
+eveIp: 	    192.168.1.42
+eveDateTime: 	2025-01-15 10:30:00
+eveEventType:  New Device
+devComments:
 ```
 
-**After (with template `{Device name} ({MAC}) - {IP}`):**
+**After (with template `{devName} ({eveMac}) - {eveIp}`):**
 ```
 🆕 New devices
 ---------
@@ -50,7 +51,7 @@ When a template is **empty**, the section uses the original vertical `Header: Va
 Use `{FieldName}` to insert a value from the notification data. Field names are **case-sensitive** and must match the column names exactly.
 
 ```
-{Device name} ({MAC}) connected at {Datetime}
+{devName} ({eveMac}) connected at {eveDateTime}
 ```
 
 - No loops, conditionals, or nesting — just simple string replacement.
@@ -58,52 +59,41 @@ Use `{FieldName}` to insert a value from the notification data. Field names are 
 
 ## Variable Availability by Section
 
-Each section has different available fields because they come from different database queries.
+All four device sections (`new_devices`, `down_devices`, `down_reconnected`, `events`) share the same unified field names.
 
-### `new_devices` and `events`
-
-| Variable | Description |
-|----------|-------------|
-| `{MAC}` | Device MAC address |
-| `{Datetime}` | Event timestamp |
-| `{IP}` | Device IP address |
-| `{Event Type}` | Type of event (e.g. `New Device`, `Connected`) |
-| `{Device name}` | Device display name |
-| `{Comments}` | Device comments |
-
-**Example:** `{Device name} ({MAC}) - {IP} [{Event Type}]`
-
-### `down_devices` and `down_reconnected`
+### `new_devices`, `down_devices`, `down_reconnected`, and `events`
 
 | Variable | Description |
 |----------|-------------|
 | `{devName}` | Device display name |
-| `{eve_MAC}` | Device MAC address |
+| `{eveMac}` | Device MAC address |
 | `{devVendor}` | Device vendor/manufacturer |
-| `{eve_IP}` | Device IP address |
-| `{eve_DateTime}` | Event timestamp |
-| `{eve_EventType}` | Type of event |
+| `{eveIp}` | Device IP address |
+| `{eveDateTime}` | Event timestamp |
+| `{eveEventType}` | Type of event (e.g. `New Device`, `Connected`, `Device Down`) |
+| `{devComments}` | Device comments |
 
-**Example:** `{devName} ({eve_MAC}) {devVendor} - went down at {eve_DateTime}`
+**Example (new_devices/events):** `{devName} ({eveMac}) - {eveIp} [{eveEventType}]`
+
+**Example (down_devices):** `{devName} ({eveMac}) {devVendor} - went down at {eveDateTime}`
+
+**Example (down_reconnected):** `{devName} ({eveMac}) reconnected at {eveDateTime}`
 
 ### `plugins`
 
 | Variable | Description |
 |----------|-------------|
-| `{Plugin}` | Plugin code name |
-| `{Object_PrimaryId}` | Primary identifier of the object |
-| `{Object_SecondaryId}` | Secondary identifier |
-| `{DateTimeChanged}` | Timestamp of change |
-| `{Watched_Value1}` | First watched value |
-| `{Watched_Value2}` | Second watched value |
-| `{Watched_Value3}` | Third watched value |
-| `{Watched_Value4}` | Fourth watched value |
-| `{Status}` | Plugin event status |
+| `{plugin}` | Plugin code name |
+| `{objectPrimaryId}` | Primary identifier of the object |
+| `{objectSecondaryId}` | Secondary identifier |
+| `{dateTimeChanged}` | Timestamp of change |
+| `{watchedValue1}` | First watched value |
+| `{watchedValue2}` | Second watched value |
+| `{watchedValue3}` | Third watched value |
+| `{watchedValue4}` | Fourth watched value |
+| `{status}` | Plugin event status |
 
-**Example:** `{Plugin}: {Object_PrimaryId} - {Status}`
-
-> [!NOTE]
-> Field names differ between sections because they come from different SQL queries. A template configured for `new_devices` cannot use `{devName}` — that field is only available in `down_devices` and `down_reconnected`.
+**Example:** `{plugin}: {objectPrimaryId} - {status}`
 
 ## Section Headers Toggle
 
