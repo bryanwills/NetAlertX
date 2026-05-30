@@ -36,13 +36,47 @@ RESULT_FILE = os.path.join(LOG_PATH, f'last_result.{pluginName}.log')
 
 def parse_scan_subnets(subnets):
     """Extract subnet and interface from SCAN_SUBNETS"""
+
     ranges = []
     interfaces = []
+
     for entry in subnets:
-        parts = entry.split("--interface=")
-        ranges.append(parts[0].strip())
-        if len(parts) > 1:
-            interfaces.append(parts[1].strip())
+
+        # Extract interface
+        interface_match = re.search(r'--interface=([^\s]+)', entry)
+        interface = interface_match.group(1) if interface_match else None
+
+        # Extract vlan
+        vlan_match = re.search(r'--vlan=(\d+)', entry)
+        vlan = vlan_match.group(1) if vlan_match else None
+
+        # If VLAN interface exists, use it
+        if interface and vlan:
+            vlan_interface = f"{interface}.{vlan}"
+
+            if os.path.exists(f"/sys/class/net/{vlan_interface}"):
+                interface = vlan_interface
+                mylog('verbose', [
+                    f'[{pluginName}] Using VLAN interface: {interface}'
+                ])
+            else:
+                mylog('verbose', [
+                    f'[{pluginName}] VLAN interface {vlan_interface} not found, using {interface}'
+                ])
+
+        if interface:
+            interfaces.append(interface)
+
+        # Remove interface/vlan options from subnet definition
+        subnet = re.sub(r'\s+--interface=[^\s]+', '', entry)
+        subnet = re.sub(r'\s+--vlan=\d+', '', subnet)
+
+        ranges.append(subnet.strip())
+
+    mylog('verbose', [f'[{pluginName}] SCAN_SUBNETS value: {subnets}'])
+    mylog('verbose', [f'[{pluginName}] Parsed subnets: {ranges}'])
+    mylog('verbose', [f'[{pluginName}] Parsed interfaces: {interfaces}'])
+
     return ranges, interfaces
 
 
