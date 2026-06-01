@@ -12,7 +12,7 @@ import ipaddress
 INSTALL_PATH = os.getenv('NETALERTX_APP', '/app')
 sys.path.extend([f"{INSTALL_PATH}/front/plugins", f"{INSTALL_PATH}/server"])
 
-from plugin_helper import Plugin_Objects  # noqa: E402 [flake8 lint suppression]
+from plugin_helper import Plugin_Objects, parse_scan_subnets  # noqa: E402 [flake8 lint suppression]
 from logger import mylog, Logger  # noqa: E402 [flake8 lint suppression]
 from helper import get_setting_value  # noqa: E402 [flake8 lint suppression]
 from const import logPath  # noqa: E402 [flake8 lint suppression]
@@ -32,52 +32,6 @@ pluginName = 'ICMP'
 LOG_PATH = logPath + '/plugins'
 LOG_FILE = os.path.join(LOG_PATH, f'script.{pluginName}.log')
 RESULT_FILE = os.path.join(LOG_PATH, f'last_result.{pluginName}.log')
-
-
-def parse_scan_subnets(subnets):
-    """Extract subnet and interface from SCAN_SUBNETS"""
-
-    ranges = []
-    interfaces = []
-
-    for entry in subnets:
-
-        # Extract interface
-        interface_match = re.search(r'--interface=([^\s]+)', entry)
-        interface = interface_match.group(1) if interface_match else None
-
-        # Extract vlan
-        vlan_match = re.search(r'--vlan=(\d+)', entry)
-        vlan = vlan_match.group(1) if vlan_match else None
-
-        # If VLAN interface exists, use it
-        if interface and vlan:
-            vlan_interface = f"{interface}.{vlan}"
-
-            if os.path.exists(f"/sys/class/net/{vlan_interface}"):
-                interface = vlan_interface
-                mylog('verbose', [
-                    f'[{pluginName}] Using VLAN interface: {interface}'
-                ])
-            else:
-                mylog('verbose', [
-                    f'[{pluginName}] VLAN interface {vlan_interface} not found, using {interface}'
-                ])
-
-        if interface:
-            interfaces.append(interface)
-
-        # Remove interface/vlan options from subnet definition
-        subnet = re.sub(r'\s+--interface=[^\s]+', '', entry)
-        subnet = re.sub(r'\s+--vlan=\d+', '', subnet)
-
-        ranges.append(subnet.strip())
-
-    mylog('verbose', [f'[{pluginName}] SCAN_SUBNETS value: {subnets}'])
-    mylog('verbose', [f'[{pluginName}] Parsed subnets: {ranges}'])
-    mylog('verbose', [f'[{pluginName}] Parsed interfaces: {interfaces}'])
-
-    return ranges, interfaces
 
 
 def get_device_by_ip(ip, all_devices):
@@ -100,7 +54,14 @@ def main():
     fakeMac = get_setting_value('ICMP_FAKE_MAC')
     scan_subnets = get_setting_value("SCAN_SUBNETS")
 
-    subnets, interfaces = parse_scan_subnets(scan_subnets)
+    parsed = parse_scan_subnets(scan_subnets)
+
+    subnets = [x.subnet for x in parsed]
+    interfaces = [
+        x.resolved_interface
+        for x in parsed
+        if x.resolved_interface
+    ]
 
     # Initialize the Plugin obj output file
     plugin_objects = Plugin_Objects(RESULT_FILE)

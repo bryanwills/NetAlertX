@@ -77,11 +77,11 @@ PUSH mode is typically recommended for MSP deployments because remote customer e
 
 The hub can operate in different synchronization ownership modes depending on your operational requirements.
 
-| Mode           | Best For                                                             |
-| -------------- | -------------------------------------------------------------------- |
-| `copy-new`     | MSP environments where the hub becomes the long-term source of truth |
-| `carbon-copy`  | Fully managed remote appliances where nodes remain authoritative     |
-| `hub-defaults` | Centralized inventory management with hub-defined policies           |
+| Mode           | Best For                                                              |
+| -------------- | --------------------------------------------------------------------- |
+| `copy-new`     | After initial discovery the hub becomes the long-term source of truth |
+| `carbon-copy`  | Fully managed remote appliances where nodes remain authoritative      |
+| `hub-defaults` | Centralized inventory management with hub-defined policies            |
 
 This flexibility allows NetAlertX to support both:
 
@@ -121,14 +121,13 @@ For best results in multi-site environments:
 * Use predefined "Down Devices" dashboards
 * Enable Prometheus metrics export
 * Use UI Filters to create site-specific views
-* Configure notification throttling to reduce alert fatigue
 
 ---
 
 # Related Documentation
 
 * [Remote Networks](./REMOTE_NETWORKS.md)
-* [Sync Hub Plugin](../front/plugins/sync/README.md)
+* [Sync Hub Plugin](https://github.com/netalertx/NetAlertX/tree/main/front/plugins/sync/README.md)
 * [Workflows](./WORKFLOWS.md)
 * [Metrics API](./API_METRICS.md)
 * [Eyes on Glass / NOC Dashboard](./ADVISORY_EYES_ON_GLASS.md)

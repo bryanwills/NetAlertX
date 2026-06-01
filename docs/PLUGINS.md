@@ -12,7 +12,7 @@ NetAlertX supports additional plugins to extend its functionality, each with its
 > ![Loaded plugins settings](./img/PLUGINS/enable_plugin.gif)
 
 1. Pick your `🔍 dev scanner` plugin (e.g. `ARPSCAN` or `NMAPDEV`), or import devices into the application with an `📥 importer` plugin. (See **Enabling plugins** below)
-2. Pick a `▶️ publisher` plugin, if you want to send notifications. If you don't see a publisher you'd like to use, look at the  [📚_publisher_apprise](/front/plugins/_publisher_apprise/) plugin which is a proxy for over 80 notification services.
+2. Pick a `▶️ publisher` plugin, if you want to send notifications. If you don't see a publisher you'd like to use, look at the  [📚_publisher_apprise](https://docs.netalertx.com/PLUGINS/?h=APPRISE#available-plugins) plugin which is a proxy for over 80 notification services.
 3. Setup your [Network topology diagram](./NETWORK_TREE.md)
 4. Fine-tune [Notifications](./NOTIFICATIONS.md)
 5. Setup [Workflows](./WORKFLOWS.md)
