@@ -12,7 +12,7 @@ import ipaddress
 INSTALL_PATH = os.getenv('NETALERTX_APP', '/app')
 sys.path.extend([f"{INSTALL_PATH}/front/plugins", f"{INSTALL_PATH}/server"])
 
-from plugin_helper import Plugin_Objects  # noqa: E402 [flake8 lint suppression]
+from plugin_helper import Plugin_Objects, parse_scan_subnets  # noqa: E402 [flake8 lint suppression]
 from logger import mylog, Logger  # noqa: E402 [flake8 lint suppression]
 from helper import get_setting_value  # noqa: E402 [flake8 lint suppression]
 from const import logPath  # noqa: E402 [flake8 lint suppression]
@@ -32,18 +32,6 @@ pluginName = 'ICMP'
 LOG_PATH = logPath + '/plugins'
 LOG_FILE = os.path.join(LOG_PATH, f'script.{pluginName}.log')
 RESULT_FILE = os.path.join(LOG_PATH, f'last_result.{pluginName}.log')
-
-
-def parse_scan_subnets(subnets):
-    """Extract subnet and interface from SCAN_SUBNETS"""
-    ranges = []
-    interfaces = []
-    for entry in subnets:
-        parts = entry.split("--interface=")
-        ranges.append(parts[0].strip())
-        if len(parts) > 1:
-            interfaces.append(parts[1].strip())
-    return ranges, interfaces
 
 
 def get_device_by_ip(ip, all_devices):
@@ -66,7 +54,14 @@ def main():
     fakeMac = get_setting_value('ICMP_FAKE_MAC')
     scan_subnets = get_setting_value("SCAN_SUBNETS")
 
-    subnets, interfaces = parse_scan_subnets(scan_subnets)
+    parsed = parse_scan_subnets(scan_subnets)
+
+    subnets = [x.subnet for x in parsed]
+    interfaces = [
+        x.resolved_interface
+        for x in parsed
+        if x.resolved_interface
+    ]
 
     # Initialize the Plugin obj output file
     plugin_objects = Plugin_Objects(RESULT_FILE)

@@ -7,7 +7,7 @@ Effective multi-network monitoring starts with understanding how NetAlertX "sees
 * **A. Understand Network Accessibility:** Local ARP-based scanning (**ARPSCAN**) only discovers devices on directly accessible subnets due to Layer 2 limitations. It cannot traverse VPNs or routed borders without specific configuration.
 * **B. Plan Subnet & Scan Interfaces:** Explicitly configure each accessible segment in `SCAN_SUBNETS` with the corresponding interfaces.
 * **C. Remote & Inaccessible Networks:** For networks unreachable via ARP, use these strategies:
-* **Alternate Plugins:** Supplement discovery with [SNMPDSC](SNMPDSC) or [DHCP lease imports](https://docs.netalertx.com/PLUGINS/?h=DHCPLSS#available-plugins).
+* **Alternate Plugins:** Supplement discovery with [SNMPDSC](https://docs.netalertx.com/PLUGINS/?h=SNMPDSC#available-plugins) or [DHCP lease imports](https://docs.netalertx.com/PLUGINS/?h=DHCPLSS#available-plugins).
 * **Sync Hub for MSP & Multi-Site Deployments:** Run secondary NetAlertX instances on isolated networks and aggregate data using the **SYNC plugin**. Use the [`SYNC_BEHAVIOR`](https://github.com/netalertx/NetAlertX/tree/main/front/plugins/sync/README.md#hub-device-write-behavior-sync_behavior) setting on the hub to control whether the hub inherits device config from nodes or manages it independently.
 * **Manual Entry:** For static assets where only ICMP (ping) status is needed.
 
@@ -110,7 +110,7 @@ Don't let a massive device list overwhelm you. Use the [Multi-edit features](./D
 As your environment grows, tuning the underlying engine is vital to maintain a snappy UI and reliable discovery cycles.
 
 * **Plugin Scheduling:** Avoid "Scan Storms" by staggering plugin execution. Running intensive tasks like `NMAP` or `MASS_DNS` simultaneously can spike CPU and cause database locks.
-* **Database Health:** Large-scale monitoring generates massive event logs. Use the **[DBCLNP (Database Cleanup)](https://www.google.com/search?q=https://docs.netalertx.com/PLUGINS/%23dbclnp)** plugin to prune old records and keep the SQLite database performant.
+* **Database Health:** Large-scale monitoring generates massive event logs. Use the **[DBCLNP (Database Cleanup)](https://docs.netalertx.com/PLUGINS/?h=dbclnp#available-plugins)** plugin to prune old records and keep the SQLite database performant.
 * **Resource Management:** For high-device counts, consider increasing the memory limit for the container and utilizing `tmpfs` for temporary files to reduce SD card/disk I/O bottlenecks.
 * Enable the `DEEP_SLEEP` setting.
 
