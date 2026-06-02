@@ -47,7 +47,7 @@ Some environments cannot be scanned directly due to:
 
 ---
 
-# Architecture Overview
+## Architecture Overview
 
 NetAlertX supports distributed monitoring using two primary roles:
 
@@ -60,7 +60,7 @@ Each node scans its local network and synchronizes device data back to the hub.
 
 ---
 
-# Sync Modes
+### Sync Modes
 
 NetAlertX supports both PUSH and PULL synchronization models.
 
@@ -73,7 +73,7 @@ PUSH mode is typically recommended for MSP deployments because remote customer e
 
 ---
 
-# Device Ownership Models (`SYNC_BEHAVIOR`) in PULL mode
+### Device Ownership Models (`SYNC_BEHAVIOR`) in PULL mode
 
 The hub can operate in different synchronization ownership modes depending on your operational requirements.
 
@@ -90,9 +90,9 @@ This flexibility allows NetAlertX to support both:
 
 ---
 
-# Example Deployment
+### Example Deployment
 
-## Multi-Site MSP Deployment
+#### Multi-Site MSP Deployment
 
 ```text
 Customer Site A ─┐
@@ -112,7 +112,7 @@ The central hub:
 
 ---
 
-# Recommended MSP Features
+## Recommended MSP Features
 
 For best results in multi-site environments:
 
@@ -124,7 +124,7 @@ For best results in multi-site environments:
 
 ---
 
-# Related Documentation
+## Related Documentation
 
 * [Remote Networks](./REMOTE_NETWORKS.md)
 * [Sync Hub Plugin](https://github.com/netalertx/NetAlertX/tree/main/front/plugins/sync/README.md)
@@ -134,7 +134,7 @@ For best results in multi-site environments:
 
 ---
 
-# Summary
+## Summary
 
 NetAlertX enables lightweight, centralized monitoring across distributed networks without the operational overhead of traditional enterprise monitoring platforms.
 
