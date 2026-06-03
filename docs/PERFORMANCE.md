@@ -26,6 +26,10 @@ A large database or oversized log files can impact performance. You can check da
 > * No table should exceed **10,000 rows** in a healthy system.
 > * Actual values vary based on network activity and plugin settings.
 
+Please note that excessively large log files will increase memory consumption. Decrease `MAINT_LOG_LENGTH` if you want to optimize memory use and increase it when debugging issues. See below chart on memory use after logs cleanup.
+
+![memory use after excessive log clean up](./img/PERFORMANCE/logs_memory_usage.png)
+
 ---
 
 ## Maintenance Plugins
