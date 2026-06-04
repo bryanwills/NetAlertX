@@ -240,7 +240,7 @@
       "description": [
         {
           "language_code": "en_us",
-          "string": "How many last <code>app.log</code> lines to keep. When <code>LOG_LEVEL</code> is set to <code>debug</code>, the application generates about 10,000 log lines per hour. Choose a value that covers the expected bug occurrence window. For example, <code>1000000</code> lines (~50 MB) is typically sufficient for issues that occur every 3 days. Set to <code>0</code> to disable log purging. Larger log files increase memory usage, so reduce this value after debugging is complete."
+          "string": "How many log entries to keep. When <code>LOG_LEVEL</code> is set to <code>debug</code>, the application generates about 10,000 log entries per hour. Choose a value that covers the expected bug occurrence window. For example, <code>1000000</code> lines (~50 MB) is typically sufficient for issues that occur every 3 days. Set to <code>0</code> to disable log purging. Larger log files increase memory usage, so reduce the value after debugging is complete."
         }
       ]
     },
