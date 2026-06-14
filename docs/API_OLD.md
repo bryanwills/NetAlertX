@@ -352,7 +352,6 @@ This API endpoint retrieves files from the `/tmp/log` folder.
 | `report_output.json`     | JSON format report output                                     |
 | `report_output.txt`      | Text format report output                                     |
 | `stderr.log`             | Logs of standard error output                                 |
-| `stdout.log`             | Logs of standard output                                       |
 
 
 ## API Endpoint: /config files

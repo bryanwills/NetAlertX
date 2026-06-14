@@ -57,7 +57,7 @@ NOTIFICATION_LEVELS = Literal["info", "warning", "error", "alert", "interrupt"]
 ALLOWED_TABLES = Literal["Devices", "Events", "Sessions", "Settings", "CurrentScan", "Online_History", "Plugins_Objects", "Plugins_History"]
 
 ALLOWED_LOG_FILES = Literal[
-    "app.log", "app_front.log", "IP_changes.log", "stdout.log", "stderr.log",
+    "app.log", "app_front.log", "IP_changes.log", "stderr.log",
     "app.php_errors.log", "execution_queue.log", "db_is_locked.log"
 ]
 

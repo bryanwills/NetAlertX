@@ -170,6 +170,7 @@ However, if you prefer to have direct, file-level access to your configuration f
 ```
 
 **After (Using a Local Folder / Bind Mount):**
+
 Make sure to replace `/local_data_dir` with your actual path. The format is `<path_on_your_computer>:<path_inside_container>:<options>`.
 
 ```yaml

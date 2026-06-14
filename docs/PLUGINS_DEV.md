@@ -352,7 +352,7 @@ See: [UI Components](PLUGINS_DEV_UI_COMPONENTS.md)
 - **Settings Helper:** `/app/server/helper.py` - Use `get_setting_value()` in scripts
 - **Example Plugins:** `/app/front/plugins/*/` - Study working implementations
 - **Logs:** `/tmp/log/plugins/` - Plugin output and execution logs
-- **Backend Logs:** `/tmp/log/stdout.log` - Core system logs
+- **Backend Logs:** `/tmp/log/app.log` - Core system logs
 
 ---
 

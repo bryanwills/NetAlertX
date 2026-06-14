@@ -507,7 +507,7 @@ mylog('none', f"Setting value: {value}")
 Check backend logs:
 
 ```bash
-tail -f /tmp/log/stdout.log | grep -i "setting\|MYPLN"
+tail -f /tmp/log/app.log | grep -i "setting\|MYPLN"
 ```
 
 ## See Also

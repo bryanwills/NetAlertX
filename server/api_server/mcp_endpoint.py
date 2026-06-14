@@ -812,7 +812,7 @@ def _list_resources() -> List[Dict[str, Any]]:
 
     # Log files
     log_files = [
-        ("stdout.log", "Backend stdout log"),
+        ("app.log", "Backend log"),
         ("stderr.log", "Backend stderr log"),
         ("app_front.log", "Frontend commands log"),
         ("app.php_errors.log", "PHP errors log")
