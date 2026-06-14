@@ -40,7 +40,7 @@ def main():
     # Check if set
     if MAINT_LOG_LENGTH != 0:
 
-        MAX_TAIL_SIZE = 0.1 * 1024 * 1024  # 0.1 MB
+        MAX_TAIL_SIZE = MAINT_LOG_LENGTH * 80  # Bytes = lines * approx 80 chars per log line
 
         for fileEntry in logFiles:
 
@@ -56,14 +56,10 @@ def main():
 
             try:
 
-                if size_before > MAX_TAIL_SIZE:
-
-                    mylog('verbose', [f'[{pluginName}] {fileEntry} exceeds {MAX_TAIL_SIZE} bytes, truncating'])
-
-                    with open(logFile, 'r+b') as f:
-                        f.truncate(0)
-
+                if size_before <= MAX_TAIL_SIZE:
+                    mylog('verbose', [f'[{pluginName}] {fileEntry} already within limit, skipping'])
                 else:
+                    mylog('verbose', [f'[{pluginName}] {fileEntry} exceeds limit, trimming to last {MAINT_LOG_LENGTH} lines'])
 
                     lines_to_keep = tail_file(logFile, MAINT_LOG_LENGTH)
 
