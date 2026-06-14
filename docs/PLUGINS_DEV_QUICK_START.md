@@ -143,7 +143,7 @@ ls -la /tmp/log/plugins/last_result.MYPLN.log
 cat /tmp/log/plugins/last_result.MYPLN.log
 
 # Check backend logs for errors
-tail -f /tmp/log/stdout.log | grep "my_plugin\|MYPLN"
+tail -f /tmp/log/app.log | grep "my_plugin\|MYPLN"
 ```
 
 ## Next Steps
@@ -162,7 +162,7 @@ Now that you have a working basic plugin:
 |-------|----------|
 | "Module not found" errors | Ensure `sys.path` includes `/app/server` and `/app/front/plugins` |
 | Settings not appearing | Restart backend and clear browser cache |
-| Results not showing up | Check `/tmp/log/plugins/*.log` and `/tmp/log/stdout.log` for errors |
+| Results not showing up | Check `/tmp/log/plugins/*.log` and `/tmp/log/app.log` for errors |
 | Permission denied | Plugin runs in container, use absolute paths like `/app/front/plugins/...` |
 
 ## Resources

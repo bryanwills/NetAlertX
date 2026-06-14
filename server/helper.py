@@ -17,7 +17,7 @@ import ipaddress
 
 import conf
 from const import applicationPath, fullConfPath, fullDbPath, dbPath, confPath, apiPath
-from logger import mylog, logResult
+from logger import mylog
 
 # Register NetAlertX directories using runtime configuration
 INSTALL_PATH = applicationPath
@@ -70,7 +70,7 @@ def initialiseFile(pathToCheck, defaultFile):
                 mylog("none", ["[Setup] (" + defaultFile + ") copied over successfully to (" + pathToCheck + ")."],)
 
             # write stdout and stderr into .log files for debugging if needed
-            logResult(stdout, stderr)  # TO-DO should be changed to mylog
+            # logResult(stdout, stderr)  # TO-DO should be changed to mylog
 
         except subprocess.CalledProcessError as e:
             # An error occured, handle it

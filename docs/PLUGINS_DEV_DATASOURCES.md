@@ -364,7 +364,7 @@ sqlite> SELECT ... ;
 
 ```bash
 # Watch backend logs
-tail -f /tmp/log/stdout.log | grep -i "data_source\|MYPREFIX"
+tail -f /tmp/log/app.log | grep -i "data_source\|MYPREFIX"
 ```
 
 ---

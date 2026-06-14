@@ -26,7 +26,7 @@ def clean_log(log_file):
         flask.Response: JSON response with success and message keys
     """
     allowed_files = [
-        'app.log', 'app_front.log', 'IP_changes.log', 'stdout.log', 'stderr.log',
+        'app.log', 'app_front.log', 'IP_changes.log', 'stderr.log',
         'app.php_errors.log', 'execution_queue.log', 'db_is_locked.log'
     ]
 

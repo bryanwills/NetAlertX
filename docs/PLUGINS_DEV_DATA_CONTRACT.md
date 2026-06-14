@@ -245,7 +245,7 @@ cat /tmp/log/plugins/last_result.YOURPREFIX.log | awk -F'|' '{print NF}' | sort 
 
 **Check core processing in logs:**
 ```bash
-tail -f /tmp/log/stdout.log | grep -i "YOURPREFIX\|Plugins_Objects"
+tail -f /tmp/log/app.log | grep -i "YOURPREFIX\|Plugins_Objects"
 ```
 
 ## See Also

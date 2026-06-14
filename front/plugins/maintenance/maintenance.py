@@ -2,7 +2,6 @@
 
 import os
 import sys
-from collections import deque
 
 # Register NetAlertX directories
 INSTALL_PATH = os.getenv('NETALERTX_APP', '/app')
@@ -36,34 +35,45 @@ def main():
     MAINT_LOG_LENGTH = int(get_setting_value('MAINT_LOG_LENGTH'))
     MAINT_NOTI_LENGTH = int(get_setting_value('MAINT_NOTI_LENGTH'))
 
-    logFiles = ["app.log", "nginx-error.log", "stdout.log"]
+    logFiles = ["app.log", "nginx-error.log"]
 
     # Check if set
     if MAINT_LOG_LENGTH != 0:
 
+        MAX_TAIL_SIZE = MAINT_LOG_LENGTH * 80  # Bytes = lines * approx 80 chars per log line
+
         for fileEntry in logFiles:
 
-            mylog('verbose', [f'[{pluginName}] Cleaning file'])
+            logFile = os.path.join(logPath, fileEntry)
 
-            logFile = logPath + "/" + fileEntry
+            if not os.path.isfile(logFile):
+                mylog('verbose', [f'[{pluginName}] File not found: {fileEntry}'])
+                continue
 
-            mylog('verbose', [f'[{pluginName}] {fileEntry} size BEFORE: {os.path.getsize(logFile)}'])
+            size_before = os.path.getsize(logFile)
 
-            # Using a deque to efficiently keep the last N lines
-            lines_to_keep = deque(maxlen=MAINT_LOG_LENGTH)
+            mylog('verbose', [f'[{pluginName}] {fileEntry} size BEFORE: {size_before}'])
 
-            with open(logFile, 'r') as file:
-                # Read lines from the file and store the last N lines
-                for line in file:
-                    lines_to_keep.append(line)
+            try:
 
-            with open(logFile, 'w') as file:
-                # Write the last N lines back to the file
-                file.writelines(lines_to_keep)
+                if size_before <= MAX_TAIL_SIZE:
+                    mylog('verbose', [f'[{pluginName}] {fileEntry} already within limit, skipping'])
+                else:
+                    mylog('verbose', [f'[{pluginName}] {fileEntry} exceeds limit, trimming to last {MAINT_LOG_LENGTH} lines'])
 
-            mylog('verbose', [f'[{pluginName}] {fileEntry} size AFTER: {os.path.getsize(logFile)}'])
+                    lines_to_keep = tail_file(logFile, MAINT_LOG_LENGTH)
 
-            mylog('verbose', [f'[{pluginName}] Cleanup of {fileEntry} finished'])
+                    with open(logFile, 'r+b') as f:
+                        f.seek(0)
+                        f.truncate()
+                        f.writelines(lines_to_keep)
+
+                size_after = os.path.getsize(logFile)
+
+                mylog('verbose', [f'[{pluginName}] {fileEntry} size AFTER: {size_after}'])
+
+            except Exception as e:
+                mylog('none', [f'[{pluginName}] Failed to clean {fileEntry}: {e}'])
 
     # Check if set
     if MAINT_NOTI_LENGTH != 0:
@@ -86,6 +96,37 @@ def main():
     mylog('verbose', [f'[{pluginName}] Deleted {deleted} processed sync artefact file(s) from {LOG_PATH}'])
 
     return 0
+
+
+def tail_file(filepath, num_lines):
+    """
+    Return the last num_lines lines from a file without reading the entire file.
+    """
+    if num_lines <= 0:
+        return []
+
+    block_size = 8192
+
+    with open(filepath, 'rb') as f:
+        f.seek(0, os.SEEK_END)
+        file_size = f.tell()
+
+        blocks = []
+        lines_found = 0
+        position = file_size
+
+        while position > 0 and lines_found <= num_lines:
+            read_size = min(block_size, position)
+            position -= read_size
+
+            f.seek(position)
+            block = f.read(read_size)
+
+            blocks.append(block)
+            lines_found += block.count(b'\n')
+
+        data = b''.join(reversed(blocks))
+        return data.splitlines(keepends=True)[-num_lines:]
 
 
 # ===============================================================================
