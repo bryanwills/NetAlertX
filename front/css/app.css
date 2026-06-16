@@ -2338,6 +2338,17 @@ textarea[readonly],
     padding: 5px;
 }
 
+.workflows .add-target-condition
+{
+    margin: 10px;
+    text-align: center;
+}
+
+.workflows .inline-hint
+{
+    margin: 5px;
+}
+
 .workflows
 {
     max-width: 800px;

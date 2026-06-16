@@ -325,7 +325,7 @@ function generateWorkflowUI(wf, wfIndex) {
         .append($("<i>", { class: "fa-solid fa-crosshairs" }))
         .append(` ${getString("WF_Action_target_conditions")}:`);
 
-      let $tokenHint = $("<div>", { class: "text-muted small col-sm-12 col-xs-12" })
+      let $tokenHint = $("<div>", { class: "text-muted inline-hint small col-sm-12 col-xs-12" })
         .html(getString("WF_Action_token_hint"));
 
       $targetConditionsWrap.append($targetConditionsTitle);
