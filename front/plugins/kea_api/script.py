@@ -6,9 +6,9 @@ import requests
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../server'))
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../plugins'))
 
-from plugin_helper import Plugin_Objects, mylog, handleEmpty, is_mac
-from helper import get_setting_value
-from const import logPath
+from plugin_helper import Plugin_Objects, mylog, is_mac    # noqa: E402 [flake8 lint suppression]
+from helper import get_setting_value    # noqa: E402 [flake8 lint suppression]
+from const import logPath    # noqa: E402 [flake8 lint suppression]
 
 pluginName = 'KEALSS'
 LOG_PATH = logPath + '/plugins'
@@ -65,10 +65,8 @@ def main():
             elif entry['result'] == 3:
                 mylog('verbose', [f'[{pluginName}] Kea API indicates no entries found: {text}'])
 
-
     except Exception as e:
         mylog('none', [f'[{pluginName}] ⚠ ERROR: {str(e)}'])
-
 
 
 if __name__ == '__main__':
