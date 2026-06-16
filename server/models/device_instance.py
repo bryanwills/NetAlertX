@@ -18,6 +18,7 @@ from db.authoritative_handler import (
     unlock_fields
 )
 from helper import is_random_mac, get_setting_value
+from workflows.constants import VALID_DEVICE_COLUMNS
 from utils.datetime_utils import timeNowUTC
 
 
@@ -85,6 +86,11 @@ class DeviceInstance:
             SELECT * FROM Devices WHERE devGUID = ?
         """, (devGUID,))
 
+    def getByMac(self, mac):
+        return self._fetchone("""
+            SELECT * FROM Devices WHERE devMac = ?
+        """, (mac,))
+
     def exists(self, devGUID):
         row = self._fetchone("""
             SELECT COUNT(*) as count FROM Devices WHERE devGUID = ?
@@ -95,6 +101,49 @@ class DeviceInstance:
         return self._fetchone("""
             SELECT * FROM Devices WHERE devLastIP = ?
         """, (ip,))
+
+    def queryByConditions(self, conditions):
+        """Query Devices using a list of condition dicts.
+
+        Each condition dict must have ``field``, ``operator``, and ``value`` keys.
+        Supported operators: ``equals``, ``contains``.
+
+        Returns a list of device dicts (may be empty).  Only fields present in
+        the Devices schema are accepted; unrecognised fields are skipped with a
+        warning to prevent SQL injection.
+        """
+        clauses = []
+        params = []
+
+        for cond in conditions:
+            field = cond.get("field", "")
+            operator = cond.get("operator", "")
+            value = cond.get("value", "")
+
+            if field not in VALID_DEVICE_COLUMNS:
+                mylog("none", [f"[WF] queryByConditions: unknown field '{field}' — skipped"])
+                continue
+
+            # Normalize MAC values before comparison to match stored format
+            if field == "devMac" and value:
+                value = normalize_mac(value)
+
+            if operator == "equals":
+                clauses.append(f"{field} = ?")
+                params.append(value)
+            elif operator == "contains":
+                clauses.append(f"{field} LIKE ?")
+                params.append(f"%{value}%")
+            else:
+                mylog("none", [f"[WF] queryByConditions: unsupported operator '{operator}' — skipped"])
+                continue
+
+        if not clauses:
+            mylog("none", ["[WF] queryByConditions: no valid conditions — returning empty result"])
+            return []
+
+        where = " AND ".join(clauses)
+        return self._fetchall(f"SELECT * FROM Devices WHERE {where}", tuple(params))
 
     def search(self, query):
         like = f"%{query}%"

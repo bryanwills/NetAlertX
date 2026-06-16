@@ -19,6 +19,7 @@ db/pialert.db
 db/app.db
 front/log/*
 /log/*
+.gemini/internal-docs/PRDs/*
 /log/plugins/*
 front/api/*
 /api/*

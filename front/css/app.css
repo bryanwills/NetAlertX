@@ -2430,6 +2430,18 @@ textarea[readonly],
     color: var(--color-green) !important;
 }
 
+.workflows .action-target-conditions
+{
+    opacity: 0.8;
+}
+
+.workflows .bckg-icon-base
+{
+    display: block;
+    position: absolute;
+    opacity: 0.1;
+    right: 0.1em;
+}
 .workflows .bckg-icon-1-line
 {
     font-size: 3em;
