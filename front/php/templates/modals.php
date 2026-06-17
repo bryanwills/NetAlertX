@@ -1,6 +1,6 @@
 <!-- ---------------------------------------------------------------------------
 #  NetAlertX
-#  Open Source Network Guard / WIFI & LAN intrusion detector 
+#  Open Source Network Guard / WIFI & LAN intrusion detector
 #
 #  notificacion.php - Front module. Common notification & modal window
 #-------------------------------------------------------------------------------
