@@ -54,6 +54,7 @@ Sometimes devices are manually archived (e.g., no longer expected on the network
 
   * `devIsArchived` is `1` (archived).
   * `devPresentLastScan` is `1` (device was detected in the latest scan).
+
 * **Action**:
 
   * Updates the device to set `devIsArchived` to `0` (unarchived).
@@ -110,6 +111,7 @@ When new devices join your network, assigning them to the correct network node i
 * **Conditions**:
 
   * `devLastIP` contains `192.168.1.` (matches subnet).
+
 * **Action**:
 
   * Sets `devNetworkNode` to the specified MAC address.
@@ -175,6 +177,7 @@ You may want to automatically clear out newly detected Google devices (such as C
 
   * `devVendor` contains `Google`.
   * `devIsNew` is `1` (device marked as new).
+
 * **Actions**:
 
   1. Sets `devIsNew` to `0` (mark as not new).
@@ -183,3 +186,69 @@ You may want to automatically clear out newly detected Google devices (such as C
 ### ✅ Result
 
 Any newly detected Google devices are cleaned up instantly — first marked as not new, then deleted — helping you avoid clutter in your device records.
+
+---
+
+## Example 4: On new device discovery archive the old device with the same ip
+
+This workflow automatically archives devices if a new device is discovered with an already assigned IP.
+
+### 📋 Use Case
+
+This workflow is useful if you are assigning static IPs to your devices. This workflow can also help with archiving device entries with [random MAC addresses](./RANDOM_MAC.md). 
+
+### ⚙️ Workflow Configuration
+
+```json
+{
+  "name": "Archive device with same ip",
+  "trigger": {
+    "object_type": "Devices",
+    "event_type": "insert"
+  },
+  "conditions": [
+    {
+      "logic": "AND",
+      "conditions": []
+    }
+  ],
+  "actions": [
+    {
+      "type": "update_field",
+      "field": "devIsArchived",
+      "value": "1",
+      "target": {
+        "strategy": "query",
+        "conditions": [
+          {
+            "field": "devLastIP",
+            "operator": "equals",
+            "value": "{{trigger.devLastIP}}"
+          }
+        ]
+      }
+    }
+  ]
+}
+```
+
+### 🔍 Explanation
+
+* **Trigger**: Runs on a new device being inserted.
+
+* **Conditions**:
+
+  * `N/A`
+
+* **Target Conditions**:
+
+  * `devLastIP` of the target is the same as the newly discovered device's `devLastIP` value.
+
+* **Actions**:
+
+  1. Sets `devIsArchived` to `1` (mark target device as archived).
+
+
+### ✅ Result
+
+Any newly detected device that has the same IP as an existing device will automatically trigger the archival of the old device.

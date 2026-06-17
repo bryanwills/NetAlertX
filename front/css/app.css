@@ -2345,6 +2345,17 @@ textarea[readonly],
     padding: 5px;
 }
 
+.workflows .add-target-condition
+{
+    margin: 10px;
+    text-align: center;
+}
+
+.workflows .inline-hint
+{
+    margin: 5px;
+}
+
 .workflows
 {
     max-width: 800px;
@@ -2435,6 +2446,12 @@ textarea[readonly],
 .green-hover-text:hover
 {
     color: var(--color-green) !important;
+}
+
+.workflows .add-condition, .workflows .add-condition-group, .workflows .add-target-condition
+{
+    padding-top: 0.5em;
+    padding-bottom: 0.5em;
 }
 
 .workflows .action-target-conditions

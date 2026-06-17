@@ -325,8 +325,8 @@ function generateWorkflowUI(wf, wfIndex) {
         .append($("<i>", { class: "fa-solid fa-crosshairs" }))
         .append(` ${getString("WF_Action_target_conditions")}:`);
 
-      let $tokenHint = $("<div>", { class: "text-muted small col-sm-12 col-xs-12" })
-        .text(getString("WF_Action_token_hint"));
+      let $tokenHint = $("<div>", { class: "text-muted inline-hint small col-sm-12 col-xs-12" })
+        .html(getString("WF_Action_token_hint"));
 
       $targetConditionsWrap.append($targetConditionsTitle);
       $targetConditionsWrap.append($tokenHint);
@@ -1230,12 +1230,18 @@ function saveWorkflows()
   appConfBase64 = btoa(JSON.stringify(getWorkflowsJson()))
 
   // import
-  $.post('php/server/query_replace_config.php', { base64data: appConfBase64, fileName: "workflows.json" }, function(msg) {
-    console.log(msg);
-    // showMessage(msg);
-    hideSpinner();
-    write_notification(`[WF]: ${msg}`, 'interrupt');
-  });
+  $.post('php/server/query_replace_config.php', { base64data: appConfBase64, fileName: "workflows.json" })
+    .done(function(msg) {
+      console.log(msg);
+      write_notification(`[WF]: ${msg}`, 'interrupt');
+    })
+    .fail(function(jqXHR, textStatus, errorThrown) {
+      console.warn("Failed to save workflows.json:", textStatus, errorThrown);
+      write_notification(`[WF]: Save failed (${textStatus})`, 'interrupt');
+    })
+    .always(function() {
+      hideSpinner();
+    });
 }
 
 // ---------------------------------------------------
