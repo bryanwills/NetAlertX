@@ -40,14 +40,14 @@ def main():
             if entry['result'] == 0:
                 leases = entry['arguments']['leases']
                 for lease in leases:
-                    mac = lease['hw-address']                    
+                    mac = lease['hw-address']
                     state = lease['state']
                     if is_mac(mac):
                         plugin_objects.add_object(
                             primaryId   = mac,
                             secondaryId = lease['ip-address'],
                             # Active or not, similar to watched1 of DHCPLSS plugin
-                            watched1    = state == 0, 
+                            watched1    = state == 0,
                             watched2    = lease['hostname'],
                             watched3    = None,
                             # Default (or assigned) (0), declined (1), expired-reclaimed (2), released (3), and registered (4)).
