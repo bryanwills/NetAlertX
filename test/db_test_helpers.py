@@ -377,6 +377,28 @@ def down_event_macs(cur) -> set:
     return {r["eveMac"].lower() for r in cur.fetchall()}
 
 
+def insert_device_from_dict(conn: sqlite3.Connection, device: dict) -> None:
+    """Insert a device dict (as produced by make_device_dict) into Devices.
+
+    Uses INSERT OR IGNORE so duplicate MACs are silently skipped.  Accepts any
+    subset of Devices columns — only keys present in the table are written.
+    """
+    cur = conn.cursor()
+    cur.execute("PRAGMA table_info(Devices)")
+    db_columns = {row[1] for row in cur.fetchall()}
+
+    cols = [k for k in device.keys() if k in db_columns]
+    placeholders = ", ".join("?" for _ in cols)
+    col_list = ", ".join(cols)
+    values = [device[c] for c in cols]
+
+    cur.execute(
+        f"INSERT OR IGNORE INTO Devices ({col_list}) VALUES ({placeholders})",
+        values,
+    )
+    conn.commit()
+
+
 # ---------------------------------------------------------------------------
 # DummyDB — minimal wrapper used by scan.session_events helpers
 # ---------------------------------------------------------------------------
