@@ -25,7 +25,7 @@ NetAlertX supports additional plugins to extend its functionality, each with its
 | Plugin type    | Icon | Description                                                               | When to run                         | Required | Data source [?](./PLUGINS_DEV.md) |
 | -------------- | ---- | ------------------------------------------------------------------------- | ----------------------------------- | -------- | ------------------------------------- |
 | publisher      | ▶️   | Sending notifications to services.                                       | `on_notification`                   | ✖        | Script                                |
-| dev scanner    | 🔍   | On-network scanner discovering devices witout a 3rd party service        | `schedule`                          | ✖        | Script / SQLite DB                    |
+| dev scanner    | 🔍   | On-network scanner discovering devices without a 3rd party service       | `schedule`                          | ✖        | Script / SQLite DB                    |
 | name discovery | 🆎   | Discovers names of devices via various protocols.                        | `before_name_updates`, `schedule`   | ✖        | Script                                |
 | importer       | 📥   | Importing devices from another service.                                  | `schedule`                          | ✖        | Script / SQLite DB                    |
 | system         | ⚙    | Providing core system functionality.                                     | `schedule` / always on              | ✖/✔      | Script / Template                     |
@@ -65,7 +65,7 @@ Device-detecting plugins insert values into the `CurrentScan` database table.  T
 | `KEALSS`        | [kea_api](https://github.com/netalertx/NetAlertX/tree/main/front/plugins/kea_api/)                                  | 📥/🆎     | Pull lease data from the Kea DHCP API   |          |          |
 | `LUCIRPC`       | [luci_import](https://github.com/netalertx/NetAlertX/tree/main/front/plugins/luci_import/)                         | 📥       | Import connected devices from OpenWRT     |          |          |
 | `MAINT`         | [maintenance](https://github.com/netalertx/NetAlertX/tree/main/front/plugins/maintenance/)                          | ⚙        | Maintenance of logs, etc.                 |          |          |
-| `MQTT`          | [_publisher_mqtt](https://github.com/netalertx/NetAlertX/tree/main/front/plugins/_publisher_mqtt/)                | ▶️       | MQTT for synching to Home Assistant        |          |          |
+| `MQTT`          | [_publisher_mqtt](https://github.com/netalertx/NetAlertX/tree/main/front/plugins/_publisher_mqtt/)                | ▶️       | MQTT for syncing to Home Assistant         |          |          |
 | `MTSCAN`        | [mikrotik_scan](https://github.com/netalertx/NetAlertX/tree/main/front/plugins/mikrotik_scan/)                    | 🔍       | Mikrotik device import & sync              |          |          |
 | `NBTSCAN`       | [nbtscan_scan](https://github.com/netalertx/NetAlertX/tree/main/front/plugins/nbtscan_scan/)                       | 🆎       | Nbtscan (NetBIOS-based) name resolution   |          |          |
 | `NEWDEV`        | [newdev_template](https://github.com/netalertx/NetAlertX/tree/main/front/plugins/newdev_template/)                 | ⚙        | New device template                       |          | Yes      |
@@ -114,7 +114,7 @@ Plugins can be enabled via Settings, and can be disabled as needed.
 
 1. Change the `<prefix>_RUN` Setting to `disabled` if you want to disable the plugin, but keep the settings
 1. (Important) Save the settings
-1. (Opptional) If you want to speed up the application, you can unload the plugin by unselecting it in the `LOADED_PLUGINS` setting (plugins have to be disabled first - see above steps).
+1. (Optional) If you want to speed up the application, you can unload the plugin by unselecting it in the `LOADED_PLUGINS` setting (plugins have to be disabled first - see above steps).
     - Careful, once you save the Settings Unloaded plugin settings will be lost (old `app.conf` files are kept in the `/config` folder)
 1. You can completely ignore plugins by placing a `ignore_plugin` file into the plugin directory. Ignored plugins won't show up in the `LOADED_PLUGINS` setting.
 
