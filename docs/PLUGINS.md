@@ -22,20 +22,20 @@ NetAlertX supports additional plugins to extend its functionality, each with its
 
 ## Plugin types
 
-| Plugin type    | Icon | Description                                                      | When to run                         | Required | Data source [?](./PLUGINS_DEV.md) |
-| -------------- | ---- | ---------------------------------------------------------------- | ----------------------------------- | -------- | ------------------------------------- |
-| publisher      | ▶️    | Sending notifications to services.                               | `on_notification`                   | ✖        | Script                                |
-| dev scanner    | 🔍    | Create devices in the app, manages online/offline device status. | `schedule`                          | ✖        | Script / SQLite DB                    |
-| name discovery | 🆎    | Discovers names of devices via various protocols.                | `before_name_updates`, `schedule`   | ✖        | Script                                |
-| importer       | 📥    | Importing devices from another service.                          | `schedule`                          | ✖        | Script / SQLite DB                    |
-| system         | ⚙    | Providing core system functionality.                             | `schedule` / always on              | ✖/✔      | Script / Template                     |
-| other          | ♻    | Other plugins                                                    | misc                                | ✖        | Script / Template                     |
+| Plugin type    | Icon | Description                                                               | When to run                         | Required | Data source [?](./PLUGINS_DEV.md) |
+| -------------- | ---- | ------------------------------------------------------------------------- | ----------------------------------- | -------- | ------------------------------------- |
+| publisher      | ▶️   | Sending notifications to services.                                       | `on_notification`                   | ✖        | Script                                |
+| dev scanner    | 🔍   | On-network scanner discovering devices without a 3rd party service       | `schedule`                          | ✖        | Script / SQLite DB                    |
+| name discovery | 🆎   | Discovers names of devices via various protocols.                        | `before_name_updates`, `schedule`   | ✖        | Script                                |
+| importer       | 📥   | Importing devices from another service.                                  | `schedule`                          | ✖        | Script / SQLite DB                    |
+| system         | ⚙    | Providing core system functionality.                                     | `schedule` / always on              | ✖/✔      | Script / Template                     |
+| other          | ♻    | Other plugins                                                            | misc                                | ✖        | Script / Template                     |
 
 ## Features
 
-| Icon | Description                                                  |
-| ---- | ------------------------------------------------------------ |
-| 🖧    | Auto-imports the network topology diagram                    |
+| Icon | Description                                                    |
+| ---- | -------------------------------------------------------------- |
+| 🖧    | Auto-imports the network topology diagram                     |
 | 🔄    | Has the option to sync some data back into the plugin source |
 
 
@@ -48,46 +48,47 @@ Device-detecting plugins insert values into the `CurrentScan` database table.  T
 | `APPRISE`       | [_publisher_apprise](https://github.com/netalertx/NetAlertX/tree/main/front/plugins/_publisher_apprise/)          | ▶️       | Apprise notification proxy                |          |          |
 | `ARPSCAN`       | [arp_scan](https://github.com/netalertx/NetAlertX/tree/main/front/plugins/arp_scan/)                               | 🔍       | ARP-scan on current network               |          |          |
 | `AVAHISCAN`     | [avahi_scan](https://github.com/netalertx/NetAlertX/tree/main/front/plugins/avahi_scan/)                           | 🆎       | Avahi (mDNS-based) name resolution        |          |          |
-| `ASUSWRT`       | [asuswrt_import](https://github.com/netalertx/NetAlertX/tree/main/front/plugins/asuswrt_import/)                   | 🔍       | Import connected devices from AsusWRT     |          |          |
+| `ASUSWRT`       | [asuswrt_import](https://github.com/netalertx/NetAlertX/tree/main/front/plugins/asuswrt_import/)                   | 📥       | Import connected devices from AsusWRT     |          |          |
 | `CSVBCKP`       | [csv_backup](https://github.com/netalertx/NetAlertX/tree/main/front/plugins/csv_backup/)                           | ⚙        | CSV devices backup                        |          |          |
 | `CUSTPROP`      | [custom_props](https://github.com/netalertx/NetAlertX/tree/main/front/plugins/custom_props/)                       | ⚙        | Managing custom device properties values  |          | Yes      |
 | `DBCLNP`        | [db_cleanup](https://github.com/netalertx/NetAlertX/tree/main/front/plugins/db_cleanup/)                           | ⚙        | Database cleanup                          |          | Yes\*    |
 | `DDNS`          | [ddns_update](https://github.com/netalertx/NetAlertX/tree/main/front/plugins/ddns_update/)                         | ⚙        | DDNS update                               |          |          |
-| `DHCPLSS`       | [dhcp_leases](https://github.com/netalertx/NetAlertX/tree/main/front/plugins/dhcp_leases/)                         | 🔍/📥/🆎 | Import devices from DHCP leases           |          |          |
+| `DHCPLSS`       | [dhcp_leases](https://github.com/netalertx/NetAlertX/tree/main/front/plugins/dhcp_leases/)                         | 📥/🆎   | Import devices from DHCP leases           |          |          |
 | `DHCPSRVS`      | [dhcp_servers](https://github.com/netalertx/NetAlertX/tree/main/front/plugins/dhcp_servers/)                       | ♻        | DHCP servers                              |          |          |
 | `DIGSCAN`       | [dig_scan](https://github.com/netalertx/NetAlertX/tree/main/front/plugins/dig_scan/)                               | 🆎       | Dig (DNS) Name resolution                 |          |          |
-| `FREEBOX`       | [freebox](https://github.com/netalertx/NetAlertX/tree/main/front/plugins/freebox/)                                  | 🔍/♻/🆎  | Pull data and names from Freebox/Iliadbox |          |          |
-| `FRITZBOX`      | [fritzbox](https://github.com/netalertx/NetAlertX/tree/main/front/plugins/fritzbox/)                                | 🔍       | Fritz!Box device scanner via TR-064       |          |          |
+| `FREEBOX`       | [freebox](https://github.com/netalertx/NetAlertX/tree/main/front/plugins/freebox/)                                  |📥/♻/🆎  | Pull data and names from Freebox/Iliadbox |          |          |
+| `FRITZBOX`      | [fritzbox](https://github.com/netalertx/NetAlertX/tree/main/front/plugins/fritzbox/)                                | 📥       | Fritz!Box device scanner via TR-064       |          |          |
 | `ICMP`          | [icmp_scan](https://github.com/netalertx/NetAlertX/tree/main/front/plugins/icmp_scan/)                             | ♻        | ICMP (ping) status checker                |          |          |
 | `INTRNT`        | [internet_ip](https://github.com/netalertx/NetAlertX/tree/main/front/plugins/internet_ip/)                         | 🔍       | Internet IP scanner                       |          |          |
 | `INTRSPD`       | [internet_speedtest](https://github.com/netalertx/NetAlertX/tree/main/front/plugins/internet_speedtest/)           | ♻        | Internet speed test                       |          |          |
 | `IPNEIGH`       | [ipneigh](https://github.com/netalertx/NetAlertX/tree/main/front/plugins/ipneigh/)                                  | 🔍       | Scan ARP (IPv4) and NDP (IPv6) tables     |          |          |
-| `KEALSS`        | [kea_api](https://github.com/netalertx/NetAlertX/tree/main/front/plugins/kea_api/)                                  | 🔍/🆎     | Pull lease data from the Kea DHCP API     |          |          |
-| `LUCIRPC`       | [luci_import](https://github.com/netalertx/NetAlertX/tree/main/front/plugins/luci_import/)                         | 🔍       | Import connected devices from OpenWRT     |          |          |
+| `KEALSS`        | [kea_api](https://github.com/netalertx/NetAlertX/tree/main/front/plugins/kea_api/)                                  | 📥/🆎     | Pull lease data from the Kea DHCP API   |          |          |
+| `LUCIRPC`       | [luci_import](https://github.com/netalertx/NetAlertX/tree/main/front/plugins/luci_import/)                         | 📥       | Import connected devices from OpenWRT     |          |          |
 | `MAINT`         | [maintenance](https://github.com/netalertx/NetAlertX/tree/main/front/plugins/maintenance/)                          | ⚙        | Maintenance of logs, etc.                 |          |          |
-| `MQTT`          | [_publisher_mqtt](https://github.com/netalertx/NetAlertX/tree/main/front/plugins/_publisher_mqtt/)                | ▶️       | MQTT for synching to Home Assistant       |          |          |
+| `MQTT`          | [_publisher_mqtt](https://github.com/netalertx/NetAlertX/tree/main/front/plugins/_publisher_mqtt/)                | ▶️       | MQTT for syncing to Home Assistant         |          |          |
 | `MTSCAN`        | [mikrotik_scan](https://github.com/netalertx/NetAlertX/tree/main/front/plugins/mikrotik_scan/)                    | 🔍       | Mikrotik device import & sync              |          |          |
 | `NBTSCAN`       | [nbtscan_scan](https://github.com/netalertx/NetAlertX/tree/main/front/plugins/nbtscan_scan/)                       | 🆎       | Nbtscan (NetBIOS-based) name resolution   |          |          |
 | `NEWDEV`        | [newdev_template](https://github.com/netalertx/NetAlertX/tree/main/front/plugins/newdev_template/)                 | ⚙        | New device template                       |          | Yes      |
 | `NMAP`          | [nmap_scan](https://github.com/netalertx/NetAlertX/tree/main/front/plugins/nmap_scan/)                             | ♻        | Nmap port scanning & discovery            |          |          |
-| `NMAPDEV`       | [nmap_dev_scan](https://github.com/netalertx/NetAlertX/tree/main/front/plugins/nmap_dev_scan/)                    | 🔍       | Nmap dev scan on current network          |          |          |
+| `NMAPDEV`       | [nmap_dev_scan](https://github.com/netalertx/NetAlertX/tree/main/front/plugins/nmap_dev_scan/)                    | 🔍       | Nmap dev scan on current network           |          |          |
 | `NSLOOKUP`      | [nslookup_scan](https://github.com/netalertx/NetAlertX/tree/main/front/plugins/nslookup_scan/)                     | 🆎       | NSLookup (DNS-based) name resolution      |          |          |
 | `NTFPRCS`       | [notification_processing](https://github.com/netalertx/NetAlertX/tree/main/front/plugins/notification_processing/) | ⚙        | Notification processing                   |          | Yes      |
 | `NTFY`          | [_publisher_ntfy](https://github.com/netalertx/NetAlertX/tree/main/front/plugins/_publisher_ntfy/)                | ▶️       | NTFY notifications                        |          |          |
-| `OMDSDN`        | [omada_sdn_imp](https://github.com/netalertx/NetAlertX/tree/main/front/plugins/omada_sdn_imp/)                    | 📥/🆎 ❌  | UNMAINTAINED use `OMDSDNOPENAPI`          | 🖧 🔄    |          |
+| `OMDSDN`        | [omada_sdn_imp](https://github.com/netalertx/NetAlertX/tree/main/front/plugins/omada_sdn_imp/)                    | 📥/🆎 ❌  | UNMAINTAINED use `OMDSDNOPENAPI`        | 🖧 🔄    |          |
 | `OMDSDNOPENAPI` | [omada_sdn_openapi](https://github.com/netalertx/NetAlertX/tree/main/front/plugins/omada_sdn_openapi/)            | 📥/🆎    | OMADA TP-Link import via OpenAPI          | 🖧       |          |
-| `PIHOLE`        | [pihole_scan](https://github.com/netalertx/NetAlertX/tree/main/front/plugins/pihole_scan/)                         | 🔍/🆎/📥 | Pi-hole device import & sync              |          |          |
-| `PIHOLEAPI`     | [pihole_api_scan](https://github.com/netalertx/NetAlertX/tree/main/front/plugins/pihole_api_scan/)                 | 🔍/🆎/📥 | Pi-hole device import & sync via API v6+ |          |          |
+| `PIHOLE`        | [pihole_scan](https://github.com/netalertx/NetAlertX/tree/main/front/plugins/pihole_scan/)                         | 🆎/📥 | Pi-hole device import & sync               |          |          |
+| `PIHOLEAPI`     | [pihole_api_scan](https://github.com/netalertx/NetAlertX/tree/main/front/plugins/pihole_api_scan/)                 | 🆎/📥 | Pi-hole device import & sync via API v6+   |          |          |
 | `PUSHSAFER`     | [_publisher_pushsafer](https://github.com/netalertx/NetAlertX/tree/main/front/plugins/_publisher_pushsafer/)      | ▶️       | Pushsafer notifications                   |          |          |
 | `PUSHOVER`      | [_publisher_pushover](https://github.com/netalertx/NetAlertX/tree/main/front/plugins/_publisher_pushover/)        | ▶️       | Pushover notifications                    |          |          |
+| `RSTIMPRT`      | [rest_import](https://github.com/netalertx/NetAlertX/tree/main/front/plugins/rest_import/)                        | 📥/🆎   | Import via a REST API endpoint             |  🖧      |          |
 | `SETPWD`        | [set_password](https://github.com/netalertx/NetAlertX/tree/main/front/plugins/set_password/)                       | ⚙        | Set password                              |          | Yes      |
 | `SMTP`          | [_publisher_email](https://github.com/netalertx/NetAlertX/tree/main/front/plugins/_publisher_email/)              | ▶️       | Email notifications                       |          |          |
 | `SNMPDSC`       | [snmp_discovery](https://github.com/netalertx/NetAlertX/tree/main/front/plugins/snmp_discovery/)                   | 🔍/📥    | SNMP device import & sync                 |          |          |
-| `SYNC`          | [sync](https://github.com/netalertx/NetAlertX/tree/main/front/plugins/sync/)                                      | 🔍/⚙/📥  | Sync & import from NetAlertX instances    | 🖧 🔄    | Yes      |
+| `SYNC`          | [sync](https://github.com/netalertx/NetAlertX/tree/main/front/plugins/sync/)                                      | ⚙/📥     | Sync & import from NetAlertX instances    | 🖧 🔄    | Yes      |
 | `TELEGRAM`      | [_publisher_telegram](https://github.com/netalertx/NetAlertX/tree/main/front/plugins/_publisher_telegram/)        | ▶️       | Telegram notifications                    |          |          |
 | `UI`            | [ui_settings](https://github.com/netalertx/NetAlertX/tree/main/front/plugins/ui_settings/)                         | ♻        | UI specific settings                      |          | Yes      |
-| `UNFIMP`        | [unifi_import](https://github.com/netalertx/NetAlertX/tree/main/front/plugins/unifi_import/)                       | 🔍/📥/🆎 | UniFi device import & sync                | 🖧       |          |
-| `UNIFIAPI`      | [unifi_api_import](https://github.com/netalertx/NetAlertX/tree/main/front/plugins/unifi_api_import/)               | 🔍/📥/🆎 | UniFi device import (SM API, multi-site) |           |         |
+| `UNFIMP`        | [unifi_import](https://github.com/netalertx/NetAlertX/tree/main/front/plugins/unifi_import/)                       | 📥/🆎 | UniFi device import & sync                  | 🖧       |          |
+| `UNIFIAPI`      | [unifi_api_import](https://github.com/netalertx/NetAlertX/tree/main/front/plugins/unifi_api_import/)               | 📥/🆎 | UniFi device import (SM API, multi-site)   |           |         |
 | `VNDRPDT`       | [vendor_update](https://github.com/netalertx/NetAlertX/tree/main/front/plugins/vendor_update/)                     | ⚙        | Vendor database update                    |          |          |
 | `WEBHOOK`       | [_publisher_webhook](https://github.com/netalertx/NetAlertX/tree/main/front/plugins/_publisher_webhook/)          | ▶️       | Webhook notifications                     |          |          |
 | `WEBMON`        | [website_monitor](https://github.com/netalertx/NetAlertX/tree/main/front/plugins/website_monitor/)                 | ♻        | Website down monitoring                   |          |          |
@@ -112,7 +113,8 @@ Plugins can be enabled via Settings, and can be disabled as needed.
 ### Disabling, Unloading and Ignoring plugins
 
 1. Change the `<prefix>_RUN` Setting to `disabled` if you want to disable the plugin, but keep the settings
-1. If you want to speed up the application, you can unload the plugin by unselecting it in the `LOADED_PLUGINS` setting.
+1. (Important) Save the settings
+1. (Optional) If you want to speed up the application, you can unload the plugin by unselecting it in the `LOADED_PLUGINS` setting (plugins have to be disabled first - see above steps).
     - Careful, once you save the Settings Unloaded plugin settings will be lost (old `app.conf` files are kept in the `/config` folder)
 1. You can completely ignore plugins by placing a `ignore_plugin` file into the plugin directory. Ignored plugins won't show up in the `LOADED_PLUGINS` setting.
 
