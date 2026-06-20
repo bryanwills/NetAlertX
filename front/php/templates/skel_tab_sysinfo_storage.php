@@ -4,7 +4,7 @@
     <span class="skel-th skel-shimmer"></span>
     <?php endfor; ?>
   </div>
-  <?php for ($i = 0; $i < 6; $i++): ?>
+  <?php for ($i = 0; $i < 25; $i++): ?>
   <div class="skel-tr">
     <?php for ($j = 0; $j < 5; $j++): ?>
     <span class="skel-td skel-shimmer"></span>

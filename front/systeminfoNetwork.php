@@ -335,6 +335,18 @@ function loadInterfaces() {
                     </tr>
                 `);
             });
+
+            if ($.fn.DataTable.isDataTable('#networkTable')) {
+                $('#networkTable').DataTable().destroy();
+            }
+
+            $('#networkTable').DataTable({
+                searching: true,
+                order: [[0, "desc"]],
+                initComplete: function() {
+                    hideSpinner();
+                }
+            });
         },
         error: function(xhr) {
             const tbody = $("#networkTable tbody");
@@ -356,16 +368,16 @@ $(document).ready(function() {
 
   loadInterfaces();
 
-  setTimeout(() => {
-    // Available IPs datatable
-    $('#networkTable').DataTable({
-      searching: true,
-      order: [[0, "desc"]],
-      initComplete: function(settings, json) {
-          hideSpinner(); // Called after the DataTable is fully initialized
-      }
-    });
-  }, 200);
+  // setTimeout(() => {
+  //   // Available IPs datatable
+  //   $('#networkTable').DataTable({
+  //     searching: true,
+  //     order: [[0, "desc"]],
+  //     initComplete: function(settings, json) {
+  //         hideSpinner(); // Called after the DataTable is fully initialized
+  //     }
+  //   });
+  // }, 200);
 });
 
 </script>

@@ -30,7 +30,7 @@
           <span class="skel-th skel-shimmer"></span>
           <?php endfor; ?>
         </div>
-        <?php for ($i = 0; $i < 8; $i++): ?>
+        <?php for ($i = 0; $i < 20; $i++): ?>
         <div class="skel-tr">
           <?php for ($j = 0; $j < 6; $j++): ?>
           <span class="skel-td skel-shimmer"></span>

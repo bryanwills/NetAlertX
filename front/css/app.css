@@ -2647,11 +2647,11 @@ table.dataTable tbody > tr.selected
 .skel-tab-pane           { z-index: 10; min-height: 400px; }
 #settings-skeleton       { padding-top: 50px; padding-left: 20px; padding-right: 20px; min-height: 500px; }
 #devices-skeleton        { top: 50px; min-height: 500px; }
-#device-details-skeleton { min-height: 600px; }
+#device-details-skeleton { top: 45px; min-height: 100px; }
 #events-skeleton         { top: 50px; min-height: 500px; }
 #presence-skeleton       { top: 50px; min-height: 500px; }
 #report-skeleton         { min-height: 400px; }
-#notifications-skeleton  { min-height: 400px; }
+#notifications-skeleton  { top: 50px; min-height: 400px; }
 #workflows-skeleton      { top: 50px; width: 770px; margin: 0 auto; min-height: 300px; }
 #plugins-skeleton        { padding: 0; min-height: 400px; }
 
@@ -2728,6 +2728,7 @@ table.dataTable tbody > tr.selected
 
 /* ----- Devices ---------------------------------------------------------- */
 .skel-tile              { display: flex; height: 80px; }
+#device-details-skeleton .skel-tile { display: flex; height: 45px; }
 .skel-tile-inner        { display: flex; flex-direction: column; padding: 12px 15px; justify-content: center; gap: 10px; }
 .skel-tile-num          { height: 26px; width: 55%; }
 .skel-tile-label        { height: 13px; width: 75%; }
@@ -2740,8 +2741,8 @@ table.dataTable tbody > tr.selected
 .skel-td                { height: 13px; }
 
 /* ----- Device Details --------------------------------------------------- */
-.skel-detail-header     { margin-bottom: 15px; }
-.skel-detail-title      { height: 26px; width: 42%; margin-bottom: 14px; }
+.skel-detail-header     { margin-bottom: 0px; }
+.skel-detail-title      { height: 26px; width: 42%; margin-bottom: 0px; }
 .skel-detail-info-panel { display: flex; gap: 0; padding: 14px; border-radius: 4px; margin-bottom: 15px; max-width: 400px; }
 .skel-tabs-bar          { display: flex; gap: 4px; padding: 8px 10px 0; border-radius: 4px 4px 0 0; border-bottom: none; }
 .skel-tab               { height: 34px; width: 100px; border-radius: 4px 4px 0 0; flex-shrink: 0; }
