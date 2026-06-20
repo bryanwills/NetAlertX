@@ -261,7 +261,7 @@ function hideEventsSkeleton() {
   $('#events-skeleton').fadeOut(250, function () { $(this).remove(); });
 }
 
-window.onload = function () {
+window.addEventListener('load', function () {
   setTimeout(hideEventsSkeleton, 15000);
-};
+});
 </script>
