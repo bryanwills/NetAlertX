@@ -1,6 +1,6 @@
 <?php
 
-  require 'php/templates/header.php';  
+  require 'php/templates/header.php';
 ?>
 
 <!-- Page ------------------------------------------------------------------ -->
@@ -10,7 +10,7 @@
 <?php
   require 'pluginsCore.php';
 ?>
-        
+
 </div>
 
 <?php
