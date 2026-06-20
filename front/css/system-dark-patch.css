@@ -512,6 +512,9 @@
     border: 1px solid #353c42;
     color: #bec5cb;
   }
+  #settingsPage .panel-heading:hover {
+    background-color: #272c30;
+  }
   .box.box-solid.box-info,
   .box.box-solid.box-info > .box-header {
     color: #bec5cb;
@@ -732,3 +735,13 @@
   font-size: .85em;
   cursor: pointer;
 }
+
+  /* Settings skeleton - dark theme */
+  :root {
+    --skel-base:     #2e3540;
+    --skel-shine:    #3d4555;
+    --skel-section:  #252c38;
+    --skel-panel-bg: #1e242e;
+    --skel-border:   #2a323e;
+    --skel-bg:       #353c42;
+  }

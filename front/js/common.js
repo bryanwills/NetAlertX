@@ -957,8 +957,8 @@ let animationTime = 300
 function showSpinner(stringKey = 'Loading') {
   let text = isEmpty(stringKey) ? "Loading..." : getString(stringKey || "Loading");
 
-  if (text == ""){
-    text = "Loading"
+  if (!text || !text.trim()) {
+    text = "Loading..."
   }
 
   const spinner = $("#loadingSpinner");
@@ -978,7 +978,7 @@ function showSpinner(stringKey = 'Loading') {
       left: offset.left,
       width: width,
       height: height,
-      zIndex: 800
+      zIndex: 9999
     });
   } else {
     // Fullscreen fallback
@@ -988,7 +988,7 @@ function showSpinner(stringKey = 'Loading') {
       left: 0,
       width: "100%",
       height: "100%",
-      zIndex: 800
+      zIndex: 9999
     });
   }
 
@@ -1018,7 +1018,7 @@ function hideSpinner() {
       left: offset.left,
       width: width,
       height: height,
-      zIndex: 800
+      zIndex: 9999
     });
   } else {
     // Fullscreen fallback
@@ -1028,7 +1028,7 @@ function hideSpinner() {
       left: 0,
       width: "100%",
       height: "100%",
-      zIndex: 800
+      zIndex: 9999
     });
   }
 

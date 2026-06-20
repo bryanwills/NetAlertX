@@ -151,7 +151,7 @@
   <div class="nax_semitransparent-panel"></div>
   <div class="panel panel-default nax_spinner">
     <table>
-      <td id="loadingSpinnerText" width="130px" ></td>
+      <td id="loadingSpinnerText" width="130px">Loading...</td>
       <td><i class="fa-solid fa-spinner fa-spin-pulse"></i></td>
     </table>
   </div>

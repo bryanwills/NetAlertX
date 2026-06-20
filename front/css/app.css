@@ -1083,6 +1083,7 @@ height: 50px;
 .settingswrap
 {
     margin-bottom: 100px;
+    padding-top: 0px;
 }
 
 .settingswrap .metadata
@@ -1178,8 +1179,10 @@ height: 50px;
 /* Settings */
 
 #settingsPage .overview-setting-value{
-    display:unset;
-
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: smaller;
 }
 
 .overview-setting-value-wrap
@@ -1228,7 +1231,7 @@ height: 50px;
 
 }
 #settingsPage .panel-heading:hover{
-    background-color: #272c30;
+    background-color: #e8e8e8;
 }
 
 .settings-expand-icon {
@@ -2256,7 +2259,7 @@ textarea[readonly],
 ----------------------------------------------------------------------------- */
 #loadingSpinner {
     position: fixed;
-    z-index: 1000;
+    z-index: 9999;
     /* top: 0; */
     /* left: 0; */
     /* width: 100%; */
@@ -2265,7 +2268,6 @@ textarea[readonly],
     transition: opacity 0.3s ease-in-out;
     pointer-events: none;
     display: block;
-    z-index: 800;
 }
 
 .fa-spinner
@@ -2588,3 +2590,169 @@ table.dataTable tbody > tr.selected
     color: #8c8c8c;
     background-color: rgba(140, 140, 140, 0.05);
 }
+
+/* ===== Settings Page Loading Skeleton ===== */
+
+:root {
+    --skel-base:     #e2e2e2;
+    --skel-shine:    #f0f0f0;
+    --skel-section:  #d4d4d4;
+    --skel-panel-bg: #f5f5f5;
+    --skel-border:   #ddd;
+    --skel-bg:       #ecf0f5;
+}
+
+@keyframes settingsShimmer {
+    0%   { background-position: -600px 0; }
+    100% { background-position:  600px 0; }
+}
+
+#settingsPage {
+    position: relative;
+}
+
+#settings-skeleton {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 50;
+    background-color: var(--skel-bg);
+    padding-top: 50px;
+    padding-left: 20px;
+    padding-right: 20px;
+    min-height: 500px;
+}
+
+.skel-shimmer {
+    background: linear-gradient(
+        90deg,
+        var(--skel-base)  25%,
+        var(--skel-shine) 50%,
+        var(--skel-base)  75%
+    );
+    background-size: 600px 100%;
+    animation: settingsShimmer 1.5s infinite linear;
+    border-radius: 3px;
+    display: inline-block;
+}
+
+/* Overview panel skeleton */
+.skel-overview-panel {
+    margin-bottom: 10px;
+    border-radius: 4px;
+    overflow: hidden;
+    border: 1px solid var(--skel-border);
+}
+
+.skel-overview-heading {
+    height: 44px;
+    background: var(--skel-section);
+    display: flex;
+    align-items: center;
+    padding: 0 15px;
+    gap: 12px;
+}
+
+.skel-overview-body {
+    padding: 12px;
+    background: var(--skel-panel-bg);
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.skel-overview-card {
+    min-width: 100px;
+    height: 76px;
+    border-radius: 4px;
+}
+
+/* Section accordion skeleton */
+.skel-section {
+    margin-bottom: 8px;
+    border-radius: 4px;
+    overflow: hidden;
+    border: 1px solid var(--skel-border);
+}
+
+.skel-overview-header {
+    height: 44px;
+    padding: 0 15px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: var(--skel-panel-bg);
+}
+
+.skel-section-header {
+    height: 44px;
+    padding: 0 15px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: var(--skel-section);
+}
+
+/* Plugin block inside an open section */
+.skel-plugin-block {
+    margin: 8px;
+    border-radius: 4px;
+    overflow: hidden;
+    border: 1px solid var(--skel-border);
+}
+
+.skel-plugin-header {
+    height: 48px;
+    padding: 0 15px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: var(--skel-section);
+}
+
+.skel-plugin-body {
+    background: var(--skel-panel-bg);
+}
+
+.skel-setting-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 15px;
+    border-bottom: 1px solid var(--skel-border);
+}
+
+.skel-setting-row:last-child {
+    border-bottom: none;
+}
+
+/* Skeleton line / cell primitives */
+.skel-line {
+    height: 14px;
+    flex-shrink: 0;
+}
+
+.skel-icon-block {
+    width: 22px;
+    height: 16px;
+    flex-shrink: 0;
+}
+
+.skel-cell-name {
+    width: 20%;
+    height: 14px;
+    flex-shrink: 0;
+}
+
+.skel-cell-desc {
+    width: 36%;
+    height: 14px;
+    flex-shrink: 0;
+}
+
+.skel-cell-input {
+    flex: 1;
+    height: 32px;
+}
+/* ===== /Settings Page Loading Skeleton ===== */

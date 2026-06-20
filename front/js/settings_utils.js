@@ -99,7 +99,7 @@ function pluginCards(prefixesOfEnabledPlugins, includeSettings) {
     });
 
     html += `
-              <div class="col-xs-6 col-sm-4 col-md-3 col-lg-2  col-xxl-1  padding-5px">
+              <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3 padding-5px">
                 <div class="small-box bg-green col-sm-12 " >
                   <div class="inner col-sm-12">
                     <a href="#${prefix}_header" onclick="toggleAllSettings('open')">
