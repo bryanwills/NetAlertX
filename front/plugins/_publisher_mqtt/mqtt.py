@@ -165,7 +165,10 @@ class sensor_config:
                 "device": {
                     "identifiers": [f"{self.deviceId}_sensor"],
                     "manufacturer": "NetAlertX",
-                    "name": self.deviceName
+                    "name": self.deviceName,
+                    "connections": [
+                        ["mac", self.mac]
+                    ],
                 },
                 "icon": f'mdi:{self.icon}'
             })
