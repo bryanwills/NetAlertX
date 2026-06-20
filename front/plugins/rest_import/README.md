@@ -48,6 +48,8 @@ Enable **Generate Fake MAC** when the API does not expose MAC addresses (e.g. re
 
 ### Example: OPNsense Dnsmasq API
 
+See the [OPNsense configuration guide](https://docs.netalertx.com/REST_IMPORT) for details. 
+
 **Response:**
 ```json
 {

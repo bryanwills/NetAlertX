@@ -61,6 +61,30 @@ p.hero-description {
   object-fit: contain;
 }
 
+/* Mobile */
+@media (max-width: 768px) {
+  .hero-wrapper {
+    flex-direction: column-reverse; /* image first, text second */
+    align-items: center;
+  }
+
+  .hero-content {
+    max-width: 100%;
+    text-align: center;
+  }
+
+  .hero-image {
+    max-width: 100%;
+    margin-bottom: 1.5rem;
+  }
+
+  .hero-logo-crisp {
+    max-width: 600px;
+    width: 100%;
+    height: auto;
+  }
+}
+
 /* --- PROMO CARDS --- */
 .promo-card-wrapper {
   display: flex;
