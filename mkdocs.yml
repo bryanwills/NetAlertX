@@ -44,9 +44,6 @@ nav:
       - Getting started:
         - Subnets: SUBNETS.md
         - Enable Plugins: PLUGINS.md
-        - Pi-hole Guide: PIHOLE_GUIDE.md
-        - Home Assistant: HOME_ASSISTANT.md
-        - Emails: SMTP.md
         - Backups: BACKUPS.md
         - Security Features: SECURITY_FEATURES.md
         - Security Considerations: SECURITY.md
@@ -60,7 +57,6 @@ nav:
         - Performance: PERFORMANCE.md
         - Reverse DNS: REVERSE_DNS.md
         - Reverse Proxy: REVERSE_PROXY.md
-        - Webhooks (n8n): WEBHOOK_N8N.md
         - Workflows: WORKFLOWS.md
         - Workflow Examples: WORKFLOW_EXAMPLES.md
         - Docker Swarm: DOCKER_SWARM.md
@@ -85,6 +81,12 @@ nav:
       - Icons and Topology:
         - Icons: ICONS.md
         - Network Topology: NETWORK_TREE.md
+  - Other guides:
+      - Pi-hole Guide: PIHOLE_GUIDE.md
+      - Home Assistant: HOME_ASSISTANT.md
+      - Emails: SMTP.md 
+      - Rest import: REST_IMPORT.md 
+      - Webhooks (n8n): WEBHOOK_N8N.md
   - Troubleshooting:
       - General Tips: DEBUG_TIPS.md
       - Common Issues: COMMON_ISSUES.md
