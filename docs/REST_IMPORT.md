@@ -46,4 +46,4 @@ This guide shows you how to configure **OPNsense/Dnsmasq** in the **RSTIMPRT** p
 ![RSTIMPRT_imports configuration](./img/REST_IMPORT/rstimport_config_2.png)
 
 7. Click **Update**
-7. Click **Save**
+8. Click **Save**
