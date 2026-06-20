@@ -8,18 +8,18 @@
       <span class="skel-line skel-shimmer" style="width:180px"></span>
     </div>
     <div class="skel-overview-body">
-      <div class="skel-overview-card skel-shimmer col-xs-6 col-sm-4 col-md-3 col-lg-2  col-xxl-1  padding-5px"></div>
-      <div class="skel-overview-card skel-shimmer col-xs-6 col-sm-4 col-md-3 col-lg-2  col-xxl-1  padding-5px"></div>
-      <div class="skel-overview-card skel-shimmer col-xs-6 col-sm-4 col-md-3 col-lg-2  col-xxl-1  padding-5px"></div>
+      <div class="skel-overview-card skel-shimmer col-xs-12 col-sm-6 col-md-4 col-lg-3 padding-5px"></div>
+      <div class="skel-overview-card skel-shimmer col-xs-12 col-sm-6 col-md-4 col-lg-3 padding-5px"></div>
+      <div class="skel-overview-card skel-shimmer col-xs-12 col-sm-6 col-md-4 col-lg-3 padding-5px"></div>
     </div>
     <div class="skel-overview-heading">
       <span class="skel-icon-block skel-shimmer"></span>
       <span class="skel-line skel-shimmer" style="width:180px"></span>
     </div>
     <div class="skel-overview-body">
-      <div class="skel-overview-card skel-shimmer col-xs-6 col-sm-4 col-md-3 col-lg-2  col-xxl-1  padding-5px"></div>
-      <div class="skel-overview-card skel-shimmer col-xs-6 col-sm-4 col-md-3 col-lg-2  col-xxl-1  padding-5px"></div>
-      <div class="skel-overview-card skel-shimmer col-xs-6 col-sm-4 col-md-3 col-lg-2  col-xxl-1  padding-5px"></div>
+      <div class="skel-overview-card skel-shimmer col-xs-12 col-sm-6 col-md-4 col-lg-3 padding-5px"></div>
+      <div class="skel-overview-card skel-shimmer col-xs-12 col-sm-6 col-md-4 col-lg-3 padding-5px"></div>
+      <div class="skel-overview-card skel-shimmer col-xs-12 col-sm-6 col-md-4 col-lg-3 padding-5px"></div>
     </div>
   </div>
 
