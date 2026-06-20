@@ -3,6 +3,7 @@
 // check if authenticated
 require_once $_SERVER["DOCUMENT_ROOT"] . "/php/templates/security.php"; ?>
 
+<?php require $_SERVER['DOCUMENT_ROOT'] . '/php/templates/skel_tab_details.php'; ?>
 
 <div class="row" id="deviceDetailsEdit">
   <div class="box-body form-horizontal">
@@ -375,6 +376,7 @@ function getDeviceData() {
             initHoverNodeInfo();
 
             hideSpinner();
+            hideDetailsTabSkeleton();
 
           }}); // $.get callback
       }, 100); // setTimeout
@@ -663,6 +665,11 @@ function toggleFieldLock(mac, fieldName) {
       lockBtn.css("opacity", 1.0);
     }
   });
+}
+
+// -----------------------------------------------------------------------------
+function hideDetailsTabSkeleton() {
+  $('#skel-tab-details').fadeOut(250, function() { $(this).remove(); });
 }
 
 </script>

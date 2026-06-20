@@ -69,7 +69,7 @@ $settingsJSON_DB = json_encode($settings, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX
 
 <div id="settingsPage" class="content-wrapper">
 
-<?php require 'php/templates/settings_skeleton.php'; ?>
+<?php require 'php/templates/skel_settings.php'; ?>
 
 
 <!-- Content header--------------------------------------------------------- -->

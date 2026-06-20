@@ -5,8 +5,11 @@
 ?>
 
 <!-- fullCalendar -->
+ <?php require $_SERVER['DOCUMENT_ROOT'] . '/php/templates/skel_tab_presence.php'; ?>
 
 <link rel="stylesheet" href="lib/fullcalendar/fullcalendar.min.css">
+
+<!-- fullCalendar -->
   <link rel="stylesheet" href="lib/fullcalendar/fullcalendar.print.min.css" media="print">
   <script src="lib/moment/moment.js"></script>
   <script src="lib/fullcalendar/fullcalendar.min.js"></script>
@@ -63,6 +66,7 @@
             console.warn("Presence calendar API error:", response);
             callback([]);
           }
+          hidePresenceTabSkeleton();
         },
         error: function(xhr) {
           console.error(
@@ -71,6 +75,7 @@
             xhr.responseText
           );
           callback([]);
+          hidePresenceTabSkeleton();
         }
       });
     });
@@ -205,6 +210,10 @@ function devicePresencePageUpdater() {
 
 devicePresencePageUpdater();
 
+// -----------------------------------------------------------------------------
+function hidePresenceTabSkeleton() {
+  $('#skel-tab-presence').fadeOut(250, function() { $(this).remove(); });
+}
 
 
 </script>

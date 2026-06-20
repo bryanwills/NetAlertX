@@ -21,7 +21,8 @@
 </script>
 
 <!-- Page ------------------------------------------------------------------ -->
-  <div class="content-wrapper">
+  <div class="content-wrapper" id="presencePage">
+<?php require 'php/templates/skel_presence.php'; ?>
 
 <!-- Main content ---------------------------------------------------------- -->
     <section class="content">
@@ -344,6 +345,7 @@ function initializeCalendar () {
           showSpinner();
         } else {
           hideSpinner();
+          hidePresenceSkeleton();
         }
     }
 
@@ -507,6 +509,12 @@ function getDevicesPresence (status) {
   });
 };
 
+function hidePresenceSkeleton() {
+  $('#presence-skeleton').fadeOut(250, function() { $(this).remove(); });
+}
 
+window.addEventListener('load', function() {
+  setTimeout(hidePresenceSkeleton, 15000);
+});
 
 </script>

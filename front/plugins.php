@@ -1,12 +1,12 @@
 <?php
 
   require 'php/templates/header.php';  
-  require 'php/templates/modals.php'; 
 ?>
 
 <!-- Page ------------------------------------------------------------------ -->
-<div class="content-wrapper integrations-plugins">
+<div class="content-wrapper integrations-plugins" id="pluginsPage">
 
+<?php require 'php/templates/skel_plugins.php'; ?>
 <?php
   require 'pluginsCore.php';
 ?>

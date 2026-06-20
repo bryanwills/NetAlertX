@@ -14,6 +14,7 @@ require 'php/templates/header.php';
 </script>
 
 <div id="notifications" class="content-wrapper">
+<?php require 'php/templates/skel_notifications.php'; ?>
   <section class="content">
     <div class="notification-box box box-gray col-xs-12" >
       <div class="box-header">
@@ -168,6 +169,7 @@ require 'php/templates/header.php';
     ,
     initComplete: function(settings, json) {
         hideSpinner(); // Called after the DataTable is fully initialized
+        hideNotificationsSkeleton();
     }});
 
     fetchData(function(data) {
@@ -214,6 +216,14 @@ require 'php/templates/header.php';
 
 
   });
+
+function hideNotificationsSkeleton() {
+  $('#notifications-skeleton').fadeOut(250, function () { $(this).remove(); });
+}
+
+window.onload = function () {
+  setTimeout(hideNotificationsSkeleton, 15000);
+};
 
 </script>
 

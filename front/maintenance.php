@@ -1,6 +1,5 @@
 <?php
   require 'php/templates/header.php';
-  require 'php/templates/modals.php';
 ?>
 
 <!-- Page ------------------------------------------------------------------ -->
@@ -146,6 +145,7 @@ $db->close();
       </ul>
     <div class="tab-content spinnerTarget">
         <div class="tab-pane active" id="tab_DBTools">
+                <?php require 'php/templates/skel_tab_maint_dbtools.php'; ?>
                 <div class="db_info_table">
                     <div class="db_info_table_row">
                         <div class="db_tools_table_cell_a" >
@@ -200,6 +200,7 @@ $db->close();
 
         <!-- ---------------------------Backup restore -------------------------------------------- -->
         <div class="tab-pane" id="tab_BackupRestore">
+          <?php require 'php/templates/skel_tab_maint_backup.php'; ?>
           <div class="db_info_table">
             <div class="db_info_table_row">
               <div class="db_tools_table_cell_a" >
@@ -241,6 +242,7 @@ $db->close();
         </div>
         <!-- ---------------------------Logging-------------------------------------------- -->
         <div class="tab-pane" id="tab_Logging">
+          <?php require 'php/templates/skel_tab_maint_logging.php'; ?>
           <div class="container">
             <div class="row actions">
               <div class="col-sm-2">
@@ -273,6 +275,7 @@ $db->close();
 
         <!-- ---------------------------Bulk edit -------------------------------------------- -->
         <div class="tab-pane" id="tab_multiEdit">
+            <?php require 'php/templates/skel_tab_maint_multiedit.php'; ?>
             <div class="db_info_table">
                 <div class="box box-solid">
                     <?php
@@ -785,7 +788,9 @@ function initializeTabs() {
     idSuffix:    '_id',
     delay:       50
   });
-  setTimeout(() => hideSpinner(), 50);
+  setTimeout(() => {
+    hideSpinner();
+  }, 50);
 }
 
 //------------------------------------------------------------------------------
@@ -836,6 +841,7 @@ function renderLogs(customData) {
       // data: { items: JSON.stringify(customData) }, // Send customData as JSON
       success: function(response) {
         $('#logsPlc').html(response); // Replace container content with fetched HTML
+        hideMaintLoggingSkeleton();
 
         applyFilter();
 
@@ -847,6 +853,7 @@ function renderLogs(customData) {
       },
       error: function(xhr, status, error) {
         console.error('Error fetching infoboxes:', error);
+        hideMaintLoggingSkeleton();
       }
     });
   }
@@ -868,6 +875,23 @@ window.onload = function asyncFooter() {
   }
 };
 
+</script>
+
+<script>
+  function hideMaintDBToolsSkeleton()   { $('#skel-tab-maint-dbtools').fadeOut(250, function() { $(this).remove(); }); }
+  function hideMaintBackupSkeleton()    { $('#skel-tab-maint-backup').fadeOut(250, function() { $(this).remove(); }); }
+  function hideMaintLoggingSkeleton()   { $('#skel-tab-maint-logging').fadeOut(250, function() { $(this).remove(); }); }
+  function hideMaintMultiEditSkeleton() { $('#skel-tab-maint-multiedit').fadeOut(250, function() { $(this).remove(); }); }
+
+  // Static tabs: content is PHP-rendered — dismiss immediately, no waiting for onload
+  hideMaintDBToolsSkeleton();
+  hideMaintBackupSkeleton();
+  hideMaintMultiEditSkeleton();
+
+  // Logging tab: AJAX-driven — fallback timeout only
+  window.addEventListener('load', function() {
+    setTimeout(hideMaintLoggingSkeleton, 15000);
+  });
 </script>
 
 <script>

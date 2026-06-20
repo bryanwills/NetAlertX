@@ -1,6 +1,4 @@
 <?php 
-
-  require 'php/templates/modals.php'; 
   //------------------------------------------------------------------------------
   // check if authenticated
   require_once  $_SERVER['DOCUMENT_ROOT'] . '/php/templates/security.php';

@@ -37,7 +37,9 @@
 
 
 <!-- Page ------------------------------------------------------------------ -->
-  <div class="content-wrapper">
+  <div class="content-wrapper" id="devicesPage">
+
+    <?php require 'php/templates/skel_devices.php'; ?>
 
 <!-- Main content ---------------------------------------------------------- -->
     <section class="content">
@@ -180,6 +182,14 @@
   // Read parameters & Initialize components
   callAfterAppInitialized(main)
   showSpinner();
+
+// -----------------------------------------------------------------------------
+function hideDevicesSkeleton() {
+  $('#devices-skeleton').fadeOut(250, function() { $(this).remove(); });
+}
+
+// Fallback: ensure skeleton is removed even if DataTable fails to initialize
+setTimeout(hideDevicesSkeleton, 15000);
 
 // -----------------------------------------------------------------------------
 function main () {
@@ -1123,6 +1133,7 @@ function initializeDatatable (status) {
 
           initHoverNodeInfo();
           hideSpinner();
+          hideDevicesSkeleton();
 
     },
     createdRow: function(row, data, dataIndex) {

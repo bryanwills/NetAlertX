@@ -6,6 +6,7 @@
 
 <!-- ----------------------------------------------------------------------- -->
 
+<?php require $_SERVER['DOCUMENT_ROOT'] . '/php/templates/skel_tab_sessions.php'; ?>
 
 <!-- Datatable Session -->
 <table id="tableSessions" class="table table-bordered table-hover table-striped ">
@@ -130,10 +131,12 @@ function loadSessionsData() {
 
       table.draw();
       hideSpinner();
+      hideSessionsTabSkeleton();
     },
     error: function (xhr, status, err) {
       console.error("Failed to load sessions:", err, xhr.responseText);
       hideSpinner();
+      hideSessionsTabSkeleton();
     }
   });
 }
@@ -173,5 +176,10 @@ function deviceSessionsPageUpdater() {
 
 // start updater
 deviceSessionsPageUpdater();
+
+// -----------------------------------------------------------------------------
+function hideSessionsTabSkeleton() {
+  $('#skel-tab-sessions').fadeOut(250, function() { $(this).remove(); });
+}
 
 </script>

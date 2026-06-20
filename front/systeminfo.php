@@ -13,7 +13,6 @@
 
   require 'php/templates/header.php';
 ?>
-<?php require 'php/templates/modals.php'; ?>
 <!-- ----------------------------------------------------------------------- -->
 
 
@@ -70,16 +69,16 @@
 
             <div class="tab-content spinnerTarget" style="min-height: 430px;">
               <div class="tab-pane fade" data-php-file="systeminfoServer.php" id="panServer">
-               <!-- PLACEHOLDER -->
+                <?php require 'php/templates/skel_tab_sysinfo_server.php'; ?>
               </div>
               <div class="tab-pane fade" data-php-file="systeminfoNetwork.php" id="panNetwork">
-                 <!-- PLACEHOLDER -->
+                <?php require 'php/templates/skel_tab_sysinfo_network.php'; ?>
               </div>
               <div class="tab-pane fade table-responsive" data-php-file="systeminfoStorage.php" id="panStorage">
-               <!-- PLACEHOLDER -->
+                <?php require 'php/templates/skel_tab_sysinfo_storage.php'; ?>
               </div>
               <div class="tab-pane fade table-responsive" data-php-file="systeminfoInitCheck.php" id="panInitCheck">
-               <!-- PLACEHOLDER -->
+                <?php require 'php/templates/skel_tab_sysinfo_initcheck.php'; ?>
               </div>
             </div>
             <!-- /.tab-content -->
