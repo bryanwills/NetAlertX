@@ -2653,7 +2653,7 @@ table.dataTable tbody > tr.selected
 #report-skeleton         { min-height: 400px; }
 #notifications-skeleton  { top: 50px; min-height: 400px; }
 #workflows-skeleton      { top: 50px; width: 770px; margin: 0 auto; min-height: 300px; }
-#plugins-skeleton        { padding: 0; min-height: 400px; }
+#plugins-skeleton        { top: 50px; padding: 0; min-height: 400px; }
 
 /* Bordered containers */
 .skel-overview-panel, .skel-section, .skel-plugin-block,
@@ -2759,7 +2759,7 @@ table.dataTable tbody > tr.selected
 
 /* ----- Plugins ---------------------------------------------------------- */
 .skel-plugins-wrap      { display: flex; gap: 0; min-height: 400px; }
-.skel-plugins-nav       { width: 165px; flex-shrink: 0; border-right: 1px solid var(--skel-border); padding: 8px 0; }
+.skel-plugins-nav       { flex-shrink: 0; border-right: 1px solid var(--skel-border); padding: 8px 0; }
 .skel-plugins-nav-item  { display: flex; align-items: center; padding: 9px 15px; border-bottom: 1px solid var(--skel-border); }
 .skel-plugins-nav-item:last-child { border-bottom: none; }
 .skel-plugins-body      { flex: 1; padding: 0; }

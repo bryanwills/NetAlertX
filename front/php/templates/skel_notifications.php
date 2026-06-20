@@ -19,5 +19,5 @@
   <div class="skel-form-footer">
       <span class="skel-form-btn skel-shimmer"></span>
       <span class="skel-form-btn skel-shimmer"></span>
-    </div>
+  </div>
 </div>
