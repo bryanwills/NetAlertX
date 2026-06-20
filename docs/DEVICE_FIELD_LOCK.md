@@ -157,9 +157,8 @@ Overwrite rules are
 ## See also
 
 - [Device locking](./DEVICE_FIELD_LOCK.md)
-- [Device source fields](./DEVICE_SOURCE_FIELDS.md)
+- [Device source fields - Authoritative updates](./DEVICE_SOURCE_FIELDS.md)
 - [API Device Endpoints Documentation](./API_DEVICE.md)
-- [Authoritative Field Updates System](./PLUGINS_DEV.md#authoritative-fields)
 - [Plugin Configuration Reference](./PLUGINS_DEV_CONFIG.md)
 - [Device locking APIs](API_DEVICE_FIELD_LOCK.md)
 - [Device management](DEVICE_MANAGEMENT.md)

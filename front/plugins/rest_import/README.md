@@ -63,7 +63,7 @@ Enable **Generate Fake MAC** when the API does not expose MAC addresses (e.g. re
 ```
 
 **Configuration:**
-```
+```text
 Name:              OPNsense DHCP
 URL:               https://firewall/api/dnsmasq/leases/search
 Method:            GET
