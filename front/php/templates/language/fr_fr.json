@@ -807,5 +807,8 @@
     "settings_system_icon": "fa-solid fa-gear",
     "settings_system_label": "Système",
     "settings_update_item_warning": "Mettre à jour la valeur ci-dessous. Veillez à bien suivre le même format qu'auparavant. <b>Il n'y a pas de pas de contrôle.</b>",
-    "test_event_tooltip": "Enregistrer d'abord vos modifications avant de tester vôtre paramétrage."
+    "test_event_tooltip": "Enregistrer d'abord vos modifications avant de tester vôtre paramétrage.",
+    "WF_Action_target": "Appliquer l'action à",
+    "WF_Action_target_conditions": "Cibler des conditions de l'appareil",
+    "WF_Action_token_hint": "Utiliser <code>{{trigger.COLUMN}}</code> pour référencer l'appareil déclencheur (par ex. <code>{{trigger.devLastIP}}</code>, <code>{{trigger.devMac}}</code>)"
 }
