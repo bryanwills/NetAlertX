@@ -294,6 +294,8 @@ async function getData() {
     generateTabs();
   } catch (err) {
     console.error("Failed to load data", err);
+    hideSpinner();
+    hidePluginsSkeleton();
   }
 }
 
@@ -865,7 +867,7 @@ function hidePluginsSkeleton() {
 }
 
 window.addEventListener('load', function() {
-  setTimeout(hidePluginsSkeleton, 15000);
+  setTimeout(function() { hidePluginsSkeleton(); hideSpinner(); }, 15000);
 });
 
 </script>

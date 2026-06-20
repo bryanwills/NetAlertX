@@ -1378,6 +1378,7 @@ $(document).ready(function () {
 });
 
 function hideWorkflowsSkeleton() {
+  hideSpinner();
   $('#workflows-skeleton').fadeOut(250, function() { $(this).remove(); });
 }
 

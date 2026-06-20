@@ -510,6 +510,7 @@ function getDevicesPresence (status) {
 };
 
 function hidePresenceSkeleton() {
+  hideSpinner();
   $('#presence-skeleton').fadeOut(250, function() { $(this).remove(); });
 }
 
