@@ -32,6 +32,5 @@
     "--line-length=180"
   ],
   "chat.useAgentSkills": true,
-  "postman.settings.dotenv-detection-notification-visibility": false,
 
 }
