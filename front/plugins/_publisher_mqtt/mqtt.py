@@ -156,6 +156,13 @@ class sensor_config:
             self.state_topic    = f'{topic_root}/{self.sensorType}/{self.deviceId}/state'
             self.unique_id      = f'{self.deviceId}_sensor_{self.sensorName}'
 
+            if self.mac != "":
+                connections_snippet = [
+                    ["mac", self.mac]
+                ]
+            else:
+                connections_snippet = []
+
             # Update the message dictionary, expanding it without overwriting
             self.message.update({
                 "name": self.sensorName,
@@ -166,9 +173,7 @@ class sensor_config:
                     "identifiers": [f"{self.deviceId}_sensor"],
                     "manufacturer": "NetAlertX",
                     "name": self.deviceName,
-                    "connections": [
-                        ["mac", self.mac]
-                    ],
+                    "connections": connections_snippet
                 },
                 "icon": f'mdi:{self.icon}'
             })
