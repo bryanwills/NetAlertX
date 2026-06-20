@@ -69,20 +69,17 @@ $settingsJSON_DB = json_encode($settings, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX
 
 <div id="settingsPage" class="content-wrapper">
 
-<a style="cursor:pointer">
-  <span>
-    <i id='toggleSettings' onclick="toggleAllSettings()" class="settings-expand-icon fa fa-angle-double-down"></i>
-  </span>
-</a>
+<?php require 'php/templates/skel_settings.php'; ?>
+
 
 <!-- Content header--------------------------------------------------------- -->
 
     <section class="content-header">
 
-    <div  class ="bg-white color-palette box box-solid box-primary  col-sm-12  panel panel-default panel-title" >
+    <div  class ="bg-white color-palette box box-solid col-sm-12  panel panel-default panel-title" >
 
       <a data-toggle="collapse" href="#settingsOverview">
-        <div class ="settings-group col-sm-12 panel-heading panel-title">
+        <div class ="settings-group col-sm-12 ">
             <i class="<?= lang("settings_enabled_icon");?>"></i>  <?= lang("settings_enabled");?>
         </div>
       </a>
@@ -284,7 +281,7 @@ $settingsJSON_DB = json_encode($settings, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX
         },
         error: function (xhr, status, error) {
             console.error("Error:", error);
-            // Handle any errors
+            hideSettingsSkeleton();
         }
     });
   }
@@ -328,7 +325,10 @@ $settingsJSON_DB = json_encode($settings, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX
 
     overviewSections.forEach((section) => {
 
-      overviewSections_html += `<div class="overview-section col-sm-12" id="${section}">
+      const sectionHtml = overviewSectionsHtml[index];
+
+      if (sectionHtml.trim()) {
+        overviewSections_html += `<div class="overview-section col-sm-12" id="${section}">
                                   <div class="col-sm-12 " title="${getString("settings_"+section)}">
                                     <a href="#${section}_content_header">
                                       <div class="overview-group col-sm-12 col-xs-12">
@@ -338,9 +338,10 @@ $settingsJSON_DB = json_encode($settings, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX
                                     </a>
                                   </div>
                                   <div class="col-sm-12">
-                                    ${overviewSectionsHtml[index]}
+                                    ${sectionHtml}
                                   </div>
                                 </div>`
+      }
       index++;
     });
 
@@ -535,7 +536,16 @@ $settingsJSON_DB = json_encode($settings, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX
     initSelect2();
     initHoverNodeInfo();
     hideSpinner();
+    hideSettingsSkeleton();
 
+  }
+
+  // ----------------------------------------------------------------
+  function hideSettingsSkeleton() {
+    var $skel = $('#settings-skeleton');
+    if (!$skel.length) return;
+    $('#settingsPage').removeClass('settings-loading');
+    $skel.fadeOut(250, function() { $(this).remove(); });
   }
 
   // display the name of the first person
@@ -652,6 +662,7 @@ $settingsJSON_DB = json_encode($settings, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX
     {
       showMessage (getString("settings_readonly"), 10000, "modal_red");
       console.log(`app.conf seems to be read only (canRWConfig: ${canReadAndWriteConfig})`);
+      hideSettingsSkeleton();
     } else
     {
       // check if config file has been updated
@@ -706,9 +717,10 @@ $settingsJSON_DB = json_encode($settings, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX
     }
   }
 
-
   showSpinner()
   handleLoadingDialog()
+  // Fallback: hide skeleton after 15s in case of unexpected error
+  setTimeout(hideSettingsSkeleton, 15000)
 
 
 

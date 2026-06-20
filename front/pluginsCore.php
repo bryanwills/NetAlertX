@@ -294,6 +294,8 @@ async function getData() {
     generateTabs();
   } catch (err) {
     console.error("Failed to load data", err);
+    hideSpinner();
+    hidePluginsSkeleton();
   }
 }
 
@@ -516,6 +518,7 @@ function generateTabs() {
   if (visiblePlugins.length === 0) {
     $('#tabs-content-location').html(`<p class="text-muted" style="padding: 15px;">${getString('Gen_No_Data')}</p>`);
     hideSpinner();
+    hidePluginsSkeleton();
     return;
   }
 
@@ -534,6 +537,7 @@ function generateTabs() {
   }
 
   hideSpinner()
+  hidePluginsSkeleton()
 }
 
 function resetTabs() {
@@ -857,5 +861,13 @@ else
 {
   initFields();
 }
+
+function hidePluginsSkeleton() {
+  $('#plugins-skeleton').fadeOut(250, function() { $(this).remove(); });
+}
+
+window.addEventListener('load', function() {
+  setTimeout(function() { hidePluginsSkeleton(); hideSpinner(); }, 15000);
+});
 
 </script>

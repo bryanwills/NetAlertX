@@ -5,6 +5,7 @@
 ?>
 <!-- ----------------------------------------------------------------------- -->
 
+<?php require $_SERVER['DOCUMENT_ROOT'] . '/php/templates/skel_tab_events.php'; ?>
 
 <!-- Hide Connections -->
 <div class="col-sm-12 col-xs-12">
@@ -103,10 +104,12 @@ function loadEventsData() {
       table.draw();
 
       hideSpinner();
+      hideEventsTabSkeleton();
     },
     error: function (xhr) {
       console.error("Failed to load events", xhr.responseText);
       hideSpinner();
+      hideEventsTabSkeleton();
     }
   });
 }
@@ -198,5 +201,9 @@ function deviceEventsPageUpdater() {
 
 deviceEventsPageUpdater();
 
+// -----------------------------------------------------------------------------
+function hideEventsTabSkeleton() {
+  $('#skel-tab-events').fadeOut(250, function() { $(this).remove(); });
+}
 
 </script>

@@ -43,6 +43,9 @@
 </div>
 <!-- ./wrapper -->
 
+<!-- Modals — placed outside .wrapper so position:fixed modals are in the root stacking context -->
+<?php require 'php/templates/modals.php'; ?>
+
 <!-- jQuery UI -->
 <script src="lib/jquery-ui/jquery-ui.min.js"></script>
 

@@ -1083,6 +1083,7 @@ height: 50px;
 .settingswrap
 {
     margin-bottom: 100px;
+    padding-top: 0px;
 }
 
 .settingswrap .metadata
@@ -1178,8 +1179,10 @@ height: 50px;
 /* Settings */
 
 #settingsPage .overview-setting-value{
-    display:unset;
-
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: smaller;
 }
 
 .overview-setting-value-wrap
@@ -1228,7 +1231,7 @@ height: 50px;
 
 }
 #settingsPage .panel-heading:hover{
-    background-color: #272c30;
+    background-color: #e8e8e8;
 }
 
 .settings-expand-icon {
@@ -2256,7 +2259,7 @@ textarea[readonly],
 ----------------------------------------------------------------------------- */
 #loadingSpinner {
     position: fixed;
-    z-index: 1000;
+    z-index: 9999;
     /* top: 0; */
     /* left: 0; */
     /* width: 100%; */
@@ -2265,7 +2268,6 @@ textarea[readonly],
     transition: opacity 0.3s ease-in-out;
     pointer-events: none;
     display: block;
-    z-index: 800;
 }
 
 .fa-spinner
@@ -2588,3 +2590,181 @@ table.dataTable tbody > tr.selected
     color: #8c8c8c;
     background-color: rgba(140, 140, 140, 0.05);
 }
+
+/* ===== Loading Skeleton ===== */
+
+/* Custom properties (overridden in dark-patch.css for Dark/System themes) */
+:root {
+    --skel-base:     #e2e2e2;
+    --skel-shine:    #f0f0f0;
+    --skel-section:  #d4d4d4;
+    --skel-panel-bg: #f5f5f5;
+    --skel-border:   #ddd;
+    --skel-bg:       #ecf0f5;
+}
+
+@keyframes settingsShimmer {
+    0%   { background-position: -600px 0; }
+    100% { background-position:  600px 0; }
+}
+
+.skel-shimmer {
+    background: linear-gradient(
+        90deg,
+        var(--skel-base)  25%,
+        var(--skel-shine) 50%,
+        var(--skel-base)  75%
+    );
+    background-size: 600px 100%;
+    animation: settingsShimmer 1.5s infinite linear;
+    border-radius: 3px;
+    display: inline-block;
+}
+
+/* Positioning anchors */
+#settingsPage, #devicesPage, #deviceDetailsPage,
+#eventsPage, #presencePage, #reportPage, #notifications, #wf-content-wrapper, #pluginsPage,
+#panDetails, #panSessions, #panPresence, #panEvents {
+    position: relative;
+}
+#panDetails, #panSessions, #panPresence, #panEvents { min-height: 420px; }
+#tab_DBTools, #tab_BackupRestore, #tab_Logging, #tab_multiEdit { position: relative; min-height: 320px; }
+
+/* Page-level overlay base */
+#settings-skeleton, #devices-skeleton, #device-details-skeleton,
+#events-skeleton, #presence-skeleton, #report-skeleton,
+#notifications-skeleton, #workflows-skeleton, #plugins-skeleton, .skel-tab-pane {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    background-color: var(--skel-bg);
+    padding: 15px;
+}
+#settings-skeleton, #devices-skeleton, #device-details-skeleton,
+#events-skeleton, #presence-skeleton, #report-skeleton,
+#notifications-skeleton, #workflows-skeleton, #plugins-skeleton { z-index: 50; }
+.skel-tab-pane           { z-index: 10; min-height: 400px; }
+#settings-skeleton       { padding-top: 50px; padding-left: 20px; padding-right: 20px; min-height: 500px; }
+#devices-skeleton        { top: 50px; min-height: 500px; }
+#device-details-skeleton { min-height: 600px; }
+#events-skeleton         { top: 50px; min-height: 500px; }
+#presence-skeleton       { top: 50px; min-height: 500px; }
+#report-skeleton         { min-height: 400px; }
+#notifications-skeleton  { min-height: 400px; }
+#workflows-skeleton      { top: 50px; width: 770px; margin: 0 auto; min-height: 300px; }
+#plugins-skeleton        { padding: 0; min-height: 400px; }
+
+/* Bordered containers */
+.skel-overview-panel, .skel-section, .skel-plugin-block,
+.skel-chart-box, .skel-table-box,
+.skel-detail-info-panel, .skel-detail-form, .skel-tabs-bar {
+    border: 1px solid var(--skel-border);
+}
+
+/* Clipped rounded containers */
+.skel-overview-panel, .skel-section, .skel-plugin-block,
+.skel-chart-box, .skel-table-box, .skel-tile {
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+/* Section-toned backgrounds */
+.skel-overview-heading, .skel-section-header, .skel-plugin-header,
+.skel-box-header, .skel-table-header-row, .skel-tile, .skel-tabs-bar {
+    background: var(--skel-section);
+}
+
+/* Panel-toned backgrounds */
+.skel-overview-body, .skel-overview-header, .skel-plugin-body,
+.skel-detail-info-panel, .skel-detail-form {
+    background: var(--skel-panel-bg);
+}
+
+/* Flex rows with vertical centering */
+.skel-overview-heading, .skel-overview-header, .skel-section-header, .skel-plugin-header,
+.skel-box-header, .skel-table-header-row, .skel-setting-row, .skel-tr, .skel-form-row,
+.skel-tile-icon-area {
+    display: flex;
+    align-items: center;
+}
+
+/* Standard header bar height + padding */
+.skel-overview-heading, .skel-overview-header, .skel-section-header, .skel-box-header {
+    height: 44px;
+    padding: 0 15px;
+}
+
+/* Row separator borders */
+.skel-setting-row, .skel-tr, .skel-form-row { border-bottom: 1px solid var(--skel-border); }
+.skel-setting-row:last-child, .skel-tr:last-child, .skel-form-row:last-of-type { border-bottom: none; }
+
+/* Standard data row spacing */
+.skel-setting-row, .skel-tr { gap: 10px; padding: 11px 15px; }
+
+/* Thin-line height (14px) */
+.skel-line, .skel-cell-name, .skel-cell-desc, .skel-th, .skel-form-label { height: 14px; }
+
+/* Non-growing primitives */
+.skel-line, .skel-icon-block, .skel-cell-name, .skel-cell-desc, .skel-form-label { flex-shrink: 0; }
+
+/* Filling cells (flex: 1) */
+.skel-tile-inner, .skel-th, .skel-td, .skel-cell-input, .skel-form-input { flex: 1; }
+
+/* ----- Settings --------------------------------------------------------- */
+.skel-overview-panel    { margin-bottom: 10px; }
+.skel-overview-heading  { gap: 12px; }
+.skel-overview-body     { padding: 12px; display: flex; gap: 12px; flex-wrap: wrap; }
+.skel-overview-card     { min-width: 100px; height: 76px; border-radius: 4px; }
+.skel-section           { margin-bottom: 8px; }
+.skel-overview-header   { gap: 14px; }
+.skel-section-header    { gap: 14px; }
+.skel-plugin-block      { margin: 8px; }
+.skel-plugin-header     { height: 48px; padding: 0 15px; gap: 14px; }
+.skel-icon-block        { width: 22px; height: 16px; }
+.skel-cell-name         { width: 20%; }
+.skel-cell-desc         { width: 36%; }
+.skel-cell-input        { height: 32px; }
+
+/* ----- Devices ---------------------------------------------------------- */
+.skel-tile              { display: flex; height: 80px; }
+.skel-tile-inner        { display: flex; flex-direction: column; padding: 12px 15px; justify-content: center; gap: 10px; }
+.skel-tile-num          { height: 26px; width: 55%; }
+.skel-tile-label        { height: 13px; width: 75%; }
+.skel-tile-icon-area    { width: 70px; justify-content: center; background: var(--skel-base); opacity: 0.6; }
+.skel-tile-icon-shape   { width: 38px; height: 38px; border-radius: 50%; }
+.skel-chart-box         { margin-bottom: 12px; }
+.skel-box-header        { gap: 12px; border-bottom: 1px solid var(--skel-border); }
+.skel-chart-body        { height: 220px; border-radius: 0; display: block; width: 100%; }
+.skel-table-header-row  { gap: 10px; padding: 10px 15px; border-bottom: 2px solid var(--skel-border); }
+.skel-td                { height: 13px; }
+
+/* ----- Device Details --------------------------------------------------- */
+.skel-detail-header     { margin-bottom: 15px; }
+.skel-detail-title      { height: 26px; width: 42%; margin-bottom: 14px; }
+.skel-detail-info-panel { display: flex; gap: 0; padding: 14px; border-radius: 4px; margin-bottom: 15px; max-width: 400px; }
+.skel-tabs-bar          { display: flex; gap: 4px; padding: 8px 10px 0; border-radius: 4px 4px 0 0; border-bottom: none; }
+.skel-tab               { height: 34px; width: 100px; border-radius: 4px 4px 0 0; flex-shrink: 0; }
+.skel-detail-form       { border-top: none; border-radius: 0 0 4px 4px; padding: 20px 15px; }
+.skel-form-row          { gap: 15px; padding: 9px 0; }
+.skel-form-label        { width: 18%; min-width: 100px; }
+.skel-form-input        { height: 32px; }
+.skel-form-footer       { display: flex; justify-content: flex-end; gap: 10px; padding-top: 15px; }
+.skel-form-btn          { height: 34px; width: 100px; }
+
+/* ----- Workflows -------------------------------------------------------- */
+.skel-workflow-card     { border: 1px solid var(--skel-border); border-radius: 4px; margin-bottom: 8px; overflow: hidden; }
+.skel-workflow-header   { display: flex; align-items: center; height: 48px; padding: 0 15px; background: var(--skel-section); }
+
+/* ----- Plugins ---------------------------------------------------------- */
+.skel-plugins-wrap      { display: flex; gap: 0; min-height: 400px; }
+.skel-plugins-nav       { width: 165px; flex-shrink: 0; border-right: 1px solid var(--skel-border); padding: 8px 0; }
+.skel-plugins-nav-item  { display: flex; align-items: center; padding: 9px 15px; border-bottom: 1px solid var(--skel-border); }
+.skel-plugins-nav-item:last-child { border-bottom: none; }
+.skel-plugins-body      { flex: 1; padding: 0; }
+
+/* ----- Systeminfo tabs -------------------------------------------------- */
+.skel-info-tab          { padding: 15px; min-height: 360px; }
+
+/* ===== /Loading Skeleton ===== */
+

@@ -107,6 +107,7 @@ function getData() {
   })
   .always(function () {
     hideSpinner(); // Ensure the spinner is hidden in all cases
+    hideWorkflowsSkeleton();
   });
 }
 
@@ -1376,5 +1377,13 @@ $(document).ready(function () {
   getData();
 });
 
+function hideWorkflowsSkeleton() {
+  hideSpinner();
+  $('#workflows-skeleton').fadeOut(250, function() { $(this).remove(); });
+}
+
+window.addEventListener('load', function() {
+  setTimeout(hideWorkflowsSkeleton, 15000);
+});
 
 </script>

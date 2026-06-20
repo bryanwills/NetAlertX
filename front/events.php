@@ -6,7 +6,8 @@ require 'php/templates/header.php';
   showSpinner(); // Show initial page loading spinner
 </script>
 
-<div class="content-wrapper eventsPage">
+<div class="content-wrapper eventsPage" id="eventsPage">
+<?php require 'php/templates/skel_events.php'; ?>
   <section class="content">
 
     <!-- ---------------- Top small boxes (Event shortcuts) ---------------- -->
@@ -154,11 +155,13 @@ function initializeDatatable() {
             recordsFiltered: response.recordsFiltered || 0
           });
           hideSpinner();
+          hideEventsSkeleton();
         },
         error: function (xhr, status, error) {
           console.error("Error fetching session events:", status, error, xhr.responseText);
           callback({ data: [], recordsTotal: 0, recordsFiltered: 0 });
           hideSpinner();
+          hideEventsSkeleton();
         }
       });
     },
@@ -253,4 +256,12 @@ function getEvents(type) {
   showSpinner();
   table.ajax.reload(null, true); // reset to page 1
 }
+
+function hideEventsSkeleton() {
+  $('#events-skeleton').fadeOut(250, function () { $(this).remove(); });
+}
+
+window.addEventListener('load', function () {
+  setTimeout(hideEventsSkeleton, 15000);
+});
 </script>

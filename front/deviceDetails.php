@@ -21,11 +21,12 @@
 </script>
 
 <!-- Page ------------------------------------------------------------------ -->
-  <div class="content-wrapper">
+  <div class="content-wrapper" id="deviceDetailsPage">
+
+    <?php require 'php/templates/skel_device_details.php'; ?>
 
 <!-- Content header--------------------------------------------------------- -->
     <section class="content-header">
-      <?php require 'php/templates/modals.php'; ?>
 
       <h1 id="pageTitle">
         &nbsp<small>Quering device info...</small>
@@ -597,7 +598,22 @@ window.onload = function() {
     updateChevrons(mac);
     await renderSmallBoxes();
     main();
+    hideDeviceDetailsSkeleton();
   });
+
+// -----------------------------------------------------------------------------
+function hideDeviceDetailsSkeleton() {
+  $('#device-details-skeleton').fadeOut(250, function() { $(this).remove(); });
+}
+
+// Fallback: remove main skeleton and all tab pane skeletons if init stalls
+setTimeout(function() {
+  hideDeviceDetailsSkeleton();
+  if (typeof hideDetailsTabSkeleton  === 'function') hideDetailsTabSkeleton();
+  if (typeof hideSessionsTabSkeleton === 'function') hideSessionsTabSkeleton();
+  if (typeof hidePresenceTabSkeleton === 'function') hidePresenceTabSkeleton();
+  if (typeof hideEventsTabSkeleton   === 'function') hideEventsTabSkeleton();
+}, 15000);
 }
 
 </script>

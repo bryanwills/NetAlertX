@@ -1,10 +1,9 @@
 <?php
 
-  require 'php/templates/header.php';  
-  require 'php/templates/modals.php'; 
+  require 'php/templates/header.php';
 ?>
 <!-- ----------------------------------------------------------------------- -->
- 
+
 
 <!-- Page ------------------------------------------------------------------ -->
 <div class="content-wrapper">
@@ -13,7 +12,7 @@
    require 'appEventsCore.php';
 ?>
 
-        
+
 </div>
 
 <?php
