@@ -2647,13 +2647,13 @@ table.dataTable tbody > tr.selected
 .skel-tab-pane           { z-index: 10; min-height: 400px; }
 #settings-skeleton       { padding-top: 50px; padding-left: 20px; padding-right: 20px; min-height: 500px; }
 #devices-skeleton        { top: 50px; min-height: 500px; }
-#device-details-skeleton { min-height: 600px; }
+#device-details-skeleton { top: 45px; min-height: 100px; }
 #events-skeleton         { top: 50px; min-height: 500px; }
 #presence-skeleton       { top: 50px; min-height: 500px; }
 #report-skeleton         { min-height: 400px; }
-#notifications-skeleton  { min-height: 400px; }
+#notifications-skeleton  { top: 50px; min-height: 400px; }
 #workflows-skeleton      { top: 50px; width: 770px; margin: 0 auto; min-height: 300px; }
-#plugins-skeleton        { padding: 0; min-height: 400px; }
+#plugins-skeleton        { top: 50px; padding: 0; min-height: 400px; }
 
 /* Bordered containers */
 .skel-overview-panel, .skel-section, .skel-plugin-block,
@@ -2728,6 +2728,7 @@ table.dataTable tbody > tr.selected
 
 /* ----- Devices ---------------------------------------------------------- */
 .skel-tile              { display: flex; height: 80px; }
+#device-details-skeleton .skel-tile { display: flex; height: 45px; }
 .skel-tile-inner        { display: flex; flex-direction: column; padding: 12px 15px; justify-content: center; gap: 10px; }
 .skel-tile-num          { height: 26px; width: 55%; }
 .skel-tile-label        { height: 13px; width: 75%; }
@@ -2740,8 +2741,8 @@ table.dataTable tbody > tr.selected
 .skel-td                { height: 13px; }
 
 /* ----- Device Details --------------------------------------------------- */
-.skel-detail-header     { margin-bottom: 15px; }
-.skel-detail-title      { height: 26px; width: 42%; margin-bottom: 14px; }
+.skel-detail-header     { margin-bottom: 0px; }
+.skel-detail-title      { height: 26px; width: 42%; margin-bottom: 0px; }
 .skel-detail-info-panel { display: flex; gap: 0; padding: 14px; border-radius: 4px; margin-bottom: 15px; max-width: 400px; }
 .skel-tabs-bar          { display: flex; gap: 4px; padding: 8px 10px 0; border-radius: 4px 4px 0 0; border-bottom: none; }
 .skel-tab               { height: 34px; width: 100px; border-radius: 4px 4px 0 0; flex-shrink: 0; }
@@ -2758,7 +2759,7 @@ table.dataTable tbody > tr.selected
 
 /* ----- Plugins ---------------------------------------------------------- */
 .skel-plugins-wrap      { display: flex; gap: 0; min-height: 400px; }
-.skel-plugins-nav       { width: 165px; flex-shrink: 0; border-right: 1px solid var(--skel-border); padding: 8px 0; }
+.skel-plugins-nav       { flex-shrink: 0; border-right: 1px solid var(--skel-border); padding: 8px 0; }
 .skel-plugins-nav-item  { display: flex; align-items: center; padding: 9px 15px; border-bottom: 1px solid var(--skel-border); }
 .skel-plugins-nav-item:last-child { border-bottom: none; }
 .skel-plugins-body      { flex: 1; padding: 0; }

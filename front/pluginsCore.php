@@ -2,6 +2,9 @@
   //------------------------------------------------------------------------------
   // check if authenticated
   require_once  $_SERVER['DOCUMENT_ROOT'] . '/php/templates/security.php';
+
+  // Capture shared sub-tab skeleton template for JS injection
+  ob_start(); require $_SERVER['DOCUMENT_ROOT'] . '/php/templates/skel_tab_plugins_table.php'; $skelPluginsTable = ob_get_clean();
 ?>
 
 <!-- Main content ---------------------------------------------------------- -->
@@ -26,6 +29,9 @@
 </section>
 
 <script>
+
+// Sub-tab skeleton HTML (server-rendered, shared across Objects / Events / History panes)
+const skelPluginsTable = <?= json_encode($skelPluginsTable) ?>;
 
 // Global variable to track the last MAC we initialized with
 let lastMac = null;
@@ -620,8 +626,11 @@ function generateDataTable(prefix, tableType, colDefinitions) {
   // Generate HTML for a DataTable and associated buttons for a given table type
   const headersHtml = colDefinitions.map(colDef => `<th class="${colDef.css_classes}">${getString(`${prefix}_${colDef.column}_name`)}</th>`).join('');
 
+  const skelHtml = skelPluginsTable;
+
   return `
-    <div id="${tableType.toLowerCase()}Target_${prefix}" class="tab-pane ${tableType == "Objects" ? "active":""}">
+    <div id="${tableType.toLowerCase()}Target_${prefix}" class="tab-pane ${tableType == "Objects" ? "active":""}" style="position:relative;">
+      <div id="skel-${tableType.toLowerCase()}Target_${prefix}" class="skel-plugins-tab-pane" style="position:absolute;top:0;left:0;right:0;z-index:1;background:inherit;">${skelHtml}</div>
       <table id="${tableType.toLowerCase()}Table_${prefix}" class="display table table-striped table-stretched" data-my-dbtable="Plugins_${tableType}">
         <thead><tr>${headersHtml}</tr></thead>
       </table>
@@ -647,6 +656,7 @@ function initializeDataTables(prefix, colDefinitions, pluginObj) {
     if ($.fn.DataTable.isDataTable(`#${tableId}`)) {
       return; // already initialized
     }
+    const skelId = `#skel-${tableId.replace('Table_', 'Target_')}`;
     $(`#${tableId}`).DataTable({
       processing: true,
       serverSide: true,
@@ -655,6 +665,11 @@ function initializeDataTables(prefix, colDefinitions, pluginObj) {
       ordering:   false,
       pageLength: 25,
       lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
+      // Fade out the skeleton only after the first draw so there is no gap
+      // between the skeleton disappearing and the table rows appearing.
+      initComplete: function() {
+        $(skelId).fadeOut(250, function() { $(this).remove(); });
+      },
       createdRow: function(row, data) {
         $(row).attr('data-my-index', data.index);
       },
