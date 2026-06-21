@@ -14,9 +14,9 @@ If a device is missing from the **My Devices** list, work through these checks.
 
 The most common cause is that a filter is hiding the device.
 
-![Image](./img/ADVISORIES/filters.png)
+![Active device filters example](./img/ADVISORIES/filters.png)
 
-![Image](./img/DEVICE_MANAGEMENT/DeviceDetails_DisplaySettings.png)
+![Display settings](./img/DEVICE_MANAGEMENT/DeviceDetails_DisplaySettings.png)
 
 Review any active:
 
@@ -32,7 +32,7 @@ Clear filters first, then reload the page and check again.
 
 You can select devices of what statuses should be displayed in the My Devices view. This can be adjusted in the _Settings_ section - search for the `UI_MY_DEVICES` setting and verify that the statuses you want to show are selected.
 
-![Image](./img/DEVICE_MANAGEMENT/device_filter_settings.png)
+![Global filter display settings](./img/DEVICE_MANAGEMENT/device_filter_settings.png)
 
 ---
 
