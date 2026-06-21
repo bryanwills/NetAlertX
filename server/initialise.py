@@ -452,6 +452,16 @@ def importConfigs(pm, db, all_plugins):
         "UI",
     )
 
+    conf.UI_WAIT_FOR_SETTINGS = ccd(
+        "UI_WAIT_FOR_SETTINGS",
+        False,
+        c_d,
+        "Wait for settings reload",
+        '{"dataType":"boolean", "elements": [{"elementType" : "checkbox", "elementOptions" : [] ,"transformers": []}]}',
+        "[]",
+        "UI",
+    )
+
     #  Init timezone in case it changed and handle invalid values
     try:
         if conf.TIMEZONE not in all_timezones:
