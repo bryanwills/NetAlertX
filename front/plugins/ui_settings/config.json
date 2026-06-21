@@ -264,11 +264,13 @@
       "localized": [],
       "name": [
         {
+          "language_code": "en_us",
           "string": "Default page size"
         }
       ],
       "description": [
         {
+          "language_code": "en_us",
           "string": "Default number of items shown in tables per page, for example in teh Devices lists."
         }
       ]
