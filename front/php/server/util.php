@@ -166,13 +166,72 @@ function saveSettings()
     copy($fullConfPath, $fullConfPath . ".bak");
   }
 
+  // Detect whether the frontend needs to block-wait for backend reload
+  $requiresReloadWait = getReloadWaitRequired($decodedSettings);
+
   // Open the file for writing without changing permissions
   $file = fopen($fullConfPath, "w") or die("Unable to open file!");
   fwrite($file, $txt);
   fclose($file);
 
-  echo "OK";
+  echo json_encode(['success' => true, 'requiresReloadWait' => $requiresReloadWait]);
 
+}
+
+// -------------------------------------------------------------------------------------------
+// Determines if the frontend must wait (block) for the backend to finish reloading after a
+// settings save. Blocking is required when LOADED_PLUGINS changes or UI_WAIT_FOR_SETTINGS
+// is explicitly enabled. Defaults to true (safe) on any parsing error.
+function getReloadWaitRequired($decodedSettings) {
+  $newLoadedPlugins = null;
+  $uiWaitForSettings = false;
+
+  foreach ($decodedSettings as $setting) {
+    if ($setting[1] === 'LOADED_PLUGINS') {
+      $newLoadedPlugins = $setting[3];
+    }
+    if ($setting[1] === 'UI_WAIT_FOR_SETTINGS') {
+      $uiWaitForSettings = ($setting[3] === true || $setting[3] === 1
+        || strtolower((string)$setting[3]) === 'true');
+    }
+  }
+
+  if ($uiWaitForSettings) {
+    return true;
+  }
+
+  $oldLoadedPlugins = getSettingValue('LOADED_PLUGINS');
+
+  // If the old value couldn't be read, default to blocking (safe).
+  if (strpos((string)$oldLoadedPlugins, 'Could not') !== false) {
+    return true;
+  }
+
+  return normalizePluginList($oldLoadedPlugins) !== normalizePluginList($newLoadedPlugins);
+}
+
+// -------------------------------------------------------------------------------------------
+// Normalise a plugin list value (PHP array, JSON array, or Python-style list) to a sorted
+// JSON string for reliable equality comparison.
+function normalizePluginList($value) {
+  if ($value === null || $value === '') {
+    return '[]';
+  }
+  if (is_array($value)) {
+    $arr = $value;
+  } else {
+    $arr = json_decode($value, true);
+    if (!is_array($arr)) {
+      // Handle Python-style single-quoted lists: ['A','B']
+      $jsonStr = str_replace("'", '"', (string)$value);
+      $arr = json_decode($jsonStr, true);
+    }
+    if (!is_array($arr)) {
+      return trim((string)$value);
+    }
+  }
+  sort($arr);
+  return json_encode($arr);
 }
 
 // -------------------------------------------------------------------------------------------

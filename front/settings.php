@@ -615,19 +615,33 @@ $settingsJSON_DB = json_encode($settings, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX
             settings: JSON.stringify(settingsArray) },
             success: function(data, textStatus) {
 
-              if(data == "OK")
-              {
-                // showMessage (getString("settings_saved"), 5000, "modal_grey");
+              // Parse response: support both legacy "OK" string and new JSON format
+              let saveSucceeded = false;
+              let requiresReloadWait = true; // safe default
+
+              if (data === "OK") {
+                saveSucceeded = true;
+              } else {
+                let parsed = null;
+                try { parsed = (typeof data === 'object') ? data : JSON.parse(data); } catch(e) {}
+                if (parsed && parsed.success === true) {
+                  saveSucceeded = true;
+                  requiresReloadWait = parsed.requiresReloadWait === true;
+                }
+              }
+
+              if (saveSucceeded) {
                 // Remove navigation prompt "Are you sure you want to leave..."
                 window.onbeforeunload = null;
 
-                // Reloads the current page
-                // setTimeout("clearCache()", 5000);
-
                 write_notification(`[Settings] Settings saved by the user`, 'info')
 
-                clearCache()
-              } else{
+                if (requiresReloadWait) {
+                  clearCache()
+                } else {
+                  showMessage(getString("settings_saved_background"), 5000, "modal_green");
+                }
+              } else {
                 // something went wrong
                 write_notification("[Important] Please take a screenshot of the Console tab in the browser (F12) and next error. Submit it (with the nginx and php error logs) as a new issue here: https://github.com/netalertx/NetAlertX/issues", 'interrupt')
                 write_notification(data, 'interrupt')

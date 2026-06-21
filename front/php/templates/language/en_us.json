@@ -807,6 +807,7 @@
     "settings_publishers_label": "Publishers",
     "settings_readonly": "Can't READ or WRITE <code>app.conf</code>. Try restarting the container and read the <a href=\"https://docs.netalertx.com/FILE_PERMISSIONS\" target=\"_blank\">file permissions documentation</a>",
     "settings_saved": "<br/>Settings saved. <br/> Reloading… <br/><i class=\"ion ion-ios-loop-strong fa-spin fa-2x fa-fw\"></i> <br/>",
+    "settings_saved_background": "Settings saved. Changes are being applied in the background.",
     "settings_system_icon": "fa-solid fa-gear",
     "settings_system_label": "System",
     "settings_update_item_warning": "Update the value below. Be careful to follow the previous format. <b>Validation is not performed.</b>",

@@ -264,11 +264,13 @@
       "localized": [],
       "name": [
         {
+          "language_code": "en_us",
           "string": "Default page size"
         }
       ],
       "description": [
         {
+          "language_code": "en_us",
           "string": "Default number of items shown in tables per page, for example in teh Devices lists."
         }
       ]
@@ -702,6 +704,34 @@
         {
           "language_code": "en_us",
           "string": "Based on which value should the network topology view be ordered."
+        }
+      ]
+    },
+    {
+      "function": "WAIT_FOR_SETTINGS",
+      "type": {
+        "dataType": "boolean",
+        "elements": [
+          {
+            "elementType": "input",
+            "elementOptions": [{ "type": "checkbox" }],
+            "transformers": []
+          }
+        ]
+      },
+      "default_value": false,
+      "options": [],
+      "localized": ["name", "description"],
+      "name": [
+        {
+          "language_code": "en_us",
+          "string": "Wait for settings reload"
+        }
+      ],
+      "description": [
+        {
+          "language_code": "en_us",
+          "string": "When enabled, the UI blocks after saving settings until the backend finishes reloading. When disabled (default), the UI returns immediately for most changes and only waits when plugin configuration changes."
         }
       ]
     }
