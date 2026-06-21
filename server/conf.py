@@ -32,7 +32,6 @@ SCAN_SUBNETS = ["192.168.1.0/24 --interface=eth1", "192.168.1.0/24 --interface=e
 LOG_LEVEL = "verbose"
 TIMEZONE = "Europe/Berlin"
 UI_LANG = "English (en_us)"
-UI_WAIT_FOR_SETTINGS = False
 UI_PRESENCE = ["online", "offline", "archived"]
 UI_MY_DEVICES = ["online", "offline", "archived", "new", "down"]
 UI_NOT_RANDOM_MAC = []
