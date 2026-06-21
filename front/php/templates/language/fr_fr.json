@@ -810,5 +810,6 @@
     "test_event_tooltip": "Enregistrer d'abord vos modifications avant de tester vôtre paramétrage.",
     "WF_Action_target": "Appliquer l'action à",
     "WF_Action_target_conditions": "Cibler des conditions de l'appareil",
-    "WF_Action_token_hint": "Utiliser <code>{{trigger.COLUMN}}</code> pour référencer l'appareil déclencheur (par ex. <code>{{trigger.devLastIP}}</code>, <code>{{trigger.devMac}}</code>)"
+    "WF_Action_token_hint": "Utiliser <code>{{trigger.COLUMN}}</code> pour référencer l'appareil déclencheur (par ex. <code>{{trigger.devLastIP}}</code>, <code>{{trigger.devMac}}</code>)",
+    "settings_saved_background": "Paramètres enregistrés. Les changements sont en cours d'application en arrière-plan."
 }
