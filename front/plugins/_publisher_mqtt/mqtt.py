@@ -150,18 +150,19 @@ class sensor_config:
                 "device_class": "timestamp"
             })
 
+        # prepare mac for "connections"
+        if self.mac != "":
+            connections_snippet = [
+                ["mac", self.mac]
+            ]
+        else:
+            connections_snippet = []
+
         # Handle 'binary_sensor' or 'sensor' types
         if self.sensorType in ['binary_sensor', 'sensor']:
             self.topic          = f'homeassistant/{self.sensorType}/{self.deviceId}/{self.sensorName}/config'
             self.state_topic    = f'{topic_root}/{self.sensorType}/{self.deviceId}/state'
             self.unique_id      = f'{self.deviceId}_sensor_{self.sensorName}'
-
-            if self.mac != "":
-                connections_snippet = [
-                    ["mac", self.mac]
-                ]
-            else:
-                connections_snippet = []
 
             # Update the message dictionary, expanding it without overwriting
             self.message.update({
@@ -172,8 +173,7 @@ class sensor_config:
                 "device": {
                     "identifiers": [f"{self.deviceId}_sensor"],
                     "manufacturer": "NetAlertX",
-                    "name": self.deviceName,
-                    "connections": connections_snippet
+                    "name": self.deviceName
                 },
                 "icon": f'mdi:{self.icon}'
             })
@@ -198,7 +198,8 @@ class sensor_config:
                     "identifiers": [f"{self.deviceId}_sensor", self.unique_id],
                     "manufacturer": "NetAlertX",
                     "model": self.model or "Unknown",  # Use model if available, else set to 'Unknown'
-                    "name": self.deviceName
+                    "name": self.deviceName,
+                    "connections": connections_snippet
                 }
             }
 
