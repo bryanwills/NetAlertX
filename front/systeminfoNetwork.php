@@ -367,17 +367,6 @@ $(document).ready(function() {
   });
 
   loadInterfaces();
-
-  // setTimeout(() => {
-  //   // Available IPs datatable
-  //   $('#networkTable').DataTable({
-  //     searching: true,
-  //     order: [[0, "desc"]],
-  //     initComplete: function(settings, json) {
-  //         hideSpinner(); // Called after the DataTable is fully initialized
-  //     }
-  //   });
-  // }, 200);
 });
 
 </script>
