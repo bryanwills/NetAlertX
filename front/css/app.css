@@ -2675,6 +2675,8 @@ table.dataTable tbody > tr.selected
     background: var(--skel-section);
 }
 
+#pluginsPage .skel-table-box, .plugin-content .skel-table-box { background: var(--skel-bg); }
+
 /* Panel-toned backgrounds */
 .skel-overview-body, .skel-overview-header, .skel-plugin-body,
 .skel-detail-info-panel, .skel-detail-form {

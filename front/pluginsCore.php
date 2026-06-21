@@ -630,7 +630,7 @@ function generateDataTable(prefix, tableType, colDefinitions) {
 
   return `
     <div id="${tableType.toLowerCase()}Target_${prefix}" class="tab-pane ${tableType == "Objects" ? "active":""}" style="position:relative;">
-      <div id="skel-${tableType.toLowerCase()}Target_${prefix}" class="skel-plugins-tab-pane" style="position:absolute;top:0;left:0;right:0;z-index:1;background:inherit;">${skelHtml}</div>
+      <div id="skel-${tableType.toLowerCase()}Target_${prefix}" class="skel-plugins-tab-pane" style="position:absolute;top:0;left:0;right:0;z-index:1">${skelHtml}</div>
       <table id="${tableType.toLowerCase()}Table_${prefix}" class="display table table-striped table-stretched" data-my-dbtable="Plugins_${tableType}">
         <thead><tr>${headersHtml}</tr></thead>
       </table>
@@ -668,7 +668,7 @@ function initializeDataTables(prefix, colDefinitions, pluginObj) {
       // Fade out the skeleton only after the first draw so there is no gap
       // between the skeleton disappearing and the table rows appearing.
       initComplete: function() {
-        $(skelId).fadeOut(250, function() { $(this).remove(); });
+        $(skelId).fadeOut(50, function() { $(this).remove(); });
       },
       createdRow: function(row, data) {
         $(row).attr('data-my-index', data.index);
