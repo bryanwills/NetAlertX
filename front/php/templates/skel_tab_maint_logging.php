@@ -6,5 +6,9 @@
     <span class="skel-shimmer" style="height:32px; flex:1; border-radius:4px;"></span>
   </div>
   <!-- Log content area -->
-  <span class="skel-shimmer" style="display:block; width:100%; height:280px; border-radius:4px;"></span>
+  <span class="skel-shimmer" style="display:block; width:100%; height:280px; border-radius:4px;padding:10px"></span>
+  <span class="skel-line skel-shimmer" style="width:120px;padding:10px;margin:10px"></span>
+  <span class="skel-shimmer" style="display:block; width:100%; height:280px; border-radius:4px;padding:10px"></span>
+  <span class="skel-line skel-shimmer" style="width:120px;padding:10px;margin:10px"></span>
+  <span class="skel-shimmer" style="display:block; width:100%; height:280px; border-radius:4px;padding:10px"></span>
 </div>

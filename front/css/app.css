@@ -2716,8 +2716,8 @@ table.dataTable tbody > tr.selected
 /* ----- Settings --------------------------------------------------------- */
 .skel-overview-panel    { margin-bottom: 10px; }
 .skel-overview-heading  { gap: 12px; }
-.skel-overview-body     { padding: 12px; display: flex; gap: 12px; flex-wrap: wrap; }
-.skel-overview-card     { min-width: 100px; height: 76px; border-radius: 4px; }
+.skel-overview-body     { padding: 12px; }
+.skel-overview-card     { min-width: 100%; height: 76px; border-radius: 4px; padding: 5px;}
 .skel-section           { margin-bottom: 8px; }
 .skel-overview-header   { gap: 14px; }
 .skel-section-header    { gap: 14px; }
