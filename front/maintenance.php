@@ -878,10 +878,10 @@ window.onload = function asyncFooter() {
 </script>
 
 <script>
-  function hideMaintDBToolsSkeleton()   { $('#skel-tab-maint-dbtools').fadeOut(250, function() { $(this).remove(); }); }
-  function hideMaintBackupSkeleton()    { $('#skel-tab-maint-backup').fadeOut(250, function() { $(this).remove(); }); }
-  function hideMaintLoggingSkeleton()   { $('#skel-tab-maint-logging').fadeOut(250, function() { $(this).remove(); }); }
-  function hideMaintMultiEditSkeleton() { $('#skel-tab-maint-multiedit').fadeOut(250, function() { $(this).remove(); }); }
+  function hideMaintDBToolsSkeleton()   { $('#skel-tab-maint-dbtools').fadeOut(50, function() { $(this).remove(); }); }
+  function hideMaintBackupSkeleton()    { $('#skel-tab-maint-backup').fadeOut(50, function() { $(this).remove(); }); }
+  function hideMaintLoggingSkeleton()   { $('#skel-tab-maint-logging').fadeOut(50, function() { $(this).remove(); }); }
+  function hideMaintMultiEditSkeleton() { $('#skel-tab-maint-multiedit').fadeOut(50, function() { $(this).remove(); }); }
 
   // Static tabs: content is PHP-rendered — dismiss immediately, no waiting for onload
   hideMaintDBToolsSkeleton();

@@ -6,7 +6,7 @@ require 'php/templates/header.php';
   showSpinner(); // Show initial page loading spinner
 </script>
 
-<div class="content-wrapper eventsPage" id="eventsPage">
+<div class="content-wrapper eventsPage spinnerTarget" id="eventsPage">
 <?php require 'php/templates/skel_events.php'; ?>
   <section class="content">
 
@@ -59,7 +59,7 @@ require 'php/templates/header.php';
           </div>
 
           <div class="box-body table-responsive">
-            <table id="tableEvents" class="spinnerTarget table table-bordered table-hover table-striped">
+            <table id="tableEvents" class="table table-bordered table-hover table-striped">
               <thead>
                 <tr>
                   <th><?= lang('Events_TableHead_Order'); ?></th>
@@ -258,7 +258,7 @@ function getEvents(type) {
 }
 
 function hideEventsSkeleton() {
-  $('#events-skeleton').fadeOut(250, function () { $(this).remove(); });
+  $('#events-skeleton').fadeOut(50, function () { $(this).remove(); });
 }
 
 window.addEventListener('load', function () {

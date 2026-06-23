@@ -124,48 +124,34 @@
               </div>
             </ul>
 
-            <div class="tab-content spinnerTarget" style="min-height: 430px;">
-
-<!-- tab page 1 ------------------------------------------------------------ -->
-
+            <div class="tab-content spinnerTarget" >
               <div class="tab-pane fade" id="panDetails">
                 <?php
                   require 'deviceDetailsEdit.php';
                 ?>
               </div>
-
-<!-- tab page 2 ------------------------------------------------------------ -->
               <div class="tab-pane fade table-responsive" id="panSessions">
               <?php
                   require 'deviceDetailsSessions.php';
                 ?>
               </div>
-
-<!-- tab page "Tools" ------------------------------------------------------------ -->
-
               <div class="tab-pane fade" id="panTools">
                 <?php
                   require 'deviceDetailsTools.php';
                 ?>
               </div>
-
-<!-- tab page 3 ------------------------------------------------------------ -->
               <div class="tab-pane fade table-responsive" id="panPresence">
                 <?php
                   // Include the other page
                   include 'deviceDetailsPresence.php';
                 ?>
               </div>
-
-<!-- tab page 4 ------------------------------------------------------------ -->
               <div class="tab-pane fade table-responsive" id="panEvents">
               <?php
                   // Include the other page
                   include 'deviceDetailsEvents.php';
                 ?>
               </div>
-
-<!-- tab page 7 ------------------------------------------------------------ -->
               <div class="tab-pane fade table-responsive" id="panPlugins">
                 <?php
                   // Include the other page
@@ -580,10 +566,6 @@ async function updateDevicePageName(mac) {
 
 
 //-----------------------------------------------------------------------------------
-
-
-
-
 window.onload = function() {
   // Always trigger app-init bootstrap
   if (typeof executeOnce === 'function') {
@@ -603,7 +585,7 @@ window.onload = function() {
 
 // -----------------------------------------------------------------------------
 function hideDeviceDetailsSkeleton() {
-  $('#device-details-skeleton').fadeOut(250, function() { $(this).remove(); });
+  $('#device-details-skeleton').fadeOut(50, function() { $(this).remove(); });
 }
 
 // Fallback: remove main skeleton and all tab pane skeletons if init stalls

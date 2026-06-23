@@ -203,7 +203,7 @@ deviceEventsPageUpdater();
 
 // -----------------------------------------------------------------------------
 function hideEventsTabSkeleton() {
-  $('#skel-tab-events').fadeOut(250, function() { $(this).remove(); });
+  $('#skel-tab-events').fadeOut(50, function() { $(this).remove(); });
 }
 
 </script>

@@ -67,7 +67,7 @@
               </li>
             </ul>
 
-            <div class="tab-content spinnerTarget" style="min-height: 430px;">
+            <div class="tab-content spinnerTarget">
               <div class="tab-pane fade" data-php-file="systeminfoServer.php" id="panServer">
                 <?php require 'php/templates/skel_tab_sysinfo_server.php'; ?>
               </div>

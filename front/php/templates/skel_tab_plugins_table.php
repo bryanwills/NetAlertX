@@ -16,7 +16,7 @@
   </div>
   <?php endforeach; ?>
 </div>
-<div class="skel-form-footer" style="padding:8px 0;">
+<div class="skel-form-footer-left" style="padding:8px 0;">
   <span class="skel-form-btn skel-shimmer"></span>
   <span class="skel-form-btn skel-shimmer"></span>
 </div>

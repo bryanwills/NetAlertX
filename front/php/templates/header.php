@@ -288,7 +288,7 @@
       <ul class="sidebar-menu" data-widget="tree">
 
         <li class=" treeview  <?php if (in_array (basename($_SERVER['SCRIPT_NAME']), array('devices.php', 'deviceDetails.php') ) ){ echo 'active menu-open'; } ?>">
-          <a href="#"  onclick="openUrl(['./devices.php', './deviceDetails.php'])">
+          <a href="devices.php"  onclick="openUrl(['./devices.php', './deviceDetails.php'])">
 
           <i class="fa fa-fw fa-laptop"></i> <span><?= lang('Navigation_Devices');?></span>
             <span class="pull-right-container">
@@ -363,7 +363,7 @@
 
         <!-- Maintenance menu item -->
         <li class=" treeview  <?php if (in_array (basename($_SERVER['SCRIPT_NAME']), array('maintenance.php') ) ){ echo 'active menu-open'; } ?>">
-          <a href="#" onclick="openUrl(['./maintenance.php'])">
+          <a href="#">
           <!-- NEW version available -->
           <div class="info-icon-nav myhidden" id="version" title="<?= lang('new_version_available');?>" data-build-time="<?php echo file_get_contents( "buildtimestamp.txt");?>">
             <i class="fa-solid fa-rocket fa-beat"></i>
@@ -391,7 +391,7 @@
 
         <!-- Settings menu item -->
         <li class=" treeview  <?php if (in_array (basename($_SERVER['SCRIPT_NAME']), array('settings.php') ) ){ echo 'active menu-open'; } ?>">
-          <a href="#" onclick="openUrl(['./settings.php'])">
+          <a href="settings.php" onclick="openUrl(['./settings.php'])">
           <i class="fa fa-fw fa-cog"></i> <span><?= lang('Navigation_Settings');?></span>
             <span class="pull-right-container">
               <i class="fa fa-angle-left pull-right"></i>

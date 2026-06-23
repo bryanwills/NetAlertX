@@ -426,7 +426,7 @@
       "description": [
         {
           "language_code": "en_us",
-          "string": "Telegram bot token. You cat get at from <a target=\"_blank\" href=\"https://t.me/BotFather\">BotFather</a>"
+          "string": "Telegram bot token. You can get one from <a target=\"_blank\" href=\"https://t.me/BotFather\">BotFather</a>"
         }
       ]
     },
