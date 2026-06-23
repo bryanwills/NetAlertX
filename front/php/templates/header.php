@@ -391,7 +391,7 @@
 
         <!-- Settings menu item -->
         <li class=" treeview  <?php if (in_array (basename($_SERVER['SCRIPT_NAME']), array('settings.php') ) ){ echo 'active menu-open'; } ?>">
-          <a href="#" onclick="openUrl(['./settings.php'])">
+          <a href="settings.php" onclick="openUrl(['./settings.php'])">
           <i class="fa fa-fw fa-cog"></i> <span><?= lang('Navigation_Settings');?></span>
             <span class="pull-right-container">
               <i class="fa fa-angle-left pull-right"></i>

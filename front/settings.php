@@ -67,7 +67,7 @@ $settingsJSON_DB = json_encode($settings, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX
 <script src="lib/bcrypt/bcrypt.min.js"></script>
 
 
-<div id="settingsPage" class="content-wrapper">
+<div id="settingsPage" class="content-wrapper spinnerTarget">
 
 <?php require 'php/templates/skel_settings.php'; ?>
 
