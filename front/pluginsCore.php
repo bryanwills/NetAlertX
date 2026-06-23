@@ -149,7 +149,6 @@ function processColumnValue(dbColumnDef, value, index, type) {
       value = `<span><a href="${value}" target="_blank">${value}</a><span>`;
       break;
     case 'url_http_https':
-
       value = `<span>
             <a href="http://${value}" target="_blank">
               <i class="fa fa-lock-open "></i>
@@ -163,7 +162,7 @@ function processColumnValue(dbColumnDef, value, index, type) {
     case 'device_name_mac':
       value = `<div class="text-center"> ${value}
                 <br/>
-                (${createDeviceLink(value)})
+                ${createDeviceLink(value)}
               </div>`;
       break;
     case 'device_mac':
@@ -662,7 +661,7 @@ function initializeDataTables(prefix, colDefinitions, pluginObj) {
       serverSide: true,
       paging:     true,
       searching:  true,
-      ordering:   false,
+      ordering:   true,
       pageLength: 25,
       lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
       // Fade out the skeleton only after the first draw so there is no gap
@@ -878,7 +877,7 @@ else
 }
 
 function hidePluginsSkeleton() {
-  $('#plugins-skeleton').fadeOut(250, function() { $(this).remove(); });
+  $('#plugins-skeleton').fadeOut(50, function() { $(this).remove(); });
 }
 
 window.addEventListener('load', function() {

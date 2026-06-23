@@ -2,70 +2,72 @@
 <div id="devices-skeleton">
 
   <!-- Tile cards row -------------------------------------------------------- -->
-  <div class="row">
-    <div class="col-lg-2 col-sm-4 col-xs-6 padding-5px">
-      <div class="skel-tile">
-        <div class="skel-tile-inner">
-          <div class="skel-tile-num skel-shimmer"></div>
-          <div class="skel-tile-label skel-shimmer"></div>
-        </div>
-        <div class="skel-tile-icon-area">
-          <div class="skel-tile-icon-shape skel-shimmer"></div>
-        </div>
-      </div>
-    </div>
-    <div class="col-lg-2 col-sm-4 col-xs-6 padding-5px">
-      <div class="skel-tile">
-        <div class="skel-tile-inner">
-          <div class="skel-tile-num skel-shimmer"></div>
-          <div class="skel-tile-label skel-shimmer"></div>
-        </div>
-        <div class="skel-tile-icon-area">
-          <div class="skel-tile-icon-shape skel-shimmer"></div>
+  <div class="skel-tile-row">
+    <div class="col-xs-12">
+      <div class="col-lg-2 col-sm-4 col-xs-6">
+        <div class="skel-tile">
+          <div class="skel-tile-inner">
+            <div class="skel-tile-num skel-shimmer"></div>
+            <div class="skel-tile-label skel-shimmer"></div>
+          </div>
+          <div class="skel-tile-icon-area">
+            <div class="skel-tile-icon-shape skel-shimmer"></div>
+          </div>
         </div>
       </div>
-    </div>
-    <div class="col-lg-2 col-sm-4 col-xs-6 padding-5px">
-      <div class="skel-tile">
-        <div class="skel-tile-inner">
-          <div class="skel-tile-num skel-shimmer"></div>
-          <div class="skel-tile-label skel-shimmer"></div>
-        </div>
-        <div class="skel-tile-icon-area">
-          <div class="skel-tile-icon-shape skel-shimmer"></div>
-        </div>
-      </div>
-    </div>
-    <div class="col-lg-2 col-sm-4 col-xs-6 padding-5px">
-      <div class="skel-tile">
-        <div class="skel-tile-inner">
-          <div class="skel-tile-num skel-shimmer"></div>
-          <div class="skel-tile-label skel-shimmer"></div>
-        </div>
-        <div class="skel-tile-icon-area">
-          <div class="skel-tile-icon-shape skel-shimmer"></div>
+      <div class="col-lg-2 col-sm-4 col-xs-6">
+        <div class="skel-tile">
+          <div class="skel-tile-inner">
+            <div class="skel-tile-num skel-shimmer"></div>
+            <div class="skel-tile-label skel-shimmer"></div>
+          </div>
+          <div class="skel-tile-icon-area">
+            <div class="skel-tile-icon-shape skel-shimmer"></div>
+          </div>
         </div>
       </div>
-    </div>
-    <div class="col-lg-2 col-sm-4 col-xs-6 padding-5px">
-      <div class="skel-tile">
-        <div class="skel-tile-inner">
-          <div class="skel-tile-num skel-shimmer"></div>
-          <div class="skel-tile-label skel-shimmer"></div>
-        </div>
-        <div class="skel-tile-icon-area">
-          <div class="skel-tile-icon-shape skel-shimmer"></div>
+      <div class="col-lg-2 col-sm-4 col-xs-6">
+        <div class="skel-tile">
+          <div class="skel-tile-inner">
+            <div class="skel-tile-num skel-shimmer"></div>
+            <div class="skel-tile-label skel-shimmer"></div>
+          </div>
+          <div class="skel-tile-icon-area">
+            <div class="skel-tile-icon-shape skel-shimmer"></div>
+          </div>
         </div>
       </div>
-    </div>
-    <div class="col-lg-2 col-sm-4 col-xs-6 padding-5px">
-      <div class="skel-tile">
-        <div class="skel-tile-inner">
-          <div class="skel-tile-num skel-shimmer"></div>
-          <div class="skel-tile-label skel-shimmer"></div>
+      <div class="col-lg-2 col-sm-4 col-xs-6">
+        <div class="skel-tile">
+          <div class="skel-tile-inner">
+            <div class="skel-tile-num skel-shimmer"></div>
+            <div class="skel-tile-label skel-shimmer"></div>
+          </div>
+          <div class="skel-tile-icon-area">
+            <div class="skel-tile-icon-shape skel-shimmer"></div>
+          </div>
         </div>
-        <div class="skel-tile-icon-area">
-          <div class="skel-tile-icon-shape skel-shimmer"></div>
+      </div>
+      <div class="col-lg-2 col-sm-4 col-xs-6">
+        <div class="skel-tile">
+          <div class="skel-tile-inner">
+            <div class="skel-tile-num skel-shimmer"></div>
+            <div class="skel-tile-label skel-shimmer"></div>
+          </div>
+          <div class="skel-tile-icon-area">
+            <div class="skel-tile-icon-shape skel-shimmer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-2 col-sm-4 col-xs-6">
+        <div class="skel-tile">
+          <div class="skel-tile-inner">
+            <div class="skel-tile-num skel-shimmer"></div>
+            <div class="skel-tile-label skel-shimmer"></div>
+          </div>
+          <div class="skel-tile-icon-area">
+            <div class="skel-tile-icon-shape skel-shimmer"></div>
+          </div>
         </div>
       </div>
     </div>

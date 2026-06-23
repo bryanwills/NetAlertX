@@ -37,7 +37,7 @@
           <span class="skel-line skel-shimmer" style="width:100px"></span>
           <span class="skel-line skel-shimmer" style="width:180px; margin-left:auto;"></span>
         </div>
-        <div class="skel-chart-body skel-shimmer" style="height:380px"></div>
+        <div class="skel-chart-body skel-shimmer" style="height:580px"></div>
       </div>
     </div>
   </div>

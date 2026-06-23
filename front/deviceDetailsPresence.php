@@ -212,7 +212,7 @@ devicePresencePageUpdater();
 
 // -----------------------------------------------------------------------------
 function hidePresenceTabSkeleton() {
-  $('#skel-tab-presence').fadeOut(250, function() { $(this).remove(); });
+  $('#skel-tab-presence').fadeOut(50, function() { $(this).remove(); });
 }
 
 

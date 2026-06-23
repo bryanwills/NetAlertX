@@ -76,7 +76,7 @@ $settingsJSON_DB = json_encode($settings, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX
 
     <section class="content-header">
 
-    <div  class ="bg-white color-palette box box-solid col-sm-12  panel panel-default panel-title" >
+    <div  class ="bg-white color-palette col-sm-12  panel-title" >
 
       <a data-toggle="collapse" href="#settingsOverview">
         <div class ="settings-group col-sm-12 ">
@@ -84,42 +84,42 @@ $settingsJSON_DB = json_encode($settings, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX
         </div>
       </a>
         <div id="settingsOverview" class="panel-collapse collapse in">
-          <div class="panel-body"></div>
+          <div id="settingsOverviewPanelBody"></div>
         <div class =" col-sm-12 " id=""></div>
       </div>
     </section>
 
     <div class="content settingswrap " id="accordion_gen">
 
-      <div class ="bg-grey-dark color-palette panel panel-default col-sm-12  box-default box-info" id="core_content_header" >
+      <div class ="bg-grey-dark color-palette  col-sm-12  box-default box-info" id="core_content_header" >
           <div class ="settings-group col-sm-12">
             <i class="<?= lang("settings_core_icon");?>"></i>  <?= lang("settings_core_label");?>
           </div>
           <div class =" col-sm-12" id="core_content"></div>
       </div>
 
-      <div class ="bg-grey-dark color-palette panel panel-default col-sm-12   box-default box-info" id="system_content_header" >
+      <div class ="bg-grey-dark color-palette col-sm-12   box-default box-info" id="system_content_header" >
           <div class ="settings-group col-sm-12">
             <i class="<?= lang("settings_system_icon");?>"></i>  <?= lang("settings_system_label");?>
           </div>
           <div class =" col-sm-12" id="system_content"></div>
       </div>
 
-      <div class ="bg-grey-dark color-palette  panel panel-default col-sm-12   box-default box-info" id="device_scanners_content_header" >
+      <div class ="bg-grey-dark color-palette  col-sm-12   box-default box-info" id="device_scanners_content_header" >
           <div class ="settings-group col-sm-12">
             <i class="<?= lang("settings_device_scanners_icon");?>"></i>  <?= lang("settings_device_scanners_label");?>
           </div>
           <div class =" col-sm-12" id="device_scanner_content"> <?= lang("settings_device_scanners_info");?> </div>
       </div>
 
-      <div class ="bg-grey-dark color-palette  panel panel-default col-sm-12   box-default box-info" id="other_scanners_content_header">
+      <div class ="bg-grey-dark color-palette  col-sm-12   box-default box-info" id="other_scanners_content_header">
           <div class ="settings-group col-sm-12">
             <i class="<?= lang("settings_other_scanners_icon");?>"></i>  <?= lang("settings_other_scanners_label");?>
           </div>
           <div class =" col-sm-12" id="other_content"></div>
       </div>
 
-      <div class ="bg-grey-dark color-palette  panel panel-default col-sm-12   box-default box-info" id="publishers_content_header" >
+      <div class ="bg-grey-dark color-palette  col-sm-12   box-default box-info" id="publishers_content_header" >
           <div class ="settings-group col-sm-12">
             <i class="<?= lang("settings_publishers_icon");?>"></i>  <?= lang("settings_publishers_label");?>
           </div>
@@ -345,7 +345,7 @@ $settingsJSON_DB = json_encode($settings, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX
       index++;
     });
 
-    $('#settingsOverview .panel-body').append(overviewSections_html);
+    $('#settingsOverview #settingsOverviewPanelBody').append(overviewSections_html);
 
     // Display warning
     if(schedulesAreSynchronized(enabledDeviceScanners, pluginsData) == false)
@@ -545,7 +545,15 @@ $settingsJSON_DB = json_encode($settings, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX
     var $skel = $('#settings-skeleton');
     if (!$skel.length) return;
     $('#settingsPage').removeClass('settings-loading');
-    $skel.fadeOut(10, function() { $(this).remove(); });
+    $skel.fadeOut(10, function() { $(this).hide(); });
+  }
+
+  // ----------------------------------------------------------------
+  function showSettingsSkeleton() {
+    var $skel = $('#settings-skeleton');
+    if (!$skel.length) return;
+    $('#settingsPage').addClass('settings-loading');
+    $skel.fadeOut(10, function() { $(this).show(); });
   }
 
   // display the name of the first person
@@ -694,7 +702,7 @@ $settingsJSON_DB = json_encode($settings, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX
         if(appState["showSpinner"] || fileModificationTime > importedMiliseconds)
         {
           showSpinner("settings_old")
-
+          showSettingsSkeleton()
           setTimeout("handleLoadingDialog()", 1000);
 
         } else
@@ -705,9 +713,7 @@ $settingsJSON_DB = json_encode($settings, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX
         humanReadable = (new Date(importedMiliseconds)).toLocaleString("en-UK", { timeZone: "<?php echo $timeZone?>" });
         document.getElementById('lastImportedTime').innerHTML = humanReadable;
       })
-
     }
-
   }
 
 

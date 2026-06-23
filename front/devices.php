@@ -185,7 +185,7 @@
 
 // -----------------------------------------------------------------------------
 function hideDevicesSkeleton() {
-  $('#devices-skeleton').fadeOut(250, function() { $(this).remove(); });
+  $('#devices-skeleton').fadeOut(50, function() { $(this).remove(); });
 }
 
 // Fallback: ensure skeleton is removed even if DataTable fails to initialize

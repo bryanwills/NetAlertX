@@ -2528,6 +2528,14 @@ textarea[readonly],
 }
 
 /* -----------------------------------------------------------------------------
+   Sys info
+----------------------------------------------------------------------------- */
+#panInitCheck .row
+{
+    width: 100%;
+}
+
+/* -----------------------------------------------------------------------------
    Floating edit button
 ----------------------------------------------------------------------------- */
 #multiEditPlc
@@ -2627,7 +2635,7 @@ table.dataTable tbody > tr.selected
 #panDetails, #panSessions, #panPresence, #panEvents {
     position: relative;
 }
-#panDetails, #panSessions, #panPresence, #panEvents { min-height: 420px; }
+
 #tab_DBTools, #tab_BackupRestore, #tab_Logging, #tab_multiEdit { position: relative; min-height: 320px; }
 
 /* Page-level overlay base */
@@ -2639,27 +2647,37 @@ table.dataTable tbody > tr.selected
     left: 0;
     right: 0;
     background-color: var(--skel-bg);
-    padding: 15px;
 }
 #settings-skeleton, #devices-skeleton, #device-details-skeleton,
 #events-skeleton, #presence-skeleton, #report-skeleton,
 #notifications-skeleton, #workflows-skeleton, #plugins-skeleton { z-index: 50; }
-.skel-tab-pane           { z-index: 10; min-height: 400px; }
-#settings-skeleton       { padding-top: 50px; padding-left: 20px; padding-right: 20px; min-height: 500px; }
-#devices-skeleton        { top: 50px; min-height: 500px; }
-#device-details-skeleton { top: 45px; min-height: 100px; }
-#events-skeleton         { top: 50px; min-height: 500px; }
-#presence-skeleton       { top: 50px; min-height: 500px; }
-#report-skeleton         { min-height: 400px; }
-#notifications-skeleton  { top: 50px; min-height: 400px; }
+.skel-tab-pane           { z-index: 10; min-height: 400px; background-color: var(--skel-panel-bg);}
+#settings-skeleton       { margin: 15px; padding-top: 50px; min-height: 500px; }
+#devices-skeleton        { margin: 15px; top: 50px; min-height: 500px; }
+#device-details-skeleton { margin: 15px; top: 42px; }
+#events-skeleton         { margin: 15px; top: 50px; min-height: 500px; }
+#presence-skeleton       { margin: 15px; top: 50px; min-height: 500px; }
+#report-skeleton         { margin: 15px; top: 50px; min-height: 400px; }
+#notifications-skeleton  { margin: 15px; top: 50px; min-height: 400px; }
 #workflows-skeleton      { top: 50px; width: 770px; margin: 0 auto; min-height: 300px; }
 #plugins-skeleton        { top: 50px; padding: 0; min-height: 400px; }
+#skel-tab-sessions, #skel-tab-events, #skel-tab-presence { margin: 0px; }
+
+/* Hide scrollbars */
+#skel-tab-sessions, #skel-tab-events, #skel-tab-presence {
+    overflow: hidden; /* Hides the scrollbar */
+    -ms-overflow-style: none; /* Internet Explorer 10+ */
+    scrollbar-width: none; /* Firefox */
+}
+#skel-tab-sessions::-webkit-scrollbar, #skel-tab-events::-webkit-scrollbar, #skel-tab-presence::-webkit-scrollbar {
+    display: none; /* Safari and Chrome */
+}
 
 /* Bordered containers */
 .skel-overview-panel, .skel-section, .skel-plugin-block,
 .skel-chart-box, .skel-table-box,
 .skel-detail-info-panel, .skel-detail-form, .skel-tabs-bar {
-    border: 1px solid var(--skel-border);
+    border: 1px none var(--skel-border);
 }
 
 /* Clipped rounded containers */
@@ -2729,7 +2747,8 @@ table.dataTable tbody > tr.selected
 .skel-cell-input        { height: 32px; }
 
 /* ----- Devices ---------------------------------------------------------- */
-.skel-tile              { display: flex; height: 80px; }
+.skel-tile-row          { margin-right: -30px;  margin-left: -30px;}
+.skel-tile              { display: flex; height: 80px; margin-bottom: 15px;}
 #device-details-skeleton .skel-tile { display: flex; height: 45px; }
 .skel-tile-inner        { display: flex; flex-direction: column; padding: 12px 15px; justify-content: center; gap: 10px; }
 .skel-tile-num          { height: 26px; width: 55%; }
@@ -2753,6 +2772,7 @@ table.dataTable tbody > tr.selected
 .skel-form-label        { width: 18%; min-width: 100px; }
 .skel-form-input        { height: 32px; }
 .skel-form-footer       { display: flex; justify-content: flex-end; gap: 10px; padding-top: 15px; }
+.skel-form-footer-left  { display: flex; justify-content: flex-start; gap: 10px; padding-top: 15px; }
 .skel-form-btn          { height: 34px; width: 100px; }
 
 /* ----- Workflows -------------------------------------------------------- */
