@@ -954,6 +954,21 @@ function getGuid() {
 let spinnerTimeout = null;
 let animationTime = 300
 
+// show spinner on all clicks
+$(document).on('click', 'a', function (e) {
+    const href = this.href;
+
+    if (
+        href &&
+        this.target !== '_blank' &&
+        !this.hasAttribute('download') &&
+        this.origin === location.origin &&
+        this.pathname + this.search !== location.pathname + location.search
+    ) {
+        showSpinner();
+    }
+});
+
 function showSpinner(stringKey = 'Loading') {
   let text = isEmpty(stringKey) ? "Loading..." : getString(stringKey || "Loading");
 

@@ -553,7 +553,7 @@ $settingsJSON_DB = json_encode($settings, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX
     var $skel = $('#settings-skeleton');
     if (!$skel.length) return;
     $('#settingsPage').addClass('settings-loading');
-    $skel.fadeOut(10, function() { $(this).show(); });
+    $skel.stop(true, true).fadeIn(10);
   }
 
   // display the name of the first person

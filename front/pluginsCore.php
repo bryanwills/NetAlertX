@@ -150,14 +150,14 @@ function processColumnValue(dbColumnDef, value, index, type) {
       break;
     case 'url_http_https':
       value = `<span>
-            <a href="http://${value}" target="_blank">
-              <i class="fa fa-lock-open "></i>
-            </a>
-            /
-            <a href="https://${value}" target="_blank">
-              <i class="fa fa-lock "></i>
-            </a>
-          <span>`;
+                <a href="http://${value}" target="_blank">
+                  <i class="fa fa-lock-open "></i>
+                </a>
+                /
+                <a href="https://${value}" target="_blank">
+                  <i class="fa fa-lock "></i>
+                </a>
+            </span>`;
       break;
     case 'device_name_mac':
       value = `<div class="text-center"> ${value}
