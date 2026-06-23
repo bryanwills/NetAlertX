@@ -2661,7 +2661,7 @@ table.dataTable tbody > tr.selected
     background-color: var(--skel-bg);
 }
 #settings-skeleton, #devices-skeleton, #device-details-skeleton,
-#events-skeleton, #presence-skeleton, #report-skeleton, #skel-app-event,
+#events-skeleton, #presence-skeleton, #report-skeleton, #skel-app-events,
 #notifications-skeleton, #workflows-skeleton, #plugins-skeleton { z-index: 50; }
 .skel-tab-pane           { z-index: 10; min-height: 400px; background-color: var(--skel-panel-bg);}
 #settings-skeleton       { margin: 15px; min-height: 500px; }
