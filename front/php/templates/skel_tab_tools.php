@@ -1,4 +1,4 @@
-<div id="skel-tab-tools">
+<div id="skel-tab-tools" class="spinnerTarget">
 
   <!-- events table -->
   <div class="row" style="margin-top:12px">

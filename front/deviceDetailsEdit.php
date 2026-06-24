@@ -488,6 +488,7 @@ function setDeviceData(direction = '', refreshCallback = '') {
 
       if (resp && resp.success) {
         showMessage(getString("Device_Saved_Success"));
+        hideDetailsTabSkeleton();
       } else {
 
         console.log(resp);

@@ -1,4 +1,4 @@
-<div id="events-skeleton">
+<div id="events-skeleton" class="spinnerTarget">
 
   <!-- 6 stat tiles -->
   <div class="row">
