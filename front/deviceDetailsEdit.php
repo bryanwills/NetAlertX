@@ -423,6 +423,7 @@ function setDeviceData(direction = '', refreshCallback = '') {
   }
 
   showSpinner();
+  showDetailsTabSkeleton();
 
   const apiToken = getSetting("API_TOKEN"); // dynamic token
   const apiBaseUrl = getApiBase();
@@ -669,7 +670,11 @@ function toggleFieldLock(mac, fieldName) {
 
 // -----------------------------------------------------------------------------
 function hideDetailsTabSkeleton() {
-  $('#skel-tab-details').fadeOut(50, function() { $(this).remove(); });
+  $('#skel-tab-details').fadeOut(50, function() { $(this).hide(); });
+}
+function showDetailsTabSkeleton() {
+  var $skel = $('#skel-tab-details');
+  $skel.stop(true, true).fadeIn(10);
 }
 
 </script>
