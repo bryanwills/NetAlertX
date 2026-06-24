@@ -787,7 +787,7 @@
     "settings_device_scanners_icon": "fa-solid fa-magnifying-glass-plus",
     "settings_device_scanners_info": "<a href=\"/settings.php#LOADED_PLUGINS\">LOADED_PLUGINS</a> 設定でより多くのデバイススキャナーを読み込みます",
     "settings_device_scanners_label": "デバイススキャナー",
-    "settings_enabled": "有効な設定",
+    "settings_enabled": "有効なプラグイン",
     "settings_enabled_icon": "fa-solid fa-toggle-on",
     "settings_expand_all": "拡大する",
     "settings_imported": "最新設定はapp.confファイルからインポートされました",
@@ -807,5 +807,9 @@
     "settings_system_icon": "fa-solid fa-gear",
     "settings_system_label": "システム",
     "settings_update_item_warning": "以下の値を更新してください。以前のフォーマットに従うよう注意してください。<b>検証は行われません。</b>",
-    "test_event_tooltip": "設定をテストする前に、まず変更を保存してください。"
+    "test_event_tooltip": "設定をテストする前に、まず変更を保存してください。",
+    "WF_Action_target": "アクションを適用する",
+    "WF_Action_target_conditions": "対象デバイスの条件",
+    "WF_Action_token_hint": "トリガーとなったデバイスを参照するには、<code>{{trigger.COLUMN}}</code> を使用します（例：<code>{{trigger.devLastIP}}</code>、<code>{{trigger.devMac}}</code>）",
+    "settings_saved_background": "設定が保存されました。変更はバックグラウンドで反映されます。"
 }
