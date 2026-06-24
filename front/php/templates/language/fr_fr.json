@@ -787,7 +787,7 @@
     "settings_device_scanners_icon": "fa-solid fa-magnifying-glass-plus",
     "settings_device_scanners_info": "Chargez plus de scanners d'appareils avec le paramètre <a href=\"/settings.php#LOADED_PLUGINS\">LOADED_PLUGINS</a>",
     "settings_device_scanners_label": "Scanners d'appareils",
-    "settings_enabled": "Paramètres activés",
+    "settings_enabled": "Plugins activés",
     "settings_enabled_icon": "fa-solid fa-toggle-on",
     "settings_expand_all": "Tout développer",
     "settings_imported": "Dernier import des paramètres depuis le fichier app.conf",
