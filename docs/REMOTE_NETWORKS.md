@@ -76,6 +76,6 @@ Dummy devices can also be used to segment your network topology, or to represent
 
 Scanning remote networks with NMAP is possible (via the `NMAPDEV` plugin), but since it cannot retrieve the MAC address, you need to enable the `NMAPDEV_FAKE_MAC` setting. This will generate a fake MAC address based on the IP address, allowing you to track devices. 
 
-Because the generated MAC address is derived from the IP address, changing the IP can cause the device to appear as a new device or create duplicate records. If this setting is disabled, only the IP address will be discovered, and devices with missing MAC addresses will be skipped.
+Because the generated MAC address is derived from the IP address, changing the IP can cause the device to appear as a new device or create duplicate records. If this setting is disabled, devices with a missing MAC addresses will be skipped.
 
 Check the [NMAPDEV plugin](https://github.com/netalertx/NetAlertX/tree/main/front/plugins/nmap_dev_scan) for details.
