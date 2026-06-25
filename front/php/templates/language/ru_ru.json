@@ -787,7 +787,7 @@
     "settings_device_scanners_icon": "fa-solid fa-magnifying-glass-plus",
     "settings_device_scanners_info": "Загрузите больше сканеров устройств с помощью параметра <a href=\"/settings.php#LOADED_PLUGINS\">LOADED_PLUGINS</a>",
     "settings_device_scanners_label": "Сканеры устройств",
-    "settings_enabled": "Вкл. настройки",
+    "settings_enabled": "Включенные плагины",
     "settings_enabled_icon": "fa-solid fa-toggle-on",
     "settings_expand_all": "Раскрыть все",
     "settings_imported": "Последний раз настройки были импортированы из файла app.conf",
@@ -807,5 +807,9 @@
     "settings_system_icon": "fa-solid fa-gear",
     "settings_system_label": "Система",
     "settings_update_item_warning": "Обновить значение ниже. Будьте осторожны, следуя предыдущему формату. <b>Проверка не выполняется.</b>",
-    "test_event_tooltip": "Сначала сохраните изменения, прежде чем проверять настройки."
+    "test_event_tooltip": "Сначала сохраните изменения, прежде чем проверять настройки.",
+    "WF_Action_target": "Применить действие к",
+    "WF_Action_target_conditions": "Состояние целевого устройства",
+    "WF_Action_token_hint": "Используйте <code>{{trigger.COLUMN}}</code> для ссылки на триггерное устройство (например, <code>{{trigger.devLastIP}}</code>, <code>{{trigger.devMac}}</code>)",
+    "settings_saved_background": "Настройки сохранены. Изменения применяются в фоновом режиме."
 }
