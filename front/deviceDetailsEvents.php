@@ -5,7 +5,7 @@
 ?>
 <!-- ----------------------------------------------------------------------- -->
 
-<?php require $_SERVER['DOCUMENT_ROOT'] . '/php/templates/skel_tab_events.php'; ?>
+<?php require $_SERVER['DOCUMENT_ROOT'] . '/php/templates/skel_device_details_tab_events.php'; ?>
 
 <!-- Hide Connections -->
 <div class="col-sm-12 col-xs-12">

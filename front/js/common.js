@@ -971,22 +971,28 @@ $(document).on('click', 'a', function (e) {
 
 function resolveSpinnerTarget(explicitTarget = null) {
   if (explicitTarget) {
-    return $(explicitTarget);
+    const explicit = $(explicitTarget);
+    if (explicit.length) {
+      return explicit;
+    }
   }
 
-  // Active tab pane
-  const activeTab = $(".tab-pane.active .spinnerTarget").first();
-  if (activeTab.length) {
-    return activeTab;
+  // Prefer the active tab pane itself
+  const activePane = $(".tab-pane.active:visible");
+  if (activePane.length) {
+    // Use a direct child spinnerTarget if one exists and is visible
+    const childTarget = activePane.children(".spinnerTarget:visible").first();
+    return childTarget.length ? childTarget : activePane;
   }
 
-  // Visible container fallback
+  // Fall back to any visible spinnerTarget
   const visibleTarget = $(".spinnerTarget:visible").first();
   if (visibleTarget.length) {
     return visibleTarget;
   }
 
-  return $();
+  // Finally, cover the page
+  return $("body");
 }
 
 function showSpinner(stringKey = "Loading", target = null) {
@@ -1000,6 +1006,10 @@ function showSpinner(stringKey = "Loading", target = null) {
 
   const spinner = $("#loadingSpinner");
   const resolvedTarget = resolveSpinnerTarget(target);
+
+  console.log(resolvedTarget);
+  
+  console.log(`spinnerTarget=${resolvedTarget.attr("id")} class=${resolvedTarget.attr("class")} size=${resolvedTarget.outerWidth()}x${resolvedTarget.outerHeight()} parent=${resolvedTarget.parent().outerWidth()}x${resolvedTarget.parent().outerHeight()}`)
 
   $("#loadingSpinnerText").text(text);
 

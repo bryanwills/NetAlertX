@@ -6,7 +6,7 @@
 
 <!-- ----------------------------------------------------------------------- -->
 
-<?php require $_SERVER['DOCUMENT_ROOT'] . '/php/templates/skel_tab_sessions.php'; ?>
+<?php require $_SERVER['DOCUMENT_ROOT'] . '/php/templates/skel_device_details_tab_sessions.php'; ?>
 
 <!-- Datatable Session -->
 <table id="tableSessions" class="table table-bordered table-hover table-striped ">

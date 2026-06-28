@@ -3,7 +3,7 @@
 // check if authenticated
 require_once $_SERVER["DOCUMENT_ROOT"] . "/php/templates/security.php"; ?>
 
-<?php require $_SERVER['DOCUMENT_ROOT'] . '/php/templates/skel_tab_details.php'; ?>
+<?php require $_SERVER['DOCUMENT_ROOT'] . '/php/templates/skel_device_details_tab_details.php'; ?>
 
 <div class="row" id="deviceDetailsEdit">
   <div class="box-body form-horizontal">

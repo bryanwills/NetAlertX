@@ -2,7 +2,7 @@
   //------------------------------------------------------------------------------
   // check if authenticated
   require_once  $_SERVER['DOCUMENT_ROOT'] . '/php/templates/security.php';
-  require $_SERVER['DOCUMENT_ROOT'] . '/php/templates/skel_tab_tools.php';
+  require $_SERVER['DOCUMENT_ROOT'] . '/php/templates/skel_device_details_tab_tools.php';
 ?>
 <!-- INTERNET INFO -->
 <?php if (strtolower($_REQUEST["mac"]) == "internet") { ?>
