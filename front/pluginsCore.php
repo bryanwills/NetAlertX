@@ -8,6 +8,7 @@
 ?>
 
 <!-- Main content ---------------------------------------------------------- -->
+ <?php require 'php/templates/skel_plugins.php'; ?>
 <section class="content">
   <div class="plugin-filters hidden" >
     <div class="input-group col-sm-12">
@@ -667,7 +668,7 @@ function initializeDataTables(prefix, colDefinitions, pluginObj) {
       // Fade out the skeleton only after the first draw so there is no gap
       // between the skeleton disappearing and the table rows appearing.
       initComplete: function() {
-        $(skelId).fadeOut(50, function() { $(this).remove(); });
+        $(skelId).fadeOut(0, function() { $(this).hide(); });
       },
       createdRow: function(row, data) {
         $(row).attr('data-my-index', data.index);
@@ -877,7 +878,12 @@ else
 }
 
 function hidePluginsSkeleton() {
-  $('#plugins-skeleton').fadeOut(50, function() { $(this).remove(); });
+  $('#plugins-skeleton').fadeOut(0, function() { $(this).hide(); });
+}
+
+function showPluginsSkeleton() {
+  var $skel = $('#plugins-skeleton');
+  $skel.stop(true, true).fadeIn();
 }
 
 window.addEventListener('load', function() {

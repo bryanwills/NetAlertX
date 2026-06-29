@@ -969,34 +969,62 @@ $(document).on('click', 'a', function (e) {
     }
 });
 
-function showSpinner(stringKey = 'Loading') {
-  let text = isEmpty(stringKey) ? "Loading..." : getString(stringKey || "Loading");
+function resolveSpinnerTarget(explicitTarget = null) {
+  if (explicitTarget) {
+    const explicit = $(explicitTarget);
+    if (explicit.length) {
+      return explicit;
+    }
+  }
+
+  // Prefer the active tab pane itself
+  const activePane = $(".tab-pane.active:visible");
+  if (activePane.length) {
+    // Use a direct child spinnerTarget if one exists and is visible
+    const childTarget = activePane.children(".spinnerTarget:visible").first();
+    return childTarget.length ? childTarget : activePane;
+  }
+
+  // Fall back to any visible spinnerTarget
+  const visibleTarget = $(".spinnerTarget:visible").first();
+  if (visibleTarget.length) {
+    return visibleTarget;
+  }
+
+  // Finally, cover the page
+  return $("body");
+}
+
+function showSpinner(stringKey = "Loading", target = null) {
+  let text = isEmpty(stringKey)
+    ? "Loading..."
+    : getString(stringKey || "Loading");
 
   if (!text || !text.trim()) {
-    text = "Loading..."
+    text = "Loading...";
   }
 
   const spinner = $("#loadingSpinner");
-  const target = $(".spinnerTarget").first(); // Only use the first one if multiple exist
+  const resolvedTarget = resolveSpinnerTarget(target);
+
+  console.log(resolvedTarget);
+  
+  console.log(`spinnerTarget=${resolvedTarget.attr("id")} class=${resolvedTarget.attr("class")} size=${resolvedTarget.outerWidth()}x${resolvedTarget.outerHeight()} parent=${resolvedTarget.parent().outerWidth()}x${resolvedTarget.parent().outerHeight()}`)
 
   $("#loadingSpinnerText").text(text);
 
-  if (target.length) {
-    // Position relative to target
-    const offset = target.offset();
-    const width = target.outerWidth();
-    const height = target.outerHeight();
+  if (resolvedTarget.length) {
+    const offset = resolvedTarget.offset();
 
     spinner.css({
       position: "absolute",
       top: offset.top,
       left: offset.left,
-      width: width,
-      height: height,
+      width: resolvedTarget.outerWidth(),
+      height: resolvedTarget.outerHeight(),
       zIndex: 9999
     });
   } else {
-    // Fullscreen fallback
     spinner.css({
       position: "fixed",
       top: 0,
@@ -1011,6 +1039,12 @@ function showSpinner(stringKey = 'Loading') {
     spinner.addClass("visible");
     spinner.fadeIn(animationTime);
   });
+}
+
+function hideSpinner() {
+  $("#loadingSpinner")
+    .removeClass("visible")
+    .fadeOut(animationTime);
 }
 
 function hideSpinner() {

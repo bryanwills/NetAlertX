@@ -185,7 +185,7 @@
 
 // -----------------------------------------------------------------------------
 function hideDevicesSkeleton() {
-   $('#devices-skeleton').fadeOut(50, function() { $(this).remove(); });
+   $('#devices-skeleton').fadeOut(0, function() { $(this).remove(); });
 }
 
 // Fallback: ensure skeleton is removed even if DataTable fails to initialize
@@ -921,8 +921,8 @@ function initializeDatatable (status) {
                   ` data-mac="${row[mapIndx(COL.devMac)]}"` +
                   ` data-vendor="${row[mapIndx(COL.devVendor)]}"` +
                   ` data-type="${row[mapIndx(COL.devType)]}"` +
-                  ` data-firstseen="${row[mapIndx(COL.devFirstConnection)]}"` +
-                  ` data-lastseen="${row[mapIndx(COL.devLastConnection)]}"` +
+                  ` data-firstseen="${localizeTimestamp(row[mapIndx(COL.devFirstConnection)])}"` +
+                  ` data-lastseen="${localizeTimestamp(row[mapIndx(COL.devLastConnection)])}"` +
                   ` data-relationship="${row[mapIndx(COL.devParentRelType)]}"` +
                   ` data-status="${row[mapIndx(COL.devStatus)]}"` +
                   ` data-present="${row[mapIndx(COL.devPresentLastScan)]}"` +

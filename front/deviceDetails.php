@@ -130,7 +130,7 @@
                   require 'deviceDetailsEdit.php';
                 ?>
               </div>
-              <div class="tab-pane fade table-responsive" id="panSessions">
+              <div class="tab-pane fade" id="panSessions">
               <?php
                   require 'deviceDetailsSessions.php';
                 ?>
@@ -140,13 +140,13 @@
                   require 'deviceDetailsTools.php';
                 ?>
               </div>
-              <div class="tab-pane fade table-responsive" id="panPresence">
+              <div class="tab-pane fade" id="panPresence">
                 <?php
                   // Include the other page
                   include 'deviceDetailsPresence.php';
                 ?>
               </div>
-              <div class="tab-pane fade table-responsive" id="panEvents">
+              <div class="tab-pane fade " id="panEvents">
               <?php
                   // Include the other page
                   include 'deviceDetailsEvents.php';
@@ -269,6 +269,7 @@ function recordSwitch(direction) {
       '<?= lang('Gen_Cancel');?>', '<?= lang('Gen_Okay');?>', performSwitch, direction);
   } else
   {
+    showSpinner();
     performSwitch(direction)
   }
 }
@@ -585,7 +586,7 @@ window.onload = function() {
 
 // -----------------------------------------------------------------------------
 function hideDeviceDetailsSkeleton() {
-  $('#device-details-skeleton').fadeOut(50, function() { $(this).remove(); });
+  $('#device-details-skeleton').fadeOut(0, function() { $(this).remove(); });
 }
 
 // Fallback: remove main skeleton and all tab pane skeletons if init stalls

@@ -3,7 +3,7 @@
 // check if authenticated
 require_once $_SERVER["DOCUMENT_ROOT"] . "/php/templates/security.php"; ?>
 
-<?php require $_SERVER['DOCUMENT_ROOT'] . '/php/templates/skel_tab_details.php'; ?>
+<?php require $_SERVER['DOCUMENT_ROOT'] . '/php/templates/skel_device_details_tab_details.php'; ?>
 
 <div class="row" id="deviceDetailsEdit">
   <div class="box-body form-horizontal">
@@ -423,6 +423,7 @@ function setDeviceData(direction = '', refreshCallback = '') {
   }
 
   showSpinner();
+  showDetailsTabSkeleton();
 
   const apiToken = getSetting("API_TOKEN"); // dynamic token
   const apiBaseUrl = getApiBase();
@@ -487,6 +488,7 @@ function setDeviceData(direction = '', refreshCallback = '') {
 
       if (resp && resp.success) {
         showMessage(getString("Device_Saved_Success"));
+        hideDetailsTabSkeleton();
       } else {
 
         console.log(resp);
@@ -669,7 +671,11 @@ function toggleFieldLock(mac, fieldName) {
 
 // -----------------------------------------------------------------------------
 function hideDetailsTabSkeleton() {
-  $('#skel-tab-details').fadeOut(50, function() { $(this).remove(); });
+  $('#skel-tab-details').fadeOut(0, function() { $(this).hide(); });
+}
+function showDetailsTabSkeleton() {
+  var $skel = $('#skel-tab-details');
+  $skel.stop(true, true).fadeIn(10);
 }
 
 </script>

@@ -5,7 +5,7 @@
 ?>
 
 <!-- fullCalendar -->
- <?php require $_SERVER['DOCUMENT_ROOT'] . '/php/templates/skel_tab_presence.php'; ?>
+ <?php require $_SERVER['DOCUMENT_ROOT'] . '/php/templates/skel_device_details_tab_presence.php'; ?>
 
 <link rel="stylesheet" href="lib/fullcalendar/fullcalendar.min.css">
 
@@ -195,6 +195,7 @@ function initDevicePresencePage() {
   if (presencePageInitialized) return;
   presencePageInitialized = true;
 
+  showPresenceTabSkeleton();
   showSpinner();
 
   initializeCalendar();
@@ -212,7 +213,12 @@ devicePresencePageUpdater();
 
 // -----------------------------------------------------------------------------
 function hidePresenceTabSkeleton() {
-  $('#skel-tab-presence').fadeOut(50, function() { $(this).remove(); });
+  $('#skel-tab-presence').fadeOut(0, function() { $(this).hide(); });
+}
+
+function showPresenceTabSkeleton() {
+  var $skel = $('#skel-tab-presence');
+  $skel.stop(true, true).fadeIn(10);
 }
 
 

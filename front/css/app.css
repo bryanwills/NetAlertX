@@ -20,6 +20,7 @@
     --color-red: #dd4b39;
     --color-gray: #8c8c8c;
     --color-darkgray: #3f3e3e;
+    --color-lightgray: #bec5cb;
     --color-black: #000;
 }
 
@@ -2532,11 +2533,25 @@ textarea[readonly],
 }
 
 /* -----------------------------------------------------------------------------
-   Sys info
+   InitCheck
 ----------------------------------------------------------------------------- */
 #panInitCheck .row
 {
     width: 100%;
+}
+
+#panInitCheck 
+{
+    display: flow-root;
+}
+
+.init-check-button
+{
+  margin: 0;
+  position: relative;
+  left: 50%;
+  -ms-transform: translate(-50%, 0%);
+  transform: translate(-50%, 0%);
 }
 
 /* -----------------------------------------------------------------------------
@@ -2663,7 +2678,7 @@ table.dataTable tbody > tr.selected
 #settings-skeleton, #devices-skeleton, #device-details-skeleton,
 #events-skeleton, #presence-skeleton, #report-skeleton, #skel-app-events,
 #notifications-skeleton, #workflows-skeleton, #plugins-skeleton { z-index: 50; }
-.skel-tab-pane           { z-index: 10; min-height: 400px; background-color: var(--skel-panel-bg);}
+.skel-tab-pane           { margin: -10px; z-index: 10; min-height: 400px; background-color: var(--skel-panel-bg);}
 #settings-skeleton       { margin: 15px; min-height: 500px; }
 #devices-skeleton        { margin: 15px; top: 50px; min-height: 500px; }
 #skel-app-events         { margin: 15px; top: 50px; min-height: 500px; z-index: inherit;}
@@ -2674,7 +2689,7 @@ table.dataTable tbody > tr.selected
 #notifications-skeleton  { margin: 15px; top: 50px; min-height: 400px; }
 #workflows-skeleton      { top: 50px; width: 770px; margin: 0 auto; min-height: 300px; }
 #plugins-skeleton        { top: 50px; padding: 0; min-height: 400px; }
-#skel-tab-sessions, #skel-tab-events, #skel-tab-presence { margin: 0px; }
+#skel-tab-sessions, #skel-tab-events, #skel-tab-presence {margin: -10px;  padding: 20px;}
 
 /* Hide scrollbars */
 #skel-tab-sessions, #skel-tab-events, #skel-tab-presence {
@@ -2781,6 +2796,7 @@ table.dataTable tbody > tr.selected
 .skel-tabs-bar          { display: flex; gap: 4px; padding: 8px 10px 0; border-radius: 4px 4px 0 0; border-bottom: none; }
 .skel-tab               { height: 34px; width: 100px; border-radius: 4px 4px 0 0; flex-shrink: 0; }
 .skel-detail-form       { border-top: none; border-radius: 0 0 4px 4px; padding: 20px 15px; }
+.skel-detail-form-tab   { border-top: none; border-radius: 0 0 4px 4px; padding: 20px 15px; margin: -10px; }
 .skel-form-row          { gap: 15px; padding: 9px 0; }
 .skel-form-label        { width: 18%; min-width: 100px; }
 .skel-form-input        { height: 32px; }
@@ -2804,6 +2820,7 @@ table.dataTable tbody > tr.selected
 
 /* ----- Systeminfo tabs -------------------------------------------------- */
 .skel-info-tab          { padding: 15px; min-height: 360px; }
+.skel-info-tab          { margin: -10px;}
 
 /* ===== /Loading Skeleton ===== */
 

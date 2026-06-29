@@ -185,7 +185,7 @@ $(document).ready(function () {
 });
 
 function hideAppEventsSkeleton() {
-  $('#skel-app-events').fadeOut(50, function () { $(this).remove(); });
+  $('#skel-app-events').fadeOut(0, function () { $(this).remove(); });
 }
 
 window.addEventListener('load', function () {

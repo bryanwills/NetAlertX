@@ -74,10 +74,10 @@
               <div class="tab-pane fade" data-php-file="systeminfoNetwork.php" id="panNetwork">
                 <?php require 'php/templates/skel_tab_sysinfo_network.php'; ?>
               </div>
-              <div class="tab-pane fade table-responsive" data-php-file="systeminfoStorage.php" id="panStorage">
+              <div class="tab-pane fade" data-php-file="systeminfoStorage.php" id="panStorage">
                 <?php require 'php/templates/skel_tab_sysinfo_storage.php'; ?>
               </div>
-              <div class="tab-pane fade table-responsive" data-php-file="systeminfoInitCheck.php" id="panInitCheck">
+              <div class="tab-pane fade" data-php-file="systeminfoInitCheck.php" id="panInitCheck">
                 <?php require 'php/templates/skel_tab_sysinfo_initcheck.php'; ?>
               </div>
             </div>
