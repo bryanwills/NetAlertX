@@ -180,7 +180,7 @@ deviceSessionsPageUpdater();
 
 // -----------------------------------------------------------------------------
 function hideSessionsTabSkeleton() {
-  $('#skel-tab-sessions').fadeOut(50, function() { $(this).hide(); });
+  $('#skel-tab-sessions').fadeOut(0, function() { $(this).hide(); });
 }
 
 function showSessionsTabSkeleton() {

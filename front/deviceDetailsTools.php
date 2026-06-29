@@ -729,7 +729,7 @@
 
 
         function hideToolsTabSkeleton() {
-            $('#skel-tab-tools').fadeOut(50, function() { $(this).hide(); });
+            $('#skel-tab-tools').fadeOut(0, function() { $(this).hide(); });
         }
 
         function showToolsTabSkeleton() {

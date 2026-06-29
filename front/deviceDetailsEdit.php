@@ -671,7 +671,7 @@ function toggleFieldLock(mac, fieldName) {
 
 // -----------------------------------------------------------------------------
 function hideDetailsTabSkeleton() {
-  $('#skel-tab-details').fadeOut(50, function() { $(this).hide(); });
+  $('#skel-tab-details').fadeOut(0, function() { $(this).hide(); });
 }
 function showDetailsTabSkeleton() {
   var $skel = $('#skel-tab-details');

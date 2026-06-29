@@ -145,57 +145,57 @@ $db->close();
       </ul>
     <div class="tab-content spinnerTarget">
         <div class="tab-pane active" id="tab_DBTools">
-                <?php require 'php/templates/skel_tab_maint_dbtools.php'; ?>
-                <div class="db_info_table">
-                    <div class="db_info_table_row">
-                        <div class="db_tools_table_cell_a" >
-                            <button type="button" class="btn btn-default pa-btn pa-btn-delete bg-red dbtools-button" id="btnDeleteMAC" onclick="askDeleteDevicesWithEmptyMACs()"><?= lang('Maintenance_Tool_del_empty_macs');?></button>
-                        </div>
-                        <div class="db_tools_table_cell_b"><?= lang('Maintenance_Tool_del_empty_macs_text');?></div>
-                    </div>
-                    <div class="db_info_table_row">
-                        <div class="db_tools_table_cell_a" >
-                            <button type="button" class="btn btn-default pa-btn pa-btn-delete bg-red dbtools-button" id="btnDeleteMAC" onclick="askDeleteAllDevices()"><?= lang('Maintenance_Tool_del_alldev');?></button>
-                        </div>
-                        <div class="db_tools_table_cell_b"><?= lang('Maintenance_Tool_del_alldev_text');?></div>
-                    </div>
-                    <div class="db_info_table_row">
-                        <div class="db_tools_table_cell_a" >
-                            <button type="button" class="btn btn-default pa-btn pa-btn-delete bg-red dbtools-button" id="btnDeleteUnknown" onclick="askDeleteUnknown()"><?= lang('Maintenance_Tool_del_unknowndev');?></button>
-                        </div>
-                        <div class="db_tools_table_cell_b"><?= lang('Maintenance_Tool_del_unknowndev_text');?></div>
-                    </div>
-                    <div class="db_info_table_row">
-                        <div class="db_tools_table_cell_a" >
-                            <button type="button" class="btn btn-default pa-btn pa-btn-delete bg-red dbtools-button" id="btnDeleteEvents" onclick="askDeleteEvents()"><?= lang('Maintenance_Tool_del_allevents');?></button>
-                        </div>
-                        <div class="db_tools_table_cell_b"><?= lang('Maintenance_Tool_del_allevents_text');?></div>
-                    </div>
-                    <div class="db_info_table_row">
-                        <div class="db_tools_table_cell_a" >
-                            <button type="button" class="btn btn-default pa-btn pa-btn-delete bg-red dbtools-button" id="btnDeleteEvents30" onclick="askDeleteEvents30()"><?= lang('Maintenance_Tool_del_allevents30');?></button>
-                        </div>
-                        <div class="db_tools_table_cell_b"><?= lang('Maintenance_Tool_del_allevents30_text');?></div>
-                    </div>
-                    <div class="db_info_table_row">
-                        <div class="db_tools_table_cell_a" >
-                            <button type="button" class="btn btn-default pa-btn pa-btn-delete bg-red dbtools-button" id="btnUnlockFields" onclick="askUnlockFields()"><?= lang('Maintenance_Tool_UnlockFields');?></button>
-                        </div>
-                        <div class="db_tools_table_cell_b"><?= lang('Maintenance_Tool_UnlockFields_text');?></div>
-                    </div>
-                    <div class="db_info_table_row">
-                        <div class="db_tools_table_cell_a" >
-                            <button type="button" class="btn btn-default pa-btn pa-btn-delete bg-red dbtools-button" id="btnDeleteActHistory" onclick="askDeleteActHistory()"><?= lang('Maintenance_Tool_del_ActHistory');?></button>
-                        </div>
-                        <div class="db_tools_table_cell_b"><?= lang('Maintenance_Tool_del_ActHistory_text');?></div>
-                    </div>
-                    <div class="db_info_table_row">
-                        <div class="db_tools_table_cell_a" >
-                            <button type="button" class="btn btn-default pa-btn pa-btn-delete bg-red dbtools-button" id="btnRestartServer" onclick="askRestartBackend()"><?= lang('Maint_RestartServer');?></button>
-                        </div>
-                        <div class="db_tools_table_cell_b"><?= lang('Maint_Restart_Server_noti_text');?></div>
-                    </div>
-                </div>
+          <?php require 'php/templates/skel_tab_maint_dbtools.php'; ?>
+          <div class="db_info_table">
+              <div class="db_info_table_row">
+                  <div class="db_tools_table_cell_a" >
+                      <button type="button" class="btn btn-default pa-btn pa-btn-delete bg-red dbtools-button" id="btnDeleteMAC" onclick="askDeleteDevicesWithEmptyMACs()"><?= lang('Maintenance_Tool_del_empty_macs');?></button>
+                  </div>
+                  <div class="db_tools_table_cell_b"><?= lang('Maintenance_Tool_del_empty_macs_text');?></div>
+              </div>
+              <div class="db_info_table_row">
+                  <div class="db_tools_table_cell_a" >
+                      <button type="button" class="btn btn-default pa-btn pa-btn-delete bg-red dbtools-button" id="btnDeleteMAC" onclick="askDeleteAllDevices()"><?= lang('Maintenance_Tool_del_alldev');?></button>
+                  </div>
+                  <div class="db_tools_table_cell_b"><?= lang('Maintenance_Tool_del_alldev_text');?></div>
+              </div>
+              <div class="db_info_table_row">
+                  <div class="db_tools_table_cell_a" >
+                      <button type="button" class="btn btn-default pa-btn pa-btn-delete bg-red dbtools-button" id="btnDeleteUnknown" onclick="askDeleteUnknown()"><?= lang('Maintenance_Tool_del_unknowndev');?></button>
+                  </div>
+                  <div class="db_tools_table_cell_b"><?= lang('Maintenance_Tool_del_unknowndev_text');?></div>
+              </div>
+              <div class="db_info_table_row">
+                  <div class="db_tools_table_cell_a" >
+                      <button type="button" class="btn btn-default pa-btn pa-btn-delete bg-red dbtools-button" id="btnDeleteEvents" onclick="askDeleteEvents()"><?= lang('Maintenance_Tool_del_allevents');?></button>
+                  </div>
+                  <div class="db_tools_table_cell_b"><?= lang('Maintenance_Tool_del_allevents_text');?></div>
+              </div>
+              <div class="db_info_table_row">
+                  <div class="db_tools_table_cell_a" >
+                      <button type="button" class="btn btn-default pa-btn pa-btn-delete bg-red dbtools-button" id="btnDeleteEvents30" onclick="askDeleteEvents30()"><?= lang('Maintenance_Tool_del_allevents30');?></button>
+                  </div>
+                  <div class="db_tools_table_cell_b"><?= lang('Maintenance_Tool_del_allevents30_text');?></div>
+              </div>
+              <div class="db_info_table_row">
+                  <div class="db_tools_table_cell_a" >
+                      <button type="button" class="btn btn-default pa-btn pa-btn-delete bg-red dbtools-button" id="btnUnlockFields" onclick="askUnlockFields()"><?= lang('Maintenance_Tool_UnlockFields');?></button>
+                  </div>
+                  <div class="db_tools_table_cell_b"><?= lang('Maintenance_Tool_UnlockFields_text');?></div>
+              </div>
+              <div class="db_info_table_row">
+                  <div class="db_tools_table_cell_a" >
+                      <button type="button" class="btn btn-default pa-btn pa-btn-delete bg-red dbtools-button" id="btnDeleteActHistory" onclick="askDeleteActHistory()"><?= lang('Maintenance_Tool_del_ActHistory');?></button>
+                  </div>
+                  <div class="db_tools_table_cell_b"><?= lang('Maintenance_Tool_del_ActHistory_text');?></div>
+              </div>
+              <div class="db_info_table_row">
+                  <div class="db_tools_table_cell_a" >
+                      <button type="button" class="btn btn-default pa-btn pa-btn-delete bg-red dbtools-button" id="btnRestartServer" onclick="askRestartBackend()"><?= lang('Maint_RestartServer');?></button>
+                  </div>
+                  <div class="db_tools_table_cell_b"><?= lang('Maint_Restart_Server_noti_text');?></div>
+              </div>
+          </div>
         </div>
 
         <!-- ---------------------------Backup restore -------------------------------------------- -->
@@ -878,10 +878,10 @@ window.onload = function asyncFooter() {
 </script>
 
 <script>
-  function hideMaintDBToolsSkeleton()   { $('#skel-tab-maint-dbtools').fadeOut(50, function() { $(this).remove(); }); }
-  function hideMaintBackupSkeleton()    { $('#skel-tab-maint-backup').fadeOut(50, function() { $(this).remove(); }); }
-  function hideMaintLoggingSkeleton()   { $('#skel-tab-maint-logging').fadeOut(50, function() { $(this).remove(); }); }
-  function hideMaintMultiEditSkeleton() { $('#skel-tab-maint-multiedit').fadeOut(50, function() { $(this).remove(); }); }
+  function hideMaintDBToolsSkeleton()   { $('#skel-tab-maint-dbtools').fadeOut(0, function() { $(this).remove(); }); }
+  function hideMaintBackupSkeleton()    { $('#skel-tab-maint-backup').fadeOut(0, function() { $(this).remove(); }); }
+  function hideMaintLoggingSkeleton()   { $('#skel-tab-maint-logging').fadeOut(0, function() { $(this).remove(); }); }
+  function hideMaintMultiEditSkeleton() { $('#skel-tab-maint-multiedit').fadeOut(0, function() { $(this).remove(); }); }
 
   // Static tabs: content is PHP-rendered — dismiss immediately, no waiting for onload
   hideMaintDBToolsSkeleton();

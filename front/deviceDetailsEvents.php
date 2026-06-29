@@ -38,6 +38,9 @@ function loadEventsData() {
     return;
   }
 
+  showEventsTabSkeleton();
+  showSpinner();
+
   const hideConnections = $('#chkHideConnectionEvents')[0].checked;
 
   let period = $("#period").val();
@@ -204,7 +207,7 @@ deviceEventsPageUpdater();
 
 // -----------------------------------------------------------------------------
 function hideEventsTabSkeleton() {
-  $('#skel-tab-events').fadeOut(50, function() { $(this).hide(); });
+  $('#skel-tab-events').fadeOut(0, function() { $(this).hide(); });
 }
 function showEventsTabSkeleton() {
   var $skel = $('#skel-tab-events');

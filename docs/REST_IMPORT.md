@@ -2,7 +2,8 @@
 
 This guide shows you how to configure **OPNsense/Dnsmasq** in the **RSTIMPRT** plugin.
 
-
+> [!NOTE]
+> See the [detailed documentation for the REST import plugin](https://github.com/netalertx/NetAlertX/tree/main/front/plugins/rest_import/) for additional details.
 
 ## 1. Create an OPNsense user
 1. In OPNsense, navigate to **System** → **Access** → **Users**
@@ -13,15 +14,11 @@ This guide shows you how to configure **OPNsense/Dnsmasq** in the **RSTIMPRT** p
 
 ![REST_IMPORT > OPNsense user](./img/REST_IMPORT/opnsense_user.png)
 
-
-
 ## 2. Create an OPNsense API key
 1. On the OPNsense Users screen, click the **AP Key** button next to your new user
 ![REST_IMPORT > OPNsense API key](./img/REST_IMPORT/opnsense_user_api_key.png)
 2. Click **Yes** when prompted to generate and download the new key.  You'll receive a text file with a `key` and a `secret`.
 ![REST_IMPORT > API key confirmation](./img/REST_IMPORT/opnsense_user_api_key_confirm.png)
-
-
 
 ## 3. Configure the RSTIMPRT plugin
 1. In NetAlertX, navigate to **Settings** → **Core** → **Loaded plugins** and add `RSTIMPRT` 

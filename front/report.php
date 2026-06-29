@@ -186,7 +186,7 @@
     <!-- /.content -->
     <script>
     function hideReportSkeleton() {
-      $('#report-skeleton').fadeOut(50, function() { $(this).remove(); });
+      $('#report-skeleton').fadeOut(0, function() { $(this).remove(); });
     }
     window.addEventListener('load', function() {
       setTimeout(hideReportSkeleton, 15000);

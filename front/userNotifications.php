@@ -218,7 +218,7 @@ require 'php/templates/header.php';
   });
 
 function hideNotificationsSkeleton() {
-  $('#notifications-skeleton').fadeOut(50, function () { $(this).remove(); });
+  $('#notifications-skeleton').fadeOut(0, function () { $(this).remove(); });
 }
 
 window.addEventListener('load', function () {

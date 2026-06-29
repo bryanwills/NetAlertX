@@ -258,7 +258,7 @@ function getEvents(type) {
 }
 
 function hideEventsSkeleton() {
-  $('#events-skeleton').fadeOut(50, function () { $(this).remove(); });
+  $('#events-skeleton').fadeOut(0, function () { $(this).remove(); });
 }
 
 window.addEventListener('load', function () {
