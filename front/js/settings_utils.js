@@ -1175,7 +1175,7 @@ function generateFormHtml(settingsData, set, overrideValue, overrideOptions, ori
 
   // Parse the setType JSON string
   // console.log(processQuotes(setType));
-  console.log(setType);
+  // console.log(setType);
 
   const setTypeObject = JSON.parse(processQuotes(setType))
   const dataType = setTypeObject.dataType;
