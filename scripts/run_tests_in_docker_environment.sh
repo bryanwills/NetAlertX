@@ -81,6 +81,7 @@ for i in $(seq 1 $BACKEND_WAIT); do
     fi
     if [ "$i" -eq "$BACKEND_WAIT" ]; then
         echo "--- Warning: Flask backend did not become ready after $BACKEND_WAIT seconds, proceeding anyway ---"
+        docker logs netalertx-test-container
     fi
     echo "    ... waiting for backend ($i/$BACKEND_WAIT)"
     sleep 1

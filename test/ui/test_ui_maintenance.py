@@ -91,6 +91,8 @@ def test_export_csv_button_works(driver):
             # Best-effort page source check; skip if alert already consumed the state
             try:
                 assert "error" not in driver.page_source.lower(), "Button click should not cause errors"
+            except AssertionError:
+                raise
             except Exception:
                 pass  # Can't reliably check page source after alert dismissal
     except Exception as e:

@@ -31,8 +31,8 @@ def test_nginx_proxy_security_modern_check():
         print("Response body:")
         print(response.text)
 
-        assert response.status_code in [200, 401, 404, 500, 502], (
-            f"Expected access allowed, got {response.status_code}"
+        assert response.status_code != 403, (
+            f"Expected access not blocked by Nginx, got {response.status_code}"
         )
 
     except requests.exceptions.ConnectionError:
@@ -50,7 +50,7 @@ def test_nginx_proxy_security_legacy_check():
     }
     try:
         response = http_get(BASE_URL, headers=headers)
-        assert response.status_code in [200, 401, 404, 500, 502], f"Expected access allowed, got {response.status_code}"
+        assert response.status_code != 403, f"Expected access not blocked by Nginx, got {response.status_code}"
     except requests.exceptions.ConnectionError:
         pytest.fail("Could not connect to Nginx. Is it running?")
 
@@ -122,7 +122,7 @@ def test_nginx_proxy_security_legacy_protocol_agnostic():
     """
     headers = {"Referer": f"https://localhost:{PORT}/path"}
     response = http_get(BASE_URL, headers=headers)
-    assert response.status_code in [200, 401, 404, 500, 502]
+    assert response.status_code != 403, f"Expected access not blocked by Nginx, got {response.status_code}"
 
 
 def test_nginx_proxy_security_block_server_docs():
@@ -140,7 +140,8 @@ def test_nginx_proxy_security_block_server_docs():
 
 def test_nginx_proxy_security_allow_port():
     """
-    Test that access to `:20212/docs` is allowed by Nginx (should return 200).
+    Test that the backend port (20212) is directly reachable without Nginx security filtering.
+    200 indicates a healthy backend; 500 indicates the backend is reachable but returned an error.
     """
     headers = {"Referer": f"https://localhost:{BACKEND_PORT}/path"}
     url = f"http://localhost:{BACKEND_PORT}/docs"

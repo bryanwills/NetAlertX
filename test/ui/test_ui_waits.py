@@ -5,6 +5,7 @@ Basic verification tests for wait helpers used by UI tests.
 
 import sys
 import os
+import pytest
 from selenium.webdriver.common.by import By
 
 # Add test directory to path
@@ -52,7 +53,7 @@ def test_wait_for_input_value_on_devices(driver):
             wait_for_element_by_css(driver, "#NEWDEV_devMac", timeout=10)
         except Exception:
             # Element still not found after direct navigation — skip the rest of the test
-            return
+            pytest.skip("NEWDEV_devMac element not found after direct navigation")
 
     # Attempt to click the generate control if present
     gen_buttons = driver.find_elements(By.CSS_SELECTOR, "span[onclick*='generate_NEWDEV_devMac']")
