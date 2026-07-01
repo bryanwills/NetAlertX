@@ -36,8 +36,12 @@ class Condition:
         # process based on operators
         if self.operator == "equals":
             result = str(obj_value) == str(self.value)
+        elif self.operator == "not_equals":
+            result = str(obj_value) != str(self.value)
         elif self.operator == "contains":
             result = str(self.value).lower() in str(obj_value).lower()
+        elif self.operator == "not_contains":
+            result = str(self.value).lower() not in str(obj_value).lower()
         elif self.operator == "regex":
             result = bool(re.match(self.value, str(obj_value)))
         else:
