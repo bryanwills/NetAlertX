@@ -4,6 +4,7 @@ Maintenance Page UI Tests
 Tests CSV export/import, delete operations, database tools
 """
 
+import pytest
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -89,9 +90,10 @@ def test_export_csv_button_works(driver):
             alert = driver.switch_to.alert
             alert_text = alert.text
             alert.accept()
-            assert False, f"Alert present: {alert_text}"
+            pytest.fail(f"Unexpected alert present: {alert_text}")
         except Exception:
-            raise e
+            # No alert present - re-raise the original exception
+            pytest.fail(f"Test failed: {e}")
 
 
 def test_import_section_present(driver):
