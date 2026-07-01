@@ -106,7 +106,7 @@ class DeviceInstance:
         """Query Devices using a list of condition dicts.
 
         Each condition dict must have ``field``, ``operator``, and ``value`` keys.
-        Supported operators: ``equals``, ``contains``.
+        Supported operators: ``equals``, ``not_equals``, ``contains``, ``not_contains``.
 
         Returns a list of device dicts (may be empty).  Only fields present in
         the Devices schema are accepted; unrecognised fields are skipped with a
@@ -131,8 +131,14 @@ class DeviceInstance:
             if operator == "equals":
                 clauses.append(f"{field} = ?")
                 params.append(value)
+            elif operator == "not_equals":
+                clauses.append(f"{field} != ?")
+                params.append(value)
             elif operator == "contains":
                 clauses.append(f"{field} LIKE ?")
+                params.append(f"%{value}%")
+            elif operator == "not_contains":
+                clauses.append(f"{field} NOT LIKE ?")
                 params.append(f"%{value}%")
             else:
                 mylog("none", [f"[WF] queryByConditions: unsupported operator '{operator}' — skipped"])

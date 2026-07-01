@@ -66,7 +66,7 @@ let wfEnabledOptions = [
 ];
 
 let operatorTypes = [
-  "equals", "contains" , "regex"
+  "equals", "not_equals", "contains", "not_contains", "regex"
 ];
 
 let actionTypes = [
