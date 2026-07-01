@@ -9,6 +9,7 @@ BASE_URL = f"http://localhost:{PORT}/server/"
 
 REQUEST_TIMEOUT = int(os.environ.get("REQUEST_TIMEOUT", 5))
 
+
 def http_get(url, headers=None):
     return requests.get(url, headers=headers, timeout=REQUEST_TIMEOUT)
 
@@ -20,11 +21,20 @@ def test_nginx_proxy_security_modern_check():
     headers = {
         "Sec-Fetch-Site": "same-origin"
     }
+
     try:
         response = http_get(BASE_URL, headers=headers)
-        # 200 (OK), 401 (Auth), 404 (Not Found on backend), or 502 (Bad Gateway) means Nginx let it through.
-        # 403 means Nginx blocked it.
-        assert response.status_code in [200, 401, 404, 502], f"Expected access allowed, got {response.status_code}"
+
+        print(f"BASE_URL: {BASE_URL}")
+        print(f"Status: {response.status_code}")
+        print("Response headers:", response.headers)
+        print("Response body:")
+        print(response.text)
+
+        assert response.status_code in [200, 401, 404, 502], (
+            f"Expected access allowed, got {response.status_code}"
+        )
+
     except requests.exceptions.ConnectionError:
         pytest.fail("Could not connect to Nginx. Is it running?")
 
