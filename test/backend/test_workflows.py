@@ -241,6 +241,39 @@ class TestQueryByConditions(unittest.TestCase):
         ])
         self.assertEqual(results, [])
 
+    def test_not_equals_operator(self):
+        inst = self._instance()
+        results = inst.queryByConditions([
+            {"field": "devLastIP", "operator": "not_equals", "value": "192.168.1.10"}
+        ])
+        macs = {r["devMac"] for r in results}
+        self.assertNotIn("aa:bb:cc:dd:ee:01", macs)
+        self.assertNotIn("aa:bb:cc:dd:ee:02", macs)
+        self.assertIn("aa:bb:cc:dd:ee:03", macs)
+
+    def test_not_contains_operator(self):
+        inst = self._instance()
+        results = inst.queryByConditions([
+            {"field": "devLastIP", "operator": "not_contains", "value": "192.168.1.1"}
+        ])
+        macs = {r["devMac"] for r in results}
+        # .10 contains "192.168.1.1", .20 does not
+        self.assertNotIn("aa:bb:cc:dd:ee:01", macs)
+        self.assertNotIn("aa:bb:cc:dd:ee:02", macs)
+        self.assertIn("aa:bb:cc:dd:ee:03", macs)
+
+    def test_not_equals_combined_with_equals(self):
+        """Exclude trigger device by MAC while matching on IP — the core use case."""
+        inst = self._instance()
+        results = inst.queryByConditions([
+            {"field": "devLastIP", "operator": "equals", "value": "192.168.1.10"},
+            {"field": "devMac", "operator": "not_equals", "value": "aa:bb:cc:dd:ee:01"},
+        ])
+        macs = {r["devMac"] for r in results}
+        self.assertNotIn("aa:bb:cc:dd:ee:01", macs)
+        self.assertIn("aa:bb:cc:dd:ee:02", macs)
+        self.assertNotIn("aa:bb:cc:dd:ee:03", macs)
+
 
 # ---------------------------------------------------------------------------
 # UpdateFieldAction — boolean cast

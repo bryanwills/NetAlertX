@@ -195,7 +195,9 @@ This workflow automatically archives devices if a new device is discovered with 
 
 ### 📋 Use Case
 
-This workflow is useful if you are assigning static IPs to your devices. This workflow can also help with archiving device entries with [random MAC addresses](./RANDOM_MAC.md). 
+This workflow is useful if you are assigning static IPs to your devices. This workflow can also help with archiving device entries with [random MAC addresses](./RANDOM_MAC.md).
+
+The `not_equals` condition on `devMac` ensures the device that triggered the workflow is never archived — only the *other* device sharing the same IP is targeted.
 
 ### ⚙️ Workflow Configuration
 
@@ -224,6 +226,11 @@ This workflow is useful if you are assigning static IPs to your devices. This wo
             "field": "devLastIP",
             "operator": "equals",
             "value": "{{trigger.devLastIP}}"
+          },
+          {
+            "field": "devMac",
+            "operator": "not_equals",
+            "value": "{{trigger.devMac}}"
           }
         ]
       }
@@ -240,15 +247,15 @@ This workflow is useful if you are assigning static IPs to your devices. This wo
 
   * `N/A`
 
-* **Target Conditions**:
+* **Target Conditions** (evaluated as AND):
 
-  * `devLastIP` of the target is the same as the newly discovered device's `devLastIP` value.
+  * `devLastIP` equals the triggering device's IP (`{{trigger.devLastIP}}`).
+  * `devMac` **not equals** the triggering device's MAC (`{{trigger.devMac}}`).
 
 * **Actions**:
 
   1. Sets `devIsArchived` to `1` (mark target device as archived).
 
-
 ### ✅ Result
 
-Any newly detected device that has the same IP as an existing device will automatically trigger the archival of the old device.
+Any existing device that shares the same IP as the newly discovered device is automatically archived. The triggering device itself is excluded from the target query, so it is never archived by its own workflow.
