@@ -1,16 +1,18 @@
 name: 🧪 Manual Test Suite Selector
 
 on:
+  schedule:
+    - cron: '0 2 * * *' # Daily at 02:00 UTC
   workflow_dispatch:
     inputs:
       run_all:
         description: '✅ Run ALL tests (overrides individual selectors)'
         type: boolean
-        default: false
+        default: true
       run_scan:
         description: '📂 scan/ (Scan, Logic, Locks, IPs)'
         type: boolean
-        default: true
+        default: false
       run_api:
         description: '📂 api_endpoints/ & server/ (Endpoints & Server)'
         type: boolean
@@ -51,8 +53,16 @@ jobs:
         run: |
           PATHS=""
 
-          # run_all overrides everything
+          # Scheduled runs always execute all tests
+          if [ "${{ github.event_name }}" == "schedule" ]; then
+            echo "📅 Scheduled run - executing full test suite"
+            echo "final_paths=test/" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Manual Run ALL overrides everything
           if [ "${{ github.event.inputs.run_all }}" == "true" ]; then
+            echo "🧪 Manual 'Run ALL' selected"
             echo "final_paths=test/" >> $GITHUB_OUTPUT
             exit 0
           fi
@@ -71,8 +81,12 @@ jobs:
           fi
 
           # If nothing is selected, default to the whole test folder
-          if [ -z "$PATHS" ]; then PATHS="test/"; fi
+          if [ -z "$PATHS" ]; then
+            echo "ℹ️ No test groups selected - defaulting to full test suite"
+            PATHS="test/"
+          fi
 
+          echo "🎯 Selected test paths: $PATHS"
           echo "final_paths=$PATHS" >> $GITHUB_OUTPUT
 
       - name: Run Docker Integration Script
