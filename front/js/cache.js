@@ -50,6 +50,7 @@ const CACHE_KEYS = {
   // --- Internal init tracking ---
   GRAPHQL_STARTED:  'graphQLServerStarted', // set when GraphQL server responds
   STRINGS_COUNT:    'cacheStringsCountCompleted', // count of language packs loaded
+  STRINGS_LANG:     'cacheStrings_v2_language',   // active non-English locale at last load
   COMPLETED_CALLS:  'completedCalls',       // comma-joined list of completed init calls
   INIT_TIMESTAMP:   'nax_init_timestamp',   // ms timestamp of last successful cache init
   CACHE_VERSION:    'nax_cache_version',     // version stamp for auto-bust on deploy
@@ -320,18 +321,21 @@ function cacheStrings() {
   return new Promise((resolve, reject) => {
     if(getCache(CACHE_KEYS.initFlag('cacheStrings_v2')) === "true")
     {
-      // Verify STRINGS_COUNT still matches the current language configuration.
-      // A language switch without a full cache clear leaves the flag set but
-      // the count wrong, causing isAppInitialized() to deadlock.
-      const expectedCount = getLangCode() === 'en_us' ? 1 : 2;
-      const currentCount = parseInt(getCache(CACHE_KEYS.STRINGS_COUNT)) || 0;
-      if (currentCount === expectedCount) {
+      // Verify STRINGS_COUNT and the stored language both match the current
+      // configuration. A count-only check allows a locale switch between two
+      // non-English languages (both count=2) to pass undetected, leaving the
+      // UI with stale strings for the old language.
+      const activeLang    = getLangCode();
+      const expectedCount = activeLang === 'en_us' ? 1 : 2;
+      const currentCount  = parseInt(getCache(CACHE_KEYS.STRINGS_COUNT)) || 0;
+      const storedLang    = getCache(CACHE_KEYS.STRINGS_LANG) || 'en_us';
+      if (currentCount === expectedCount && storedLang === activeLang) {
         resolve();
         return;
       }
       // Mismatch — reset count and fall through to reload strings for the
       // current language set. The flag stays set; handleSuccess re-increments.
-      console.log(`[cacheStrings] STRINGS_COUNT mismatch (stored: ${currentCount}, expected: ${expectedCount}) — reloading strings.`);
+      console.log(`[cacheStrings] stale cache (count: ${currentCount}/${expectedCount}, lang: '${storedLang}' → '${activeLang}') — reloading strings.`);
       setCache(CACHE_KEYS.STRINGS_COUNT, 0);
       // Do NOT return — fall through to full load path below.
     }
@@ -369,6 +373,9 @@ function cacheStrings() {
       // Wait for all language promises to complete
       Promise.all(languagePromises)
         .then(() => {
+          // Record the active language so the early-return check can detect
+          // a locale switch between two non-English languages (both count=2).
+          setCache(CACHE_KEYS.STRINGS_LANG, getLangCode());
           resolve();
         })
         .catch((error) => {
