@@ -50,6 +50,7 @@ const CACHE_KEYS = {
   // --- Internal init tracking ---
   GRAPHQL_STARTED:  'graphQLServerStarted', // set when GraphQL server responds
   STRINGS_COUNT:    'cacheStringsCountCompleted', // count of language packs loaded
+  STRINGS_LANG:     'cacheStrings_v2_language',   // active non-English locale at last load
   COMPLETED_CALLS:  'completedCalls',       // comma-joined list of completed init calls
   INIT_TIMESTAMP:   'nax_init_timestamp',   // ms timestamp of last successful cache init
   CACHE_VERSION:    'nax_cache_version',     // version stamp for auto-bust on deploy
@@ -178,8 +179,10 @@ function cacheApiConfig() {
 
 // Module-level declaration so cachePluginStrings() and other callers can
 // safely reference pluginsData even before cacheSettings() has fetched it.
-// Populated (or repopulated) by cacheSettings() on every full fetch.
-var pluginsData = [];
+// null  = fetch not yet attempted or fetch failed (unknown state).
+// []    = fetch succeeded and confirmed no plugins are configured.
+// [...] = fetch succeeded and plugins are present.
+var pluginsData = null;
 
 function cacheSettings()
 {
@@ -192,11 +195,17 @@ function cacheSettings()
       // so the extra fetch would be pointless on every subsequent warm load.
       if (getCache(CACHE_KEYS.initFlag('cachePluginStrings_v1')) !== 'true') {
         fetchJson('plugins.json')
-          .catch(() => [])
           .then((pluginsArr) => {
-            if (Array.isArray(pluginsArr) && pluginsArr.length > 0) {
+            // Only update pluginsData on a successful fetch so that a network
+            // failure is not misread as "no plugins configured" (null sentinel).
+            if (Array.isArray(pluginsArr)) {
               pluginsData = pluginsArr;
             }
+            resolve();
+          })
+          .catch(() => {
+            // Fetch failed — leave pluginsData as null (unknown state) so
+            // cachePluginStrings() retries rather than treating it as no-op.
             resolve();
           });
         return;
@@ -312,10 +321,23 @@ function cacheStrings() {
   return new Promise((resolve, reject) => {
     if(getCache(CACHE_KEYS.initFlag('cacheStrings_v2')) === "true")
     {
-      // Core strings are already cached. Plugin strings are now handled by
-      // the dedicated cachePluginStrings() step — nothing to do here.
-      resolve();
-      return;
+      // Verify STRINGS_COUNT and the stored language both match the current
+      // configuration. A count-only check allows a locale switch between two
+      // non-English languages (both count=2) to pass undetected, leaving the
+      // UI with stale strings for the old language.
+      const activeLang    = getLangCode();
+      const expectedCount = activeLang === 'en_us' ? 1 : 2;
+      const currentCount  = parseInt(getCache(CACHE_KEYS.STRINGS_COUNT)) || 0;
+      const storedLang    = getCache(CACHE_KEYS.STRINGS_LANG) || 'en_us';
+      if (currentCount === expectedCount && storedLang === activeLang) {
+        resolve();
+        return;
+      }
+      // Mismatch — reset count and fall through to reload strings for the
+      // current language set. The flag stays set; handleSuccess re-increments.
+      console.log(`[cacheStrings] stale cache (count: ${currentCount}/${expectedCount}, lang: '${storedLang}' → '${activeLang}') — reloading strings.`);
+      setCache(CACHE_KEYS.STRINGS_COUNT, 0);
+      // Do NOT return — fall through to full load path below.
     }
 
       // Create a promise for each language (include en_us by default as fallback)
@@ -351,6 +373,9 @@ function cacheStrings() {
       // Wait for all language promises to complete
       Promise.all(languagePromises)
         .then(() => {
+          // Record the active language so the early-return check can detect
+          // a locale switch between two non-English languages (both count=2).
+          setCache(CACHE_KEYS.STRINGS_LANG, getLangCode());
           resolve();
         })
         .catch((error) => {
@@ -386,7 +411,10 @@ function cachePluginStrings() {
           // No plugin strings returned. If plugins are loaded the file may not
           // be ready yet — reject so retryStep() retries. If no plugins are
           // loaded at all, empty strings are expected: succeed.
-          const hasPlugins = Array.isArray(pluginsData) && pluginsData.length > 0;
+          // null  = plugins.json fetch failed (unknown) — retry to be safe.
+          // []    = confirmed no plugins — accept empty strings as valid.
+          // [...] = plugins present — retry, file may not be ready yet.
+          const hasPlugins = pluginsData === null || (Array.isArray(pluginsData) && pluginsData.length > 0);
           if (hasPlugins) {
             console.warn('[cachePluginStrings] 0 entries returned but plugins are loaded — file may not be ready yet. Will retry.');
             reject(new Error('Plugin language strings empty'));

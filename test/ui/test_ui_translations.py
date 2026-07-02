@@ -9,7 +9,6 @@ PRD: Reliable Loading of Plugin Translation Strings
 
 import sys
 import os
-import time
 
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -161,16 +160,19 @@ def test_plugins_page_no_undefined_strings_after_cache_clear(driver):
 
     _wait_for_app_init(driver)
 
-    # Give the tabs a moment to render after init completes
-    time.sleep(2)
+    # Wait for getData() to complete: either tab links or the empty-state
+    # paragraph will appear once generateTabs() has run.
+    WebDriverWait(driver, 10).until(
+        lambda d: len(d.find_elements(
+            By.CSS_SELECTOR,
+            "#tabs-location a, #tabs-content-location p.text-muted"
+        )) > 0
+    )
 
-    # Allow the word 'undefined' inside code/technical blocks but not as a
-    # standalone visible label replacing a translation string.
-    # We check that it does not appear as a trimmed standalone word in headings/tabs.
     tab_labels = driver.find_elements(By.CSS_SELECTOR, "#tabs-location a, .tab-label, h5")
     for el in tab_labels:
         label = el.text.strip()
         assert label != "undefined", (
-            f"Tab/heading label is literally 'undefined' — plugin strings were not "
-            f"loaded before getData() rendered the tabs on plugins.php."
+            "Tab/heading label is literally 'undefined' — plugin strings were not "
+            "loaded before getData() rendered the tabs on plugins.php."
         )

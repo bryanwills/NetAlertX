@@ -312,7 +312,7 @@ async function getData() {
 // module-level fetchJson defined in cache.js, which returns res['data'] and
 // is used by cachePluginStrings() during app initialization.
 async function fetchPluginJson(filename) {
-  const response = await fetch(`php/server/query_json.php?file=${filename}`);
+  const response = await fetch(`php/server/query_json.php?file=${encodeURIComponent(filename)}&nocache=${Date.now()}`);
   if (!response.ok) throw new Error(`Failed to load ${filename}`);
   return await response.json();
 }
