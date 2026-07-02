@@ -317,6 +317,10 @@ body
     width: 150px;
 }
 
+.fixed .main-header
+{
+    z-index: 10000;
+}
 
 .navbar-nav > .user-menu .user-image
 {
