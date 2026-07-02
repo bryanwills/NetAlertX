@@ -176,11 +176,31 @@ function cacheApiConfig() {
   });
 }
 
+// Module-level declaration so cachePluginStrings() and other callers can
+// safely reference pluginsData even before cacheSettings() has fetched it.
+// Populated (or repopulated) by cacheSettings() on every full fetch.
+var pluginsData = [];
+
 function cacheSettings()
 {
   return new Promise((resolve, reject) => {
     if(getCache(CACHE_KEYS.initFlag('cacheSettings')) === "true")
     {
+      // Re-populate pluginsData only when cachePluginStrings hasn't completed
+      // yet (first load after a deploy / migration). Once cachePluginStrings_v1
+      // is set it early-returns immediately and never reads pluginsData again,
+      // so the extra fetch would be pointless on every subsequent warm load.
+      if (getCache(CACHE_KEYS.initFlag('cachePluginStrings_v1')) !== 'true') {
+        fetchJson('plugins.json')
+          .catch(() => [])
+          .then((pluginsArr) => {
+            if (Array.isArray(pluginsArr) && pluginsArr.length > 0) {
+              pluginsData = pluginsArr;
+            }
+            resolve();
+          });
+        return;
+      }
       resolve();
       return;
     }
@@ -292,22 +312,9 @@ function cacheStrings() {
   return new Promise((resolve, reject) => {
     if(getCache(CACHE_KEYS.initFlag('cacheStrings_v2')) === "true")
     {
-      // Core strings are cached, but plugin strings may have failed silently on
-      // the first load (non-fatal fetch).  Always re-fetch them so that plugin
-      // keys like "CSVBCKP_overwrite_description" are available without needing
-      // a full clearCache().
-      fetchJson('table_plugins_language_strings.json')
-        .catch((pluginError) => {
-          console.warn('[cacheStrings early-return] Plugin language strings unavailable (non-fatal):', pluginError);
-          return [];
-        })
-        .then((data) => {
-          if (!Array.isArray(data)) { data = []; }
-          data.forEach((langString) => {
-            setCache(CACHE_KEYS.langString(langString.stringKey, langString.languageCode), langString.stringValue);
-          });
-          resolve();
-        });
+      // Core strings are already cached. Plugin strings are now handled by
+      // the dedicated cachePluginStrings() step — nothing to do here.
+      resolve();
       return;
     }
 
@@ -321,42 +328,21 @@ function cacheStrings() {
         languagesToLoad.push(additionalLanguage)
       }
 
-      console.log(languagesToLoad);
+      console.log('[cacheStrings] Languages to load:', languagesToLoad);
 
       const languagePromises = languagesToLoad.map((language_code) => {
         return new Promise((resolveLang, rejectLang) => {
-          // Fetch core strings and translations
-
           $.get(`php/templates/language/${language_code}.json?nocache=${Date.now()}`)
             .done((res) => {
-              // Iterate over each key-value pair and store the translations
-              Object.entries(res).forEach(([key, value]) => {
+              const entries = Object.entries(res);
+              entries.forEach(([key, value]) => {
                 setCache(CACHE_KEYS.langString(key, language_code), value);
               });
-
-              // Fetch strings and translations from plugins (non-fatal — file may
-              // not exist on first boot or immediately after a cache clear)
-              fetchJson('table_plugins_language_strings.json')
-                .catch((pluginError) => {
-                  console.warn('[cacheStrings] Plugin language strings unavailable (non-fatal):', pluginError);
-                  return []; // treat as empty list
-                })
-                .then((data) => {
-                  // Defensive: ensure data is an array (fetchJson may return
-                  // an object, undefined, or empty string on edge cases)
-                  if (!Array.isArray(data)) { data = []; }
-                  // Store plugin translations
-                  data.forEach((langString) => {
-                    setCache(CACHE_KEYS.langString(langString.stringKey, langString.languageCode), langString.stringValue);
-                  });
-
-                  // Handle successful completion of language processing
-                  handleSuccess('cacheStrings_v2');
-                  resolveLang();
-                });
+              console.log(`[cacheStrings] Loaded ${entries.length} core strings for language '${language_code}'.`);
+              handleSuccess('cacheStrings_v2');
+              resolveLang();
             })
             .fail((error) => {
-              // Handle failure in core strings fetching
               rejectLang(error);
             });
         });
@@ -365,15 +351,60 @@ function cacheStrings() {
       // Wait for all language promises to complete
       Promise.all(languagePromises)
         .then(() => {
-          // All languages processed successfully
           resolve();
         })
         .catch((error) => {
-          // Handle failure in any of the language processing
           handleFailure('cacheStrings_v2');
           reject(error);
         });
 
+  });
+}
+
+// -----------------------------------------------------------------------------
+// Fetch and cache plugin-specific language strings from table_plugins_language_strings.json.
+// Runs as a separate init step so that a missing or empty file triggers a retry
+// via retryStep(), instead of silently marking initialization complete.
+// Resolves immediately if no plugins are loaded (pluginsData is empty).
+// -----------------------------------------------------------------------------
+function cachePluginStrings() {
+  return new Promise((resolve, reject) => {
+    if (getCache(CACHE_KEYS.initFlag('cachePluginStrings_v1')) === 'true') {
+      resolve();
+      return;
+    }
+
+    fetchJson('table_plugins_language_strings.json')
+      .catch((err) => {
+        console.warn('[cachePluginStrings] Plugin language strings fetch failed:', err);
+        return [];
+      })
+      .then((data) => {
+        if (!Array.isArray(data)) { data = []; }
+
+        if (data.length === 0) {
+          // No plugin strings returned. If plugins are loaded the file may not
+          // be ready yet — reject so retryStep() retries. If no plugins are
+          // loaded at all, empty strings are expected: succeed.
+          const hasPlugins = Array.isArray(pluginsData) && pluginsData.length > 0;
+          if (hasPlugins) {
+            console.warn('[cachePluginStrings] 0 entries returned but plugins are loaded — file may not be ready yet. Will retry.');
+            reject(new Error('Plugin language strings empty'));
+          } else {
+            console.log('[cachePluginStrings] No plugins loaded — skipping plugin string cache.');
+            handleSuccess('cachePluginStrings_v1');
+            resolve();
+          }
+          return;
+        }
+
+        data.forEach((langString) => {
+          setCache(CACHE_KEYS.langString(langString.stringKey, langString.languageCode), langString.stringValue);
+        });
+        console.log(`[cachePluginStrings] Loaded ${data.length} plugin language string entries.`);
+        handleSuccess('cachePluginStrings_v1');
+        resolve();
+      });
   });
 }
 
