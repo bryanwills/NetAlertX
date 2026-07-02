@@ -1851,7 +1851,7 @@ textarea[readonly],
 
 #modal-ok
 {
-    z-index: 1051; /*highest priority*/
+    z-index: 11051; /*highest priority*/
 }
 
 #modal-form-plc
