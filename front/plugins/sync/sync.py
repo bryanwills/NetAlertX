@@ -23,6 +23,7 @@ from messaging.in_app import write_notification  # noqa: E402 [flake8 lint suppr
 import conf  # noqa: E402 [flake8 lint suppression]
 from pytz import timezone  # noqa: E402 [flake8 lint suppression]
 from database import get_temp_db_connection  # noqa: E402 [flake8 lint suppression]
+from config_paths import API_PATH  # noqa: E402 [flake8 lint suppression]
 
 # Make sure the TIMEZONE for logging is correct
 conf.tz = timezone(get_setting_value('TIMEZONE'))
@@ -105,9 +106,7 @@ def main():
 
         # PUSHING/SENDING devices
         if send_devices:
-
-            api_path = os.environ.get('NETALERTX_API', '/tmp/api')
-            file_path = f"{api_path}/table_devices.json"
+            file_path = f"{API_PATH}/table_devices.json"
             pref = 'SYNC'
 
             if os.path.exists(file_path):
@@ -118,7 +117,7 @@ def main():
                     mylog('verbose', [f'[{pluginName}] Sending file_content: "{file_content}"'])
                     send_data(api_token, file_content, encryption_key, file_path, node_name, pref, hub_url)
             else:
-                mylog('none', [f'[{pluginName}] ERROR Could not open: "{file_content}"'])
+                mylog('none', [f'[{pluginName}] ERROR Could not open: "{file_path}"'])
         else:
             mylog('verbose', [f'[{pluginName}] SYNC_hub_url not defined, skipping posting "Devices" data'])
     else:
