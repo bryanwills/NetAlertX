@@ -106,7 +106,8 @@ def main():
         # PUSHING/SENDING devices
         if send_devices:
 
-            file_path = f"{INSTALL_PATH}/api/table_devices.json"
+            api_path = os.environ.get('NETALERTX_API', '/tmp/api')
+            file_path = f"{api_path}/table_devices.json"
             pref = 'SYNC'
 
             if os.path.exists(file_path):
@@ -116,6 +117,8 @@ def main():
 
                     mylog('verbose', [f'[{pluginName}] Sending file_content: "{file_content}"'])
                     send_data(api_token, file_content, encryption_key, file_path, node_name, pref, hub_url)
+            else:
+                mylog('none', [f'[{pluginName}] ERROR Could not open: "{file_content}"'])
         else:
             mylog('verbose', [f'[{pluginName}] SYNC_hub_url not defined, skipping posting "Devices" data'])
     else:

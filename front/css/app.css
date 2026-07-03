@@ -732,6 +732,11 @@ hr
     margin-right: auto;
 }
 
+.modal
+{
+    z-index: 12000;
+}
+
 .modal_green
 {
     color: #258744;
