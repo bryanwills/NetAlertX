@@ -787,7 +787,7 @@
     "settings_device_scanners_icon": "fa-solid fa-magnifying-glass-plus",
     "settings_device_scanners_info": "使用 <a href=\"/settings.php#LOADED_PLUGINS\">LOADED_PLUGINS</a> 设置加载更多设备扫描仪",
     "settings_device_scanners_label": "设备扫描仪",
-    "settings_enabled": "已启用的设置",
+    "settings_enabled": "已启用的插件",
     "settings_enabled_icon": "fa-solid fa-toggle-on",
     "settings_expand_all": "展开全部",
     "settings_imported": "上次设置是从 app.conf 文件导入的",
