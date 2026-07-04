@@ -811,5 +811,15 @@
     "settings_system_icon": "fa-solid fa-gear",
     "settings_system_label": "System",
     "settings_update_item_warning": "Update the value below. Be careful to follow the previous format. <b>Validation is not performed.</b>",
-    "test_event_tooltip": "Save your changes at first before you test your settings."
+    "test_event_tooltip": "Save your changes at first before you test your settings.",
+    "Navigation_ChangeHistory": "Change History",
+    "device_history_tab_title": "Change Log",
+    "device_history_col_time": "Timestamp",
+    "device_history_col_source": "Modified By",
+    "device_history_col_changes": "Tracked Variations",
+    "device_history_empty_state": "No property changes recorded within the configured retention window.",
+    "DEV_HIST_DAYS_name": "Device History Retention (Days)",
+    "DEV_HIST_DAYS_description": "Number of days to retain device field change history. Set to 0 to completely disable the auditing engine and reduce resource usage.",
+    "DEV_HIST_TRACKED_name": "Device History Tracked Fields",
+    "DEV_HIST_TRACKED_description": "List of Devices column names to monitor for changes. Add or remove field names to control what gets audited. Changes take effect immediately without a restart."
 }

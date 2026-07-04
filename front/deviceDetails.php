@@ -111,6 +111,14 @@
                     </span>
                 </a>
                 </li>
+              <li>
+                <a id="tabHistory" href="#panHistory" data-toggle="tab">
+                  <i class="fa fa-clock-rotate-left"></i>
+                    <span class="dev-detail-tab-name">
+                      <?= lang('device_history_tab_title');?>
+                    </span>
+                </a>
+                </li>
 
               <div class="btn-group pull-right">
                 <button type="button" class="btn btn-default"  style="padding: 10px; min-width: 30px;"
@@ -159,7 +167,46 @@
                 ?>
               </div>
 
-            </div>
+              <div class="tab-pane fade" id="panHistory">
+                <?php require 'php/templates/skel_device_details_tab_history.php'; ?>
+                <!-- Filter bar -->
+                <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:12px;">
+                  <select id="histFilterBy" class="form-control" style="width:180px;"
+                          onchange="loadHistoryData()">
+                    <option value=""><?= lang('device_history_col_source');?> — All</option>
+                  </select>
+                  <select id="histFilterCol" class="form-control" style="width:180px;"
+                          onchange="loadHistoryData()">
+                    <option value=""><?= lang('device_history_col_changes');?> — All</option>
+                  </select>
+                </div>
+                <!-- Table -->
+                <table class="table table-bordered table-striped table-hover">
+                  <thead>
+                    <tr>
+                      <th><?= lang('device_history_col_time');?></th>
+                      <th><?= lang('device_history_col_source');?></th>
+                      <th><?= lang('device_history_col_changes');?></th>
+                    </tr>
+                  </thead>
+                  <tbody id="historyTableBody">
+                    <tr><td colspan="3" class="text-center"><i class="fa fa-spinner fa-spin"></i></td></tr>
+                  </tbody>
+                </table>
+                <!-- Pagination -->
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
+                  <span id="histInfo" class="text-muted" style="font-size:12px;"></span>
+                  <div>
+                    <button class="btn btn-default btn-xs" id="histBtnPrev" onclick="histChangePage(-1)" disabled>
+                      <i class="fa fa-chevron-left"></i>
+                    </button>
+                    <span id="histPageLabel" style="margin:0 6px;font-size:12px;">1</span>
+                    <button class="btn btn-default btn-xs" id="histBtnNext" onclick="histChangePage(1)" disabled>
+                      <i class="fa fa-chevron-right"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
             <!-- /.tab-content -->
           </div>
           <!-- /.nav-tabs-custom -->
@@ -596,8 +643,141 @@ setTimeout(function() {
   if (typeof hideSessionsTabSkeleton === 'function') hideSessionsTabSkeleton();
   if (typeof hidePresenceTabSkeleton === 'function') hidePresenceTabSkeleton();
   if (typeof hideEventsTabSkeleton   === 'function') hideEventsTabSkeleton();
+  $('#skel-tab-history').hide();
 }, 15000);
 }
+
+// ---------------------------------------------------------------------------
+// Change Log tab — device-scoped history
+// ---------------------------------------------------------------------------
+
+var _histPage   = 0;
+var _histLimit  = 50;
+var _histTotal  = 0;
+var _histLoaded = false;
+
+function loadHistoryData() {
+  var devGuid = getDevDataByMac(mac, 'devGUID');
+  // Devices without a GUID (created before GUIDs were introduced) cannot be
+  // queried — show a clear message instead of spinning indefinitely.
+  if (devGuid === null || devGuid === undefined || devGuid === '') {
+    _renderHistoryTable([]);
+    return;
+  }
+
+  var changedBy     = (document.getElementById('histFilterBy')  || {}).value || null;
+  var changedColumn = (document.getElementById('histFilterCol') || {}).value || null;
+
+  var query = [
+    'query($devGuid:String!,$changedBy:String,$changedColumn:String,$limit:Int,$offset:Int){',
+    '  deviceHistoryGrouped(devGuid:$devGuid,changedBy:$changedBy,changedColumn:$changedColumn,limit:$limit,offset:$offset){',
+    '    count history{timestamp changedBy changes{changedColumn oldValue newValue}}',
+    '  }',
+    '}'
+  ].join('');
+
+  var variables = {
+    devGuid:       devGuid,
+    changedBy:     changedBy     || null,
+    changedColumn: changedColumn || null,
+    limit:         _histLimit,
+    offset:        _histPage * _histLimit
+  };
+
+  $.ajax({
+    url:         getApiBase() + '/graphql',
+    method:      'POST',
+    contentType: 'application/json',
+    headers:     { 'Authorization': 'Bearer ' + getSetting('API_TOKEN') },
+    data:        JSON.stringify({ query: query, variables: variables }),
+    success: function(resp) {
+      if (!resp.data || !resp.data.deviceHistoryGrouped) return;
+      var result = resp.data.deviceHistoryGrouped;
+      _histTotal = result.count;
+      _renderHistoryTable(result.history);
+      _updateHistoryPagination();
+
+      // Populate filter dropdowns once on first load
+      if (!_histLoaded) {
+        _histLoaded = true;
+        _populateHistoryFilters(devGuid);
+      }
+    }
+  });
+}
+
+function _populateHistoryFilters(devGuid) {
+  $.ajax({
+    url:     getApiBase() + '/devices/history/filters?devGuid=' + encodeURIComponent(devGuid),
+    method:  'GET',
+    headers: { 'Authorization': 'Bearer ' + getSetting('API_TOKEN') },
+    success: function(resp) {
+      if (!resp.data) return;
+      var byEl  = document.getElementById('histFilterBy');
+      var colEl = document.getElementById('histFilterCol');
+      (resp.data.changedBy    || []).forEach(function(v) { byEl.add(new Option(v, v)); });
+      (resp.data.changedColumn || []).forEach(function(v) { colEl.add(new Option(v, v)); });
+    }
+  });
+}
+
+function _renderHistoryTable(groups) {
+  var tbody = document.getElementById('historyTableBody');
+  if (!tbody) return;
+  // Always hide the loading skeleton once we have a result (even empty)
+  $('#skel-tab-history').fadeOut(0, function() { $(this).hide(); });
+  if (!groups || groups.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="3" class="text-center text-muted"><?= lang('device_history_empty_state');?></td></tr>';
+    return;
+  }
+  var html = '';
+  groups.forEach(function(g) {
+    var iconHtml = (g.changedBy === 'user:api' || g.changedBy === 'USER')
+      ? '<i class="fa fa-user" title="' + _histEsc(g.changedBy) + '"></i>'
+      : '<i class="fa fa-cog"  title="' + _histEsc(g.changedBy) + '"></i>';
+    var changesHtml = g.changes.map(function(c) {
+      return '<div><code>' + _histEsc(c.changedColumn) + '</code>: '
+        + '<span class="text-danger">'  + _histEsc(c.oldValue || '\u2205') + '</span>'
+        + ' \u2192 '
+        + '<span class="text-success">' + _histEsc(c.newValue || '\u2205') + '</span>'
+        + '</div>';
+    }).join('');
+    html += '<tr>'
+      + '<td style="white-space:nowrap;font-size:12px;">' + _histEsc(g.timestamp) + '</td>'
+      + '<td>' + iconHtml + ' ' + _histEsc(g.changedBy) + '</td>'
+      + '<td>' + changesHtml + '</td>'
+      + '</tr>';
+  });
+  tbody.innerHTML = html;
+}
+
+function _updateHistoryPagination() {
+  var totalPages = Math.max(1, Math.ceil(_histTotal / _histLimit));
+  var lbl = document.getElementById('histPageLabel');
+  var info = document.getElementById('histInfo');
+  var prev = document.getElementById('histBtnPrev');
+  var next = document.getElementById('histBtnNext');
+  if (lbl)  lbl.textContent  = (_histPage + 1) + ' / ' + totalPages;
+  if (info) info.textContent = _histTotal + ' <?= lang('device_history_col_changes');?>';
+  if (prev) prev.disabled    = _histPage <= 0;
+  if (next) next.disabled    = (_histPage + 1) >= totalPages;
+}
+
+function histChangePage(delta) {
+  _histPage = Math.max(0, _histPage + delta);
+  loadHistoryData();
+}
+
+function _histEsc(str) {
+  if (str === null || str === undefined) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// Load history when the tab becomes visible
+$(document).on('shown.bs.tab', 'a[id="tabHistory"]', function() {
+  _histPage  = 0;
+  loadHistoryData();
+});
 
 </script>
 

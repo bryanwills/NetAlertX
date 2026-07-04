@@ -21,6 +21,7 @@ from scheduler import schedule_class
 from plugin import plugin_manager, print_plugin_info
 from utils.plugin_utils import get_plugins_configs, get_set_value_for_init
 from messaging.in_app import write_notification
+from utils.plugin_utils import list_to_csv
 
 # ===============================================================================
 # Language helpers
@@ -326,6 +327,38 @@ def importConfigs(pm, db, all_plugins):
         '{"dataType":"integer", "elements": [{"elementType" : "input", "elementOptions" : [{"type": "number"}] ,"transformers": []}]}',
         "[]",
         "General",
+    )
+    conf.DEV_HIST_DAYS = ccd(
+        "DEV_HIST_DAYS",
+        14,
+        c_d,
+        "Device history retention (days)",
+        '{"dataType":"integer", "elements": [{"elementType" : "input", "elementOptions" : [{"type": "number"}] ,"transformers": []}]}',
+        "[]",
+        "General",
+        desc="Number of days to retain device change history. Set to 0 to completely disable the auditing engine.",
+    )
+    _DEV_HIST_TRACKED_DEFAULT = [
+        'devMac', 'devName', 'devOwner', 'devType', 'devVendor', 'devFavorite',
+        'devGroup', 'devComments', 'devLastIP', 'devFQDN', 'devPrimaryIPv4',
+        'devPrimaryIPv6', 'devVlan', 'devForceStatus', 'devStaticIP', 'devScan',
+        'devAlertDown', 'devCanSleep', 'devSkipRepeated', 'devLocation',
+        'devIsArchived', 'devParentMAC', 'devParentPort', 'devParentRelType',
+        'devReqNicsOnline', 'devIcon', 'devSite', 'devSSID', 'devSyncHubNode',
+        'devSourcePlugin', 'devMacSource', 'devNameSource', 'devFQDNSource',
+        'devLastIPSource', 'devVendorSource', 'devSSIDSource',
+        'devParentMACSource', 'devParentPortSource', 'devParentRelTypeSource',
+        'devVlanSource', 'devCustomProps',
+    ]
+    conf.DEV_HIST_TRACKED = ccd(
+        "DEV_HIST_TRACKED",
+        _DEV_HIST_TRACKED_DEFAULT,
+        c_d,
+        "Device history tracked fields",
+        '{"dataType":"array","elements":[{"elementType":"select","elementHasInputValue":1,"elementOptions":[{"multiple":"true","orderable":"true"}],"transformers":[]},{"elementType":"button","elementOptions":[{"sourceSuffixes":[]},{"separator":""},{"cssClasses":"col-xs-12"},{"onClick":"selectChange(this)"},{"getStringKey":"Gen_Change"}],"transformers":[]}]}',  # noqa: E501
+        list_to_csv(_DEV_HIST_TRACKED_DEFAULT),
+        "General",
+        desc="List of Devices column names to monitor for changes. Add or remove field names to control what gets audited.",
     )
     conf.HRS_TO_KEEP_NEWDEV = ccd(
         "HRS_TO_KEEP_NEWDEV",

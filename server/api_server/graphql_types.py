@@ -259,3 +259,25 @@ class EventsResult(ObjectType):
     entries  = List(EventEntry, description="Events table rows")
     count    = Int(description="Filtered count (before pagination)")
     db_count = Int(description="Total rows in table before any filter")
+
+
+# ---------------------------------------------------------------------------
+# Device History
+# ---------------------------------------------------------------------------
+
+class DeviceHistoryChange(ObjectType):
+    changedColumn = String(description="Name of the Devices column that changed")
+    oldValue = String(description="Value before the change (null for new devices)")
+    newValue = String(description="Value after the change")
+
+
+class GroupedDeviceHistory(ObjectType):
+    devGUID = String(description="GUID of the device that changed")
+    timestamp = String(description="UTC timestamp of the change event")
+    changedBy = String(description="Attribution: USER, plugin prefix (e.g. ARPSCAN), or system")
+    changes = List(DeviceHistoryChange, description="Field-level changes in this event")
+
+
+class DeviceHistoryResult(ObjectType):
+    history = List(GroupedDeviceHistory, description="Grouped change events")
+    count = Int(description="Total number of grouped events matching the filters")

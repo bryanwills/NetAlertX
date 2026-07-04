@@ -7,6 +7,7 @@ Import from any test subdirectory with:
     sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
     from db_test_helpers import make_db, insert_device, minutes_ago, DummyDB, down_event_macs, make_device_dict, sync_insert_devices
     from db_test_helpers import make_plugin_db, make_plugin_dict, make_plugin_event_row, seed_plugin_object, plugin_history_rows, plugin_objects_rows, PluginFakeDB
+    from db_test_helpers import make_history_db
 """
 
 import sqlite3
@@ -17,6 +18,7 @@ from datetime import datetime, timezone, timedelta
 # Make the 'server' package importable when this module is loaded directly.
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "server"))
 from db.db_upgrade import ensure_views  # noqa: E402
+from db.db_history import ensure_deviceshistory_table, ensure_deviceshistory_triggers  # noqa: E402
 
 
 # ---------------------------------------------------------------------------
@@ -140,6 +142,41 @@ def make_db(sleep_minutes: int = 30) -> sqlite3.Connection:
     )
     conn.commit()
     ensure_views(cur)
+    conn.commit()
+    return conn
+
+
+def make_history_db(dev_hist_days: int = 14,
+                    tracked: str = "['devName', 'devVendor', 'devLastIP', 'devNameSource']") -> sqlite3.Connection:
+    """
+    Return an in-memory SQLite connection with DevicesHistory fully set up.
+
+    Extends make_db() by adding the DevicesHistory table, indexes, and the
+    AFTER UPDATE / AFTER INSERT triggers. Settings rows for DEV_HIST_DAYS
+    and DEV_HIST_TRACKED are pre-inserted.
+
+    DEV_HIST_TRACKED is stored as a Python list literal string (e.g.
+    \"['devName','devVendor']\") matching the settings engine and the SQLite
+    trigger's instr(..., '''field''') membership check.
+
+    Args:
+        dev_hist_days: Value for DEV_HIST_DAYS setting (0 disables tracking).
+        tracked:       Python list literal string for DEV_HIST_TRACKED.
+    """
+    conn = make_db()
+    cur = conn.cursor()
+    cur.execute(
+        "INSERT OR REPLACE INTO Settings (setKey, setValue) VALUES (?, ?)",
+        ("DEV_HIST_DAYS", str(dev_hist_days)),
+    )
+    cur.execute(
+        "INSERT OR REPLACE INTO Settings (setKey, setValue) VALUES (?, ?)",
+        ("DEV_HIST_TRACKED", tracked),
+    )
+    conn.commit()
+    ensure_deviceshistory_table(cur)
+    conn.commit()
+    ensure_deviceshistory_triggers(cur)
     conn.commit()
     return conn
 

@@ -6,6 +6,7 @@ import os
 
 from flask import Flask, redirect, request, jsonify, url_for, Response
 from models.device_instance import DeviceInstance  # noqa: E402
+from models.device_history_instance import DevicesHistoryInstance  # noqa: E402
 from flask_cors import CORS
 from werkzeug.exceptions import HTTPException
 
@@ -770,6 +771,20 @@ def api_import_csv(payload=None):
 def api_devices_totals(payload=None):
     device_handler = DeviceInstance()
     return jsonify(device_handler.getTotals())
+
+
+@app.route("/devices/history/filters", methods=["GET"])
+@validate_request(
+    operation_id="get_device_history_filters",
+    summary="Get Device History Filter Values",
+    description="Return distinct changedBy and changedColumn values available in DevicesHistory. Optionally scope to a single device with ?devGuid=<guid>.",
+    tags=["devices"],
+    auth_callable=is_authorized
+)
+def api_devices_history_filters(payload=None):
+    dev_guid = request.args.get("devGuid") or None
+    filters = DevicesHistoryInstance().get_available_filter_values(devGUID=dev_guid)
+    return jsonify({"success": True, "data": filters})
 
 
 @app.route("/devices/totals/named", methods=["GET"])

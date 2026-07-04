@@ -13,6 +13,7 @@ from const import logPath, fullDbPath  # noqa: E402 [flake8 lint suppression]
 import conf  # noqa: E402 [flake8 lint suppression]
 from pytz import timezone  # noqa: E402 [flake8 lint suppression]
 from database import get_temp_db_connection  # noqa: E402 [flake8 lint suppression]
+from models.device_history_instance import DevicesHistoryInstance  # noqa: E402 [flake8 lint suppression]
 
 # Make sure the TIMEZONE for logging is correct
 conf.tz = timezone(get_setting_value("TIMEZONE"))
@@ -34,6 +35,7 @@ def main():
     HRS_TO_KEEP_OFFDEV = int(get_setting_value("HRS_TO_KEEP_OFFDEV"))
     DAYS_TO_KEEP_EVENTS = int(get_setting_value("DAYS_TO_KEEP_EVENTS"))
     CLEAR_NEW_FLAG = get_setting_value("CLEAR_NEW_FLAG")
+    DEV_HIST_DAYS = int(get_setting_value("DEV_HIST_DAYS") or 14)
 
     mylog("verbose", [f"[{pluginName}] In script"])
 
@@ -45,6 +47,7 @@ def main():
         HRS_TO_KEEP_OFFDEV,
         PLUGINS_KEEP_HIST,
         CLEAR_NEW_FLAG,
+        DEV_HIST_DAYS,
     )
 
     mylog("verbose", [f"[{pluginName}] Cleanup complete"])
@@ -62,6 +65,7 @@ def cleanup_database(
     HRS_TO_KEEP_OFFDEV,
     PLUGINS_KEEP_HIST,
     CLEAR_NEW_FLAG,
+    DEV_HIST_DAYS=14,
 ):
     """
     Cleaning out old records from the tables that don't need to keep all data.
@@ -155,6 +159,13 @@ def cleanup_database(
     mylog("verbose", [f"[{pluginName}] AppEvents deleted rows: {cursor.rowcount}"])
 
     conn.commit()
+
+    # -----------------------------------------------------
+    # Cleanup DevicesHistory
+    if DEV_HIST_DAYS > 0:
+        mylog("verbose", f"[{pluginName}] DevicesHistory: Delete rows older than {DEV_HIST_DAYS} days")
+        deleted = DevicesHistoryInstance().prune_history(DEV_HIST_DAYS)
+        mylog("verbose", [f"[{pluginName}] DevicesHistory deleted rows: {deleted}"])
 
     # -----------------------------------------------------
     # Cleanup New Devices

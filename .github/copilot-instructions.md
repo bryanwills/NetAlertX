@@ -27,6 +27,7 @@ Procedural knowledge lives in `.github/skills/`. Load the appropriate skill when
 
 | Task | Skill |
 |------|-------|
+| Find or cross-reference any skill | `skills-overview` |
 | Run tests, check failures | `testing-workflow` |
 | Start/stop/restart services | `devcontainer-services` |
 | Wipe database, fresh start | `database-reset` |
@@ -42,6 +43,7 @@ Procedural knowledge lives in `.github/skills/`. Load the appropriate skill when
 | Settings and config | `settings-management` |
 | Find files and paths | `project-navigation` |
 | Coding standards | `code-standards` |
+| Devices table write paths, SQLite triggers, audit logging, `*Source` attribution | `database-patterns` |
 
 ## Execution Protocol
 

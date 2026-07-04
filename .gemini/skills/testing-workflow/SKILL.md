@@ -75,4 +75,34 @@ The retrieved token MUST be used in all subsequent API or test calls requiring a
 If tests fail with 403 Forbidden or empty tokens:
 1. Verify server is running and use the setup script (`/workspaces/NetAlertX/.devcontainer/scripts/setup.sh`) if required.
 2. Verify `app.conf` inside the container: `cat /data/config/app.conf`
+
+## Check for Pre-Existing Failures
+
+Before attributing failures to your changes, check what was already broken:
+
+```bash
+cd /workspaces/NetAlertX; pytest test/ --tb=no -q 2>&1 | tail -20
+```
+
+Do not fix pre-existing failures unless that is the explicit goal.
+
+## PYTHONPATH
+
+The test environment is pre-configured with:
+- `/app` — primary location where Python runs in production
+- `/app/server` — symlink to `/workspaces/NetAlertX/server`
+- `/app/front/plugins` — symlink to `/workspaces/NetAlertX/front/plugins`
+- `/workspaces/NetAlertX/test`
+- `/workspaces/NetAlertX/server`
+- `/workspaces/NetAlertX`
+
+## Docker Test Image
+
+If the Dockerfile or dependencies changed, rebuild the test image before running:
+
+```bash
+docker buildx build -t netalertx-test .
+```
+
+Takes ~30 seconds; ~90 seconds if the venv stage changed.
 3. Verify Python can read it: `python3 -c "from helper import get_setting_value; print(get_setting_value('API_TOKEN'))"`
