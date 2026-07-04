@@ -1,7 +1,7 @@
 from scan.device_handling import (
     create_new_devices,
     print_scan_stats,
-    save_scanned_devices,
+    save_own_device,
     exclude_ignored_devices,
     update_devices_data_from_scan,
     update_sync_hub_node,
@@ -35,13 +35,14 @@ Logger(get_setting_value("LOG_LEVEL"))
 
 
 def process_scan(db):
+
+    # Save own device data into CurrentScan TODO:move potentially into a separate plugin
+    mylog("verbose", "[Process Scan]  Processing scan results")
+    save_own_device(db)
+
     # Apply exclusions
     mylog("verbose", "[Process Scan]  Exclude ignored devices")
     exclude_ignored_devices(db)
-
-    # Load current scan data
-    mylog("verbose", "[Process Scan]  Processing scan results")
-    save_scanned_devices(db)
 
     db.commitDB()
 

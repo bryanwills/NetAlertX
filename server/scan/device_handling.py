@@ -510,7 +510,7 @@ def update_vendors_from_mac(db):
 
 
 # -------------------------------------------------------------------------------
-def save_scanned_devices(db):
+def save_own_device(db):
     sql = db.sql  # TO-DO
 
     # Add Local MAC of default local interface
