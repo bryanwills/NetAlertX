@@ -14,7 +14,7 @@ This skill configures the environment to expose the Model Context Protocol (MCP)
 
 ## Usage
 
-This skill assumes you are already running within the NetAlertX devcontainer. 
+This skill assumes you are already running within the NetAlertX devcontainer.
 
 1.  **Generate Configurations:**
     Run the configuration generation script to extract the API Token and update the VS Code MCP settings.
