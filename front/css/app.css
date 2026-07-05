@@ -2677,7 +2677,7 @@ table.dataTable tbody > tr.selected
 
 /* Page-level overlay base */
 #settings-skeleton, #devices-skeleton, #device-details-skeleton,
-#events-skeleton, #presence-skeleton, #report-skeleton, #skel-app-events,
+#events-skeleton, #presence-skeleton, #report-skeleton, #skel-app-events, #change-log-skeleton
 #notifications-skeleton, #workflows-skeleton, #plugins-skeleton, .skel-tab-pane {
     position: absolute;
     top: 0;
@@ -2699,6 +2699,7 @@ table.dataTable tbody > tr.selected
 #notifications-skeleton  { margin: 15px; top: 50px; min-height: 400px; }
 #workflows-skeleton      { top: 50px; width: 770px; margin: 0 auto; min-height: 300px; }
 #plugins-skeleton        { top: 50px; padding: 0; min-height: 400px; }
+#change-log-skeleton     { display: block;  min-height: 400px;  z-index: 1; position: absolute; margin-left: 15px; padding-top: 15px; width:100%;}
 #skel-tab-sessions, #skel-tab-events, #skel-tab-presence {margin: -10px;  padding: 20px;}
 
 /* Hide scrollbars */

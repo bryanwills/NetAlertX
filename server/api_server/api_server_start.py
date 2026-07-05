@@ -777,12 +777,12 @@ def api_devices_totals(payload=None):
 @validate_request(
     operation_id="get_device_history_filters",
     summary="Get Device History Filter Values",
-    description="Return distinct changedBy and changedColumn values available in DevicesHistory. Optionally scope to a single device with ?devGuid=<guid>.",
+    description="Return distinct changedBy and changedColumn values available in DevicesHistory. Optionally scope to a single device with ?devGUID=<guid>.",
     tags=["devices"],
     auth_callable=is_authorized
 )
 def api_devices_history_filters(payload=None):
-    dev_guid = request.args.get("devGuid") or None
+    dev_guid = request.args.get("devGUID") or None
     filters = DevicesHistoryInstance().get_available_filter_values(devGUID=dev_guid)
     return jsonify({"success": True, "data": filters})
 

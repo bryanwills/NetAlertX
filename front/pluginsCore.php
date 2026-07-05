@@ -8,7 +8,7 @@
 ?>
 
 <!-- Main content ---------------------------------------------------------- -->
- <?php require 'php/templates/skel_plugins.php'; ?>
+<?php require 'php/templates/skel_plugins.php'; ?>
 <section class="content">
   <div class="plugin-filters hidden" >
     <div class="input-group col-sm-12">

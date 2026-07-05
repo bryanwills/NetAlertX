@@ -35,7 +35,7 @@ class DevicesHistoryInstance:
     # -------------------------------------------------------------------------
 
     def get_grouped_history(self, devGUID, changedColumn=None, changedBy=None,
-                            limit=50, offset=0):
+                            limit=50, offset=0, sort=None, search=None):
         """
         Return grouped change history for a single device.
 
@@ -60,10 +60,18 @@ class DevicesHistoryInstance:
             changedBy=changedBy,
             limit=limit,
             offset=offset,
+            sort=sort,
+            search=search
         )
 
-    def get_all_grouped_history(self, changedColumn=None, changedBy=None,
-                                limit=100, offset=0):
+    def get_all_grouped_history(self,
+                                changedColumn=None,
+                                changedBy=None,
+                                limit=50,
+                                offset=0,
+                                sort=None,
+                                search=None
+                                ):
         """
         Return grouped change history across all devices (global view).
 
@@ -75,6 +83,8 @@ class DevicesHistoryInstance:
             changedBy=changedBy,
             limit=limit,
             offset=offset,
+            sort=sort,
+            search=search
         )
 
     def get_available_filter_values(self, devGUID=None):
@@ -157,7 +167,7 @@ class DevicesHistoryInstance:
     # -------------------------------------------------------------------------
 
     @staticmethod
-    def _build_clauses(devGUID, changedColumn, changedBy):
+    def _build_clauses(devGUID, changedColumn, changedBy, search=None):
         clauses = []
         params = []
         if devGUID:
@@ -169,18 +179,38 @@ class DevicesHistoryInstance:
         if changedBy:
             clauses.append("changedBy = ?")
             params.append(changedBy)
+        if search:
+            clauses.append("""
+                (
+                    devGUID LIKE ?
+                    OR changedBy LIKE ?
+                    OR changedColumn LIKE ?
+                    OR oldValue LIKE ?
+                    OR newValue LIKE ?
+                )
+            """)
+            like = f"%{search}%"
+            params.extend([like] * 5)
         return clauses, params
 
-    def _query_grouped(self, devGUID, changedColumn, changedBy, limit, offset):
+    def _query_grouped(self, devGUID, changedColumn, changedBy, limit, offset, sort, search):
         """
         Core fetch-and-group logic shared by all public query methods.
 
         1. Fetch matching rows ordered by timestamp DESC.
         2. Group by (timestamp, changedBy, devGUID) in Python.
-        3. Apply limit/offset at the group level.
+        3. Apply sorting at group level.
+        4. Apply pagination at the end.
         """
-        clauses, params = self._build_clauses(devGUID, changedColumn, changedBy)
+
+        clauses, params = self._build_clauses(devGUID, changedColumn, changedBy, search)
         where = f"WHERE {' AND '.join(clauses)}" if clauses else ""
+
+        mylog("none", f"[HISTORY] SQL {where} params={params}")
+        mylog("none", f"[HISTORY] sort={sort}")
+        mylog("none", f"[HISTORY] sort type={type(sort)}")
+        mylog("none", f"[HISTORY] search {search} ")
+        mylog("none", f"[HISTORY] FINAL CALL limit={limit} offset={offset} sort={sort}")
 
         rows = self._fetchall(
             f"""
@@ -192,12 +222,15 @@ class DevicesHistoryInstance:
             tuple(params),
         )
 
-        # Group by (timestamp, changedBy, devGUID) — preserving DESC order
+        # ---------------------------
+        # 1. GROUP
+        # ---------------------------
         groups = {}
         order = []
 
         for row in rows:
             key = (row["timestamp"], row["changedBy"], row["devGUID"])
+
             if key not in groups:
                 groups[key] = {
                     "devGUID": row["devGUID"],
@@ -206,6 +239,7 @@ class DevicesHistoryInstance:
                     "changes": [],
                 }
                 order.append(key)
+
             groups[key]["changes"].append({
                 "changedColumn": row["changedColumn"],
                 "oldValue": row["oldValue"],
@@ -213,4 +247,39 @@ class DevicesHistoryInstance:
             })
 
         grouped_list = [groups[k] for k in order]
-        return grouped_list[offset: offset + limit]
+
+        # ---------------------------
+        # 2. SORT (group-level, stable)
+        # ---------------------------
+        if sort and len(sort) > 0:
+            s = sort[0]
+            field = s.get("field")
+            direction = s.get("order", "desc")
+
+            reverse = direction.lower() == "desc"
+
+            allowed_fields = {"timestamp", "changedBy", "devGUID"}
+
+            if field in allowed_fields:
+
+                def sort_key(x):
+                    val = x.get(field)
+
+                    # make timestamp safe for sorting
+                    if field == "timestamp":
+                        return val or ""
+                    return val
+
+                grouped_list = sorted(
+                    grouped_list,
+                    key=sort_key,
+                    reverse=reverse
+                )
+
+        # ---------------------------
+        # 3. PAGINATION (FINAL STEP ONLY)
+        # ---------------------------
+        start = max(offset or 0, 0)
+        end = start + (limit or 50)
+
+        return grouped_list[start:end]

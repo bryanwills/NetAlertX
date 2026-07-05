@@ -33,6 +33,7 @@ from .graphql_helpers import (  # noqa: E402 [flake8 lint suppression]
     apply_common_pagination,
     apply_plugin_filters,
     apply_events_filters,
+    extract_paging
 )
 from models.device_history_instance import DevicesHistoryInstance  # noqa: E402
 
@@ -65,72 +66,98 @@ def _to_graphql_history(groups):
 
 
 class Query(ObjectType):
-    # --- DEVICES ---
-    devices = Field(DeviceResult, options=PageQueryOptionsInput())
-
     # --- DEVICE HISTORY ---
     deviceHistoryGrouped = Field(
         DeviceHistoryResult,
-        devGuid=String(required=True, description="Device GUID to fetch history for"),
+        devGUID=String(required=False, description="Device GUID to fetch history for"),
         changedColumn=String(description="Filter to groups containing this field change"),
         changedBy=String(description="Filter to a specific attribution source"),
-        limit=graphene.Int(description="Max grouped events to return (default 50)"),
-        offset=graphene.Int(description="Grouped-event offset for pagination (default 0)"),
+        options=PageQueryOptionsInput(description="Paging, sorting, filtering options"),
     )
 
-    allDeviceHistoryGrouped = Field(
-        DeviceHistoryResult,
-        changedColumn=String(description="Filter to groups containing this field change"),
-        changedBy=String(description="Filter to a specific attribution source"),
-        limit=graphene.Int(description="Max grouped events to return (default 100)"),
-        offset=graphene.Int(description="Grouped-event offset for pagination (default 0)"),
-    )
+    def resolve_deviceHistoryGrouped(
+            self,
+            info,
+            devGUID=None,
+            changedColumn=None,
+            changedBy=None,
+            options=None):
+        """
+        Return grouped device history.
 
-    def resolve_deviceHistoryGrouped(self, info, devGuid, changedColumn=None,
-                                     changedBy=None, limit=50, offset=0):
+        If `devGUID` is provided, results are restricted to a single device.
+        If omitted, history across all devices is returned.
+
+        This resolver supports:
+            - Optional filtering by device GUID, change column, and attribution source
+            - Pagination via `options` (page/limit/offset)
+            - Sorting at the grouped event level
+            - Full-text search across history fields (if enabled in backend)
+
+        Internally:
+            - Raw history rows are fetched from the database
+            - Rows are grouped in Python by (timestamp, changedBy, devGUID)
+            - Sorting is applied to grouped events
+            - Pagination is applied after grouping
+
+        Args:
+            info: GraphQL execution context
+            devGUID (str | None): Optional device GUID filter
+            changedColumn (str | None): Filter to only events containing this column
+            changedBy (str | None): Filter by attribution source
+            options (PageQueryOptionsInput | None): Paging, sorting, and search options
+
+        Returns:
+            DeviceHistoryResult: Grouped history events and total count
+        """
         try:
+            mylog("none", f"[HISTORY] unified resolver devGUID={devGUID} changedColumn={changedColumn} changedBy={changedBy}")
+
             h = DevicesHistoryInstance()
-            groups = h.get_grouped_history(
-                devGUID=devGuid,
-                changedColumn=changedColumn,
-                changedBy=changedBy,
-                limit=limit,
-                offset=offset,
-            )
-            total = h.get_total_group_count(
-                devGUID=devGuid,
-                changedColumn=changedColumn,
-                changedBy=changedBy,
-            )
+            paging = extract_paging(options)
+
+            if devGUID:
+                groups = h.get_grouped_history(
+                    devGUID=devGUID,
+                    changedColumn=changedColumn,
+                    changedBy=changedBy,
+                    limit=paging["limit"],
+                    offset=paging["offset"],
+                    sort=paging["sort"],
+                    search=paging["search"],
+                )
+
+                total = h.get_total_group_count(
+                    devGUID=devGUID,
+                    changedColumn=changedColumn,
+                    changedBy=changedBy,
+                )
+            else:
+                groups = h.get_all_grouped_history(
+                    changedColumn=changedColumn,
+                    changedBy=changedBy,
+                    limit=paging["limit"],
+                    offset=paging["offset"],
+                    sort=paging["sort"],
+                    search=paging["search"],
+                )
+
+                total = h.get_total_group_count(
+                    changedColumn=changedColumn,
+                    changedBy=changedBy,
+                )
+
             return DeviceHistoryResult(
                 history=_to_graphql_history(groups),
                 count=total,
             )
+
         except Exception as e:
-            mylog("none", f"[graphql] resolve_deviceHistoryGrouped error: {e}")
+            mylog("none", f"[graphql] unified resolver error: {e}")
             return DeviceHistoryResult(history=[], count=0)
 
-    def resolve_allDeviceHistoryGrouped(self, info, changedColumn=None,
-                                        changedBy=None, limit=100, offset=0):
-        try:
-            h = DevicesHistoryInstance()
-            groups = h.get_all_grouped_history(
-                changedColumn=changedColumn,
-                changedBy=changedBy,
-                limit=limit,
-                offset=offset,
-            )
-            total = h.get_total_group_count(
-                changedColumn=changedColumn,
-                changedBy=changedBy,
-            )
-            return DeviceHistoryResult(
-                history=_to_graphql_history(groups),
-                count=total,
-            )
-        except Exception as e:
-            mylog("none", f"[graphql] resolve_allDeviceHistoryGrouped error: {e}")
-            return DeviceHistoryResult(history=[], count=0)
+    # --- DEVICES ---
+    devices = Field(DeviceResult, options=PageQueryOptionsInput())
 
     def resolve_devices(self, info, options=None):
         # mylog('none', f'[graphql_schema] resolve_devices: {self}')

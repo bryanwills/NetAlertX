@@ -10,7 +10,7 @@ from graphene import (
 
 class SortOptionsInput(InputObjectType):
     field = String()
-    order = String()
+    order = String()  # direction asc, desc
 
 
 class FilterOptionsInput(InputObjectType):
@@ -20,8 +20,8 @@ class FilterOptionsInput(InputObjectType):
 
 class PageQueryOptionsInput(InputObjectType):
     page = Int()
-    limit = Int()
-    sort = List(SortOptionsInput)
+    limit = Int()                        # pageSize
+    sort = List(SortOptionsInput)        # sorting 
     search = String()
     status = String()
     filters = List(FilterOptionsInput)
