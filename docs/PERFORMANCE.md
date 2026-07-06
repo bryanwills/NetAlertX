@@ -132,6 +132,14 @@ When **any** name-resolution plugin has `devName` in its `SET_ALWAYS` list, the 
 
 The actual number of DB rows updated is logged at `verbose` level under `[Update Device Name] SET_ALWAYS re-resolve - DB rows updated`.
 
+
+---
+
+## Disable change log tracking
+
+To improve performance, you can reduce or disable change log tracking. Use the `DEV_HIST_TRACKED` setting to limit tracking to specific columns, and adjust `DEV_HIST_DAYS` to control how long history is retained. Setting `DEV_HIST_DAYS` to `0` disables history tracking entirely.
+
+
 ---
 
 ## Storing Temporary Files in Memory

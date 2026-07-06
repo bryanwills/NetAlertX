@@ -19,6 +19,7 @@ from db.db_upgrade import (
     migrate_to_camelcase,
     migrate_timestamps_to_utc,
 )
+from db.db_history import ensure_deviceshistory_table, ensure_deviceshistory_triggers
 
 
 class DB:
@@ -224,6 +225,10 @@ class DB:
             # Normalization triggers
             ensure_mac_lowercase_triggers(self.sql)
 
+            # Device history table + audit triggers
+            ensure_deviceshistory_table(self.sql)
+            ensure_deviceshistory_triggers(self.sql)
+
             # commit changes
             self.commitDB()
         except Exception as e:
@@ -233,6 +238,12 @@ class DB:
 
         # Init the AppEvent database table
         AppEvent_obj(self)
+
+        # AppEvent_obj.drop_all_triggers() wipes every trigger in the DB
+        # (including trg_devhist_*) as part of its clean-start routine.
+        # Re-create the device history audit triggers here so they survive.
+        ensure_deviceshistory_triggers(self.sql)
+        self.commitDB()
 
     def get_table_as_json(self, sqlQuery, parameters=None):
         """

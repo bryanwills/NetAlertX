@@ -6,9 +6,11 @@
 
 
 <!-- Page ------------------------------------------------------------------ -->
-<div class="content-wrapper" id="wf-content-wrapper">
+<div id="wf-content-wrapper" class="content-wrapper spinnerTarget" >
 <?php require 'php/templates/skel_workflows.php'; ?>
-<span class="helpIcon"> <a target="_blank" href="https://docs.netalertx.com/WORKFLOWS"><i class="fa fa-circle-question"></i></a></span>
+<span class="helpIcon"> 
+  <a target="_blank" href="https://docs.netalertx.com/WORKFLOWS"><i class="fa fa-circle-question"></i></a>
+</span>
 <?php
    require 'workflowsCore.php';
 ?>

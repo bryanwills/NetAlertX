@@ -21,6 +21,11 @@
 
 
 <!-- Calendar -->
+<span class="calendarHelpIcon">
+  <a target="_blank" href="https://docs.netalertx.com/DEVICE_PRESENCE">
+    <i class="fa fa-circle-question"></i>
+  </a>
+</span>
 <div id="calendar">
 </div>
 

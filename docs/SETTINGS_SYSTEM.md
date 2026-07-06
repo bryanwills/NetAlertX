@@ -36,6 +36,37 @@ Plugin settings are loaded dynamically from the `config.json` of individual plug
 
 ![Screen 1][screen1]
 
+### Localization
+
+Every setting must have localized language strings.
+
+If the language strings are **not** defined directly inside `config.json`, they must exist in `en_us.json`.
+
+For example, for:
+
+```text
+UI_DEV_SECTIONS
+```
+
+add:
+
+```json
+"UI_DEV_SECTIONS_name": "Hide device sections",
+"UI_DEV_SECTIONS_description": "Select which UI elements to hide on the Devices page."
+```
+
+When using external language files, `config.json` must reference:
+
+```json
+"name": [
+  {
+    "string": "_GLOBAL_LANG_FILES_"
+  }
+]
+```
+
+This tells NetAlertX to resolve the display name from the language files.
+
 ### Settings Process flow
 
 The process flow is mostly managed by the [initialise.py](/server/initialise.py) file.

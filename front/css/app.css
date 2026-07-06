@@ -1001,6 +1001,19 @@ height: 50px;
     opacity: .75;
 }
 
+#presencePage .helpIcon{
+    top: 2px;
+    display: initial;
+    font-size: x-small;
+}
+
+.calendarHelpIcon{
+    display: block;
+    position: absolute;
+    font-size: x-small;
+    top: -5px;
+}
+
 /* --------------------------------------------------------- */
 /*                         report                            */
 /* --------------------------------------------------------- */
@@ -2206,6 +2219,12 @@ textarea[readonly],
     padding-top: 20px;
 }
 
+.pluginsCore .helpIcon
+{
+    margin-left: -20px;
+    font-size: x-small;
+}
+
 /*Hidden special button*/
 
 @media (max-width: 365px) {
@@ -2636,7 +2655,29 @@ table.dataTable tbody > tr.selected
     background-color: rgba(140, 140, 140, 0.05);
 }
 
-/* ===== Loading Skeleton ===== */
+/* -----------------------------------------------------------------------------
+   Change log
+----------------------------------------------------------------------------- */
+
+.change-log .helpIcon{
+    left: 15px;
+    font-size: x-small;
+}
+
+#panHistory
+{
+    min-height:850px
+}
+
+#panHistory .change-log-skeleton-class 
+{
+    margin-left: 0px;
+    width: calc(100% - 40px);
+}
+
+/* -----------------------------------------------------------------------------
+   Loading Skeletons
+----------------------------------------------------------------------------- */
 
 /* Custom properties (overridden in dark-patch.css for Dark/System themes) */
 :root {
@@ -2677,7 +2718,7 @@ table.dataTable tbody > tr.selected
 
 /* Page-level overlay base */
 #settings-skeleton, #devices-skeleton, #device-details-skeleton,
-#events-skeleton, #presence-skeleton, #report-skeleton, #skel-app-events,
+#events-skeleton, #presence-skeleton, #report-skeleton, #skel-app-events, #change-log-skeleton
 #notifications-skeleton, #workflows-skeleton, #plugins-skeleton, .skel-tab-pane {
     position: absolute;
     top: 0;
@@ -2699,6 +2740,7 @@ table.dataTable tbody > tr.selected
 #notifications-skeleton  { margin: 15px; top: 50px; min-height: 400px; }
 #workflows-skeleton      { top: 50px; width: 770px; margin: 0 auto; min-height: 300px; }
 #plugins-skeleton        { top: 50px; padding: 0; min-height: 400px; }
+#change-log-skeleton     { display: block;  min-height: 400px;  z-index: 1; position: absolute; margin-left: 15px; padding-top: 15px; width:100%;}
 #skel-tab-sessions, #skel-tab-events, #skel-tab-presence {margin: -10px;  padding: 20px;}
 
 /* Hide scrollbars */

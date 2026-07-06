@@ -74,7 +74,10 @@ nav:
         - Device display settings: DEVICE_DISPLAY_SETTINGS.md
         - Device views filtering: DEVICE_FILTERS.md
         - Session info: SESSION_INFO.md
-        - Field Lock/Unlock: DEVICE_FIELD_LOCK.md
+        - Field Lock/Unlock: DEVICE_FIELD_LOCK.md        
+      - Device auditing:
+        - Change log: DEVICE_CHANGE_LOG.md
+        - Presence: DEVICE_PRESENCE.md
         - Device source fields: DEVICE_SOURCE_FIELDS.md
       - Icons and network topology:
         - Icons: ICONS.md

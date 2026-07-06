@@ -22,6 +22,7 @@
 
 <!-- Page ------------------------------------------------------------------ -->
   <div class="content-wrapper" id="presencePage">
+
 <?php require 'php/templates/skel_presence.php'; ?>
 
 <!-- Main content ---------------------------------------------------------- -->
@@ -128,9 +129,11 @@
 
 <!-- Calendar -------------------------------------------------------------- -->
       <div class="row">
+        
         <div class="col-lg-12 col-sm-12 col-xs-12">
+        
           <div id="tableDevicesBox" class="box" style="min-height: 500px">
-
+            
             <!-- box-header -->
             <div class="box-header">
               <h3 id="tableDevicesTitle" class="box-title text-gray">Devices</h3>
@@ -145,6 +148,11 @@
                   <div class="presenceOnlinePastMiss presenceKeyBoxes"></div> <?= lang('Presence_Key_OnlinePastMiss');?>
                 </span>
               </div>
+              <span class="helpIcon">
+                <a target="_blank" href="https://docs.netalertx.com/DEVICE_PRESENCE">
+                  <i class="fa fa-circle-question"></i>
+                </a>
+              </span>
             </div>
 
             <!-- box-body -->
@@ -456,7 +464,7 @@ function getDevicesPresence (status) {
   // Set title and color
   $('#tableDevicesTitle')[0].className = 'box-title text-'+ color;
   $('#tableDevicesBox')[0].className = 'box box-'+ color;
-  $('#tableDevicesTitle').html (tableTitle);
+  $('#tableDevicesTitle').html (`${tableTitle}  ${getString("Device_TableHead_PresentLastScan")}`);
 
   const apiToken = getSetting("API_TOKEN");
 

@@ -111,6 +111,14 @@
                     </span>
                 </a>
                 </li>
+              <li>
+                <a id="tabHistory" href="#panHistory" data-toggle="tab">
+                  <i class="fa fa-clock-rotate-left"></i>
+                    <span class="dev-detail-tab-name">
+                      <?= lang('device_history_tab_title');?>
+                    </span>
+                </a>
+                </li>
 
               <div class="btn-group pull-right">
                 <button type="button" class="btn btn-default"  style="padding: 10px; min-width: 30px;"
@@ -159,7 +167,12 @@
                 ?>
               </div>
 
-            </div>
+              <div class="tab-pane fade" id="panHistory">
+                <?php
+                  // Include the other page
+                  include 'changeLogCore.php';
+                ?>
+              </div>
             <!-- /.tab-content -->
           </div>
           <!-- /.nav-tabs-custom -->
@@ -596,8 +609,16 @@ setTimeout(function() {
   if (typeof hideSessionsTabSkeleton === 'function') hideSessionsTabSkeleton();
   if (typeof hidePresenceTabSkeleton === 'function') hidePresenceTabSkeleton();
   if (typeof hideEventsTabSkeleton   === 'function') hideEventsTabSkeleton();
+  $('#skel-tab-history').hide();
 }, 15000);
 }
+
+
+// Load history when the tab becomes visible
+$(document).on('shown.bs.tab', 'a[id="tabHistory"]', function() {
+  _histPage  = 0;
+  // loadHistoryData();
+});
 
 </script>
 

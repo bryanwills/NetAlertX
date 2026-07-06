@@ -21,6 +21,7 @@ from scheduler import schedule_class
 from plugin import plugin_manager, print_plugin_info
 from utils.plugin_utils import get_plugins_configs, get_set_value_for_init
 from messaging.in_app import write_notification
+from utils.plugin_utils import list_to_csv
 
 # ===============================================================================
 # Language helpers
@@ -50,12 +51,6 @@ def _load_language_display_names():
 # ===============================================================================
 # Initialise user defined values
 # ===============================================================================
-
-# -------------------------------------------------------------------------------
-# Import user values
-# Check config dictionary
-
-
 # -------------------------------------------------------------------------------
 # managing application settings, ensuring SQL safety for user input, and updating internal configuration lists
 def ccd(
@@ -74,6 +69,43 @@ def ccd(
     overriddenByEnv=0,
     all_plugins=[],
 ):
+    """
+    Create or update a configuration setting entry and synchronise it across
+    in-memory config, plugin settings, and SQL-safe storage structures.
+
+    This function is responsible for:
+    - Resolving a setting value from defaults or existing config
+    - Sanitising text inputs for SQL safety
+    - Propagating updates into plugin configuration structures when
+      overridden by environment variables
+    - Maintaining both raw and SQL-safe representations of settings
+    - Storing optional JSON metadata alongside settings entries
+
+    Parameters:
+        key (str): Unique identifier for the setting.
+        default (any): Default value used if no existing config value exists.
+        config_dir (dict): Dictionary holding current runtime configuration.
+        name (str): Human-readable name of the setting.
+        inputtype (str): Type of input (e.g. "text", "number", etc.).
+        options (list|str): Allowed options or configuration constraints.
+        group (str): Logical grouping/category of the setting.
+        events (list, optional): Events triggered by changes to this setting.
+        desc (str, optional): Human-readable description of the setting.
+        setJsonMetadata (dict, optional): Additional metadata stored as JSON.
+        overrideTemplate (dict, optional): Template overrides (currently unused).
+        forceDefault (bool, optional): If True, ignores existing config value.
+        overriddenByEnv (int, optional): Flag indicating environment override.
+        all_plugins (list, optional): Plugin list for propagating updates.
+
+    Returns:
+        any: The resolved configuration value after processing.
+
+    Side Effects:
+        - Updates config_dir in-place
+        - Updates conf.mySettings and conf.mySettingsSQLsafe
+        - Updates plugin setting values if overridden by environment
+        - Adds/updates metadata entries for non-metadata keys
+    """
     if events is None:
         events = []
     if setJsonMetadata is None:
@@ -326,6 +358,26 @@ def importConfigs(pm, db, all_plugins):
         '{"dataType":"integer", "elements": [{"elementType" : "input", "elementOptions" : [{"type": "number"}] ,"transformers": []}]}',
         "[]",
         "General",
+    )
+    conf.DEV_HIST_DAYS = ccd(
+        "DEV_HIST_DAYS",
+        1,
+        c_d,
+        "Device history retention (days)",
+        '{"dataType":"integer", "elements": [{"elementType" : "input", "elementOptions" : [{"type": "number"}] ,"transformers": []}]}',
+        "[]",
+        "General",
+        desc="Number of days to retain device change history. Set to 0 to completely disable the auditing engine.",
+    )
+    conf.DEV_HIST_TRACKED = ccd(
+        "DEV_HIST_TRACKED",
+        ['devMac', 'devName', 'devOwner', 'devType', 'devVendor', 'devFavorite', 'devGroup', 'devComments', 'devLastIP', 'devFQDN', 'devPrimaryIPv4', 'devPrimaryIPv6', 'devVlan', 'devForceStatus', 'devStaticIP', 'devScan', 'devAlertDown', 'devCanSleep', 'devSkipRepeated', 'devLocation', 'devIsArchived', 'devParentMAC', 'devParentPort', 'devParentRelType', 'devReqNicsOnline', 'devIcon', 'devSite', 'devSSID', 'devSyncHubNode'],  # noqa: E501
+        c_d,
+        "Device history tracked fields",
+        '{"dataType":"array","elements":[{"elementType":"select","elementHasInputValue":1,"elementOptions":[{"multiple":"true","orderable":"true"}],"transformers":[]},{"elementType":"button","elementOptions":[{"sourceSuffixes":[]},{"separator":""},{"cssClasses":"col-xs-12"},{"onClick":"selectChange(this)"},{"getStringKey":"Gen_Change"}],"transformers":[]}]}',  # noqa: E501
+        list_to_csv(['devMac', 'devName', 'devOwner', 'devType', 'devVendor', 'devFavorite', 'devGroup', 'devComments', 'devLastIP', 'devFQDN', 'devPrimaryIPv4', 'devPrimaryIPv6', 'devVlan', 'devForceStatus', 'devStaticIP', 'devScan', 'devAlertDown', 'devCanSleep', 'devSkipRepeated', 'devLocation', 'devIsArchived', 'devParentMAC', 'devParentPort', 'devParentRelType', 'devReqNicsOnline', 'devIcon', 'devSite', 'devSSID', 'devSyncHubNode', 'devSourcePlugin', 'devMacSource', 'devNameSource', 'devFQDNSource', 'devLastIPSource', 'devVendorSource', 'devSSIDSource', 'devParentMACSource', 'devParentPortSource', 'devParentRelTypeSource', 'devVlanSource', 'devCustomProps']),  # noqa: E501
+        "General",
+        desc="List of Devices column names to monitor for changes. Add or remove field names to control what gets audited.",
     )
     conf.HRS_TO_KEEP_NEWDEV = ccd(
         "HRS_TO_KEEP_NEWDEV",

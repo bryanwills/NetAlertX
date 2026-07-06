@@ -1164,5 +1164,5 @@ function getLengthMenu(newEntry) {
   return [values, labels];
 }
 
-
+window.__appReady = true;
 console.log("init ui_components.js")

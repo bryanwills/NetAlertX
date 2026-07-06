@@ -509,6 +509,45 @@ function getDevDataByMac(macAddress, dbColumn) {
   return null; // Return a default value if MAC address is not found
 }
 
+
+// -----------------------------------------------------------------------------
+// Get a device property using GUID as key and DB column name as parameter
+function getDevDataByGuid(devGUID, dbColumn) {
+
+  const sessionDataKey = CACHE_KEYS.DEVICES_ALL;
+  const devicesCache = getCache(sessionDataKey);
+
+  if (!devicesCache || devicesCache == "") {
+    console.warn(`[getDevDataByGuid] Cache key "${sessionDataKey}" is empty — cache may not be initialized yet.`);
+    return null;
+  }
+
+  const devices = parseDeviceCache(devicesCache);
+
+  if (devices.length === 0) {
+    return null;
+  }
+
+  const guid = devGUID?.toLowerCase();
+  
+
+  for (const device of devices) {
+
+    if ((device["devGUID"] || "").toLowerCase() === guid) {
+
+      if (dbColumn) {
+        return device[dbColumn];
+      }
+
+      return device;
+    }
+  }
+
+  console.error("⚠ Device with GUID not found: " + devGUID);
+  return null;
+}
+
+
 // -----------------------------------------------------------------------------
 /**
  * Fetches the full device list from table_devices.json and stores it in

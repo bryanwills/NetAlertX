@@ -3,6 +3,7 @@ import base64
 import re
 import sqlite3
 import csv
+import uuid
 from io import StringIO
 from front.plugins.plugin_helper import is_mac, normalize_mac
 from logger import mylog
@@ -724,7 +725,7 @@ class DeviceInstance:
                     data.get("devLastConnection") or timeNowUTC(),
                     data.get("devFirstConnection") or timeNowUTC(),
                     data.get("devLastIP") or "",
-                    data.get("devGUID") or "",
+                    data.get("devGUID") or str(uuid.uuid4()),
                     data.get("devCustomProps") or "",
                     data.get("devSourcePlugin") or "DUMMY",
                     data.get("devForceStatus") or "dont_force",

@@ -21,8 +21,9 @@ Ensure all work begins with **documentation-first understanding**, **PRD validat
   1. `/CONTRIBUTING.md`
   2. `/README.md`
   3. `/.github/skills/code-standards/SKILL.md`
-  4. `/docs/**`
-  5. Related module/code context if referenced
+  4. `/.github/skills/database-patterns/SKILL.md` — read when the feature touches the `Devices` table or requires audit/history logging
+  5. `/docs/**`
+  6. Related module/code context if referenced
 
 * Extract:
 
@@ -68,6 +69,13 @@ If anything is unclear:
   * Duplicate logic
   * Breaking assumptions
   * Plugin or API mismatches
+
+* **If the feature writes to the `Devices` table:**
+
+  * Load `/.github/skills/database-patterns/SKILL.md`
+  * Audit all write paths listed there — confirm which are affected
+  * Determine if a SQLite trigger or Python hook is the right approach
+  * Check if `*Source` fields already solve attribution requirements
 
 * Clearly report inconsistencies before proceeding
 

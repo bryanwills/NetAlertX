@@ -332,14 +332,14 @@
 
         <!-- Monitoring menu item -->
 
-        <li class=" treeview <?php if (in_array (basename($_SERVER['SCRIPT_NAME']), array('presence.php', 'report.php', 'events.php', 'userNotifications.php' ) ) ){ echo 'active menu-open'; } ?>">
+        <li class=" treeview <?php if (in_array (basename($_SERVER['SCRIPT_NAME']), array('presence.php', 'report.php', 'events.php', 'userNotifications.php', 'changeLog.php' ) ) ){ echo 'active menu-open'; } ?>">
           <a href="#">
           <i class="fa fa-fw fa-chart-bar"></i> <span><?= lang('Navigation_Monitoring');?></span>
             <span class="pull-right-container">
               <i class="fa fa-angle-left pull-right"></i>
             </span>
           </a>
-          <ul class="treeview-menu " style="display: <?php if (in_array (basename($_SERVER['SCRIPT_NAME']), array('presence.php', 'report.php', 'events.php', 'userNotifications.php' ) ) ){ echo 'block'; } else {echo 'none';} ?>;">
+          <ul class="treeview-menu " style="display: <?php if (in_array (basename($_SERVER['SCRIPT_NAME']), array('presence.php', 'report.php', 'events.php', 'userNotifications.php', 'changeLog.php' ) ) ){ echo 'block'; } else {echo 'none';} ?>;">
             <li>
               <a href="presence.php">  <?= lang("Navigation_Presence");?> </a>
             </li>
@@ -351,6 +351,9 @@
             </li>
             <li>
               <a href="userNotifications.php"> <?= lang("Navigation_Notifications");?> </a>
+            </li>
+            <li>
+              <a href="changeLog.php"> <?= lang("Navigation_ChangeHistory");?> </a>
             </li>
 
           </ul>
