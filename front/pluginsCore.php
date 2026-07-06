@@ -9,7 +9,10 @@
 
 <!-- Main content ---------------------------------------------------------- -->
 <?php require 'php/templates/skel_plugins.php'; ?>
-<section class="content">
+<section class="content pluginsCore">
+  <span class="helpIcon"> 
+    <a target="_blank" href="https://docs.netalertx.com/PLUGINS"><i class="fa fa-circle-question"></i></a>
+  </span>
   <div class="plugin-filters hidden" >
     <div class="input-group col-sm-12">
       <label class="col-sm-3"><?= lang('Plugins_Filters_Mac');?></label>

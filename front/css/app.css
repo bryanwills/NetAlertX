@@ -2219,6 +2219,12 @@ textarea[readonly],
     padding-top: 20px;
 }
 
+.pluginsCore .helpIcon
+{
+    margin-left: -20px;
+    font-size: x-small;
+}
+
 /*Hidden special button*/
 
 @media (max-width: 365px) {
@@ -2658,6 +2664,17 @@ table.dataTable tbody > tr.selected
     font-size: x-small;
 }
 
+#panHistory
+{
+    min-height:850px
+}
+
+#panHistory .change-log-skeleton-class 
+{
+    margin-left: 0px;
+    width: calc(100% - 40px);
+}
+
 /* -----------------------------------------------------------------------------
    Loading Skeletons
 ----------------------------------------------------------------------------- */
@@ -2693,7 +2710,7 @@ table.dataTable tbody > tr.selected
 /* Positioning anchors */
 #settingsPage, #devicesPage, #deviceDetailsPage,
 #eventsPage, #presencePage, #reportPage, #notifications, #wf-content-wrapper, #pluginsPage,
-#panDetails, #panSessions, #panPresence, #panEvents, #appEvents {
+#panDetails, #panSessions, #panPresence, #panEvents, #appEvents #panHistory{
     position: relative;
 }
 

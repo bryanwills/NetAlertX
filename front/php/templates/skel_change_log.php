@@ -1,7 +1,7 @@
 <!-- Change log Table Skeleton === -->
-<div id="change-log-skeleton" class="  spinnerTarget">
+<div id="change-log-skeleton" class=" change-log-skeleton-class">
     <section class="box">
-        <div class="skel-table-box  spinnerTarget">
+        <div class="skel-table-box ">
         <div class="skel-table-header-row">
             <?php for ($j = 0; $j < 5; $j++): ?>
             <span class="skel-th skel-shimmer"></span>

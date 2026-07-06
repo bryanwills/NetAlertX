@@ -115,12 +115,12 @@ class DevicesHistoryInstance:
             "changedColumn": [r["changedColumn"] for r in col_rows],
         }
 
-    def get_total_group_count(self, devGUID=None, changedColumn=None, changedBy=None):
+    def get_total_group_count(self, devGUID=None, changedColumn=None, changedBy=None, search=None):
         """
         Return the total number of distinct change-event groups matching the
         given filters. Used by the frontend to calculate total pages.
         """
-        clauses, params = self._build_clauses(devGUID, changedColumn, changedBy)
+        clauses, params = self._build_clauses(devGUID, changedColumn, changedBy, search)
         where = f"WHERE {' AND '.join(clauses)}" if clauses else ""
 
         rows = self._fetchall(

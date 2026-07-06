@@ -15,10 +15,8 @@
   <div class="row">
     <div class="col-xs-12">
       <div class="box">
-
-        <!-- ===================== -->
-        <!-- Filter Bar -->
-        <!-- ===================== -->
+      
+        <!-- Filter Bar -->      
         <div class="box-header" style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
           <select id="filterChangedBy" class="form-control" style="width:200px;">
             <option value=""><?= lang('device_history_col_source'); ?> - All</option>
@@ -31,9 +29,7 @@
           <?= lang('device_history_col_changes'); ?>
         </div>
 
-        <!-- ===================== -->
         <!-- Data Table -->
-        <!-- ===================== -->
         <div class="box-body">
           <table id="changeHistoryTable" class="table table-bordered table-striped">
             <thead>
@@ -321,7 +317,7 @@
       queryString += `?devGUID=${getDevDataByMac(urlMac, "devGUID")}`;
     }
 
-    const url = `${apiBaseUrl}/${apiEndpoint}${encodeURIComponent(queryString)}`;
+    const url = `${apiBaseUrl}/${apiEndpoint}${queryString}`;
 
     $.ajax({
       url,

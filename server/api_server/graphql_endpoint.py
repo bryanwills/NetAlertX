@@ -131,6 +131,7 @@ class Query(ObjectType):
                     devGUID=devGUID,
                     changedColumn=changedColumn,
                     changedBy=changedBy,
+                    search=paging["search"]
                 )
             else:
                 groups = h.get_all_grouped_history(
@@ -145,6 +146,7 @@ class Query(ObjectType):
                 total = h.get_total_group_count(
                     changedColumn=changedColumn,
                     changedBy=changedBy,
+                    search=paging["search"]
                 )
 
             return DeviceHistoryResult(

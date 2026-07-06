@@ -196,7 +196,12 @@ function initDeviceEventsPage()
 
 // -----------------------------------------------------------------------------
 // Recurring function to monitor the URL and reinitialize if needed
-initLazyTab('#panEvents', initDeviceEventsPage);
+function deviceEventsPageUpdater() {
+  initDeviceEventsPage();
+
+  // Run updater again after delay
+  setTimeout(deviceEventsPageUpdater, 200);
+}
 
 deviceEventsPageUpdater();
 
