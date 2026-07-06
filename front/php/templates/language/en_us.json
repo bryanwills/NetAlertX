@@ -777,7 +777,7 @@
     "add_icon_event_tooltip": "Add new icon",
     "add_option_event_tooltip": "Add new value",
     "copy_icons_event_tooltip": "Overwrite icons of all devices with the same device type",
-    "device_history_col_changes": "Select which columns are tracked via the <a href=\"/settings.php#DEV_HIST_TRACKED\"  target=\"_blank\"><code>DEV_HIST_TRACKED</code> </a> setting.",
+    "device_history_col_changes": "Select which columns are tracked via the <a href=\"/settings.php#DEV_HIST_TRACKED\"  target=\"_blank\"><code>DEV_HIST_TRACKED</code></a> setting.",
     "device_history_col_dropdown": "Columns",
     "device_history_col_source": "Modified By",
     "device_history_col_time": "Timestamp",

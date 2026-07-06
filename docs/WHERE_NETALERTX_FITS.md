@@ -122,13 +122,43 @@ NetAlertX supports [device relationships](./NETWORK_TREE.md) to better represent
 
 Many monitoring systems focus only on the current state.
 
-NetAlertX also records historical information so you can answer questions like:
+NetAlertX also records historical information, helping you understand how devices behave over time.
+
+You can answer questions like:
 
 * When was this device first discovered?
 * When was it last online?
-* Which ports have changed over time?
+* How does its network presence change over time?
+* Which configuration attributes have changed?
 
-Historical information provides valuable operational context without requiring a separate logging platform.
+Historical data provides operational context without requiring a separate logging platform.
+
+Two key views help explore this history:
+
+* **Presence View** – when a device was active on the network
+* **Change log** – what changed in the device’s configuration over time
+
+---
+
+## Change log
+
+![Device change log](./img/DEVICE_MANAGEMENT/device_change_log.png)
+
+The **Change log** records all tracked changes to device attributes, showing what changed and when it happened.
+
+Each entry includes:
+
+* Timestamp of the change
+* Previous and new values
+* Source of the change (plugin, workflow, or user action)
+
+You can filter, search, and sort changes to quickly investigate events such as IP changes, hostname updates, VLAN changes, or device classification updates.
+
+| View              | Answers             |
+| ----------------- | ------------------- |
+| **Presence View** | When was it active? |
+| **Change log**    | What changed?       |
+
 
 ---
 

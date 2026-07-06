@@ -1175,6 +1175,82 @@ function isSQLQuery(query) {
   return sqlRegex.test(query);
 }
 
+/**
+ * Lazy tab initializer
+ * - Ensures a tab is only initialized once
+ * - Waits until tab is visible in DOM
+ * - Uses polling (compatible with your existing architecture)
+ */
+
+function waitForAppReady(cb) {
+
+  if (window.__appReady) {
+    cb();
+    return;
+  }
+
+  const t = setInterval(() => {
+
+    if (window.__appReady) {
+      clearInterval(t);
+      cb();
+    }
+
+  }, 50);
+}
+
+function initLazyTab(selector, initFn, intervalMs = 200) {
+
+  const stateKey = `__lazy_init_${selector}`;
+  let initialized = false;
+
+  function runner() {
+
+    // prevent duplicate execution
+    if (initialized || window[stateKey]) return;
+
+    const $el = $(selector);
+
+    // ---------------------------------------------------------
+    // CASE 1: element does not exist → standalone page variant
+    // run immediately (no DOM dependency)
+    // ---------------------------------------------------------
+    if (!$el.length) {
+      initialized = true;
+      window[stateKey] = true;
+
+      try {
+        initFn();
+      } catch (e) {
+        console.error("Lazy init (no-element) failed:", selector, e);
+      }
+      return;
+    }
+
+    // ---------------------------------------------------------
+    // CASE 2: element exists AND is visible → run immediately
+    // ---------------------------------------------------------
+    if ($el.is(':visible')) {
+      initialized = true;
+      window[stateKey] = true;
+
+      try {
+        initFn();
+      } catch (e) {
+        console.error("Lazy init (visible) failed:", selector, e);
+      }
+      return;
+    }
+
+    // ---------------------------------------------------------
+    // CASE 3: element exists but hidden → wait for visibility
+    // (tab mode)
+    // ---------------------------------------------------------
+    setTimeout(runner, intervalMs);
+  }
+
+  runner();
+}
 
 // -------------------------------------------------------------------
 // Get corresponding plugin setting object

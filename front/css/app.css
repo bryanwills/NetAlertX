@@ -1001,6 +1001,19 @@ height: 50px;
     opacity: .75;
 }
 
+#presencePage .helpIcon{
+    top: 2px;
+    display: initial;
+    font-size: x-small;
+}
+
+.calendarHelpIcon{
+    display: block;
+    position: absolute;
+    font-size: x-small;
+    top: -5px;
+}
+
 /* --------------------------------------------------------- */
 /*                         report                            */
 /* --------------------------------------------------------- */
@@ -2636,7 +2649,18 @@ table.dataTable tbody > tr.selected
     background-color: rgba(140, 140, 140, 0.05);
 }
 
-/* ===== Loading Skeleton ===== */
+/* -----------------------------------------------------------------------------
+   Change log
+----------------------------------------------------------------------------- */
+
+.change-log .helpIcon{
+    left: 15px;
+    font-size: x-small;
+}
+
+/* -----------------------------------------------------------------------------
+   Loading Skeletons
+----------------------------------------------------------------------------- */
 
 /* Custom properties (overridden in dark-patch.css for Dark/System themes) */
 :root {
