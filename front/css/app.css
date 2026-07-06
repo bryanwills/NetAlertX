@@ -2710,7 +2710,7 @@ table.dataTable tbody > tr.selected
 /* Positioning anchors */
 #settingsPage, #devicesPage, #deviceDetailsPage,
 #eventsPage, #presencePage, #reportPage, #notifications, #wf-content-wrapper, #pluginsPage,
-#panDetails, #panSessions, #panPresence, #panEvents, #appEvents #panHistory{
+#panDetails, #panSessions, #panPresence, #panEvents, #appEvents {
     position: relative;
 }
 

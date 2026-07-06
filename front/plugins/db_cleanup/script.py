@@ -163,9 +163,12 @@ def cleanup_database(
     # -----------------------------------------------------
     # Cleanup DevicesHistory
     if DEV_HIST_DAYS > 0:
-        mylog("verbose", f"[{pluginName}] DevicesHistory: Delete rows older than {DEV_HIST_DAYS} days")
-        deleted = DevicesHistoryInstance().prune_history(DEV_HIST_DAYS)
-        mylog("verbose", [f"[{pluginName}] DevicesHistory deleted rows: {deleted}"])
+        try:
+            mylog("verbose", f"[{pluginName}] DevicesHistory: Delete rows older than {DEV_HIST_DAYS} days")
+            deleted = DevicesHistoryInstance().prune_history(DEV_HIST_DAYS)
+            mylog("verbose", f"[{pluginName}] DevicesHistory deleted rows: {deleted}")
+        except Exception as e:
+            mylog("none", f"[{pluginName}] DevicesHistory cleanup failed: {e}")
 
     # -----------------------------------------------------
     # Cleanup New Devices
