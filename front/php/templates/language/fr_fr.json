@@ -69,7 +69,7 @@
     "DEEP_SLEEP_description": "Diminue l'utilisation du processeur, en augmentant les temps de repos entre les cycles de calcul. Quand activé, les scans peuvent être retardés jusqu'à 1 minute, et l'interface peut être moins réactive.",
     "DEEP_SLEEP_name": "Veille profonde",
     "DEV_HIST_DAYS_description": "Nombre de jours d'historique des changements des champs d'appareil. Mettre 0 pour désactiver complètement le moteur d'audit et réduire l'utilisation des ressources.",
-    "DEV_HIST_DAYS_name": "Durée de conservation des changements de colonnes (jours)",
+    "DEV_HIST_DAYS_name": "Durée de conservation des changements de colonnes",
     "DEV_HIST_TRACKED_description": "Les colonnes d'appareils dont les changements sont à surveiller. Ajouter ou supprimer des noms de champs pour contrôler ce qui est audité dans les journaux de changements.",
     "DEV_HIST_TRACKED_name": "Changements de colonnes suivis",
     "DISCOVER_PLUGINS_description": "Désactivez cette option pour accélérer le démarrage et l'enregistrement de paramètres. Quand elle est désactivée, les plugins ne sont pas découverts, et vous ne pouvez près ajouter de nouveaux plugins au paramètre <code>LOADED_PLUGINS</code>.",
