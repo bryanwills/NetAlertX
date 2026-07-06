@@ -69,7 +69,7 @@
     "DEEP_SLEEP_description": "Lowers CPU usage by extending idle wait times between processing cycles. When enabled, scans may be delayed by up to 1 minute and the UI might become less responsive.",
     "DEEP_SLEEP_name": "Deep sleep",
     "DEV_HIST_DAYS_description": "Number of days to retain device field change history. Set to 0 to completely disable the auditing engine and reduce resource usage.",
-    "DEV_HIST_DAYS_name": "Column changes retention (Days)",
+    "DEV_HIST_DAYS_name": "Column changes retention",
     "DEV_HIST_TRACKED_description": "Devices columns to monitor for changes. Add or remove field names to control what gets audited in the change log.",
     "DEV_HIST_TRACKED_name": "Tracked column changes",
     "DISCOVER_PLUGINS_description": "Disable this option to speed up initialization and settings saving. When disabled, plugins are not discovered, and you cannot add new plugins to the <code>LOADED_PLUGINS</code> setting.",
