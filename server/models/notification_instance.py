@@ -126,9 +126,14 @@ class NotificationInstance:
             mail_text = mail_text.replace("REPORT_DASHBOARD_URL", self.serverUrl)
             mail_html = mail_html.replace("REPORT_DASHBOARD_URL", self.serverUrl)
 
+            # Preheaders for preview
+            preheaders = []
+
             # Generate TEXT & HTML for each notification section
             for section in SECTION_ORDER:
-                html, text = construct_notifications(self.JSON, section)
+                html, text, preheader = construct_notifications(self.JSON, section)
+                if preheader:
+                    preheaders.append(preheader)
                 placeholder = f"{section.upper()}_TABLE"
                 mail_text = mail_text.replace(placeholder, text + "\n")
                 mail_html = mail_html.replace(placeholder, html)
@@ -139,6 +144,11 @@ class NotificationInstance:
             # Create clickable MAC links
             mail_html = generate_mac_links(
                 mail_html, conf.REPORT_DASHBOARD_URL + "/deviceDetails.php?mac="
+            )
+
+            # Add Preheaders for preview after mac links created
+            mail_html = mail_html.replace(
+                "PREHEADER", " • ".join(preheaders)
             )
 
             final_html = indent(
@@ -276,24 +286,23 @@ class NotificationInstance:
 # -----------------------------------------------------------------------------
 # Reporting
 # -----------------------------------------------------------------------------
-
-
 # ------------------------------------------------------------------------------
 def construct_notifications(JSON, section):
     jsn = JSON[section]
 
     # Return if empty
     if jsn == []:
-        return "", ""
+        return "", "", ""
 
     tableTitle = JSON[section + "_meta"]["title"]
     headers = JSON[section + "_meta"]["columnNames"]
 
     html = ""
     text = ""
+    preheader_preview = ""
 
     table_attributes = {
-        "style": "border-collapse: collapse; font-size: 12px; color:#70707",
+        "style": "border-collapse: collapse; font-size: 12px; color: #70707;",
         "width": "100%",
         "cellspacing": 0,
         "cellpadding": "3px",
@@ -326,6 +335,9 @@ def construct_notifications(JSON, section):
             table_attributes=table_attributes,
         )
 
+        # pre-header in emails (html) to show a more valuable preview
+        preheader_preview = build_preheader(tableTitle, jsn, headers)
+
         # Cleanup the generated HTML table notification
         html = (
             format_table(html, "data", headerProps, tableTitle)
@@ -357,7 +369,7 @@ def construct_notifications(JSON, section):
         for header in headers:
             html = format_table(html, header, thProps)
 
-    return html, text
+    return html, text, preheader_preview
 
 
 # -----------------------------------------------------------------------------
@@ -378,3 +390,26 @@ def format_table(html, thValue, props, newThValue=""):
     return html.replace(
         "<th>" + thValue + "</th>", "<th " + props + " >" + newThValue + "</th>"
     )
+
+
+# -----------------------------------------------------------------------------
+# Pre-header Preview
+def build_preheader(tableTitle, jsn, headers):
+    previews = []
+
+    # pre-headers for email previews
+    preview_fields = headers[:3]
+
+    for entry in jsn[:3]:
+        vals = [
+            str(entry[h])
+            for h in preview_fields
+            if entry.get(h)
+        ]
+        previews.append(" • ".join(vals))
+
+    suffix = ""
+    if len(jsn) > 3:
+        suffix = f" (+{len(jsn) - 3} more)"
+
+    return f"{tableTitle}: " + "; ".join(previews) + suffix

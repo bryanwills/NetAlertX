@@ -221,8 +221,8 @@ def get_notifications(db):
             sqlQuery = template.format(**fallback_vars)
             parameters = {}
 
-        mylog("debug", [f"[Notification] {section} SQL query: ", sqlQuery])
-        mylog("debug", [f"[Notification] {section} parameters: ", parameters])
+        mylog("trace", [f"[Notification] {section} SQL query: ", sqlQuery])
+        mylog("trace", [f"[Notification] {section} parameters: ", parameters])
 
         try:
             json_obj = db.get_table_as_json(sqlQuery, parameters)

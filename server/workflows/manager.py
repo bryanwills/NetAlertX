@@ -28,7 +28,6 @@ class WorkflowManager:
 
     # -------------------------------------------------------------------------
     # Token validation
-
     def _validate_workflow_tokens(self, workflow):
         """Recursively scan a workflow dict for {{trigger.X}} tokens.
         Returns True if every token maps to a valid Devices column."""
@@ -52,7 +51,6 @@ class WorkflowManager:
 
     # -------------------------------------------------------------------------
     # Loading
-
     def load_workflows(self):
         """Load workflows from workflows.json, rejecting any with invalid tokens."""
         try:
@@ -87,7 +85,6 @@ class WorkflowManager:
 
     # -------------------------------------------------------------------------
     # Event processing
-
     def process_event(self, event):
         """Process one AppEvent against all enabled workflows."""
         evGuid = event["guid"]
@@ -116,7 +113,6 @@ class WorkflowManager:
 
     # -------------------------------------------------------------------------
     # Workflow execution
-
     def execute_workflow(self, workflow, trigger):
         """Execute workflow actions if any condition group evaluates to True."""
         wfName = workflow["name"]
@@ -130,11 +126,11 @@ class WorkflowManager:
             evaluator = ConditionGroup(condition_group)
             if evaluator.evaluate(trigger):
                 mylog("none", f"[WF] Workflow {wfName} will be executed - conditions were evaluated as TRUE")
-                mylog("debug", [f"[WF] Workflow condition_group: {condition_group}"])
+                mylog("trace", [f"[WF] Workflow condition_group: {condition_group}"])
                 self.execute_actions(workflow["actions"], trigger)
                 return
 
-        mylog("none", ["[WF] No condition group matched. Actions not executed."])
+        mylog("trace", ["[WF] No condition group matched. Actions not executed."])
 
     def _resolve_target_devices(self, action, trigger_device):
         """Return the list of device dicts that the action should be applied to.
@@ -180,7 +176,7 @@ class WorkflowManager:
             target_devices = self._resolve_target_devices(action, trigger_obj)
 
             if not target_devices:
-                mylog("debug", [f"[WF] No target devices matched for action '{action_type}'"])
+                mylog("trace", [f"[WF] No target devices matched for action '{action_type}'"])
                 continue
 
             for target_device in target_devices:

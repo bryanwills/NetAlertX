@@ -100,12 +100,12 @@ def get_device_data(site, api):
     # --- Devices ---
     unifi_devices_resp = api.get_unifi_devices(site_id)
     unifi_devices = unifi_devices_resp.get("data", [])
-    mylog('verbose', [f'[{pluginName}] Site: {site_name} unifi devices: {json.dumps(unifi_devices_resp, indent=2)}'])
+    mylog('trace', [f'[{pluginName}] Site: {site_name} unifi devices: {json.dumps(unifi_devices_resp, indent=2)}'])
 
     # --- Clients ---
     clients_resp = api.get_clients(site_id)
     clients = clients_resp.get("data", [])
-    mylog('verbose', [f'[{pluginName}] Site: {site_name} clients: {json.dumps(clients_resp, indent=2)}'])
+    mylog('trace', [f'[{pluginName}] Site: {site_name} clients: {json.dumps(clients_resp, indent=2)}'])
 
     # Build a lookup for devices by their 'id' to find parent MAC easily
     device_id_to_mac = {}
