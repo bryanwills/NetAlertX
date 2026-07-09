@@ -1011,7 +1011,7 @@ height: 50px;
     display: block;
     position: absolute;
     font-size: x-small;
-    top: -5px;
+    top: 5px;
 }
 
 /* --------------------------------------------------------- */
@@ -2221,7 +2221,7 @@ textarea[readonly],
 
 .pluginsCore .helpIcon
 {
-    margin-left: -20px;
+    margin-left: -15px;
     font-size: x-small;
 }
 
@@ -2607,21 +2607,47 @@ table.dataTable tbody > tr.selected
 }
 
 /* -----------------------------------------------------------------------------
-   Donations
+   Device -> Details
 ----------------------------------------------------------------------------- */
-.donations .box
+#panDetails
 {
-    padding:15px;
-    margin-bottom: 0px;
+    padding:10px;
 }
-.donations .box-header
+
+/* -----------------------------------------------------------------------------
+   Device -> Tools
+----------------------------------------------------------------------------- */
+#panTools
 {
-    color:15px;
+    padding:10px;
 }
-.donations h3
+
+/* -----------------------------------------------------------------------------
+   Device -> Sessions
+----------------------------------------------------------------------------- */
+#panSessions
 {
-    margin-top: 10px;
+    padding:10px;
 }
+
+
+/* -----------------------------------------------------------------------------
+   Device -> Presence
+----------------------------------------------------------------------------- */
+#panPresence
+{
+    padding:10px;
+}
+
+/* -----------------------------------------------------------------------------
+   Device -> Events
+----------------------------------------------------------------------------- */
+#panEvents
+{
+    padding:10px;
+}
+
+
 /* -----------------------------------------------------------------------------
    Field Lock/Unlock Buttons & Source Indicators
 ----------------------------------------------------------------------------- */
@@ -2660,13 +2686,24 @@ table.dataTable tbody > tr.selected
 ----------------------------------------------------------------------------- */
 
 .change-log .helpIcon{
+    font-size: x-small;
+    top: 65px; 
+}
+
+#panHistory .change-log .helpIcon{
     left: 15px;
     font-size: x-small;
+    top: 45px;
 }
 
 #panHistory
 {
     min-height:850px
+}
+
+#navDevice .tab-content
+{
+    padding:0px;
 }
 
 #panHistory .change-log-skeleton-class 
@@ -2729,7 +2766,7 @@ table.dataTable tbody > tr.selected
 #settings-skeleton, #devices-skeleton, #device-details-skeleton,
 #events-skeleton, #presence-skeleton, #report-skeleton, #skel-app-events,
 #notifications-skeleton, #workflows-skeleton, #plugins-skeleton { z-index: 50; }
-.skel-tab-pane           { margin: -10px; z-index: 10; min-height: 400px; background-color: var(--skel-panel-bg);}
+.skel-tab-pane           { z-index: 10; min-height: 400px; background-color: var(--skel-panel-bg);}
 #settings-skeleton       { margin: 15px; min-height: 500px; }
 #devices-skeleton        { margin: 15px; top: 50px; min-height: 500px; }
 #skel-app-events         { margin: 15px; top: 50px; min-height: 500px; z-index: inherit;}
@@ -2741,7 +2778,7 @@ table.dataTable tbody > tr.selected
 #workflows-skeleton      { top: 50px; width: 770px; margin: 0 auto; min-height: 300px; }
 #plugins-skeleton        { top: 50px; padding: 0; min-height: 400px; }
 #change-log-skeleton     { display: block;  min-height: 400px;  z-index: 1; position: absolute; margin-left: 15px; padding-top: 15px; width:100%;}
-#skel-tab-sessions, #skel-tab-events, #skel-tab-presence {margin: -10px;  padding: 20px;}
+#skel-tab-sessions, #skel-tab-events, #skel-tab-presence { padding: 20px;}
 
 /* Hide scrollbars */
 #skel-tab-sessions, #skel-tab-events, #skel-tab-presence {

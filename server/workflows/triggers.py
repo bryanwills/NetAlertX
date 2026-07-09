@@ -24,7 +24,7 @@ class Trigger:
             self.object_type == event["objectType"] and self.event_type == event["appEventType"]
         )
 
-        mylog("debug", f"""[WF] self.triggered '{self.triggered}' for event '{get_array_from_sql_rows(event)} and trigger {json.dumps(triggerJson)}' """)
+        mylog("trace", f"""[WF] self.triggered '{self.triggered}' for event '{get_array_from_sql_rows(event)} and trigger {json.dumps(triggerJson)}' """)
 
         if self.triggered:
             # object type corresponds with the DB table name
@@ -45,10 +45,10 @@ class Trigger:
                     WHERE {refField} = '{event["objectGuid"]}'
                 """
 
-            mylog("debug", [query])
+            mylog("trace", [query])
 
             result = db.sql.execute(query).fetchall()
-            
+
             if len(result) > 0:
                 self.object = result[0]
             else:

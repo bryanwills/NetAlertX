@@ -206,12 +206,6 @@ class DevicesHistoryInstance:
         clauses, params = self._build_clauses(devGUID, changedColumn, changedBy, search)
         where = f"WHERE {' AND '.join(clauses)}" if clauses else ""
 
-        mylog("none", f"[HISTORY] SQL {where} params={params}")
-        mylog("none", f"[HISTORY] sort={sort}")
-        mylog("none", f"[HISTORY] sort type={type(sort)}")
-        mylog("none", f"[HISTORY] search {search} ")
-        mylog("none", f"[HISTORY] FINAL CALL limit={limit} offset={offset} sort={sort}")
-
         rows = self._fetchall(
             f"""
             SELECT devGUID, timestamp, changedBy, changedColumn, oldValue, newValue

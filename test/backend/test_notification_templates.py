@@ -74,9 +74,10 @@ class TestConstructNotificationsTemplates(unittest.TestCase):
 
         mock_setting.return_value = ""
         json_data = _make_json("new_devices", [], [])
-        html, text = construct_notifications(json_data, "new_devices")
+        html, text, preheader_preview = construct_notifications(json_data, "new_devices")
         self.assertEqual(html, "")
         self.assertEqual(text, "")
+        self.assertEqual(preheader_preview, "")
 
     # -----------------------------------------------------------------
     # Legacy fallback: no template → vertical Header: Value per device
@@ -93,7 +94,7 @@ class TestConstructNotificationsTemplates(unittest.TestCase):
         json_data = _make_json(
             "new_devices", SAMPLE_NEW_DEVICES, NEW_DEVICE_COLUMNS, "🆕 New devices"
         )
-        html, text = construct_notifications(json_data, "new_devices")
+        html, text, preheader_preview = construct_notifications(json_data, "new_devices")
 
         # Section header must be present
         self.assertIn("🆕 New devices", text)
@@ -123,7 +124,7 @@ class TestConstructNotificationsTemplates(unittest.TestCase):
         json_data = _make_json(
             "new_devices", SAMPLE_NEW_DEVICES, NEW_DEVICE_COLUMNS, "🆕 New devices"
         )
-        _, text = construct_notifications(json_data, "new_devices")
+        _, text, _ = construct_notifications(json_data, "new_devices")
 
         self.assertIn("MyPhone (aa:bb:cc:dd:ee:ff) - 192.168.1.42", text)
         self.assertIn("Laptop (11:22:33:44:55:66) - 192.168.1.99", text)
@@ -143,7 +144,7 @@ class TestConstructNotificationsTemplates(unittest.TestCase):
         json_data = _make_json(
             "new_devices", SAMPLE_NEW_DEVICES, NEW_DEVICE_COLUMNS, "🆕 New devices"
         )
-        _, text = construct_notifications(json_data, "new_devices")
+        _, text, _ = construct_notifications(json_data, "new_devices")
 
         self.assertIn("MyPhone - {NonExistent}", text)
         self.assertIn("Laptop - {NonExistent}", text)
@@ -163,7 +164,7 @@ class TestConstructNotificationsTemplates(unittest.TestCase):
         json_data = _make_json(
             "new_devices", SAMPLE_NEW_DEVICES, NEW_DEVICE_COLUMNS, "🆕 New devices"
         )
-        _, text = construct_notifications(json_data, "new_devices")
+        _, text, _ = construct_notifications(json_data, "new_devices")
 
         self.assertNotIn("🆕 New devices", text)
         self.assertNotIn("---------", text)
@@ -183,7 +184,7 @@ class TestConstructNotificationsTemplates(unittest.TestCase):
         json_data = _make_json(
             "new_devices", SAMPLE_NEW_DEVICES, NEW_DEVICE_COLUMNS, "🆕 New devices"
         )
-        _, text = construct_notifications(json_data, "new_devices")
+        _, text, _ = construct_notifications(json_data, "new_devices")
 
         # Headers should be shown by default
         self.assertIn("🆕 New devices", text)
@@ -204,7 +205,7 @@ class TestConstructNotificationsTemplates(unittest.TestCase):
         json_data = _make_json(
             "new_devices", SAMPLE_NEW_DEVICES, NEW_DEVICE_COLUMNS, "🆕 New devices"
         )
-        _, text = construct_notifications(json_data, "new_devices")
+        _, text, _ = construct_notifications(json_data, "new_devices")
 
         self.assertIn("MyPhone ({BadField}) - 192.168.1.42", text)
 
@@ -234,7 +235,7 @@ class TestConstructNotificationsTemplates(unittest.TestCase):
         columns = ["devName", "eveMac", "devVendor", "eveIp", "eveDateTime", "eveEventType", "devComments"]
 
         json_data = _make_json("down_devices", down_devices, columns, "🔴 Down devices")
-        _, text = construct_notifications(json_data, "down_devices")
+        _, text, _ = construct_notifications(json_data, "down_devices")
 
         self.assertIn("Router (ff:ee:dd:cc:bb:aa) down since 2025-01-15 08:00:00", text)
 
@@ -264,7 +265,7 @@ class TestConstructNotificationsTemplates(unittest.TestCase):
         columns = ["devName", "eveMac", "devVendor", "eveIp", "eveDateTime", "eveEventType", "devComments"]
 
         json_data = _make_json("down_reconnected", reconnected, columns, "🔁 Reconnected down devices")
-        _, text = construct_notifications(json_data, "down_reconnected")
+        _, text, _ = construct_notifications(json_data, "down_reconnected")
 
         self.assertIn("Switch (aa:11:bb:22:cc:33) reconnected at 2025-01-15 09:30:00", text)
 
@@ -283,14 +284,14 @@ class TestConstructNotificationsTemplates(unittest.TestCase):
         json_data = _make_json(
             "new_devices", SAMPLE_NEW_DEVICES, NEW_DEVICE_COLUMNS, "🆕 New devices"
         )
-        html_without, _ = construct_notifications(json_data, "new_devices")
+        html_without, _, _ = construct_notifications(json_data, "new_devices")
 
         # Get HTML with template
         mock_setting.side_effect = self._setting_factory({
             "NTFPRCS_TEXT_SECTION_HEADERS": True,
             "NTFPRCS_TEXT_TEMPLATE_new_devices": "{devName} ({eveMac})",
         })
-        html_with, _ = construct_notifications(json_data, "new_devices")
+        html_with, _, _ = construct_notifications(json_data, "new_devices")
 
         self.assertEqual(html_without, html_with)
 

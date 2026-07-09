@@ -56,7 +56,7 @@ class ConditionGroup:
     """Handles condition groups with AND, OR logic, supporting nested groups."""
 
     def __init__(self, group_json):
-        mylog("verbose", f"[WF] ConditionGroup json.dumps(group_json): {json.dumps(group_json)}")
+        mylog("trace", f"[WF] ConditionGroup json.dumps(group_json): {json.dumps(group_json)}")
 
         self.logic = group_json.get("logic", "AND").upper()
         self.conditions = []
@@ -76,5 +76,5 @@ class ConditionGroup:
             return any(results)
         else:
             m = f"[WF] ConditionGroup unsupported logic: {self.logic}"
-            mylog("verbose", [m])
+            mylog("none", [m])
             raise ValueError(m)
