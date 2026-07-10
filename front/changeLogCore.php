@@ -14,10 +14,10 @@
 
   <div class="row">
     <div class="col-xs-12">
-      <div class="box">
+      <div >
       
         <!-- Filter Bar -->      
-        <div class="box-header" style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+        <div class="changeLogFilter" >
           <select id="filterChangedBy" class="form-control" style="width:200px;">
             <option value=""><?= lang('device_history_col_source'); ?> - All</option>
           </select>

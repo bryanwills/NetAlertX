@@ -248,7 +248,7 @@ a[target="_blank"] {
 .main-footer {
     padding: 5px;
     z-index: 10000;
-    position: inherit;
+    /* position: inherit; */
 }
 
 .header-server-time
@@ -2687,7 +2687,7 @@ table.dataTable tbody > tr.selected
 
 .change-log .helpIcon{
     font-size: x-small;
-    top: 65px; 
+    top: 0px; 
 }
 
 #panHistory .change-log .helpIcon{
@@ -2706,10 +2706,23 @@ table.dataTable tbody > tr.selected
     padding:0px;
 }
 
-#panHistory .change-log-skeleton-class 
+.changeLogFilter{
+    display:flex; 
+    gap:10px; 
+    flex-wrap:wrap; 
+    align-items:center;
+    padding:5px;
+}
+
+#changeHistoryPage .box
 {
-    margin-left: 0px;
-    width: calc(100% - 40px);
+    margin-bottom:0px
+}
+
+#changeHistoryPage .change-log-skeleton-class
+{
+    padding: 15px;
+    width: auto;
 }
 
 /* -----------------------------------------------------------------------------
@@ -2755,7 +2768,7 @@ table.dataTable tbody > tr.selected
 
 /* Page-level overlay base */
 #settings-skeleton, #devices-skeleton, #device-details-skeleton,
-#events-skeleton, #presence-skeleton, #report-skeleton, #skel-app-events, #change-log-skeleton
+#events-skeleton, #presence-skeleton, #report-skeleton, #skel-app-events, #change-log-skeleton,
 #notifications-skeleton, #workflows-skeleton, #plugins-skeleton, .skel-tab-pane {
     position: absolute;
     top: 0;
@@ -2770,7 +2783,7 @@ table.dataTable tbody > tr.selected
 #settings-skeleton       { margin: 15px; min-height: 500px; }
 #devices-skeleton        { margin: 15px; top: 50px; min-height: 500px; }
 #skel-app-events         { margin: 15px; top: 50px; min-height: 500px; z-index: inherit;}
-#device-details-skeleton { margin: 15px; top: 42px; }
+#device-details-skeleton { margin: 15px; top: 42px; padding: 10px }
 #events-skeleton         { margin: 15px; top: 50px; min-height: 500px; }
 #presence-skeleton       { margin: 15px; top: 50px; min-height: 500px; }
 #report-skeleton         { margin: 15px; top: 50px; min-height: 400px; }
@@ -2910,6 +2923,9 @@ table.dataTable tbody > tr.selected
 /* ----- Systeminfo tabs -------------------------------------------------- */
 .skel-info-tab          { padding: 15px; min-height: 360px; }
 .skel-info-tab          { margin: -10px;}
+
+/* ----- ChangeLog tabs -------------------------------------------------- */
+#panHistory .change-log-skeleton-class { width: calc(100% - 30px); padding: 5px; top: auto;}
 
 /* ===== /Loading Skeleton ===== */
 
