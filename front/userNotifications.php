@@ -15,12 +15,12 @@ require 'php/templates/header.php';
 
 <div id="notifications" class="content-wrapper">
 <?php require 'php/templates/skel_notifications.php'; ?>
-  <section class="content">
+  <section class="content table-responsive">
     <div class="notification-box box box-gray col-xs-12" >
       <div class="box-header">
        <h3 class="box-title text-aqua"><?= lang('Notifications_All');?></h3>
       </div>
-      <div class="box-body table-responsive">
+      <div class=" ">
         <table id="notificationsTable" class="table table-bordered table-hover table-striped display">
           <thead>
             <tr>
@@ -75,6 +75,7 @@ require 'php/templates/header.php';
 
   $(document).ready(function() {
     const table = $('#notificationsTable').DataTable({
+      "autoWidth": false,
       "pageLength": parseInt(getSetting("UI_DEFAULT_PAGE_SIZE")),
       'lengthMenu'   : getLengthMenu(parseInt(getSetting("UI_DEFAULT_PAGE_SIZE"))),
       "columns": [
