@@ -24,12 +24,12 @@ require 'php/templates/header.php';
         <table id="notificationsTable" class="table table-bordered table-hover table-striped display">
           <thead>
             <tr>
-              <th>Timestamp</th>
-              <th>Level</th>
-              <th>Content</th>
+              <th><?= lang('gen_timestamp');?></th>
+              <th><?= lang('gen_level');?></th>
+              <th><?= lang('gen_content');?></th>
               <th>GUID</th>
-              <th>Read</th>
-              <th>Actions</th>
+              <th><?= lang('gen_read');?></th>
+              <th><?= lang('gen_actions');?></th>
             </tr>
           </thead>
           <tbody>
