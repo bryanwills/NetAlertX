@@ -146,9 +146,14 @@ class NotificationInstance:
                 mail_html, conf.REPORT_DASHBOARD_URL + "/deviceDetails.php?mac="
             )
 
-            # Add Preheaders for preview after mac links created
+            # Add preheader for inbox preview after all links have been generated.
+            # Invisible padding prevents email clients from showing the start of the email body.
+            preheader = " • ".join(preheaders)
+            padding = "&nbsp;" * 40 + "&#8203;" * 40
+
             mail_html = mail_html.replace(
-                "PREHEADER", " • ".join(preheaders)
+                "PREHEADER",
+                preheader + padding,
             )
 
             final_html = indent(
