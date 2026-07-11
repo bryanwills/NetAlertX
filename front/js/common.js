@@ -1041,11 +1041,6 @@ function showSpinner(stringKey = "Loading", target = null) {
   });
 }
 
-function hideSpinner() {
-  $("#loadingSpinner")
-    .removeClass("visible")
-    .fadeOut(animationTime);
-}
 
 function hideSpinner() {
   clearTimeout(spinnerTimeout);
@@ -1053,7 +1048,7 @@ function hideSpinner() {
 
   if (!spinner.length) return;
 
-  const target = $(".spinnerTarget").first();
+  const target = $(".spinnerTarget").last();
 
   if (target.length) {
     // Lock position to target

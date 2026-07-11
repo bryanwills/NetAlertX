@@ -1,6 +1,6 @@
 <!-- Change log Table Skeleton === -->
-<div id="change-log-skeleton" class=" change-log-skeleton-class">
-    <section class="box">
+<div id="change-log-skeleton" class="change-log-skeleton-class">
+    <section>
         <div class="skel-table-box ">
         <div class="skel-table-header-row">
             <?php for ($j = 0; $j < 5; $j++): ?>

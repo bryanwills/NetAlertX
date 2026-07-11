@@ -599,8 +599,15 @@ window.onload = function() {
 
 // -----------------------------------------------------------------------------
 function hideDeviceDetailsSkeleton() {
-  $('#device-details-skeleton').fadeOut(0, function() { $(this).remove(); });
+  $('#device-details-skeleton').fadeOut(0, function() { $(this).hide(); });
 }
+
+// -----------------------------------------------------------------------------
+function showDeviceDetailsSkeleton() {
+  var $skel = $('#device-details-skeleton');
+  $skel.stop(true, true).fadeIn(10);
+}
+
 
 // Fallback: remove main skeleton and all tab pane skeletons if init stalls
 setTimeout(function() {
