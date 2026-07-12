@@ -316,7 +316,12 @@ def setting_value_to_python_type(set_type, set_value):
 
     # boolean handling
     elif dataType == "boolean" and elementType == "input":
-        value = set_value.lower() in ["true", "1"]
+        if isinstance(set_value, str):
+            value = set_value.lower() in ["true", "1"]
+        elif isinstance(set_value, bool):
+            value = set_value
+        else:
+            value = str(set_value).lower() in ["true", "1"]
 
     # array handling
     elif dataType == "array" and elementType == "select":
