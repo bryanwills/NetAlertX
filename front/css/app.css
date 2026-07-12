@@ -2222,12 +2222,27 @@ textarea[readonly],
 .plugins-description
 {
     padding-top: 20px;
+    padding-left: 5px;
 }
 
 .pluginsCore .helpIcon
 {
     margin-left: -15px;
     font-size: x-small;
+}
+
+.pluginsCore .tab-content
+{
+    padding-left: 5px;
+}
+
+.pluginsCore .tab-content .row
+{
+    margin: 0px;
+}
+
+.plugin-obj-purge{
+    padding: 5px;
 }
 
 /*Hidden special button*/

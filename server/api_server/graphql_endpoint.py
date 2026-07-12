@@ -537,7 +537,7 @@ class Query(ObjectType):
         langStrings = []
 
         # --- CORE JSON FILES ---
-        language_folder = '/app/front/php/templates/language/'
+        language_folder = INSTALL_PATH + '/front/php/templates/language/'
         if os.path.exists(language_folder):
             for filename in os.listdir(language_folder):
                 if filename.endswith('.json') and filename != 'languages.json':
@@ -607,15 +607,48 @@ class Query(ObjectType):
             langStrings = [ls for ls in langStrings if ls.langStringKey == langStringKey]
 
         # --- Fallback to en_us if enabled and requested lang is missing ---
+        # Build a lookup map once without modifying the cached language lists.
         if fallback_to_en and langCode and langCode != "en_us":
+            en_map = {}
+
+            en_us_path = os.path.join(language_folder, "en_us.json")
+
+            try:
+                # get modified time and compared to cached data modified time
+                en_us_mtime = os.path.getmtime(en_us_path)
+
+                if ("core_en_us" not in _langstrings_cache or _langstrings_cache_mtime.get("core_en_us") != en_us_mtime):
+                    with open(en_us_path, "r", encoding="utf-8") as f:
+                        data = json.load(f)
+
+                    _langstrings_cache["core_en_us"] = [
+                        LangString(
+                            langCode="en_us",
+                            langStringKey=k,
+                            langStringText=v
+                        )
+                        for k, v in data.items()
+                    ]
+                    _langstrings_cache_mtime["core_en_us"] = en_us_mtime
+
+            except (FileNotFoundError, json.JSONDecodeError) as e:
+                mylog("none", f"[graphql_schema] Error loading en_us fallback file: {e}")
+
+            # Index core English strings
+            for e in _langstrings_cache.get("core_en_us", []):
+                en_map.setdefault(e.langStringKey, e)
+
+            # Index English plugin strings (do not overwrite core strings)
+            for p in _langstrings_cache.get("plugin", []):
+                if p.langCode == "en_us":
+                    en_map.setdefault(p.langStringKey, p)
+
+            # Replace empty translations with their English equivalent
             for i, ls in enumerate(langStrings):
                 if not ls.langStringText:  # empty string triggers fallback
-                    # try to get en_us version
-                    en_list = _langstrings_cache.get("core_en_us", [])
-                    en_list += [p for p in _langstrings_cache.get("plugin", []) if p.langCode == "en_us"]
-                    en_fallback = [e for e in en_list if e.langStringKey == ls.langStringKey]
+                    en_fallback = en_map.get(ls.langStringKey)
                     if en_fallback:
-                        langStrings[i] = en_fallback[0]
+                        langStrings[i] = en_fallback
 
         mylog('trace', f'[graphql_schema] Collected {len(langStrings)} language strings (langCode={langCode}, key={langStringKey}, fallback_to_en={fallback_to_en})')
 

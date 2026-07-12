@@ -424,6 +424,34 @@ def ensure_Indexes(sql) -> bool:
             "idx_dev_parentmac",
             "CREATE INDEX idx_dev_parentmac ON Devices(devParentMAC)",
         ),
+        (
+            "idx_ses_lower_mac_date",
+            """
+            CREATE INDEX idx_ses_lower_mac_date
+            ON Sessions(LOWER(sesMac), sesDateTimeConnection, sesDateTimeDisconnection, sesStillConnected)
+            """,
+        ),
+        (
+            "idx_eve_lower_mac_date_type",
+            """
+            CREATE INDEX idx_eve_lower_mac_date_type
+            ON Events(LOWER(eveMac), eveDateTime, eveEventType)
+            """,
+        ),
+        (
+            "idx_dev_lower_mac",
+            """
+            CREATE INDEX idx_dev_lower_mac
+            ON Devices(LOWER(devMac))
+            """,
+        ),
+        (
+            "idx_dev_lower_parentmac",
+            """
+            CREATE INDEX idx_dev_lower_parentmac
+            ON Devices(LOWER(devParentMAC))
+            """,
+        ),
         # Optional filter indexes
         ("idx_dev_site", "CREATE INDEX idx_dev_site ON Devices(devSite)"),
         ("idx_dev_group", "CREATE INDEX idx_dev_group ON Devices(devGroup)"),
@@ -437,11 +465,8 @@ def ensure_Indexes(sql) -> bool:
         (
             "idx_plugins_plugin_mac_ip",
             "CREATE INDEX idx_plugins_plugin_mac_ip ON Plugins_Objects(plugin, objectPrimaryId, objectSecondaryId)",
-        ),  # Issue #1251: Optimize name resolution lookup
+        ),
         # Plugins_History: covers both the db_cleanup window function
-        # (PARTITION BY plugin ORDER BY dateTimeChanged DESC) and the
-        # API query (SELECT * … ORDER BY dateTimeChanged DESC).
-        # Without this, both ops do a full 48k-row table sort on every cycle.
         (
             "idx_plugins_history_plugin_dt",
             "CREATE INDEX idx_plugins_history_plugin_dt ON Plugins_History(plugin, dateTimeChanged DESC)",

@@ -667,6 +667,7 @@ function initializeDataTables(prefix, colDefinitions, pluginObj) {
     }
     const skelId = `#skel-${tableId.replace('Table_', 'Target_')}`;
     $(`#${tableId}`).DataTable({
+      autoWidth: false,
       processing: true,
       serverSide: true,
       paging:     true,
