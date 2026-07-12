@@ -80,10 +80,10 @@ def main():
 
         mylog('verbose', [f'[{pluginName}] plugins_to_sync {plugins_to_sync}'])
 
+        index = 0
         for plugin in all_plugins:
             pref = plugin["unique_prefix"]
 
-            index = 0
             if pref in plugins_to_sync:
                 index += 1
                 mylog('verbose', [f'[{pluginName}] synching "{pref}" ({index}/{len(plugins_to_sync)})'])

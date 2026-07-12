@@ -302,7 +302,7 @@ def setting_value_to_python_type(set_type, set_value):
 
     elif dataType == "integer" and (elementType == "input" or elementType == "select"):
         # handle storing/retrieving boolean values as 1/0
-        if set_value.lower() not in ["true", "false"] and isinstance(set_value, str):
+        if isinstance(set_value, str) and set_value.lower() not in ["true", "false"]:
             value = int(set_value)
 
         elif isinstance(set_value, bool):

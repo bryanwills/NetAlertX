@@ -581,6 +581,20 @@ def print_scan_stats(db):
     sql.execute(query)
     stats = sql.fetchall()
 
+    # guard against empty resuolts crashing on stats[0] access below
+    if not stats:
+        stats = [{
+            "devices_detected": 0,
+            "new_devices": 0,
+            "down_alerts": 0,
+            "new_down_alerts": 0,
+            "new_connections": 0,
+            "disconnections": 0,
+            "ip_changes": 0,
+            "scanSourcePlugin": None,
+            "scan_method_count": 0,
+        }]
+
     mylog("verbose", f"[Scan Stats] Devices Detected.......: {stats[0]['devices_detected']}",)
     mylog("verbose", f"[Scan Stats] New Devices............: {stats[0]['new_devices']}")
     mylog("verbose", f"[Scan Stats] Down Alerts............: {stats[0]['down_alerts']}")
@@ -1354,41 +1368,100 @@ def check_mac_or_internet(input_str):
         return False
 
 
-# -------------------------------------------------------------------------------
-# Lookup unknown vendors on devices
-def query_MAC_vendor(pMAC):
-    pMACstr = str(pMAC)
+# ------------------------------------------------------------------------------
+# Vendor database cache
+#
+# The IEEE OUI database is loaded into memory on first use to avoid repeatedly
+# opening and linearly scanning the vendors file for every MAC address lookup.
+# The cache is automatically rebuilt if the selected vendors file changes or is
+# updated on disk.
+# ------------------------------------------------------------------------------
+_vendor_cache = None
+_vendor_cache_path = None
+_vendor_cache_mtime = None
 
-    filePath = vendorsPath
 
-    if os.path.isfile(vendorsPathNewest):
-        filePath = vendorsPathNewest
+# ------------------------------------------------------------------------------
+def _load_vendor_cache():
+    """
+    Load the MAC vendor database into an in-memory dictionary.
 
-    # Check MAC parameter
-    mac = pMACstr.replace(":", "").lower()
-    if len(pMACstr) != 17 or len(mac) != 12:
-        return -2  # return -2 if ignored MAC
+    The cache maps the first six hexadecimal characters of a MAC address
+    (the OUI prefix) to the corresponding vendor name.
 
-    # Search vendor in HW Vendors DB
-    mac_start_string6 = mac[0:6]
+    The cache is only rebuilt when:
+      - It has not been loaded yet.
+      - The selected vendors file changes.
+      - The vendors file modification time changes.
+
+    Returns:
+        None
+    """
+    global _vendor_cache, _vendor_cache_path, _vendor_cache_mtime
+
+    file_path = vendorsPathNewest if os.path.isfile(vendorsPathNewest) else vendorsPath
 
     try:
-        with open(filePath, "r") as f:
-            for line in f:
-                line_lower = (
-                    line.lower()
-                )  # Convert line to lowercase for case-insensitive matching
-                if line_lower.startswith(mac_start_string6):
-                    parts = line.split("\t", 1)
-                    if len(parts) > 1:
-                        vendor = parts[1].strip()
-                        mylog("debug", [f"[Vendor Check] Found '{vendor}' for '{pMAC}' in {vendorsPath}"], )
-                        return vendor
-                    else:
-                        mylog("debug", [f'[Vendor Check] ⚠ ERROR: Match found, but line could not be processed: "{line_lower}"'],)
-                        return -1
+        mtime = os.path.getmtime(file_path)
+    except OSError:
+        mtime = None
 
-        return -1  # MAC address not found in the database
+    # Cache is already up-to-date.
+    if (
+        _vendor_cache is not None and _vendor_cache_path == file_path and _vendor_cache_mtime == mtime
+    ):
+        return
+
+    cache = {}
+
+    try:
+        with open(file_path, "r") as f:
+            for line in f:
+                parts = line.rstrip("\n").split("\t", 1)
+
+                # Expected format:
+                #   <OUI>\t<Vendor Name>
+                if len(parts) == 2:
+                    cache[parts[0].lower()] = parts[1]
+
     except FileNotFoundError:
-        mylog("none", [f"[Vendor Check] ⚠ ERROR: Vendors file {vendorsPath} not found."])
-        return -1
+        mylog("none", [f"[Vendor Check] ⚠ ERROR: Vendors file '{file_path}' not found."])
+
+    _vendor_cache = cache
+    _vendor_cache_path = file_path
+    _vendor_cache_mtime = mtime
+
+
+# ------------------------------------------------------------------------------
+def query_MAC_vendor(pMAC):
+    """
+    Look up the hardware vendor for a MAC address.
+
+    The lookup uses an in-memory cache of the IEEE OUI database for O(1)
+    performance. The vendor database is loaded on first use and automatically
+    reloaded if the underlying file changes.
+
+    Args:
+        pMAC (str): MAC address in the format 'AA:BB:CC:DD:EE:FF'.
+
+    Returns:
+        str: Vendor name if found.
+        -1 : Vendor not found or vendor database unavailable.
+        -2 : Invalid MAC address format.
+    """
+    pMACstr = str(pMAC)
+    mac = pMACstr.replace(":", "").lower()
+
+    # Validate expected MAC address format.
+    if len(pMACstr) != 17 or len(mac) != 12:
+        return -2
+
+    _load_vendor_cache()
+
+    vendor = _vendor_cache.get(mac[:6])
+
+    if vendor:
+        mylog("debug", [f"[Vendor Check] Found '{vendor}' for '{pMAC}'"])
+        return vendor
+
+    return -1

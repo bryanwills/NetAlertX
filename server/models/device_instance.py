@@ -213,11 +213,17 @@ class DeviceInstance:
         )
 
         ports = []
+
         for o in objs:
+            try:
+                port = int(str(o.get('objectSecondaryId') or '').strip())
+            except (TypeError, ValueError):
+                continue
 
-            port = int(o.get('objectSecondaryId') or 0)
-
-            ports.append({"port": port, "service": o.get('watchedValue2', '')})
+            ports.append({
+                "port": port,
+                "service": o.get('watchedValue2', '')
+            })
 
         return ports
 
