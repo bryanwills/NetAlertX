@@ -891,7 +891,7 @@
       "description": [
         {
           "language_code": "en_us",
-          "string": "A little hack - delay adding to the queue in case the process is restarted and previous publish processes aborted (it takes ~<code>2</code>s to update a sensor config on the broker). Tested with <code>2</code>-<code>3</code> seconds of delay. This delay is only applied when devices are created (during the first notification loop). It doesn not affect subsequent scans or notifications."
+          "string": "A little hack - delay adding to the queue in case the process is restarted and previous publish processes aborted (it takes ~<code>2</code>s to update a sensor config on the broker). Tested with <code>2</code>-<code>3</code> seconds of delay. This delay is only applied when devices are created (during the first notification loop). It does not affect subsequent scans or notifications."
         },
         {
           "language_code": "es_es",

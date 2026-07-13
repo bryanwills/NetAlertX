@@ -149,7 +149,8 @@ class NotificationInstance:
             # Add preheader for inbox preview after all links have been generated.
             # Invisible padding prevents email clients from showing the start of the email body.
             preheader = " • ".join(preheaders)
-            padding = "&nbsp;" * 40 + "&#8203;" * 40
+
+            padding = (" &zwnj;&#8199;" * 47)
 
             mail_html = mail_html.replace(
                 "PREHEADER",
