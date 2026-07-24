@@ -7,7 +7,7 @@
  *             All cross-file calls (handleSuccess, showSpinner, etc.) are
  *             call-time dependencies resolved after page load.
  *-------------------------------------------------------------------------------
- #  jokob@duck.com                GNU GPLv3
+ #  netalertx@gmail.com                GNU GPLv3
  ----------------------------------------------------------------------------- */
 
 // Cache version stamp — injected by header.php from the app's .VERSION file.

@@ -5,7 +5,7 @@
 //
 //  util.php - Front module. Server side. Settings and utility functions
 //------------------------------------------------------------------------------
-#  Puche 2021 / 2022+ jokob             jokob@duck.com                GNU GPLv3
+#  Puche 2021 / 2022+ jokob             netalertx@gmail.com                GNU GPLv3
 //------------------------------------------------------------------------------
 
 require dirname(__FILE__).'/../templates/globals.php';

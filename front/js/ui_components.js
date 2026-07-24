@@ -4,7 +4,7 @@
 *
 *  ui_components.js - Front module. Common UI components
 *-------------------------------------------------------------------------------
-#  jokob             jokob@duck.com                GNU GPLv3
+#  jokob             netalertx@gmail.com                GNU GPLv3
 ----------------------------------------------------------------------------- */
 
 
