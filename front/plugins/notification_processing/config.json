@@ -210,7 +210,7 @@
       "type": {
         "dataType": "string",
         "elements": [
-          { "elementType": "input", "elementOptions": [], "transformers": [] }
+          { "elementType": "textarea", "elementOptions": [], "transformers": [] }
         ]
       },
       "default_value": "",
@@ -234,7 +234,7 @@
       "type": {
         "dataType": "string",
         "elements": [
-          { "elementType": "input", "elementOptions": [], "transformers": [] }
+          { "elementType": "textarea", "elementOptions": [], "transformers": [] }
         ]
       },
       "default_value": "",
@@ -258,7 +258,7 @@
       "type": {
         "dataType": "string",
         "elements": [
-          { "elementType": "input", "elementOptions": [], "transformers": [] }
+          { "elementType": "textarea", "elementOptions": [], "transformers": [] }
         ]
       },
       "default_value": "",
@@ -282,7 +282,7 @@
       "type": {
         "dataType": "string",
         "elements": [
-          { "elementType": "input", "elementOptions": [], "transformers": [] }
+          { "elementType": "textarea", "elementOptions": [], "transformers": [] }
         ]
       },
       "default_value": "",
@@ -306,7 +306,7 @@
       "type": {
         "dataType": "string",
         "elements": [
-          { "elementType": "input", "elementOptions": [], "transformers": [] }
+          { "elementType": "textarea", "elementOptions": [], "transformers": [] }
         ]
       },
       "default_value": "",

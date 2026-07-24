@@ -1009,7 +1009,7 @@ function showSpinner(stringKey = "Loading", target = null) {
 
   console.log(resolvedTarget);
   
-  console.log(`spinnerTarget=${resolvedTarget.attr("id")} class=${resolvedTarget.attr("class")} size=${resolvedTarget.outerWidth()}x${resolvedTarget.outerHeight()} parent=${resolvedTarget.parent().outerWidth()}x${resolvedTarget.parent().outerHeight()}`)
+  // console.log(`spinnerTarget=${resolvedTarget.attr("id")} class=${resolvedTarget.attr("class")} size=${resolvedTarget.outerWidth()}x${resolvedTarget.outerHeight()} parent=${resolvedTarget.parent().outerWidth()}x${resolvedTarget.parent().outerHeight()}`)
 
   $("#loadingSpinnerText").text(text);
 

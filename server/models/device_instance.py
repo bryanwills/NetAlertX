@@ -446,7 +446,7 @@ class DeviceInstance:
         # Join all sub-selects with commas
         query = "SELECT\n    " + ",\n    ".join(sub_queries)
 
-        mylog('none', [f'[getNamedTotals] query {query}'])
+        mylog('trace', [f'[getNamedTotals] query {query}'])
         json_obj = get_table_json(sql, query, parameters=None)
 
         return json_obj
