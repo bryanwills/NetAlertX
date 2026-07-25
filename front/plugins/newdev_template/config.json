@@ -1888,7 +1888,7 @@
       "description": [
         {
           "language_code": "en_us",
-          "string": "Indicates whether this device should be considered online only if all associated NICs (devices with the <code>nic</code> relationship type) are online. If disabled, the device is considered online if any NIC is online. Database column name: <code>devReqNicsOnline</code>."
+          "string": "Determines whether this device is considered online only when <strong>all associated NICs</strong> are online. To configure this, navigate to the child devices, assign the <code>nic</code> relationship, and set this device as the <strong>Parent node</strong>. If enabled, every associated NIC must be online for the device to be considered online. If disabled, the device is considered online when <strong>any NIC</strong> is online. Database column name: <code>devReqNicsOnline</code>."
         }
       ]
     },
