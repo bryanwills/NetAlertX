@@ -127,4 +127,4 @@ You can read or watch several [community configuration guides](https://docs.neta
 - Bitcoin: `1N8tupjeCK12qRVU2XrV17WvKK7LCawyZM`
 - Ethereum: `0x6e2749Cb42F4411bc98501406BdcD82244e3f9C7`
 
-> 📧 Email me at [netalertx@gmail.com](mailto:netalertx@gmail.com?subject=NetAlertX Donations) if you want to get in touch or if I should add other sponsorship platforms.
+> 📧 Email me at [support@netalertx.com](mailto:support@netalertx.com?subject=NetAlertX Donations) if you want to get in touch or if I should add other sponsorship platforms.

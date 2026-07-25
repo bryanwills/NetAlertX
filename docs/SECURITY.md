@@ -93,7 +93,7 @@ By default, NetAlertX does **not** require login. Before exposing the UI in any 
 
 If you discover a vulnerability or security concern, please report it **privately** via GitHub security advisories or to:
 
-📧 [netalertx@gmail.com](mailto:netalertx@gmail.com?subject=NetAlertX%20Security%20Disclosure)
+📧 [support@netalertx.com](mailto:support@netalertx.com?subject=NetAlertX%20Security%20Disclosure)
 
 We take security seriously and will work to patch confirmed issues promptly. Your help in responsible disclosure is appreciated!
 

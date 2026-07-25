@@ -8,7 +8,7 @@
  *                mergeUniqueArrays(), getSetting(), getString(), getCache(),
  *                setCache(), and all cache* functions from cache.js.
  *-------------------------------------------------------------------------------
- #  netalertx@gmail.com                GNU GPLv3
+ #  support@netalertx.com                GNU GPLv3
  ----------------------------------------------------------------------------- */
 
 // -----------------------------------------------------------------------------
