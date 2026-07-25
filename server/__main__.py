@@ -6,7 +6,7 @@
 #
 #  Back module. Network scanner
 # -------------------------------------------------------------------------------
-#  Puche 2021 / 2022+ jokob             jokob@duck.com                GNU GPLv3
+#  Puche 2021 / 2022+ jokob             support@netalertx.com                GNU GPLv3
 # -------------------------------------------------------------------------------
 
 

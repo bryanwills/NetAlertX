@@ -1059,6 +1059,16 @@ function collectSetting(prefix, setCodeName, setType, settingsArray) {
 
   // Map of handlers
   const handlers = {
+      textarea: () => {
+          let value = $(`#${setCodeName}`).val();
+      
+          // Only escape multiline plain text values
+          if (dataType === "string") {
+              value = JSON.stringify(value).slice(1, -1);
+          }
+      
+          return applyTransformers(value, transformers);
+      },
       datatableString: () => {
           const value = collectTableData(`#${setCodeName}_table`);
           return btoa(JSON.stringify(value));
@@ -1091,9 +1101,26 @@ function collectSetting(prefix, setCodeName, setType, settingsArray) {
       },
       none: () => "",
       json: () => {
-          let value = $(`#${setCodeName}`).val();
-          value = applyTransformers(value, transformers);
-          return JSON.stringify(value, null, 2);
+        let value = $(`#${setCodeName}`).val();
+
+        value = applyTransformers(value, transformers);
+    
+        try {
+            value = JSON.parse(value);
+        } catch (e) {
+            console.error(`[collectSetting] Invalid JSON for ${setCodeName}`, e);
+            return value;
+        }
+    
+        value = JSON.stringify(value, null, 2)
+        .replace(/\btrue\b/g, "True")
+        .replace(/\bfalse\b/g, "False")
+        .replace(/\bnull\b/g, "None");
+
+        console.log("---------------")
+        console.log(value)
+
+        return value;
       },
       fallback: () => {
           console.error(`[collectSetting] Couldn't determine how to handle (${setCodeName}|${dataType}|${opts.inputType})`);
@@ -1106,17 +1133,20 @@ function collectSetting(prefix, setCodeName, setType, settingsArray) {
   let handlerKey;
   if (dataType === "string" && elementType === "datatable") {
       handlerKey = "datatableString";
+  } else if (dataType === "json") {
+    handlerKey = "json";
+  } 
+  else if (elementType === "textarea") {
+    handlerKey = "textarea";
   } else if (dataType === "string" ||
             (dataType === "integer" && (opts.inputType === "number" || opts.inputType === "text"))) {
-      handlerKey = "simpleValue";
+    handlerKey = "simpleValue";
   } else if (opts.inputType === "checkbox") {
       handlerKey = "checkbox";
   } else if (dataType === "array") {
       handlerKey = "array";
   } else if (dataType === "none") {
       handlerKey = "none";
-  } else if (dataType === "json") {
-      handlerKey = "json";
   } else {
       handlerKey = "fallback";
   }
@@ -1162,16 +1192,19 @@ function generateFormHtml(settingsData, set, overrideValue, overrideOptions, ori
   const setKey = set['setKey'];
   const setType = set['setType'];
 
-    // if (setKey == 'UNIFIAPI_site_name') {
+  // if (setKey == 'NTFPRCS_TEXT_TEMPLATE_down_devices') {
 
-    //   console.log("==== DEBUG OUTPUT BELOW 1 ====");
-    //   console.log("populateFromOverrides: " + populateFromOverrides);
-    //   console.log(setType);
-    //   console.log(setKey);
-    //   console.log("overrideValue:" + overrideValue);
-    //   console.log("inVal:" + inVal);
-    //   console.log("set['setValue']:" + set['setValue']);
-    // }
+  //   console.log("==== DEBUG OUTPUT BELOW 1 ====");
+  //   console.log("populateFromOverrides: " + populateFromOverrides);
+  //   console.log(setType);
+  //   console.log(setKey);
+  //   console.log("overrideValue:" + overrideValue);
+  //   console.log("inVal:" + inVal);
+  //   console.log("set['setValue']:" + set['setValue']);
+  //   console.log("overrideValue stringify:", JSON.stringify(overrideValue));
+  //   console.log("inVal stringify:", JSON.stringify(inVal));
+  //   console.log("set['setValue'] stringify:", JSON.stringify(set['setValue']));
+  // }
 
   // Parse the setType JSON string
   // console.log(processQuotes(setType));
@@ -1212,7 +1245,7 @@ function generateFormHtml(settingsData, set, overrideValue, overrideOptions, ori
     // Override value
     let val = valRes;
 
-    // if (setKey == 'UNIFIAPI_site_name') {
+    // if (setKey == 'NTFPRCS_TEXT_TEMPLATE_down_devices') {
 
     //   console.log("==== DEBUG OUTPUT BELOW 2 ====");
     //   console.log(setType);

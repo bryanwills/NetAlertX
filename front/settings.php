@@ -439,7 +439,7 @@ $settingsJSON_DB = json_encode($settings, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX
         // constructing final HTML for the setting
         setHtml = ""
 
-        if(set["setGroup"] == prefix)
+        if(set["setGroup"] == prefix )
         {
           // hide metadata by default by assigning it a special class
           isMetadata ? metadataClass = 'metadata' : metadataClass = '';

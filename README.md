@@ -198,7 +198,7 @@ Thank you to everyone who appreciates this tool and donates.
   - Bitcoin: `1N8tupjeCK12qRVU2XrV17WvKK7LCawyZM`
   - Ethereum: `0x6e2749Cb42F4411bc98501406BdcD82244e3f9C7`
 
-  📧 Email me at [jokob@duck.com](mailto:jokob@duck.com?subject=NetAlertX) if you want to get in touch or if I should add other sponsorship platforms.
+  📧 Email me at [support@netalertx.com](mailto:support@netalertx.com?subject=NetAlertX) if you want to get in touch or if I should add other sponsorship platforms.
 
 </details>
 

@@ -4,7 +4,7 @@
 *
 *  common.js - Front module. Common Javascript functions
 *-------------------------------------------------------------------------------
-#  Puche 2021 / 2022+ jokob             jokob@duck.com                GNU GPLv3
+#  Puche 2021 / 2022+ jokob             support@netalertx.com                GNU GPLv3
 ----------------------------------------------------------------------------- */
 
 // -----------------------------------------------------------------------------
@@ -1009,7 +1009,7 @@ function showSpinner(stringKey = "Loading", target = null) {
 
   console.log(resolvedTarget);
   
-  console.log(`spinnerTarget=${resolvedTarget.attr("id")} class=${resolvedTarget.attr("class")} size=${resolvedTarget.outerWidth()}x${resolvedTarget.outerHeight()} parent=${resolvedTarget.parent().outerWidth()}x${resolvedTarget.parent().outerHeight()}`)
+  // console.log(`spinnerTarget=${resolvedTarget.attr("id")} class=${resolvedTarget.attr("class")} size=${resolvedTarget.outerWidth()}x${resolvedTarget.outerHeight()} parent=${resolvedTarget.parent().outerWidth()}x${resolvedTarget.parent().outerHeight()}`)
 
   $("#loadingSpinnerText").text(text);
 
