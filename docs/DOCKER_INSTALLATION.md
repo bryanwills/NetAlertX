@@ -25,12 +25,16 @@ Head to [https://netalertx.com/](https://netalertx.com/) for more gifs and scree
 > You will have to run the container on the `host` network and specify `SCAN_SUBNETS` unless you use other [plugin scanners](https://docs.netalertx.com/PLUGINS). The initial scan can take a few minutes, so please wait 5-10 minutes for the initial discovery to finish.
 
 ```bash
-docker run -d --rm --network=host \
+docker run -d --rm \
+  --network=host \
+  --cap-add=NET_RAW \
+  --cap-add=NET_ADMIN \
+  --cap-add=NET_BIND_SERVICE \
   -v /local_data_dir:/data \
-  -v /etc/localtime:/etc/localtime \
+  -v /etc/localtime:/etc/localtime:ro \
   --tmpfs /tmp:uid=${NETALERTX_UID:-20211},gid=${NETALERTX_GID:-20211},mode=1700 \
   -e PORT=20211 \
-  -e APP_CONF_OVERRIDE={"GRAPHQL_PORT":"20214"} \
+  -e APP_CONF_OVERRIDE='{"GRAPHQL_PORT":"20214"}' \
   ghcr.io/netalertx/netalertx:latest
 ```
 
