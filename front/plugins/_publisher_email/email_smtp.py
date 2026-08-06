@@ -111,21 +111,21 @@ def send(pHTML, pText):
 
     mylog('debug', [f'[{pluginName}] SMTP_REPORT_TO: {hide_email(str(get_setting_value("SMTP_REPORT_TO")))} SMTP_USER: {hide_email(str(get_setting_value("SMTP_USER")))}'])
 
-    subject, from_email, to_email, message_html, message_text = sanitize_email_content(
+    to_emails = []
+
+    # handle multiple emails
+    if ',' in get_setting_value("SMTP_REPORT_TO"):
+        to_emails = get_setting_value("SMTP_REPORT_TO").split(',')
+    else:
+        to_emails.append(get_setting_value("SMTP_REPORT_TO"))
+        
+    subject, from_email, emails, message_html, message_text = sanitize_email_content(
         str(get_setting_value("SMTP_SUBJECT")),
         get_setting_value("SMTP_REPORT_FROM"),
-        get_setting_value("SMTP_REPORT_TO"),
+        to_emails,
         pHTML,
         pText
     )
-
-    emails = []
-
-    # handle multiple emails
-    if ',' in to_email:
-        emails = to_email.split(',')
-    else:
-        emails.append(to_email)
 
     mylog('debug', [f'[{pluginName}] Sending emails to {emails}'])
 
@@ -218,7 +218,7 @@ def send_email(msg, smtp_timeout):
 
 
 # ----------------------------------------------------------------------------------
-def sanitize_email_content(subject, from_email, to_email, message_html, message_text):
+def sanitize_email_content(subject, from_email, to_emails, message_html, message_text):
     # Validate and sanitize subject
     subject = Header(subject, 'utf-8').encode()
 
@@ -226,16 +226,18 @@ def sanitize_email_content(subject, from_email, to_email, message_html, message_
     from_name, from_address = parseaddr(from_email)
     from_email = Header(from_name, 'utf-8').encode() + ' <' + from_address + '>'
 
-    # Validate and sanitize recipient's email address
-    to_name, to_address = parseaddr(to_email)
-    to_email = Header(to_name, 'utf-8').encode() + ' <' + to_address + '>'
+    emails = []
+    for to_email in to_emails:
+        # Validate and sanitize recipient's email address
+        to_name, to_address = parseaddr(to_email)
+        emails.append(Header(to_name, 'utf-8').encode() + ' <' + to_address + '>')
 
     # Validate and sanitize message content
     # Remove potentially problematic characters
     message_html = re.sub(r'[^\x00-\x7F]+', ' ', message_html)
     message_text = re.sub(r'[^\x00-\x7F]+', ' ', message_text)
 
-    return subject, from_email, to_email, message_html, message_text
+    return subject, from_email, emails, message_html, message_text
 
 
 # ----------------------------------------------------------------------------------
