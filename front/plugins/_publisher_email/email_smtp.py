@@ -119,8 +119,8 @@ def send(pHTML, pText):
     else:
         to_emails.append(get_setting_value("SMTP_REPORT_TO"))
 
-    # remove empty array entries
-    to_emails = [x for x in to_emails if x]
+    # remove empty array and whitespace only entries
+    to_emails = [x for x in to_emails if x and x.strip()]
 
     # throw error if array empty
     if not to_emails:
