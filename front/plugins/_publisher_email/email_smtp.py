@@ -213,7 +213,7 @@ def send_email(msg, smtp_timeout):
         smtp_connection.login(get_setting_value('SMTP_USER'), get_setting_value('SMTP_PASS'))
 
     mylog('debug', ['Sending .sendmail()'])
-    smtp_connection.sendmail(get_setting_value("SMTP_REPORT_FROM"), get_setting_value("SMTP_REPORT_TO"), msg.as_string())
+    smtp_connection.sendmail(get_setting_value("SMTP_REPORT_FROM"), msg['To'], msg.as_string())
     smtp_connection.quit()
 
 
