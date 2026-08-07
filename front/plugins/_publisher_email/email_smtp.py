@@ -118,6 +118,14 @@ def send(pHTML, pText):
         to_emails = get_setting_value("SMTP_REPORT_TO").split(',')
     else:
         to_emails.append(get_setting_value("SMTP_REPORT_TO"))
+
+    # remove empty array entries
+    to_emails = [x for x in to_emails if x]
+
+    # throw error if array empty
+    if not to_emails:
+        mylog('none', [f'[Email Check Config] ⚠ ERROR: Email service not set up correctly. Check your {confFileName} SMTP_REPORT_TO variable.'])
+        return False
         
     subject, from_email, emails, message_html, message_text = sanitize_email_content(
         str(get_setting_value("SMTP_SUBJECT")),
