@@ -47,7 +47,7 @@ Edit `my_plugin/script.py` and implement your data collection logic:
 import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../server'))
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../plugins'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../server/plugins'))
 
 from plugin_helper import Plugin_Objects, mylog
 from helper import get_setting_value

@@ -35,8 +35,7 @@
   "chat.tools.terminal.autoApprove": {
     "test": true,
     "git check-ignore": true,
-    "mkdir": true,
-    "cp": true
+    "mkdir": true
   },
 
 }

@@ -4,7 +4,7 @@ import sys
 import requests
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../server'))
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../plugins'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../server/plugins'))
 
 from plugin_helper import Plugin_Objects, mylog, is_mac    # noqa: E402 [flake8 lint suppression]
 from helper import get_setting_value    # noqa: E402 [flake8 lint suppression]
