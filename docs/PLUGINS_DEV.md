@@ -34,7 +34,7 @@ NetAlertX comes with a plugin system to feed events from third-party scripts int
 
 ### 🐛 Troubleshooting
 - **[Debugging Plugins](DEBUG_PLUGINS.md)** - Troubleshoot plugin issues
-- **[Plugin Examples](https://github.com/netalertx/NetAlertX/tree/main/front/plugins)** - Study existing plugins as reference implementations
+- **[Plugin Examples](https://github.com/netalertx/NetAlertX/tree/main/server/plugins)** - Study existing plugins as reference implementations
 
 ### 🎥 Video Tutorial
 
@@ -96,12 +96,12 @@ See [Quick Start Guide](PLUGINS_DEV_QUICK_START.md) for detailed step-by-step in
 
 ## Plugin File Structure
 
-Every plugin lives in its own folder under `/app/front/plugins/`.
+Every plugin lives in its own folder under `/app/server/plugins/`.
 
 > **Important:** Folder name must match the `"code_name"` value in `config.json`
 
 ```
-/app/front/plugins/
+/app/server/plugins/
 ├── __template/          # Copy this as a starting point
 │   ├── config.json      # Plugin manifest (configuration)
 │   ├── script.py        # Your plugin logic (optional, depends on data_source)
@@ -146,7 +146,7 @@ The `config.json` file is the **plugin manifest** - it tells NetAlertX everythin
     {
       "function": "CMD",
       "type": {"dataType": "string", "elements": [{"elementType": "input", "elementOptions": [], "transformers": []}]},
-      "default_value": "python3 /app/front/plugins/my_plugin/script.py",
+      "default_value": "python3 /app/server/plugins/my_plugin/script.py",
       "localized": ["name"],
       "name": [{"language_code": "en_us", "string": "Command"}]
     }
@@ -347,10 +347,10 @@ See: [UI Components](PLUGINS_DEV_UI_COMPONENTS.md)
 
 ## Tools & References
 
-- **Template Plugin:** `/app/front/plugins/__template/` - Start here!
-- **Helper Library:** `/app/front/plugins/plugin_helper.py` - Use for output formatting
+- **Template Plugin:** `/app/server/plugins/__template/` - Start here!
+- **Helper Library:** `/app/server/plugins/plugin_helper.py` - Use for output formatting
 - **Settings Helper:** `/app/server/helper.py` - Use `get_setting_value()` in scripts
-- **Example Plugins:** `/app/front/plugins/*/` - Study working implementations
+- **Example Plugins:** `/app/server/plugins/*/` - Study working implementations
 - **Logs:** `/tmp/log/plugins/` - Plugin output and execution logs
 - **Backend Logs:** `/tmp/log/app.log` - Core system logs
 

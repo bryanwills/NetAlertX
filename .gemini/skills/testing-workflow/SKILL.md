@@ -91,7 +91,7 @@ Do not fix pre-existing failures unless that is the explicit goal.
 The test environment is pre-configured with:
 - `/app` — primary location where Python runs in production
 - `/app/server` — symlink to `/workspaces/NetAlertX/server`
-- `/app/front/plugins` — symlink to `/workspaces/NetAlertX/front/plugins`
+- `/app/server/plugins` — symlink to `/workspaces/NetAlertX/server/plugins`
 - `/workspaces/NetAlertX/test`
 - `/workspaces/NetAlertX/server`
 - `/workspaces/NetAlertX`

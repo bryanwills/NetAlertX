@@ -393,7 +393,7 @@
     "Loading": "Carregando...",
     "Login_Box": "Introduza a sua palavra-passe",
     "Login_Default_PWD": "A palavra-passe predefinida “123456” ainda está ativa.",
-    "Login_Info": "As palavra-passes são definidas por meio do plugin Definir palavra-passe. Verifique a <a target=\"_blank\" href=\"https://github.com/netalertx/NetAlertX/tree/main/front/plugins/set_password\">documentação do SETPWD</a> se tiver problemas para fazer login.",
+    "Login_Info": "As palavra-passes são definidas por meio do plugin Definir palavra-passe. Verifique a <a target=\"_blank\" href=\"https://github.com/netalertx/NetAlertX/tree/main/server/plugins/set_password\">documentação do SETPWD</a> se tiver problemas para fazer login.",
     "Login_Psw-box": "Palavra-passe",
     "Login_Psw_alert": "Alerta de palavra-passe!",
     "Login_Psw_folder": "na pasta de configuração.",

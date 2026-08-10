@@ -17,7 +17,7 @@ from unittest.mock import patch
 
 # Add server and plugins to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'server'))
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'front', 'plugins'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'server', 'plugins'))
 
 from models.device_instance import DeviceInstance  # noqa: E402 [flake8 lint suppression]
 from plugin_helper import normalize_mac  # noqa: E402 [flake8 lint suppression]

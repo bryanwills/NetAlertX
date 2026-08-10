@@ -393,7 +393,7 @@
     "Loading": "Yükleniyor...",
     "Login_Box": "Şifrenizi giriniz",
     "Login_Default_PWD": "Varsayılan şifre \"123456\" hâlâ aktif.",
-    "Login_Info": "Parolalar, Set Password eklentisi aracılığıyla ayarlanır. Giriş yapmakta sorun yaşıyorsanız, <a target=\"_blank\" href=\"https://github.com/netalertx/NetAlertX/tree/main/front/plugins/set_password\">SETPWD belgelerini</a> kontrol edin.",
+    "Login_Info": "Parolalar, Set Password eklentisi aracılığıyla ayarlanır. Giriş yapmakta sorun yaşıyorsanız, <a target=\"_blank\" href=\"https://github.com/netalertx/NetAlertX/tree/main/server/plugins/set_password\">SETPWD belgelerini</a> kontrol edin.",
     "Login_Psw-box": "Şİfre",
     "Login_Psw_alert": "Parola Uyarısı!",
     "Login_Psw_folder": "Konfigürasyon klasöründe.",

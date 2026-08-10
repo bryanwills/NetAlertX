@@ -49,6 +49,9 @@ Start NetAlertX in seconds with Docker:
 docker run -d \
   --network=host \
   --restart unless-stopped \
+  --cap-add=NET_RAW \
+  --cap-add=NET_ADMIN \
+  --cap-add=NET_BIND_SERVICE \
   -v /local_data_dir:/data \
   -v /etc/localtime:/etc/localtime:ro \
   --tmpfs /tmp:uid=20211,gid=20211,mode=1700 \

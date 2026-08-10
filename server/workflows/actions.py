@@ -1,7 +1,7 @@
 import sqlite3
 from logger import mylog, Logger
 from helper import get_setting_value
-from front.plugins.plugin_helper import normalize_mac
+from server.plugins.plugin_helper import normalize_mac
 from models.device_instance import DeviceInstance
 from models.plugin_object_instance import PluginObjectInstance
 from workflows.constants import BOOLEAN_COLUMNS, TOKEN_RE

@@ -8,23 +8,23 @@ description: Create and run NetAlertX plugins. Use this when asked to create plu
 ## Expected Workflow for Running Plugins
 
 1. Read this skill document for context and instructions.
-2. Find the plugin in `front/plugins/<code_name>/`.
+2. Find the plugin in `server/plugins/<code_name>/`.
 3. Read the plugin's `config.json` and `script.py` to understand its functionality and settings.
-4. Formulate and run the command: `python3 front/plugins/<code_name>/script.py`.
+4. Formulate and run the command: `python3 server/plugins/<code_name>/script.py`.
 5. Retrieve the result from the plugin log folder (`/tmp/log/plugins/last_result.<PREF>.log`) quickly, as the backend may delete it after processing.
 
 ## Run a Plugin Manually
 
 ```bash
-python3 front/plugins/<code_name>/script.py
+python3 server/plugins/<code_name>/script.py
 ```
 
-Ensure `sys.path` includes `/app/front/plugins` and `/app/server` (as in the template).
+Ensure `sys.path` includes `/app/server/plugins` and `/app/server` (as in the template).
 
 ## Plugin Structure
 
 ```text
-front/plugins/<code_name>/
+server/plugins/<code_name>/
 ├── config.json      # Manifest with settings
 ├── script.py        # Main script
 └── ...
@@ -32,7 +32,7 @@ front/plugins/<code_name>/
 
 ## Manifest Location
 
-`front/plugins/<code_name>/config.json`
+`server/plugins/<code_name>/config.json`
 
 - `code_name` == folder name
 - `unique_prefix` drives settings and filenames (e.g., `ARPSCAN`)
@@ -51,7 +51,7 @@ Scripts write to `/tmp/log/plugins/last_result.<PREF>.log`
 
 **Important:** The backend will almost immediately process this result file and delete it after ingestion. If you need to inspect the output, run the plugin and immediately retrieve the result file before the backend processes it.
 
-Use `front/plugins/plugin_helper.py`:
+Use `server/plugins/plugin_helper.py`:
 
 ```python
 from plugin_helper import Plugin_Objects
@@ -82,4 +82,4 @@ plugin_objects.write_result_file()  # Exactly once at end
 
 ## Starting Point
 
-Copy from `front/plugins/__template` and customize.
+Copy from `server/plugins/__template` and customize.
