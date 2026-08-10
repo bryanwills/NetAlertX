@@ -7,7 +7,7 @@
 //    3. NUMERIC_DEFAULTS      — add fieldName if its default value is 0 not ""
 //    4. GRAPHQL_EXTRA_FIELDS  — add fieldName ONLY if it is NOT a display column
 //                               (i.e. fetched for logic but not shown in table)
-//    5. front/plugins/ui_settings/config.json  options[]
+//    5. server/plugins/ui_settings/config.json  options[]
 //    6. front/php/templates/language/en_us.json  Device_TableHead_X
 //       then run merge_translations.py for other languages
 //    7. Backend: DB view + GraphQL type

@@ -383,7 +383,7 @@ $settingsJSON_DB = json_encode($settings, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX
           <div class="table_cell bold">
             <i class="fa fa-book fa-sm"></i>
             ${getString(prefix+'_description')}
-            <a href="https://github.com/netalertx/NetAlertX/tree/main/front/plugins/${getPluginCodeName(pluginsData, prefix)}" target="_blank">
+            <a href="https://github.com/netalertx/NetAlertX/tree/main/server/plugins/${getPluginCodeName(pluginsData, prefix)}" target="_blank">
             ${getString('Gen_ReadDocs')}
             </a>
           </div>

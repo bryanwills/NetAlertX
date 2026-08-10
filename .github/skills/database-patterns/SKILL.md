@@ -28,7 +28,7 @@ Before implementing any feature that reads or writes the `Devices` table, audit 
 | `server/db/authoritative_handler.py` | `enforce_source_on_user_update()` | `*Source` columns |
 | `server/db/authoritative_handler.py` | `lock_field()` / `unlock_field()` | `*Source` columns |
 | `server/models/notification_instance.py` | `clearPendingEmailFlag()` | `devLastNotification` |
-| `front/plugins/db_cleanup/script.py` | `cleanup_database()` | DELETE operations |
+| `server/plugins/db_cleanup/script.py` | `cleanup_database()` | DELETE operations |
 
 **Key insight:** Most scan functions use `sql.executemany()` — there is no per-row Python state available. Python hooks before/after executemany require a pre-fetch+diff pattern that is expensive and error-prone.
 

@@ -8,23 +8,23 @@ description: Create and run NetAlertX plugins. Use this when asked to create plu
 ## Expected Workflow
 
 1. Read this skill and `docs/PLUGINS_DEV.md` for full context.
-2. Find or create the plugin in `front/plugins/<code_name>/`.
+2. Find or create the plugin in `server/plugins/<code_name>/`.
 3. Read the plugin's `config.json` and `script.py` to understand its functionality.
-4. Run: `python3 front/plugins/<code_name>/script.py`
+4. Run: `python3 server/plugins/<code_name>/script.py`
 5. Retrieve the result from `/tmp/log/plugins/last_result.<PREF>.log` quickly — the backend deletes it after processing.
 
 ## Run a Plugin Manually
 
 ```bash
-python3 front/plugins/<code_name>/script.py
+python3 server/plugins/<code_name>/script.py
 ```
 
-Ensure `sys.path` includes `/app/front/plugins` and `/app/server` (as in the template).
+Ensure `sys.path` includes `/app/server/plugins` and `/app/server` (as in the template).
 
 ## Plugin Structure
 
 ```text
-front/plugins/<code_name>/
+server/plugins/<code_name>/
 ├── config.json      # Manifest with settings
 ├── script.py        # Main script
 └── ...
@@ -81,6 +81,6 @@ plugin_objects.write_result_file()  # Exactly once at end
 
 ## Starting Point
 
-Copy from `front/plugins/__template` and customize. Read `docs/PLUGINS_DEV.md` for the full development guide.
+Copy from `server/plugins/__template` and customize. Read `docs/PLUGINS_DEV.md` for the full development guide.
 
 

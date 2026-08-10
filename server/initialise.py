@@ -857,6 +857,8 @@ replacements = {
     r"\bSYNC_node_name=\'\'": f"SYNC_node_name='NAX-{str(uuid.uuid4()).split('-')[0]}'",
     # Detect SMTP_PASS='anything' BUT not starting with base64:
     r"SMTP_PASS='(?!base64:)([^']*)'": r"SMTP_PASS='base64:\1'",
+    # Migrate plugin paths from /app/front/plugins to /app/server/plugins
+    r"/app/front/plugins/": "/app/server/plugins/",
 }
 
 

@@ -20,6 +20,7 @@ db/app.db
 front/log/*
 /log/*
 .gemini/internal-docs/PRDs/*
+!.gemini/internal-docs/PRDs/.gitkeep
 /log/plugins/*
 front/api/*
 /api/*

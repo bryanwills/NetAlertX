@@ -74,7 +74,7 @@ See alternative [docker-compose examples](https://docs.netalertx.com/DOCKER_COMP
 | ✅ | `/etc/localtime:/etc/localtime:ro` | Ensuring the timezone is the same as on the server.  |
 | | `:/tmp/log` |  Logs folder useful for debugging if you have issues setting up the container  |
 | | `:/tmp/api` |  The [API endpoint](https://docs.netalertx.com/API) containing static (but regularly updated) json and other files. Path configurable via `NETALERTX_API` environment variable.   |
-| | `:/app/front/plugins/<plugin>/ignore_plugin` | Map a file `ignore_plugin` to ignore a plugin. Plugins can be soft-disabled via settings. More in the [Plugin docs](https://docs.netalertx.com/PLUGINS).  |
+| | `:/app/server/plugins/<plugin>/ignore_plugin` | Map a file `ignore_plugin` to ignore a plugin. Plugins can be soft-disabled via settings. More in the [Plugin docs](https://docs.netalertx.com/PLUGINS).  |
 | | `:/etc/resolv.conf` | Use a custom `resolv.conf` file for [better name resolution](https://docs.netalertx.com/REVERSE_DNS).  |
 
 ### Folder structure

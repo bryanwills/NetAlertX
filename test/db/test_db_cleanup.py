@@ -152,7 +152,7 @@ class TestSessionsTrim:
 
         INSTALL_PATH = os.getenv("NETALERTX_APP", "/app")
         script_path = os.path.join(
-            INSTALL_PATH, "front", "plugins", "db_cleanup", "script.py"
+            INSTALL_PATH, "server", "plugins", "db_cleanup", "script.py"
         )
         with open(script_path) as fh:
             source = fh.read()

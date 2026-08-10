@@ -57,7 +57,7 @@ if "requests" not in sys.modules:
 # ---------------------------------------------------------------------------
 # Import the functions under test (must come after the stubs above).
 # ---------------------------------------------------------------------------
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "front", "plugins", "adguard_export"))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "server", "plugins", "adguard_export"))
 
 from script import (  # noqa: E402
     AdGuardClient,

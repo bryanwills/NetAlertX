@@ -28,7 +28,7 @@ Tests live in `test/` directory. App code is under `server/`.
 PYTHONPATH is preconfigured to include the following which should meet all needs:
 - `/app` # the primary location where python runs in the production system
 - `/app/server` # symbolic link to /wprkspaces/NetAlertX/server
-- `/app/front/plugins` # symbolic link to /workspaces/NetAlertX/front/plugins
+- `/app/server/plugins` # symbolic link to /workspaces/NetAlertX/server/plugins
 - `/opt/venv/lib/pythonX.Y/site-packages`
 - `/workspaces/NetAlertX/test`
 - `/workspaces/NetAlertX/server`

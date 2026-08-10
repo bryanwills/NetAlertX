@@ -5,7 +5,7 @@ import sqlite3
 import csv
 import uuid
 from io import StringIO
-from front.plugins.plugin_helper import is_mac, normalize_mac
+from server.plugins.plugin_helper import is_mac, normalize_mac
 from logger import mylog
 from models.plugin_object_instance import PluginObjectInstance
 from database import get_temp_db_connection

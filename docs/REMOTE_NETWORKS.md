@@ -58,14 +58,14 @@ Using supplementing plugins that employ alternate discovery methods is one of th
 
 ### Workaround: Multiple NetAlertX Instances if you have servers in all networks
 
-If you have servers in different networks, you can set up separate NetAlertX instances on those subnets and synchronize the results into one instance using the [`SYNC` plugin](https://github.com/netalertx/NetAlertX/tree/main/front/plugins/sync).
+If you have servers in different networks, you can set up separate NetAlertX instances on those subnets and synchronize the results into one instance using the [`SYNC` plugin](https://github.com/netalertx/NetAlertX/tree/main/server/plugins/sync).
 
 > [!TIP]
-> The [`SYNC_BEHAVIOR`](https://github.com/netalertx/NetAlertX/tree/main/front/plugins/sync/README.md#hub-device-write-behavior-sync_behavior) setting controls how the hub handles newly discovered devices from nodes - whether it inherits node config, overwrites on every sync, or applies its own `NEWDEV` defaults.
+> The [`SYNC_BEHAVIOR`](https://github.com/netalertx/NetAlertX/tree/main/server/plugins/sync/README.md#hub-device-write-behavior-sync_behavior) setting controls how the hub handles newly discovered devices from nodes - whether it inherits node config, overwrites on every sync, or applies its own `NEWDEV` defaults.
 
 ### Workaround: Manual Entry for devices you can `ping`
 
-If you don't need to discover new devices in unreachable networks, and only need to report on their status (`online`, `offline`, `down`), you can manually enter devices, with their actual IP address, and check their status using the [`ICMP` plugin](https://github.com/netalertx/NetAlertX/blob/main/front/plugins/icmp_scan/), which uses the `ping` command internally.
+If you don't need to discover new devices in unreachable networks, and only need to report on their status (`online`, `offline`, `down`), you can manually enter devices, with their actual IP address, and check their status using the [`ICMP` plugin](https://github.com/netalertx/NetAlertX/blob/main/server/plugins/icmp_scan/), which uses the `ping` command internally.
 
 > [!TIP]
 > For more information on how to add devices manually (or dummy devices), refer to the [Device Management](./DEVICE_MANAGEMENT.md) documentation.
@@ -78,4 +78,4 @@ Scanning remote networks with NMAP is possible (via the `NMAPDEV` plugin), but s
 
 Because the generated MAC address is derived from the IP address, changing the IP can cause the device to appear as a new device or create duplicate records. If this setting is disabled, devices with a missing MAC addresses will be skipped.
 
-Check the [NMAPDEV plugin](https://github.com/netalertx/NetAlertX/tree/main/front/plugins/nmap_dev_scan) for details.
+Check the [NMAPDEV plugin](https://github.com/netalertx/NetAlertX/tree/main/server/plugins/nmap_dev_scan) for details.

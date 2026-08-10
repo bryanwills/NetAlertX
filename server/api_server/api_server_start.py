@@ -12,7 +12,7 @@ from werkzeug.exceptions import HTTPException
 
 # Register NetAlertX directories
 INSTALL_PATH = os.getenv("NETALERTX_APP", "/app")
-sys.path.extend([f"{INSTALL_PATH}/front/plugins", f"{INSTALL_PATH}/server"])
+sys.path.extend([f"{INSTALL_PATH}/server/plugins", f"{INSTALL_PATH}/server"])
 
 from logger import mylog  # noqa: E402 [flake8 lint suppression]
 from helper import get_setting_value, get_env_setting_value, getBuildTimeStampAndVersion  # noqa: E402 [flake8 lint suppression]

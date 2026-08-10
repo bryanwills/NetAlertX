@@ -19,7 +19,7 @@ Network monitoring & alerting. Provides inventory, awareness, insight, categoriz
 - **Backend Config:** `/data/config/app.conf`
 - **Data (SQLite):** `/data/db/app.db`; helpers in `server/db/*`
 - **Frontend (Nginx + PHP + JS):** `front/`
-- **Plugins (Python):** `front/plugins/*` with `config.json` manifests
+- **Plugins (Python):** `server/plugins/*` with `config.json` manifests
 
 ## Skills
 

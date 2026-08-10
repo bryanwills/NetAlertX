@@ -397,8 +397,8 @@ def execute_plugin(db, all_plugins, plugin):
     set_CMD = set["value"]
 
     # Replace hardcoded /app paths with environment-aware path
-    if "/app/front/plugins" in set_CMD:
-        set_CMD = set_CMD.replace("/app/front/plugins", str(pluginsPath))
+    if "/app/server/plugins" in set_CMD:
+        set_CMD = set_CMD.replace("/app/server/plugins", str(pluginsPath))
     if "/app/" in set_CMD:
         set_CMD = set_CMD.replace("/app/", f"{applicationPath}/")
 

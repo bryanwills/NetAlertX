@@ -1,4 +1,4 @@
-from front.plugins.plugin_helper import is_mac, normalize_mac
+from server.plugins.plugin_helper import is_mac, normalize_mac
 
 
 def test_is_mac_accepts_wildcard():

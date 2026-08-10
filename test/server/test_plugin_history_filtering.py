@@ -21,7 +21,7 @@ import pytest
 # Path setup
 # ---------------------------------------------------------------------------
 INSTALL_PATH = os.getenv("NETALERTX_APP", "/app")
-sys.path.extend([f"{INSTALL_PATH}/front/plugins", f"{INSTALL_PATH}/server"])
+sys.path.extend([f"{INSTALL_PATH}/server/plugins", f"{INSTALL_PATH}/server"])
 
 # Test helpers (shared DDL, fake DB, factories)
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))

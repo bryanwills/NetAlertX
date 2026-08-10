@@ -27,7 +27,7 @@ The following device properties influence notifications. You can:
 5. **Require NICs Online** - Determines whether this device is considered online only when **all associated NICs** are online. To configure this, navigate to the child devices, assign the `nic` relationship, and set this device as the **Parent node**. If enabled, every associated NIC must be online for the device to be considered online. If disabled, the device is considered online when **any NIC** is online. Database column name: `devReqNicsOnline`.
 
 > [!NOTE]
-> Please read through the [NTFPRCS plugin](https://github.com/netalertx/NetAlertX/blob/main/front/plugins/notification_processing/README.md) documentation to understand how device and global settings influence the notification processing.
+> Please read through the [NTFPRCS plugin](https://github.com/netalertx/NetAlertX/blob/main/server/plugins/notification_processing/README.md) documentation to understand how device and global settings influence the notification processing.
 
 ## Plugin settings 🔌
 
@@ -46,11 +46,11 @@ Click the **Read more in the docs.** Link at the top of each plugin to get more 
 
 In Notification Processing settings, you can specify blanket rules. These allow you to specify exceptions to the Plugin and Device settings and will override those.
 
-1. Notify on (`NTFPRCS_INCLUDED_SECTIONS`) allows you to specify which events trigger notifications. Usual setups will have `new_devices`, `down_devices`, and possibly `down_reconnected` set. Including `plugin` (dependenton the Plugin `<plugin>_WATCH` and `<plugin>_REPORT_ON` settings) and `events` (dependent on the on-device **Alert Events** setting) might be too noisy for most setups. More info in the [NTFPRCS plugin](https://github.com/netalertx/NetAlertX/blob/main/front/plugins/notification_processing/README.md) on what events these selections include.
+1. Notify on (`NTFPRCS_INCLUDED_SECTIONS`) allows you to specify which events trigger notifications. Usual setups will have `new_devices`, `down_devices`, and possibly `down_reconnected` set. Including `plugin` (dependenton the Plugin `<plugin>_WATCH` and `<plugin>_REPORT_ON` settings) and `events` (dependent on the on-device **Alert Events** setting) might be too noisy for most setups. More info in the [NTFPRCS plugin](https://github.com/netalertx/NetAlertX/blob/main/server/plugins/notification_processing/README.md) on what events these selections include.
 2. Alert down after (`NTFPRCS_alert_down_time`) is useful if you want to wait for some time before the system sends out a down notification for a device. This is related to the on-device **Alert down** setting and only devices with this checked will trigger a down notification.
 3. Alert down after (sleep) (`NTFPRCS_sleep_time`) sets the **sleep window** in minutes. If a device has **Can Sleep** enabled and goes offline, it is shown as **Sleeping** (aqua 🌙 badge) for this many minutes before down-alert logic kicks in. Default is `30` minutes. Changing this setting takes effect after saving — no restart required.
 
-You can filter out unwanted notifications globally. This could be because of a misbehaving device (GoogleNest/GoogleHub (See also [ARPSAN docs and the `--exclude-broadcast` flag](https://github.com/netalertx/NetAlertX/tree/main/front/plugins/arp_scan#ip-flipping-on-google-nest-devices))) which flips between IP addresses, or because you want to ignore new device notifications of a certain pattern.
+You can filter out unwanted notifications globally. This could be because of a misbehaving device (GoogleNest/GoogleHub (See also [ARPSAN docs and the `--exclude-broadcast` flag](https://github.com/netalertx/NetAlertX/tree/main/server/plugins/arp_scan#ip-flipping-on-google-nest-devices))) which flips between IP addresses, or because you want to ignore new device notifications of a certain pattern.
 
 1. Events Filter (`NTFPRCS_event_condition`) - Filter out Events from notifications.
 2. New Devices Filter (`NTFPRCS_new_dev_condition`) - Filter out New Devices from notifications, but log and keep a new device in the system.

@@ -4,7 +4,7 @@ NetAlertX supports centralized monitoring across remote sites, customer environm
 
 Deploy lightweight NetAlertX instances inside remote or segmented networks, then securely aggregate device inventory and network visibility data into a central hub for unified monitoring, alerting, and asset management.
 
-![Sync Hub Setup Diagram](https://raw.githubusercontent.com/netalertx/NetAlertX/refs/heads/main/front/plugins/sync/sync_hub.png)
+![Sync Hub Setup Diagram](https://raw.githubusercontent.com/netalertx/NetAlertX/refs/heads/main/server/plugins/sync/sync_hub.png)
 
 ---
 
@@ -127,7 +127,7 @@ For best results in multi-site environments:
 ## Related Documentation
 
 * [Remote Networks](./REMOTE_NETWORKS.md)
-* [Sync Hub Plugin](https://github.com/netalertx/NetAlertX/tree/main/front/plugins/sync/README.md)
+* [Sync Hub Plugin](https://github.com/netalertx/NetAlertX/tree/main/server/plugins/sync/README.md)
 * [Workflows](./WORKFLOWS.md)
 * [Metrics API](./API_METRICS.md)
 * [Eyes on Glass / NOC Dashboard](./ADVISORY_EYES_ON_GLASS.md)

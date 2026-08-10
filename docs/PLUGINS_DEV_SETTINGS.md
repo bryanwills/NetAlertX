@@ -316,7 +316,7 @@ Update your `CMD` setting:
 ```json
 {
   "function": "CMD",
-  "default_value": "python3 /app/front/plugins/my_plugin/script.py --url={api_url} --timeout={timeout}"
+  "default_value": "python3 /app/server/plugins/my_plugin/script.py --url={api_url} --timeout={timeout}"
 }
 ```
 
@@ -408,7 +408,7 @@ Settings and UI text support multiple languages. Define translations in the `nam
     {
       "function": "CMD",
       "type": {"dataType": "string", "elements": [{"elementType": "input", "elementOptions": [], "transformers": []}]},
-      "default_value": "python3 /app/front/plugins/website_monitor/script.py urls={urls}",
+      "default_value": "python3 /app/server/plugins/website_monitor/script.py urls={urls}",
       "localized": ["name", "description"],
       "name": [{"language_code": "en_us", "string": "Command"}],
       "description": [{"language_code": "en_us", "string": "Command to execute"}]
