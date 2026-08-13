@@ -88,14 +88,16 @@ function deleteCookie (cookie) {
 // -----------------------------------------------------------------------------
 // cacheStrings, getString, getLangCode moved to cache.js
 
-  const tz = getSetting("TIMEZONE") || 'Europe/Berlin';
-  const LOCALE = getSetting('UI_LOCALE') || 'en-GB';
-
 // -----------------------------------------------------------------------------
 // DateTime utilities
 // -----------------------------------------------------------------------------
 function localizeTimestamp(input) {
 
+  // Read fresh on every call (not a module-level const): getSetting() reads
+  // a localStorage cache that clearCache() wipes before reloading, so a
+  // stale/hardcoded fallback could otherwise stick for the page's lifetime. See #1640.
+  const tz = getSetting("TIMEZONE") || 'Europe/Berlin';
+  const LOCALE = getSetting('UI_LOCALE') || 'en-GB';
 
   input = String(input || '').trim();
 
