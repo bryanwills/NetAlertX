@@ -278,7 +278,7 @@ def skip_repeated_notifications(db):
                           AND devLastNotification <>""
                           AND (strftime("%s", devLastNotification)/60 +
                                 devSkipRepeated * 60) >
-                              (strftime('%s','now','localtime')/60 )
+                              (strftime('%s','now')/60 )
                         )
                  """)
 
