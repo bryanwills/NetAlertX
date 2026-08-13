@@ -7,177 +7,125 @@ devSkipRepeated works correctly regardless of the server's local timezone.
 License: GNU GPLv3
 """
 
-import sqlite3
 import sys
 import os
 import time
 import unittest
 
+# Make db_test_helpers importable from any working directory.
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+from db_test_helpers import make_db, minutes_ago, DummyDB  # noqa: E402
+
 INSTALL_PATH = os.getenv("NETALERTX_APP", "/app")
 sys.path.extend([f"{INSTALL_PATH}/server"])
 
 
-def _make_db():
-    """Create an in-memory SQLite DB with the minimal schema needed."""
-    con = sqlite3.connect(":memory:")
-    con.row_factory = sqlite3.Row
-    con.executescript("""
-        CREATE TABLE Devices (
-            devMac TEXT PRIMARY KEY,
-            devName TEXT,
-            devLastNotification TEXT,
-            devSkipRepeated INTEGER DEFAULT 0
-        );
-        CREATE TABLE Events (
-            eveRowid INTEGER PRIMARY KEY AUTOINCREMENT,
-            eveMac TEXT,
-            evePendingAlertEmail INTEGER DEFAULT 0
-        );
-    """)
-    return con
+def _insert_device_with_cooldown(conn, mac, last_notification, skip_repeated):
+    """Insert a Devices row with devLastNotification and devSkipRepeated set."""
+    conn.execute(
+        """
+        INSERT INTO Devices
+            (devMac, devLastNotification, devSkipRepeated,
+             devAlertDown, devPresentLastScan, devIsArchived, devIsNew)
+        VALUES (?, ?, ?, 1, 0, 0, 0)
+        """,
+        (mac, last_notification, skip_repeated),
+    )
 
 
-class FakeDB:
-    """Minimal stub accepted by skip_repeated_notifications."""
+def _insert_pending_event(conn, mac):
+    """Insert an Events row with evePendingAlertEmail=1 for the given MAC."""
+    conn.execute(
+        "INSERT INTO Events (eveMac, evePendingAlertEmail) VALUES (?, 1)",
+        (mac,),
+    )
 
-    def __init__(self, con):
-        self.sql = con
-        self._committed = False
 
-    def commitDB(self):
-        self._committed = True
-        self.sql.commit()
+def _get_flag(conn, mac):
+    row = conn.execute(
+        "SELECT evePendingAlertEmail FROM Events WHERE eveMac=?", (mac,)
+    ).fetchone()
+    return row[0] if row else None
 
 
 class TestSkipRepeatedNotifications(unittest.TestCase):
 
-    def _get_flag(self, con, mac):
-        row = con.execute(
-            "SELECT evePendingAlertEmail FROM Events WHERE eveMac=?", (mac,)
-        ).fetchone()
-        return row[0] if row else None
-
     def test_recent_notification_suppresses_event(self):
-        """
-        A notification that occurred seconds ago should suppress the pending
-        alert when devSkipRepeated is set to 1 hour.
-        """
+        """A notification seconds ago should suppress the pending alert."""
         from messaging.reporting import skip_repeated_notifications
 
-        con = _make_db()
+        conn = make_db()
+        mac = "aa:bb:cc:dd:ee:01"
+        _insert_device_with_cooldown(conn, mac, minutes_ago(0), skip_repeated=1)
+        _insert_pending_event(conn, mac)
+        conn.commit()
 
-        # last notification = now (UTC ISO format)
-        now_utc = time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())
-        con.execute(
-            "INSERT INTO Devices VALUES (?,?,?,?)",
-            ("AA:BB:CC:DD:EE:01", "TestDev", now_utc, 1),
-        )
-        con.execute(
-            "INSERT INTO Events (eveMac, evePendingAlertEmail) VALUES (?,?)",
-            ("AA:BB:CC:DD:EE:01", 1),
-        )
-        con.commit()
-
-        db = FakeDB(con)
-        skip_repeated_notifications(db)
+        skip_repeated_notifications(DummyDB(conn))
 
         self.assertEqual(
-            self._get_flag(con, "AA:BB:CC:DD:EE:01"),
+            _get_flag(conn, mac),
             0,
-            "Event should have been suppressed because last notification is recent",
+            "Event should be suppressed: last notification is recent (0 min ago), cooldown 1 h",
         )
 
     def test_old_notification_does_not_suppress(self):
-        """
-        A notification older than devSkipRepeated should NOT suppress the event.
-        """
+        """A notification older than devSkipRepeated should NOT suppress the event."""
         from messaging.reporting import skip_repeated_notifications
 
-        con = _make_db()
+        conn = make_db()
+        mac = "aa:bb:cc:dd:ee:02"
+        _insert_device_with_cooldown(conn, mac, minutes_ago(120), skip_repeated=1)
+        _insert_pending_event(conn, mac)
+        conn.commit()
 
-        # last notification = 2 hours ago (UTC)
-        two_hours_ago = time.strftime(
-            "%Y-%m-%d %H:%M:%S", time.gmtime(time.time() - 7200)
-        )
-        con.execute(
-            "INSERT INTO Devices VALUES (?,?,?,?)",
-            ("AA:BB:CC:DD:EE:02", "TestDev2", two_hours_ago, 1),
-        )
-        con.execute(
-            "INSERT INTO Events (eveMac, evePendingAlertEmail) VALUES (?,?)",
-            ("AA:BB:CC:DD:EE:02", 1),
-        )
-        con.commit()
-
-        db = FakeDB(con)
-        skip_repeated_notifications(db)
+        skip_repeated_notifications(DummyDB(conn))
 
         self.assertEqual(
-            self._get_flag(con, "AA:BB:CC:DD:EE:02"),
+            _get_flag(conn, mac),
             1,
-            "Event should NOT be suppressed because last notification was 2 h ago "
-            "and cooldown is only 1 h",
+            "Event should NOT be suppressed: last notification was 2 h ago, cooldown 1 h",
         )
 
-    def test_utc_stored_timestamp_not_inflated_by_localtime(self):
+    def test_utc_stored_timestamp_within_cooldown_suppresses(self):
         """
-        Regression test: if the RHS still used 'localtime', a UTC-stored
-        devLastNotification in a positive-offset timezone would appear as if
-        the cooldown has already expired, producing no suppression.
+        Regression test for the UTC/localtime bug.
 
-        We simulate this by using a timestamp that is 20 minutes in the past
-        (well within a 2-hour cooldown).  With the bug the comparison would
-        evaluate incorrectly in timezones with a positive UTC offset.
+        A UTC timestamp 20 minutes ago with a 2-hour cooldown must be
+        suppressed.  With the old 'localtime' modifier the comparison was
+        inflated by the UTC offset (e.g. +7200 s for UTC+2), which made
+        the cooldown appear expired even for genuinely-recent notifications.
         """
         from messaging.reporting import skip_repeated_notifications
 
-        con = _make_db()
+        conn = make_db()
+        mac = "aa:bb:cc:dd:ee:03"
+        _insert_device_with_cooldown(conn, mac, minutes_ago(20), skip_repeated=2)
+        _insert_pending_event(conn, mac)
+        conn.commit()
 
-        twenty_min_ago_utc = time.strftime(
-            "%Y-%m-%d %H:%M:%S", time.gmtime(time.time() - 1200)
-        )
-        con.execute(
-            "INSERT INTO Devices VALUES (?,?,?,?)",
-            ("AA:BB:CC:DD:EE:03", "TestDev3", twenty_min_ago_utc, 2),
-        )
-        con.execute(
-            "INSERT INTO Events (eveMac, evePendingAlertEmail) VALUES (?,?)",
-            ("AA:BB:CC:DD:EE:03", 1),
-        )
-        con.commit()
-
-        db = FakeDB(con)
-        skip_repeated_notifications(db)
+        skip_repeated_notifications(DummyDB(conn))
 
         self.assertEqual(
-            self._get_flag(con, "AA:BB:CC:DD:EE:03"),
+            _get_flag(conn, mac),
             0,
-            "Event should be suppressed: only 20 min elapsed, cooldown is 2 h. "
-            "Failure here means the localtime bug is still present.",
+            "Event should be suppressed: only 20 min elapsed, cooldown 2 h. "
+            "Failure here indicates the localtime UTC-offset bug is still present.",
         )
 
     def test_zero_skip_repeated_never_suppresses(self):
         """devSkipRepeated=0 should never suppress notifications."""
         from messaging.reporting import skip_repeated_notifications
 
-        con = _make_db()
+        conn = make_db()
+        mac = "aa:bb:cc:dd:ee:04"
+        _insert_device_with_cooldown(conn, mac, minutes_ago(0), skip_repeated=0)
+        _insert_pending_event(conn, mac)
+        conn.commit()
 
-        now_utc = time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())
-        con.execute(
-            "INSERT INTO Devices VALUES (?,?,?,?)",
-            ("AA:BB:CC:DD:EE:04", "TestDev4", now_utc, 0),
-        )
-        con.execute(
-            "INSERT INTO Events (eveMac, evePendingAlertEmail) VALUES (?,?)",
-            ("AA:BB:CC:DD:EE:04", 1),
-        )
-        con.commit()
-
-        db = FakeDB(con)
-        skip_repeated_notifications(db)
+        skip_repeated_notifications(DummyDB(conn))
 
         self.assertEqual(
-            self._get_flag(con, "AA:BB:CC:DD:EE:04"),
+            _get_flag(conn, mac),
             1,
             "Event should NOT be suppressed when devSkipRepeated=0",
         )
