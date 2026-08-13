@@ -97,6 +97,21 @@ from db_test_helpers import make_db, DummyDB, insert_device, minutes_ago
 
 If a helper you need doesn't exist yet, add it to `db_test_helpers.py` — not locally in the test file.
 
+## MAC Literals in Tests — ALWAYS Lowercase
+
+**MANDATORY:** Every MAC address literal used in test fixtures, parametrize decorators, assertions, or comments must be lowercase hex:
+
+```python
+# Correct
+make_device_dict("aa:bb:cc:dd:ee:01", ...)
+
+# Wrong — will be rejected in review
+make_device_dict("AA:BB:CC:DD:EE:01", ...)
+make_device_dict("Aa:Bb:Cc:Dd:Ee:01", ...)
+```
+
+This applies to hardcoded strings in `assert`, `pytest.mark.parametrize`, docstrings, and comments too. There are no exceptions.
+
 ## Path Hygiene
 
 - Use environment variables for runtime paths

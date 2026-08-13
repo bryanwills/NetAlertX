@@ -5,6 +5,15 @@ description: How to analyze and respond to GitHub PR review comments in NetAlert
 
 # PR Analysis
 
+## Before Writing Any Test Code — Non-Negotiable Checklist
+
+Run through this before creating or editing any file under `test/`:
+
+1. **Helpers first:** Check `test/db_test_helpers.py` for existing factories (`make_db`, `make_device_dict`, `insert_device_from_dict`, `DummyDB`). Use them. If what you need doesn't exist, add it there — never define it locally in the test file.
+2. **MAC literals must be lowercase:** Every MAC string in fixtures, `parametrize`, assertions, docstrings, and comments must be lowercase hex (e.g. `aa:bb:cc:dd:ee:01`). No exceptions.
+3. **Test file location:** Place tests under a subdirectory of `test/` that mirrors the source path (e.g. `test/scan/` for `server/scan/`). Never put test files directly in `test/`.
+4. **No inline imports:** All imports at the top of the file.
+
 ## Before Acting on Any PR Comment
 
 1. Load `code-standards` skill — all code changes must comply with it before replying.
@@ -40,10 +49,10 @@ For each comment, determine:
 
 ## What to Check After Every Batch of Changes
 
-- All MACs are lowercase everywhere (code-standards).
-- No mocks or DB helpers are re-defined locally — use `test/db_test_helpers.py` (code-standards).
-- No inline imports — all imports at the top of the file (code-standards).
-- Tests live under a subdirectory of `test/` matching the source path, not in `test/` root (code-standards).
+- **MAC literals lowercase** — grep for uppercase hex in every changed test file: `grep -Pn '[0-9A-F]{2}:[0-9A-F]' test/` must be empty.
+- **No local DB helpers** — no `DummyDB`, `make_db`, or inline DDL defined outside `test/db_test_helpers.py`.
+- No inline imports — all imports at the top of the file.
+- Tests live under a subdirectory of `test/` matching the source path, not in `test/` root.
 - Secret scan (`runtime-tools-secret_scanning`) before committing.
 
 ## Stacked / Base-Branch Issues
