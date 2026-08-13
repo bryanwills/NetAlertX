@@ -1270,9 +1270,17 @@ def update_devPresentLastScan_based_on_nics(db):
         if nics:
             nic_statuses = [nic.get("devPresentLastScan") == 1 for nic in nics]
             if req_all:
-                new_present = int(all(nic_statuses))
+                nic_online = all(nic_statuses)
             else:
-                new_present = int(any(nic_statuses))
+                nic_online = any(nic_statuses)
+
+            if original == 1:
+                # Parent was directly detected this scan — NIC children cannot
+                # force it offline. Leave new_present = original (no change).
+                pass
+            else:
+                # Parent was not directly detected — NICs determine presence.
+                new_present = 1 if nic_online else 0
 
         # Only add update if changed
         if original != new_present:
