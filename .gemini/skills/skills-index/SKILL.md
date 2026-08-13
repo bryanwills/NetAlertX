@@ -24,6 +24,8 @@ Skills with the same purpose exist in both, sometimes under different names and 
 | Project navigation | `project-navigation` | `project-navigation` | Copilot version has full path tables and env vars; Gemini version is a brief reference |
 | Plugin dev | `plugin-development` | `plugin-run-development` | Copilot version is comprehensive (data contract, phases, formats); Gemini version is a brief checklist pointing to `docs/PLUGINS_DEV.md` |
 | Devcontainer | `devcontainer-management` | `devcontainer-services` + `devcontainer-setup` + `devcontainer-configs` | Gemini combines into one (uses `docker exec`); Copilot splits into 3 focused skills |
+| PR review | `pr-analysis` | `pr-analysis` | How to classify and respond to PR comments; pre-flight skill loading checklist |
+| Logging | `logging-standards` | `logging-standards` | `mylog` levels, message format, what not to log |
 
 ---
 
