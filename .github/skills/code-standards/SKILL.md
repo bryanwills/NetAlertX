@@ -24,6 +24,7 @@ description: NetAlertX coding standards and conventions. Use this when writing c
 - follow existing code style and structure, and ensure backward compatibility with existing installations when submitting PRs
 - all code needs to be scalable to handle large networks with thousands of devices (10k+) without performance degradation
 - no inline imports, all imports must be at the top of the file
+- when using `server/logger.py` `mylog()`, only use valid levels: `none`, `minimal`, `verbose`, `debug`, `trace`; invalid levels silently degrade to `none`
 
 
 ## File Length

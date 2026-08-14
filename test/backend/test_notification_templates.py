@@ -334,8 +334,9 @@ class TestConstructNotificationsTemplates(unittest.TestCase):
     # -----------------------------------------------------------------
     # Final HTML escapes preheaders and tolerates indent failures
     # -----------------------------------------------------------------
+    @patch("models.notification_instance.mylog")
     @patch("models.notification_instance.indent")
-    def test_finalize_html_escapes_preheader_and_falls_back(self, mock_indent):
+    def test_finalize_html_escapes_preheader_and_falls_back(self, mock_indent, mock_mylog):
         from models.notification_instance import finalize_html, XMLTokenError
 
         mock_indent.side_effect = XMLTokenError("broken html")
@@ -351,6 +352,10 @@ class TestConstructNotificationsTemplates(unittest.TestCase):
 
         self.assertEqual(final_html, expected_html)
         mock_indent.assert_called_once()
+        mock_mylog.assert_called_once_with(
+            "none",
+            "[Notification] Failed to pretty-print HTML report, sending unindented HTML instead: broken html",
+        )
 
 
 if __name__ == "__main__":

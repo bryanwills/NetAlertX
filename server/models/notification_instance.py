@@ -421,7 +421,7 @@ def finalize_html(mail_html, preheaders):
         )
     except XMLTokenError as err:
         mylog(
-            "warn",
+            "none",
             f"[Notification] Failed to pretty-print HTML report, sending unindented HTML instead: {err}",
         )
         return mail_html
