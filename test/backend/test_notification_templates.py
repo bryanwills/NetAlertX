@@ -295,6 +295,56 @@ class TestConstructNotificationsTemplates(unittest.TestCase):
 
         self.assertEqual(html_without, html_with)
 
+    # -----------------------------------------------------------------
+    # HTML output escapes free-text device values while text stays raw
+    # -----------------------------------------------------------------
+    @patch("models.notification_instance.get_setting_value")
+    def test_html_escapes_free_text_values(self, mock_setting):
+        from models.notification_instance import construct_notifications
+
+        mock_setting.side_effect = self._setting_factory({
+            "NTFPRCS_TEXT_SECTION_HEADERS": True,
+            "NTFPRCS_TEXT_TEMPLATE_new_devices": "",
+        })
+
+        devices = [
+            {
+                "devName": "Meta Quest <Pro",
+                "eveMac": "aa:bb:cc:dd:ee:ff",
+                "devVendor": "Meta",
+                "eveIp": "192.168.1.42",
+                "eveDateTime": "2025-01-15 10:30:00",
+                "eveEventType": "New Device",
+                "devComments": "values <=2 break things",
+            }
+        ]
+        json_data = _make_json(
+            "new_devices", devices, NEW_DEVICE_COLUMNS, "🆕 New devices"
+        )
+
+        html, text, _ = construct_notifications(json_data, "new_devices")
+
+        self.assertIn("Meta Quest &lt;Pro", html)
+        self.assertIn("values &lt;=2 break things", html)
+        self.assertNotIn("Meta Quest <Pro", html)
+        self.assertNotIn("values <=2 break things</td>", html)
+        self.assertIn("Meta Quest <Pro", text)
+        self.assertIn("values <=2 break things", text)
+
+    # -----------------------------------------------------------------
+    # Final HTML escapes preheaders and tolerates indent failures
+    # -----------------------------------------------------------------
+    def test_finalize_html_escapes_preheader_and_falls_back(self):
+        from models.notification_instance import finalize_html
+
+        final_html = finalize_html(
+            "<html><body><span>PREHEADER</span>broken < content</body></html>",
+            ["Meta Quest <Pro"],
+        )
+
+        self.assertIn("Meta Quest &lt;Pro", final_html)
+        self.assertIn("broken < content", final_html)
+
 
 if __name__ == "__main__":
     unittest.main()

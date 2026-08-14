@@ -1,8 +1,10 @@
+import html
 import json
 import re
 import uuid
 import socket
 from yattag import indent
+from yattag.indentation import XMLTokenError
 from json2table import convert
 
 # Register NetAlertX modules
@@ -146,20 +148,7 @@ class NotificationInstance:
                 mail_html, conf.REPORT_DASHBOARD_URL + "/deviceDetails.php?mac="
             )
 
-            # Add preheader for inbox preview after all links have been generated.
-            # Invisible padding prevents email clients from showing the start of the email body.
-            preheader = " • ".join(preheaders)
-
-            padding = (" &zwnj;&#8199;" * 47)
-
-            mail_html = mail_html.replace(
-                "PREHEADER",
-                preheader + padding,
-            )
-
-            final_html = indent(
-                mail_html, indentation="    ", newline="\r\n", indent_text=True
-            )
+            final_html = finalize_html(mail_html, preheaders)
 
             send_api(self.JSON, final_text, final_html)
 
@@ -335,8 +324,9 @@ def construct_notifications(JSON, section):
             text = tableTitle + "\n---------\n"
 
         # Convert a JSON into an HTML table
+        html_data = escape_html_rows(jsn)
         html = convert(
-            {"data": jsn},
+            {"data": html_data},
             build_direction=build_direction,
             table_attributes=table_attributes,
         )
@@ -396,6 +386,43 @@ def format_table(html, thValue, props, newThValue=""):
     return html.replace(
         "<th>" + thValue + "</th>", "<th " + props + " >" + newThValue + "</th>"
     )
+
+
+# -----------------------------------------------------------------------------
+# Escape free-text values before embedding them into notification HTML
+def escape_html_rows(rows):
+    return [
+        {
+            key: html.escape(value) if isinstance(value, str) else value
+            for key, value in row.items()
+        }
+        for row in rows
+    ]
+
+
+# -----------------------------------------------------------------------------
+# Finalize HTML and tolerate pretty-print failures
+def finalize_html(mail_html, preheaders):
+    # Add preheader for inbox preview after all links have been generated.
+    # Invisible padding prevents email clients from showing the start of the email body.
+    preheader = html.escape(" • ".join(preheaders))
+    padding = (" &zwnj;&#8199;" * 47)
+
+    mail_html = mail_html.replace(
+        "PREHEADER",
+        preheader + padding,
+    )
+
+    try:
+        return indent(
+            mail_html, indentation="    ", newline="\r\n", indent_text=True
+        )
+    except XMLTokenError as err:
+        mylog(
+            "warn",
+            f"[Notification] Failed to pretty-print HTML report, sending unindented HTML instead: {err}",
+        )
+        return mail_html
 
 
 # -----------------------------------------------------------------------------
