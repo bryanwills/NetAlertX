@@ -391,6 +391,7 @@ def format_table(html, thValue, props, newThValue=""):
 # -----------------------------------------------------------------------------
 # Escape free-text values before embedding them into notification HTML
 def escape_html_rows(rows):
+    """Return a copy of notification rows with only string values HTML-escaped."""
     return [
         {
             key: html.escape(value) if isinstance(value, str) else value
@@ -403,9 +404,10 @@ def escape_html_rows(rows):
 # -----------------------------------------------------------------------------
 # Finalize HTML and tolerate pretty-print failures
 def finalize_html(mail_html, preheaders):
+    """Insert an escaped preheader and pretty-print HTML, falling back to raw HTML on XML errors."""
     # Add preheader for inbox preview after all links have been generated.
     # Invisible padding prevents email clients from showing the start of the email body.
-    preheader = html.escape(" • ".join(preheaders))
+    preheader = " • ".join(html.escape(entry) for entry in preheaders)
     padding = (" &zwnj;&#8199;" * 47)
 
     mail_html = mail_html.replace(

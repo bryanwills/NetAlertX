@@ -327,23 +327,30 @@ class TestConstructNotificationsTemplates(unittest.TestCase):
         self.assertIn("Meta Quest &lt;Pro", html)
         self.assertIn("values &lt;=2 break things", html)
         self.assertNotIn("Meta Quest <Pro", html)
-        self.assertNotIn("values <=2 break things</td>", html)
+        self.assertNotIn("values <=2 break things", html)
         self.assertIn("Meta Quest <Pro", text)
         self.assertIn("values <=2 break things", text)
 
     # -----------------------------------------------------------------
     # Final HTML escapes preheaders and tolerates indent failures
     # -----------------------------------------------------------------
-    def test_finalize_html_escapes_preheader_and_falls_back(self):
-        from models.notification_instance import finalize_html
+    @patch("models.notification_instance.indent")
+    def test_finalize_html_escapes_preheader_and_falls_back(self, mock_indent):
+        from models.notification_instance import finalize_html, XMLTokenError
 
-        final_html = finalize_html(
-            "<html><body><span>PREHEADER</span>broken < content</body></html>",
-            ["Meta Quest <Pro"],
+        mock_indent.side_effect = XMLTokenError("broken html")
+
+        # The mock forces the pretty-print failure so we can assert the raw
+        # fallback HTML returned after PREHEADER replacement.
+        template = "<html><body><span>PREHEADER</span>broken < content</body></html>"
+        expected_html = template.replace(
+            "PREHEADER",
+            "Meta Quest &lt;Pro" + (" &zwnj;&#8199;" * 47),
         )
+        final_html = finalize_html(template, ["Meta Quest <Pro"])
 
-        self.assertIn("Meta Quest &lt;Pro", final_html)
-        self.assertIn("broken < content", final_html)
+        self.assertEqual(final_html, expected_html)
+        mock_indent.assert_called_once()
 
 
 if __name__ == "__main__":
