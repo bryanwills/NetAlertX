@@ -66,6 +66,8 @@ def main():
             #  Process the data into native application tables
             if len(device_data) > 0:
 
+                site_api_name = site.get("name") or siteDict.get("UNIFIAPI_site_name")
+
                 # insert devices into the lats_result.log
                 for device in device_data:
                     plugin_objects.add_object(
@@ -77,7 +79,7 @@ def main():
                         watched4    = device['dev_parent_mac'],             # parent_mac or "internet"
                         extra       = '',
                         foreignKey  = device['dev_mac'],
-                        helpVal1    = siteDict["UNIFIAPI_site_name"],       # devSite
+                        helpVal1    = site_api_name,                        # devSite
                         helpVal2    = device.get('dev_vlan_id', 'null'),
                         helpVal3    = device.get('dev_vlan_name', 'null'),  # devVlan
                         helpVal4    = device.get('dev_wan_name', 'null')
@@ -189,20 +191,22 @@ def get_device_data(site, api):
         uplinkDeviceId = device.get('uplinkDeviceId', '')
         dev_parent_mac = resolve_parent_mac(uplinkDeviceId)
 
-        # Resolve VLAN/network for devices if available
-        vlan_id = device.get('vlanId')
+        # Resolve VLAN/network for devices
+        vlan_id = None
         vlan_name = ''
-        if not vlan_id and 'networkId' in device:
-            network = network_lookup.get(device.get('networkId'), {})
+        
+        if 'networkId' in device and device.get('networkId') in network_lookup:
+            network = network_lookup.get(device.get('networkId'))
             vlan_id = network.get("vlanId")
             vlan_name = network.get("name", "")
 
-        # Default management network fallback for gateway/devices
-        if not vlan_id and network_lookup:
-            # Fallback to the first network (e.g., LAN) if none specified
-            default_net = list(network_lookup.values())[0]
-            vlan_id = default_net.get("vlanId")
-            vlan_name = default_net.get("name", "")
+        if vlan_id is None and 'vlanId' in device:
+            vlan_id = device.get('vlanId')
+
+        if vlan_id is not None and not vlan_name:
+            matched_net = vlan_lookup.get(str(vlan_id))
+            if matched_net:
+                vlan_name = matched_net.get("name", "")
 
         wan_name = wans[0].get("name", "") if wans else ""
 
@@ -240,18 +244,28 @@ def get_device_data(site, api):
         if client_id:
             client_details = api.get_client_details(site_id, client_id)
 
-        # Resolve VLAN/network from client details or base client payload
+        # Resolve VLAN/network from client details or base client payload independently
         client_network = client_details.get("network", {})
         network_id = client_network.get("id") or client.get("network_id")
 
-        if network_id:
-            network = network_lookup.get(network_id, {})
+        if network_id and network_id in network_lookup:
+            network = network_lookup.get(network_id)
             vlan_id = network.get("vlanId")
             vlan_name = network.get("name", "")
-        
-        # Fallback if network name is directly in client payload
+
+        if vlan_id is None and 'vlanId' in client_details:
+            vlan_id = client_details.get('vlanId')
+        elif vlan_id is None and 'vlanId' in client:
+            vlan_id = client.get('vlanId')
+
+        if vlan_id is not None and not vlan_name:
+            matched_net = vlan_lookup.get(str(vlan_id))
+            if matched_net:
+                vlan_name = matched_net.get("name", "")
+
+        # Fallback if network name is directly in client payload or details
         if not vlan_name:
-            vlan_name = client.get("last_connection_network_name", "")
+            vlan_name = client_details.get("last_connection_network_name") or client.get("last_connection_network_name", "")
 
         # Map WAN name
         wan_id = client_details.get("wan_id") or client.get("wan_id")
@@ -267,8 +281,8 @@ def get_device_data(site, api):
             "dev_type": dev_type,
             "dev_connected": dev_connected,
             "dev_parent_mac": dev_parent_mac,
-            "dev_vlan_id": str(vlan_id) if vlan_id is not None else "1",  # Fallback to 1 if default LAN
-            "dev_vlan_name": vlan_name or "LAN",
+            "dev_vlan_id": str(vlan_id) if vlan_id is not None else "null",
+            "dev_vlan_name": vlan_name or "null",
             "dev_wan_name": wan_name or "null"
         })
 
@@ -276,3 +290,4 @@ def get_device_data(site, api):
 
 if __name__ == '__main__':
     main()
+    
