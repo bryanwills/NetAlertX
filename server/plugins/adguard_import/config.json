@@ -490,7 +490,7 @@
       "column": "Dummy",
       "mapped_to_column": "scanSourcePlugin",
       "mapped_to_column_data": {
-        "value": "Example Plugin"
+        "value": "ADGUARDIMP"
       },
       "css_classes": "col-sm-2",
       "show": false,
@@ -501,7 +501,7 @@
       "name": [
         {
           "language_code": "en_us",
-          "string": "ADGUARDIMP"
+          "string": "Plugin"
         }
       ]
     },
