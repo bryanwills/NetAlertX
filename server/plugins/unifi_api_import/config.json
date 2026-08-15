@@ -693,6 +693,76 @@
       ]
     },
     {
+      "column": "helpVal1",
+      "mapped_to_column": "scanSite",
+      "css_classes": "col-sm-2",
+      "show": true,
+      "type": "label",
+      "default_value": "",
+      "options": [],
+      "localized": [
+        "name"
+      ],
+      "name": [
+        {
+          "language_code": "en_us",
+          "string": "Site"
+        }
+      ]
+    },
+    {
+      "column": "helpVal2",
+      "css_classes": "col-sm-2",
+      "show": true,
+      "type": "label",
+      "default_value": "",
+      "options": [],
+      "localized": [
+        "name"
+      ],
+      "name": [
+        {
+          "language_code": "en_us",
+          "string": "VLAN ID"
+        }
+      ]
+    },
+    {
+      "column": "helpVal3",
+      "mapped_to_column": "scanVlan",
+      "css_classes": "col-sm-2",
+      "show": true,
+      "type": "label",
+      "default_value": "",
+      "options": [],
+      "localized": [
+        "name"
+      ],
+      "name": [
+        {
+          "language_code": "en_us",
+          "string": "VLAN name"
+        }
+      ]
+    },
+    {
+      "column": "helpVal4",
+      "css_classes": "col-sm-2",
+      "show": true,
+      "type": "label",
+      "default_value": "",
+      "options": [],
+      "localized": [
+        "name"
+      ],
+      "name": [
+        {
+          "language_code": "en_us",
+          "string": "WAN name"
+        }
+      ]
+    },
+    {
       "column": "Dummy",
       "mapped_to_column": "scanSourcePlugin",
       "mapped_to_column_data": {
