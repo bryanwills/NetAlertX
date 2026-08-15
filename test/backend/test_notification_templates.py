@@ -295,6 +295,68 @@ class TestConstructNotificationsTemplates(unittest.TestCase):
 
         self.assertEqual(html_without, html_with)
 
+    # -----------------------------------------------------------------
+    # HTML output escapes free-text device values while text stays raw
+    # -----------------------------------------------------------------
+    @patch("models.notification_instance.get_setting_value")
+    def test_html_escapes_free_text_values(self, mock_setting):
+        from models.notification_instance import construct_notifications
+
+        mock_setting.side_effect = self._setting_factory({
+            "NTFPRCS_TEXT_SECTION_HEADERS": True,
+            "NTFPRCS_TEXT_TEMPLATE_new_devices": "",
+        })
+
+        devices = [
+            {
+                "devName": "Meta Quest <Pro",
+                "eveMac": "aa:bb:cc:dd:ee:ff",
+                "devVendor": "Meta",
+                "eveIp": "192.168.1.42",
+                "eveDateTime": "2025-01-15 10:30:00",
+                "eveEventType": "New Device",
+                "devComments": "values <=2 break things",
+            }
+        ]
+        json_data = _make_json(
+            "new_devices", devices, NEW_DEVICE_COLUMNS, "🆕 New devices"
+        )
+
+        html, text, _ = construct_notifications(json_data, "new_devices")
+
+        self.assertIn("Meta Quest &lt;Pro", html)
+        self.assertIn("values &lt;=2 break things", html)
+        self.assertNotIn("Meta Quest <Pro", html)
+        self.assertNotIn("values <=2 break things", html)
+        self.assertIn("Meta Quest <Pro", text)
+        self.assertIn("values <=2 break things", text)
+
+    # -----------------------------------------------------------------
+    # Final HTML escapes preheaders and tolerates indent failures
+    # -----------------------------------------------------------------
+    @patch("models.notification_instance.mylog")
+    @patch("models.notification_instance.indent")
+    def test_finalize_html_escapes_preheader_and_falls_back(self, mock_indent, mock_mylog):
+        from models.notification_instance import finalize_html, XMLTokenError
+
+        mock_indent.side_effect = XMLTokenError("broken html")
+
+        # The mock forces the pretty-print failure so we can assert the raw
+        # fallback HTML returned after PREHEADER replacement.
+        template = "<html><body><span>PREHEADER</span>broken < content</body></html>"
+        expected_html = template.replace(
+            "PREHEADER",
+            "Meta Quest &lt;Pro" + (" &zwnj;&#8199;" * 47),
+        )
+        final_html = finalize_html(template, ["Meta Quest <Pro"])
+
+        self.assertEqual(final_html, expected_html)
+        mock_indent.assert_called_once()
+        mock_mylog.assert_called_once_with(
+            "none",
+            "[Notification] Failed to pretty-print HTML report, sending unindented HTML instead: broken html",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
