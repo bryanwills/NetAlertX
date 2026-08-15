@@ -86,7 +86,7 @@ def main():
     raw_clients = clients_json.get("auto_clients", []) or []
 
     # -------------------------------------------
-    # Fetch DHCP leases if DHCP enabled
+    # Fetch DHCP leases & static reservations
     # -------------------------------------------
     dhcp_json = ag_request(
         "/control/dhcp/status",
@@ -94,12 +94,24 @@ def main():
     )
 
     dhcp_leases = []
-    if dhcp_json and dhcp_json.get("enabled"):
-        dhcp_leases = dhcp_json.get("leases", [])
+    static_leases = []
+    
+    if dhcp_json:
+        dhcp_leases = dhcp_json.get("leases", []) or []
+        static_leases = dhcp_json.get("static_leases", []) or []
 
-    # Build MAC lookup table for DHCP
+    # Build MAC lookup table for DHCP (combining dynamic and static leases)
     dhcp_mac_map = {}
+    
+    # Process dynamic leases first
     for lease in dhcp_leases:
+        ip = lease.get("ip")
+        mac = lease.get("mac")
+        if ip and mac:
+            dhcp_mac_map[ip] = mac.upper()
+
+    # Process static leases (overriding or adding to the map)
+    for lease in static_leases:
         ip = lease.get("ip")
         mac = lease.get("mac")
         if ip and mac:
