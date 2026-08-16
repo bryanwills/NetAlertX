@@ -121,11 +121,13 @@ def send(html, text):
     # Optional custom header, e.g. to authenticate through a reverse proxy / tunnel
     # (Pangolin, Tailscale, ...) sitting in front of the ntfy instance. Skip it if it
     # would clobber a built-in header (e.g. Authorization) so ntfy auth stays intact.
+    custom_header_applied = False
     if custom_header_name != '' and custom_header_value != '':
         if custom_header_name.lower() in {k.lower() for k in headers}:
             mylog('none', [f'[{pluginName}] ⚠ Custom header "{custom_header_name}" collides with a built-in header; skipping it.'])
         else:
             headers[custom_header_name] = custom_header_value
+            custom_header_applied = True
 
     # call NTFY service
     try:
@@ -146,6 +148,24 @@ def send(html, text):
             response_text = response.text  # This captures the response body/message
         else:
             response_text = json.dumps(response.text)
+
+    except requests.exceptions.InvalidHeader:
+        # requests echoes the offending header value in this exception's message,
+        # so the message itself is never logged - it would leak the configured
+        # custom header value. Report the problem without quoting the value.
+        if custom_header_applied:
+            error_text = (f'Invalid custom header "{custom_header_name}" - the header name or value contains '
+                          f'characters that are not allowed in an HTTP header (e.g. a newline, a leading space, '
+                          f'or a non-ASCII character). Check for trailing whitespace on the value.')
+        else:
+            error_text = ('A request header contains characters that are not allowed in an HTTP header. Check the '
+                          'NTFY_* settings for stray newlines or non-ASCII characters.')
+
+        mylog('none', [f'[{pluginName}] ⚠ ERROR: ', error_text])
+
+        response_text = error_text
+
+        return response_text, response_status_code
 
     except requests.exceptions.RequestException as e:
         # The exception message embeds the request URL, which may include a secret
