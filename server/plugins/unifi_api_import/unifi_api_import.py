@@ -1,109 +1,122 @@
 #!/usr/bin/env python
 
+import json
 import os
 import sys
-import json
 from pytz import timezone
 from unifi_sm_api.api import SiteManagerAPI
 
-# Define the installation path and extend the system path for plugin imports
 INSTALL_PATH = os.getenv('NETALERTX_APP', '/app')
-sys.path.extend([f"{INSTALL_PATH}/server/plugins", f"{INSTALL_PATH}/server"])
+sys.path.extend([
+    f"{INSTALL_PATH}/server/plugins",
+    f"{INSTALL_PATH}/server"
+])
 
-from plugin_helper import Plugin_Objects, decode_settings_base64  # noqa: E402 [flake8 lint suppression]
-from logger import mylog, Logger  # noqa: E402 [flake8 lint suppression]
-from const import logPath  # noqa: E402 [flake8 lint suppression]
-from helper import get_setting_value  # noqa: E402 [flake8 lint suppression]
-import conf  # noqa: E402 [flake8 lint suppression]
+from plugin_helper import Plugin_Objects, decode_settings_base64  # noqa: E402
+from logger import mylog, Logger  # noqa: E402
+from const import logPath  # noqa: E402
+from helper import get_setting_value  # noqa: E402
+import conf  # noqa: E402
 
-# Make sure the TIMEZONE for logging is correct
+
 conf.tz = timezone(get_setting_value('TIMEZONE'))
-
-# Make sure log level is initialized correctly
 Logger(get_setting_value('LOG_LEVEL'))
 
 pluginName = 'UNIFIAPI'
 
-# Define the current path and log file paths
-LOG_PATH = logPath + '/plugins'
-LOG_FILE = os.path.join(LOG_PATH, f'script.{pluginName}.log')
-RESULT_FILE = os.path.join(LOG_PATH, f'last_result.{pluginName}.log')
+RESULT_FILE = os.path.join(
+    logPath,
+    'plugins',
+    f'last_result.{pluginName}.log'
+)
 
-# Initialize the Plugin obj output file
 plugin_objects = Plugin_Objects(RESULT_FILE)
 
 
 def main():
     mylog('verbose', [f'[{pluginName}] In script'])
 
-    # Retrieve configuration settings
-    unifi_sites_configs = get_setting_value('UNIFIAPI_sites')
+    site_configs = get_setting_value('UNIFIAPI_sites')
 
-    mylog('verbose', [f'[{pluginName}] number of unifi_sites_configs: {len(unifi_sites_configs)}'])
+    mylog(
+        'verbose',
+        [f'[{pluginName}] number of unifi_sites_configs: '
+         f'{len(site_configs)}']
+    )
 
-    for site_config in unifi_sites_configs:
+    for site_config in site_configs:
+        site_config = decode_settings_base64(site_config)
 
-        siteDict = decode_settings_base64(site_config)
-
-        mylog('verbose', [f'[{pluginName}] siteDict: {json.dumps(siteDict)}'])
-        mylog('none', [f'[{pluginName}] Connecting to: {siteDict["UNIFIAPI_site_name"]}'])
-
-        api = SiteManagerAPI(
-            api_key=siteDict["UNIFIAPI_api_key"],
-            version=siteDict["UNIFIAPI_api_version"],
-            base_url=siteDict["UNIFIAPI_base_url"],
-            verify_ssl=siteDict["UNIFIAPI_verify_ssl"]
+        mylog(
+            'verbose',
+            [f'[{pluginName}] siteDict: {json.dumps(site_config)}']
         )
 
-        sites_resp = api.get_sites()
-        sites = sites_resp.get("data", [])
+        mylog(
+            'none',
+            [f'[{pluginName}] Connecting to: '
+             f'{site_config["UNIFIAPI_site_name"]}']
+        )
+
+        api = SiteManagerAPI(
+            api_key=site_config["UNIFIAPI_api_key"],
+            version=site_config["UNIFIAPI_api_version"],
+            base_url=site_config["UNIFIAPI_base_url"],
+            verify_ssl=site_config["UNIFIAPI_verify_ssl"]
+        )
+
+        sites = api.get_sites().get("data", [])
 
         for site in sites:
-
-            # retrieve data
             device_data = get_device_data(site, api)
 
-            #  Process the data into native application tables
-            if len(device_data) > 0:
+            if not device_data:
+                continue
 
-                site_api_name = site.get("name") or siteDict.get("UNIFIAPI_site_name")
+            site_name = (
+                site.get("name")
+                or site_config.get("UNIFIAPI_site_name")
+            )
 
-                # insert devices into the lats_result.log
-                for device in device_data:
-                    plugin_objects.add_object(
-                        primaryId   = device['dev_mac'],                    # mac
-                        secondaryId = device['dev_ip'],                     # IP
-                        watched1    = device['dev_name'],                   # name
-                        watched2    = device['dev_type'],                   # device_type (AP/Switch etc)
-                        watched3    = device['dev_connected'],              # connectedAt or empty
-                        watched4    = device['dev_parent_mac'],             # parent_mac or "internet"
-                        extra       = '',
-                        foreignKey  = device['dev_mac'],
-                        helpVal1    = site_api_name,                        # devSite
-                        helpVal2    = device.get('dev_vlan_id', 'null'),
-                        helpVal3    = device.get('dev_vlan_name', 'null'),  # devVlan
-                        helpVal4    = device.get('dev_wan_name', 'null')
-                    )
+            for device in device_data:
+                plugin_objects.add_object(
+                    primaryId=device["dev_mac"],
+                    secondaryId=device["dev_ip"],
+                    watched1=device["dev_name"],
+                    watched2=device["dev_type"],
+                    watched3=device["dev_connected"],
+                    watched4=device["dev_parent_mac"],
+                    extra="",
+                    foreignKey=device["dev_mac"],
+                    helpVal1=site_name,
+                    helpVal2=device["dev_vlan_id"],
+                    helpVal3=device["dev_vlan_name"],
+                    helpVal4=device["dev_wan_name"]
+                )
 
-                mylog('verbose', [f'[{pluginName}] New entries: "{len(device_data)}"'])
+            mylog(
+                'verbose',
+                [f'[{pluginName}] New entries: "{len(device_data)}"']
+            )
 
-        # log result
         plugin_objects.write_result_file()
 
     return 0
 
 
-#  retrieve data
 def get_device_data(site, api):
-    device_data = []
-
-    mylog('verbose', [f'[{pluginName}] Site: {site} '])
     site_id = site["id"]
     site_name = site.get("name", "Unnamed Site")
 
-    mylog('verbose', [f'[{pluginName}] Site: {site_name} ({site_id})'])
+    mylog(
+        'verbose',
+        [f'[{pluginName}] Site: {site_name} ({site_id})']
+    )
 
-    # --- Networks ---
+    # -------------------------------------------------------------------------
+    # Networks
+    # -------------------------------------------------------------------------
+
     networks_resp = api.get_networks(site_id)
     networks = networks_resp.get("data", [])
 
@@ -113,26 +126,45 @@ def get_device_data(site, api):
          f'{json.dumps(networks_resp, indent=2)}']
     )
 
-    # Network/VLAN lookup by UniFi network ID
     network_lookup = {
-        network.get("id"): network
+        network["id"]: network
         for network in networks
         if network.get("id")
     }
 
-    # VLAN lookup by VLAN ID
-    vlan_lookup = {
-        str(network.get("vlanId")): network
-        for network in networks
-        if network.get("vlanId") is not None
+    default_network = next(
+        (
+            network
+            for network in networks
+            if network.get("default") is True
+        ),
+        None
+    )
+
+    # -------------------------------------------------------------------------
+    # WiFi broadcasts
+    # -------------------------------------------------------------------------
+
+    wifi_broadcasts_resp = api.get_wifi_broadcasts(site_id)
+    wifi_broadcasts = wifi_broadcasts_resp.get("data", [])
+
+    mylog(
+        'verbose',
+        [f'[{pluginName}] WIFI BROADCASTS: '
+         f'{json.dumps(wifi_broadcasts_resp, indent=2)}']
+    )
+
+    wifi_lookup = {
+        wifi["name"]: wifi
+        for wifi in wifi_broadcasts
+        if wifi.get("name")
     }
 
-    # --- WiFi broadcasts ---
-    wifi_broadcasts_resp = api.get_wifi_broadcasts(site_id)
+    # -------------------------------------------------------------------------
+    # WANs
+    # -------------------------------------------------------------------------
 
-    # --- WANs ---
     wans_resp = api.get_wans(site_id)
-    wans = wans_resp.get("data", [])
 
     mylog(
         'trace',
@@ -140,154 +172,93 @@ def get_device_data(site, api):
          f'{json.dumps(wans_resp, indent=2)}']
     )
 
-    # WAN lookup by UniFi WAN ID
-    wan_lookup = {
-        wan.get("id"): wan
-        for wan in wans
-        if wan.get("id")
+    # The API exposes WAN definitions, but does not provide a client/device
+    # -> WAN association in the responses currently supported here.
+
+    # -------------------------------------------------------------------------
+    # UniFi devices
+    # -------------------------------------------------------------------------
+
+    devices_resp = api.get_unifi_devices(site_id)
+    devices = devices_resp.get("data", [])
+
+    mylog(
+        'trace',
+        [f'[{pluginName}] Site: {site_name} UniFi devices: '
+         f'{json.dumps(devices_resp, indent=2)}']
+    )
+
+    device_id_to_mac = {
+        device["id"]: device.get("macAddress", "")
+        for device in devices
+        if device.get("id")
     }
 
-    # --- Devices ---
-    unifi_devices_resp = api.get_unifi_devices(site_id)
-    unifi_devices = unifi_devices_resp.get("data", [])
-    mylog('trace', [f'[{pluginName}] Site: {site_name} unifi devices: {json.dumps(unifi_devices_resp, indent=2)}'])
+    def resolve_parent_mac(uplink_device_id):
+        if not uplink_device_id:
+            return "internet"
 
-    # --- Clients ---
+        return device_id_to_mac.get(uplink_device_id, "Unknown")
+
+    device_data = []
+
+    # -------------------------------------------------------------------------
+    # UniFi infrastructure devices
+    # -------------------------------------------------------------------------
+
+    for device in devices:
+        features = device.get("features", [])
+
+        if "accessPoint" in features:
+            device_type = "AP"
+        elif "switching" in features:
+            device_type = "Switch"
+        else:
+            device_type = "Unknown"
+
+        device_data.append({
+            "dev_mac": device.get("macAddress", ""),
+            "dev_ip": device.get("ipAddress", ""),
+            "dev_name": device.get("name", ""),
+            "dev_type": device_type,
+            "dev_connected": "",
+            "dev_parent_mac": resolve_parent_mac(
+                device.get("uplinkDeviceId")
+            ),
+            "dev_vlan_id": "null",
+            "dev_vlan_name": "null",
+            "dev_wan_name": "null"
+        })
+
+    # -------------------------------------------------------------------------
+    # Clients
+    # -------------------------------------------------------------------------
+
     clients_resp = api.get_clients(site_id)
     clients = clients_resp.get("data", [])
-    mylog('trace', [f'[{pluginName}] Site: {site_name} clients: {json.dumps(clients_resp, indent=2)}'])
 
-    # Build a lookup for devices by their 'id' to find parent MAC easily
-    device_id_to_mac = {}
-    for dev in unifi_devices:
-        if "id" not in dev:
-            mylog("verbose", [f"[{pluginName}] Skipping device without 'id': {json.dumps(dev)}"])
-            continue
-        device_id_to_mac[dev["id"]] = dev.get("macAddress", "")
-
-    # Helper to resolve uplinkDeviceId to parent MAC, or "internet" if no uplink
-    def resolve_parent_mac(uplink_id):
-        if not uplink_id:
-            return "internet"
-        return device_id_to_mac.get(uplink_id, "Unknown")
-
-    # Process Unifi devices
-    for device in unifi_devices:
-        dev_mac  = device.get('macAddress', '')
-        dev_ip   = device.get('ipAddress', '')
-        dev_name = device.get('name', '')
-        
-        features = device.get('features', [])
-        if 'accessPoint' in features:
-            device_type = 'AP'
-        elif 'switching' in features:
-            device_type = 'Switch'
-        else:
-            device_type = 'Unknown'
-
-        dev_type = device_type
-        dev_connected = ''
-
-        uplinkDeviceId = device.get('uplinkDeviceId', '')
-        dev_parent_mac = resolve_parent_mac(uplinkDeviceId)
-
-        # Resolve VLAN/network for devices
-        vlan_id = None
-        vlan_name = ''
-        
-        if 'networkId' in device and device.get('networkId') in network_lookup:
-            network = network_lookup.get(device.get('networkId'))
-            vlan_id = network.get("vlanId")
-            vlan_name = network.get("name", "")
-
-        if vlan_id is None and 'vlanId' in device:
-            vlan_id = device.get('vlanId')
-
-        if vlan_id is not None and not vlan_name:
-            matched_net = vlan_lookup.get(str(vlan_id))
-            if matched_net:
-                vlan_name = matched_net.get("name", "")
-
-        wan_name = wans[0].get("name", "") if wans else ""
-
-        device_data.append({
-            "dev_mac": dev_mac,
-            "dev_ip": dev_ip,
-            "dev_name": dev_name,
-            "dev_type": dev_type,
-            "dev_connected": dev_connected,
-            "dev_parent_mac": dev_parent_mac,
-            "dev_vlan_id": str(vlan_id) if vlan_id is not None else "null",
-            "dev_vlan_name": vlan_name or "null",
-            "dev_wan_name": wan_name or "null"
-        })
-
-    # Process Clients (child devices connected to APs or switches)
     for client in clients:
-        dev_mac = client.get('macAddress', '')
-        dev_ip = client.get('ipAddress', '')
-        dev_name = client.get('name', '')
-        dev_type = ''
-        dev_connected = client.get('connectedAt', '')
+        client_data = {
+            "dev_mac": client.get("macAddress", ""),
+            "dev_ip": client.get("ipAddress", ""),
+            "dev_name": client.get("name", ""),
+            "dev_type": "",
+            "dev_connected": client.get("connectedAt", ""),
+            "dev_parent_mac": resolve_parent_mac(
+                client.get("uplinkDeviceId")
+            ),
+            "dev_vlan_id": "null",
+            "dev_vlan_name": "null",
+            "dev_wan_name": "null"
+        }
 
-        uplinkDeviceId = client.get('uplinkDeviceId', '')
-        dev_parent_mac = resolve_parent_mac(uplinkDeviceId)
+        # The Integration API client response currently does not expose
+        # network/VLAN information. Do not infer it from unsupported fields.
 
-        # Defaults
-        vlan_id = None
-        vlan_name = ''
-        wan_name = ''
-
-        # Retrieve client details
-        client_id = client.get("id")
-        client_details = {}
-        if client_id:
-            client_details = api.get_client_details(site_id, client_id)
-
-        # Resolve VLAN/network from client details or base client payload independently
-        client_network = client_details.get("network", {})
-        network_id = client_network.get("id") or client.get("network_id")
-
-        if network_id and network_id in network_lookup:
-            network = network_lookup.get(network_id)
-            vlan_id = network.get("vlanId")
-            vlan_name = network.get("name", "")
-
-        if vlan_id is None and 'vlanId' in client_details:
-            vlan_id = client_details.get('vlanId')
-        elif vlan_id is None and 'vlanId' in client:
-            vlan_id = client.get('vlanId')
-
-        if vlan_id is not None and not vlan_name:
-            matched_net = vlan_lookup.get(str(vlan_id))
-            if matched_net:
-                vlan_name = matched_net.get("name", "")
-
-        # Fallback if network name is directly in client payload or details
-        if not vlan_name:
-            vlan_name = client_details.get("last_connection_network_name") or client.get("last_connection_network_name", "")
-
-        # Map WAN name
-        wan_id = client_details.get("wan_id") or client.get("wan_id")
-        if wan_id and wan_id in wan_lookup:
-            wan_name = wan_lookup[wan_id].get("name", "")
-        else:
-            wan_name = wans[0].get("name", "") if wans else ""
-
-        device_data.append({
-            "dev_mac": dev_mac,
-            "dev_ip": dev_ip,
-            "dev_name": dev_name,
-            "dev_type": dev_type,
-            "dev_connected": dev_connected,
-            "dev_parent_mac": dev_parent_mac,
-            "dev_vlan_id": str(vlan_id) if vlan_id is not None else "null",
-            "dev_vlan_name": vlan_name or "null",
-            "dev_wan_name": wan_name or "null"
-        })
+        device_data.append(client_data)
 
     return device_data
 
+
 if __name__ == '__main__':
     main()
-    

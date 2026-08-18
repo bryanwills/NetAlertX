@@ -713,7 +713,7 @@
     {
       "column": "helpVal2",
       "css_classes": "col-sm-2",
-      "show": true,
+      "show": false,
       "type": "label",
       "default_value": "",
       "options": [],
@@ -729,9 +729,8 @@
     },
     {
       "column": "helpVal3",
-      "mapped_to_column": "scanVlan",
       "css_classes": "col-sm-2",
-      "show": true,
+      "show": false,
       "type": "label",
       "default_value": "",
       "options": [],
@@ -748,7 +747,7 @@
     {
       "column": "helpVal4",
       "css_classes": "col-sm-2",
-      "show": true,
+      "show": false,
       "type": "label",
       "default_value": "",
       "options": [],
