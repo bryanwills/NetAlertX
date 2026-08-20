@@ -233,6 +233,7 @@
     "Device_Shortcut_OnlineChart": "Présence de l'appareil",
     "Device_Shortcut_Unstable": "Instable",
     "Device_TableHead_AlertDown": "Alerter si En panne",
+    "Device_TableHead_Comments": "",
     "Device_TableHead_Connected_Devices": "Connexions",
     "Device_TableHead_CustomProps": "Champs / Actions",
     "Device_TableHead_FQDN": "Nom de domaine FQDN",

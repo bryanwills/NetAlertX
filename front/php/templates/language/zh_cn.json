@@ -233,6 +233,7 @@
     "Device_Shortcut_OnlineChart": "设备统计",
     "Device_Shortcut_Unstable": "",
     "Device_TableHead_AlertDown": "提醒宕机",
+    "Device_TableHead_Comments": "",
     "Device_TableHead_Connected_Devices": "链接",
     "Device_TableHead_CustomProps": "属性",
     "Device_TableHead_FQDN": "FQDN",

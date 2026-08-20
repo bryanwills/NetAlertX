@@ -24,6 +24,7 @@ description: NetAlertX coding standards and conventions. Use this when writing c
 - follow existing code style and structure, and ensure backward compatibility with existing installations when submitting PRs
 - all code needs to be scalable to handle large networks with thousands of devices (10k+) without performance degradation
 - no inline imports, all imports must be at the top of the file
+- when using `server/logger.py` `mylog()`, only use valid levels: `none`, `minimal`, `verbose`, `debug`, `trace`; invalid levels silently degrade to `none`
 
 
 ## File Length
@@ -96,6 +97,21 @@ from db_test_helpers import make_db, DummyDB, insert_device, minutes_ago
 ```
 
 If a helper you need doesn't exist yet, add it to `db_test_helpers.py` — not locally in the test file.
+
+## MAC Literals in Tests — ALWAYS Lowercase
+
+**MANDATORY:** Every MAC address literal used in test fixtures, parametrize decorators, assertions, or comments must be lowercase hex:
+
+```python
+# Correct
+make_device_dict("aa:bb:cc:dd:ee:01", ...)
+
+# Wrong — will be rejected in review
+make_device_dict("AA:BB:CC:DD:EE:01", ...)
+make_device_dict("Aa:Bb:Cc:Dd:Ee:01", ...)
+```
+
+This applies to hardcoded strings in `assert`, `pytest.mark.parametrize`, docstrings, and comments too. There are no exceptions.
 
 ## Path Hygiene
 

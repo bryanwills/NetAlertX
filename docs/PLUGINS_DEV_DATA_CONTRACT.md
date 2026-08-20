@@ -32,16 +32,18 @@ plugin_objects.add_object(
     objectSecondaryId="192.168.1.1",
     DateTime="2023-01-02 15:56:30",
     watchedValue1="online",
-    watchedValue2=None,
-    watchedValue3=None,
-    watchedValue4=None,
+    watchedValue2="null",
+    watchedValue3="null",
+    watchedValue4="null",
     Extra="Additional data",
     ForeignKey="aa:bb:cc:dd:ee:ff",
-    helpVal1=None,
-    helpVal2=None,
-    helpVal3=None,
-    helpVal4=None
+    helpVal1="null",
+    helpVal2="null",
+    helpVal3="null",
+    helpVal4="null"
 )
+
+Please note unavailable values need to be set to `"null"` 
 
 # Write results (handles formatting, sanitization, and file creation)
 plugin_objects.write_result_file()
@@ -123,6 +125,33 @@ This allows NetAlertX to:
 - Display the object on the device details page
 - Send notifications when the parent device is involved
 - Link events across plugins
+
+
+### Target columns for config.json
+
+Typically, target columns would be pointing to the `CurrentScan` table, so, e.g. `scanSite` or `scanLastIP`. This mapping is defined in the `config.json` of the given plugin. As of writing this article, the `CurrentScan` table is defined as follows:
+
+```sql
+CREATE TABLE CurrentScan (
+                                scanMac STRING(50) NOT NULL COLLATE NOCASE,
+                                scanLastIP STRING(50) NOT NULL COLLATE NOCASE,
+                                scanVendor STRING(250),
+                                scanSourcePlugin STRING(10),
+                                scanName STRING(250),
+                                scanLastQuery STRING(250),
+                                scanLastConnection STRING(250),
+                                scanSyncHubNode STRING(50),
+                                scanSite STRING(250),
+                                scanSSID STRING(250),
+                                scanVlan STRING(250),
+                                scanParentMAC STRING(250),
+                                scanParentPort STRING(250),
+                                scanType STRING(250),
+                                UNIQUE(scanMac)
+)
+```
+
+As the documentation might become outdated, it's good practice to check the latest definition of the `CurrentScan` table in the `app.sql` script in the code base.
 
 ## Examples
 

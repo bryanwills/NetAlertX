@@ -233,6 +233,7 @@
     "Device_Shortcut_OnlineChart": "デバイス検出",
     "Device_Shortcut_Unstable": "不安定",
     "Device_TableHead_AlertDown": "ダウンアラート",
+    "Device_TableHead_Comments": "",
     "Device_TableHead_Connected_Devices": "接続",
     "Device_TableHead_CustomProps": "属性 / アクション",
     "Device_TableHead_FQDN": "FQDN",

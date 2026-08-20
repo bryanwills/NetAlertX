@@ -233,6 +233,7 @@
     "Device_Shortcut_OnlineChart": "Наявність пристрою",
     "Device_Shortcut_Unstable": "",
     "Device_TableHead_AlertDown": "Агент Вниз",
+    "Device_TableHead_Comments": "",
     "Device_TableHead_Connected_Devices": "Зв'язки",
     "Device_TableHead_CustomProps": "Реквізит / дії",
     "Device_TableHead_FQDN": "FQDN",
