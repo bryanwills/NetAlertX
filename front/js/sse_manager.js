@@ -186,6 +186,13 @@ class NetAlertXStateManager {
         }));
       }
 
+      // 6. Dispatch pause state update for the header Pause/Resume button
+      if (appState["pause_until"] !== undefined) {
+        document.dispatchEvent(new CustomEvent('nax:pauseStateUpdate', {
+          detail: { pauseUntil: appState["pause_until"] }
+        }));
+      }
+
       // console.log("[NetAlertX State] UI updated via jQuery");
     } catch (e) {
       console.error("[NetAlertX State] Failed to update state display:", e);

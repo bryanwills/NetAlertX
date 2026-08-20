@@ -387,6 +387,8 @@
     "HRS_TO_KEEP_NEWDEV_name": "Delete new devices after",
     "HRS_TO_KEEP_OFFDEV_description": "This is a maintenance setting <b>DELETING devices</b>. If enabled (<code>0</code> is disabled), devices that are <b>Offline</b> and their <b>Last Connection</b> date time is older than the specified hours in this setting, will be deleted. Use this setting if you want to auto-delete <b>Offline devices</b> after <code>X</code> hours being offline.",
     "HRS_TO_KEEP_OFFDEV_name": "Delete offline devices after",
+    "Header_PauseScans_Tooltip": "Pause automatic scans for 10 minutes",
+    "Header_ResumeScans_Tooltip": "Resume automatic scans",
     "LOADED_PLUGINS_description": "Which Plugins to load. Adding plugins might slow the application. Read more about which plugins need to be enabled, types, or scanning options in the <a target=\"_blank\" href=\"https://docs.netalertx.com/PLUGINS\">plugins docs</a>. Unloaded plugins will lose your settings. Only <code>disabled</code> plugins can be unloaded.",
     "LOADED_PLUGINS_name": "Loaded plugins",
     "LOG_LEVEL_description": "This setting will enable more verbose logging. Useful for debugging events writing into the database.",
