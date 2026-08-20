@@ -581,50 +581,78 @@
       ]
     },
     {
-      "function": "CUSTOMHEADER_NAME",
+      "function": "CUSTOM_HEADERS",
       "type": {
-        "dataType": "string",
+        "dataType": "array",
         "elements": [
-          { "elementType": "input", "elementOptions": [], "transformers": [] }
+          {
+            "elementType": "input",
+            "elementOptions": [
+              { "placeholder": "Enter value" },
+              { "suffix": "_in" },
+              { "cssClasses": "col-sm-10" },
+              { "prefillValue": "null" }
+            ],
+            "transformers": []
+          },
+          {
+            "elementType": "button",
+            "elementOptions": [
+              { "sourceSuffixes": ["_in"] },
+              { "separator": "" },
+              { "cssClasses": "col-xs-12" },
+              { "onClick": "addList(this, false)" },
+              { "getStringKey": "Gen_Add" }
+            ],
+            "transformers": []
+          },
+          {
+            "elementType": "select",
+            "elementHasInputValue": 1,
+            "elementOptions": [
+              { "multiple": "true" },
+              { "readonly": "true" },
+              { "editable": "true" }
+            ],
+            "transformers": []
+          },
+          {
+            "elementType": "button",
+            "elementOptions": [
+              { "sourceSuffixes": [] },
+              { "separator": "" },
+              { "cssClasses": "col-xs-6" },
+              { "onClick": "removeAllOptions(this)" },
+              { "getStringKey": "Gen_Remove_All" }
+            ],
+            "transformers": []
+          },
+          {
+            "elementType": "button",
+            "elementOptions": [
+              { "sourceSuffixes": [] },
+              { "separator": "" },
+              { "cssClasses": "col-xs-6" },
+              { "onClick": "removeFromList(this)" },
+              { "getStringKey": "Gen_Remove_Last" }
+            ],
+            "transformers": []
+          }
         ]
       },
-      "default_value": "",
+      "default_value": [],
       "options": [],
       "localized": ["name", "description"],
       "name": [
         {
           "language_code": "en_us",
-          "string": "Custom header name"
+          "string": "Custom headers"
         }
       ],
       "description": [
         {
           "language_code": "en_us",
-          "string": "Optional custom HTTP header name sent with the ntfy request, e.g. to authenticate through a reverse proxy or tunnel. Requires the custom header value to also be set. Leave empty to disable."
-        }
-      ]
-    },
-    {
-      "function": "CUSTOMHEADER_VALUE",
-      "type": {
-        "dataType": "string",
-        "elements": [
-          { "elementType": "input", "elementOptions": [{ "type": "password" }], "transformers": [] }
-        ]
-      },
-      "default_value": "",
-      "options": [],
-      "localized": ["name", "description"],
-      "name": [
-        {
-          "language_code": "en_us",
-          "string": "Custom header value"
-        }
-      ],
-      "description": [
-        {
-          "language_code": "en_us",
-          "string": "Value for the custom HTTP header defined above. Requires the custom header name to also be set. Leave empty to disable."
+          "string": "Optional custom HTTP headers sent with the ntfy request, one entry per header in the format <code>Name: Value</code>, for example <code>P-Access-Token-Id: abc123</code>. Useful to authenticate through a reverse proxy or tunnel (Pangolin, Tailscale, ...) in front of ntfy, where more than one header may be required. Entries that are malformed, or whose name collides with a header the plugin already sets (such as <code>Authorization</code>), are skipped and logged. Leave empty to disable."
         }
       ]
     }

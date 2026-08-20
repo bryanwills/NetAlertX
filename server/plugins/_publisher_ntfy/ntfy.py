@@ -85,6 +85,33 @@ def check_config():
 
 
 # -------------------------------------------------------------------------------
+def build_custom_headers(entries, reserved_headers):
+    """Turn "Name: Value" setting entries into a header dict.
+
+    Entries are skipped when malformed, when the name would clobber a header the
+    plugin already set (so ntfy auth stays intact), and when a name repeats.
+    Values are never logged, they are usually secrets.
+    """
+
+    taken = {name.lower() for name in reserved_headers}
+    custom_headers = {}
+
+    for position, entry in enumerate(entries, start=1):
+        name, separator, value = entry.partition(':')
+        name, value = name.strip(), value.strip()
+
+        if separator == '' or name == '' or value == '':
+            mylog('none', [f'[{pluginName}] ⚠ Ignoring custom header #{position}, expected the format "Name: Value".'])
+        elif name.lower() in taken:
+            mylog('none', [f'[{pluginName}] ⚠ Custom header "{name}" collides with a header that is already set; skipping it.'])
+        else:
+            taken.add(name.lower())
+            custom_headers[name] = value
+
+    return custom_headers
+
+
+# -------------------------------------------------------------------------------
 def send(html, text):
 
     response_text = ''
@@ -95,8 +122,7 @@ def send(html, text):
     user = get_setting_value('NTFY_USER')
     pwd = get_setting_value('NTFY_PASSWORD')
     verify_ssl = get_setting_value('NTFY_VERIFY_SSL')
-    custom_header_name = get_setting_value('NTFY_CUSTOMHEADER_NAME')
-    custom_header_value = get_setting_value('NTFY_CUSTOMHEADER_VALUE')
+    custom_header_entries = get_setting_value('NTFY_CUSTOM_HEADERS') or []
     # Strip a leading '?' so both "p_token=..." and "?p_token=..." work; requests
     # adds the '?' itself, and a leading one would produce a broken "??" in the URL.
     url_query_string = get_setting_value('NTFY_URL_QUERY_STRING').lstrip('?')
@@ -118,16 +144,11 @@ def send(html, text):
         # add authorization header with hash
         headers["Authorization"] = "Basic {}".format(basichash)
 
-    # Optional custom header, e.g. to authenticate through a reverse proxy / tunnel
-    # (Pangolin, Tailscale, ...) sitting in front of the ntfy instance. Skip it if it
-    # would clobber a built-in header (e.g. Authorization) so ntfy auth stays intact.
-    custom_header_applied = False
-    if custom_header_name != '' and custom_header_value != '':
-        if custom_header_name.lower() in {k.lower() for k in headers}:
-            mylog('none', [f'[{pluginName}] ⚠ Custom header "{custom_header_name}" collides with a built-in header; skipping it.'])
-        else:
-            headers[custom_header_name] = custom_header_value
-            custom_header_applied = True
+    # Optional custom headers, e.g. to authenticate through a reverse proxy / tunnel
+    # sitting in front of the ntfy instance. Pangolin needs two of them, which is why
+    # this is a list rather than a single name/value pair.
+    custom_headers = build_custom_headers(custom_header_entries, headers)
+    headers.update(custom_headers)
 
     # call NTFY service
     try:
@@ -153,10 +174,11 @@ def send(html, text):
         # requests echoes the offending header value in this exception's message,
         # so the message itself is never logged - it would leak the configured
         # custom header value. Report the problem without quoting the value.
-        if custom_header_applied:
-            error_text = (f'Invalid custom header "{custom_header_name}" - the header name or value contains '
-                          f'characters that are not allowed in an HTTP header (e.g. a newline, a leading space, '
-                          f'or a non-ASCII character). Check for trailing whitespace on the value.')
+        if custom_headers:
+            names = ', '.join(f'"{name}"' for name in custom_headers)
+            error_text = (f'Invalid custom header - one of {names} has a name or value containing characters '
+                          f'that are not allowed in an HTTP header (e.g. a newline, a leading space, or a '
+                          f'non-ASCII character). Check for trailing whitespace on the value.')
         else:
             error_text = ('A request header contains characters that are not allowed in an HTTP header. Check the '
                           'NTFY_* settings for stray newlines or non-ASCII characters.')
