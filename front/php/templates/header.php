@@ -54,6 +54,7 @@
   <script src="js/db_methods.js?v=<?php include 'php/templates/version.php'; ?>"></script>
   <script src="js/settings_utils.js?v=<?php include 'php/templates/version.php'; ?>"></script>
   <script src="js/device.js?v=<?php include 'php/templates/version.php'; ?>"></script>
+  <script src="js/scan_control.js?v=<?php include 'php/templates/version.php'; ?>"></script>
 
   <!-- iCheck -->
 
@@ -208,17 +209,17 @@
           <li>
             <a id="fullscreen-button" href='#' role="button" span class='fa fa-arrows-alt' onclick='toggleFullscreen()'></a>
           </li>
-          <!-- Notifications -->
-          <li>
-            <a id="notifications-button" href='userNotifications.php' role="button" span class='fa-solid fa-bell'></a>
-            <span  id="unread-notifications-bell-count" title="" class="badge bg-red unread-notifications-bell" >0</span>
-          </li>
           <!-- Pause / Resume automatic scans -->
           <li>
             <a id="pause-resume-button" href="#" role="button" title="<?= lang('Header_PauseScans_Tooltip') ?>" onclick="togglePauseScans(); return false;">
               <i id="pause-resume-icon" class="fa-solid fa-pause"></i>
             </a>
           </li>
+          <!-- Notifications -->
+          <li>
+            <a id="notifications-button" href='userNotifications.php' role="button" span class='fa-solid fa-bell'></a>
+            <span  id="unread-notifications-bell-count" title="" class="badge bg-red unread-notifications-bell" >0</span>
+          </li>         
           <!-- Server Status -->
           <li>
             <a onclick="setCache('activeMaintenanceTab', 'tab_Logging_id')" href="maintenance.php#tab_Logging">
@@ -488,57 +489,13 @@
 
   function toggleFullscreen() {
 
-   if (document.fullscreenElement) {
-     document.exitFullscreen();
-    }
-   else {
-     document.documentElement.requestFullscreen();
-	}
-   }
-
-  //--------------------------------------------------------------
-  // Pause / Resume automatic scans button
-  // Default pause duration (minutes) used for the single-click header button
-  const PAUSE_SCANS_DEFAULT_MINUTES = 10;
-
-  function renderPauseResumeButton(pauseUntil) {
-    const icon = document.getElementById('pause-resume-icon');
-    const link = document.getElementById('pause-resume-button');
-    if (!icon || !link) return;
-
-    const isPaused = !!pauseUntil;
-    icon.className = isPaused ? 'fa-solid fa-play' : 'fa-solid fa-pause';
-    link.title = isPaused
-      ? '<?= lang('Header_ResumeScans_Tooltip') ?>'
-      : '<?= lang('Header_PauseScans_Tooltip') ?>';
-  }
-
-  // Updated whenever the SSE state manager receives a state_update event (see sse_manager.js)
-  document.addEventListener('nax:pauseStateUpdate', (e) => {
-    renderPauseResumeButton(e.detail.pauseUntil);
-  });
-
-  function togglePauseScans() {
-    const icon = document.getElementById('pause-resume-icon');
-    const isPaused = icon && icon.classList.contains('fa-play');
-    const apiBase = getApiBase();
-    const apiToken = getSetting("API_TOKEN");
-    const endpoint = isPaused ? '/scan/resume' : '/scan/pause';
-    const payload = isPaused ? {} : { minutes: PAUSE_SCANS_DEFAULT_MINUTES };
-
-    $.ajax({
-      url: `${apiBase}${endpoint}`,
-      method: "POST",
-      contentType: "application/json",
-      headers: { "Authorization": `Bearer ${apiToken}` },
-      data: JSON.stringify(payload),
-      error: function(xhr, status, error) {
-        console.error("[Header] Error toggling scan pause:", status, error);
+    if (document.fullscreenElement) {
+      document.exitFullscreen();
       }
-    });
-  }
-
-  //--------------------------------------------------------------
+    else {
+      document.documentElement.requestFullscreen();
+    }
+   }
 
   // Update server time in the header
   update_servertime()
