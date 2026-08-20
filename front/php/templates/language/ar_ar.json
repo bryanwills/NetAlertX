@@ -233,6 +233,7 @@
     "Device_Shortcut_OnlineChart": "مخطط الاتصال",
     "Device_Shortcut_Unstable": "",
     "Device_TableHead_AlertDown": "تنبيه عدم الاتصال",
+    "Device_TableHead_Comments": "",
     "Device_TableHead_Connected_Devices": "الأجهزة المتصلة",
     "Device_TableHead_CustomProps": "خصائص مخصصة",
     "Device_TableHead_FQDN": "اسم النطاق الكامل",

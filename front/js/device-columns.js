@@ -50,6 +50,7 @@ const DEVICE_COLUMN_FIELDS = [
   "devPrimaryIPv4",        // 31 Device_TableHead_IPv4
   "devPrimaryIPv6",        // 32 Device_TableHead_IPv6
   "devFlapping",           // 33 Device_TableHead_Flapping
+  "devComments",           // 34 Device_TableHead_Comments
 ];
 
 // Named index constants — eliminates all mapIndx(N) magic numbers.
@@ -128,6 +129,7 @@ const COLUMN_NAME_MAP = {
   "Device_TableHead_IPv4":              "devPrimaryIPv4",
   "Device_TableHead_IPv6":              "devPrimaryIPv6",
   "Device_TableHead_Flapping":          "devFlapping",
+  "Device_TableHead_Comments":          "devComments",
 };
 
 console.log("init device-columns.js");
