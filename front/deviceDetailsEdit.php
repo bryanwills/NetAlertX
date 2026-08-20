@@ -110,7 +110,7 @@ function getDeviceData() {
             // columns to hide
             hiddenFields = ["NEWDEV_devScan", "NEWDEV_devPresentLastScan"]
             // columns to disable/readonly - conditional depending if a new dummy device is created
-            disabledFields = mac == "new" ? ["NEWDEV_devLastNotification", "NEWDEV_devFirstConnection", "NEWDEV_devLastConnection"] : ["NEWDEV_devLastNotification", "NEWDEV_devFirstConnection", "NEWDEV_devLastConnection", "NEWDEV_devMac", "NEWDEV_devLastIP", "NEWDEV_devPrimaryIPv6", "NEWDEV_devPrimaryIPv4", "NEWDEV_devSyncHubNode", "NEWDEV_devFQDN"];
+            disabledFields = mac == "new" ? ["NEWDEV_devLastNotification", "NEWDEV_devFirstConnection", "NEWDEV_devLastConnection", "NEWDEV_devFQDN", "NEWDEV_devPrimaryIPv4", "NEWDEV_devPrimaryIPv6", "NEWDEV_devSyncHubNode"] : ["NEWDEV_devLastNotification", "NEWDEV_devFirstConnection", "NEWDEV_devLastConnection", "NEWDEV_devMac", "NEWDEV_devLastIP", "NEWDEV_devPrimaryIPv6", "NEWDEV_devPrimaryIPv4", "NEWDEV_devSyncHubNode", "NEWDEV_devFQDN"];
 
             // Fields that are tracked by authoritative handler and can be locked/unlocked
             const trackedFields = {
