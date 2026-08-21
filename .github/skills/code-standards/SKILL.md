@@ -98,6 +98,15 @@ from db_test_helpers import make_db, DummyDB, insert_device, minutes_ago
 
 If a helper you need doesn't exist yet, add it to `db_test_helpers.py` — not locally in the test file.
 
+## Stubbing Modules in Standalone-Capable Tests
+
+If a test stubs NetAlertX modules into `sys.modules` so a script can be imported
+outside the container (see `test/plugins/test_ntfy_custom_headers.py`), pop each
+stubbed name back out of `sys.modules` right after the one-time import that needed
+it. Otherwise the fake module leaks into every other test file collected in the
+same pytest session and shadows the real module (see `testing-workflow` skill for
+the full pattern and reproduction steps).
+
 ## MAC Literals in Tests — ALWAYS Lowercase
 
 **MANDATORY:** Every MAC address literal used in test fixtures, parametrize decorators, assertions, or comments must be lowercase hex:
