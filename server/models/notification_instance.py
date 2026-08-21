@@ -18,7 +18,6 @@ from helper import (
     get_setting_value,
     getBuildTimeStampAndVersion,
 )
-from messaging.in_app import write_notification
 from messaging.notification_sections import SECTION_ORDER
 from utils.datetime_utils import timeNowUTC, timeNowTZ, get_timezone_offset
 
@@ -162,6 +161,7 @@ class NotificationInstance:
             self.HTML = final_html
 
             # Notify frontend
+            from messaging.in_app import write_notification  # lazy import to avoid Flask dep at module level
             write_notification(f"Report:{self.GUID}", "alert", self.DateTimeCreated)
 
             self.upsert()
