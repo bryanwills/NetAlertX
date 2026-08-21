@@ -27,7 +27,6 @@ NetAlertX gives you a real-time source of truth for connected devices, helps ide
 
 Use NetAlertX to spot shadow IT, unauthorized hardware, IPAM drift, and other changes that matter to service teams. With multi-site sync, reporting, workflows, and webhooks, it helps MSPs stay ahead of problems without the overhead of a full NMS or SIEM.
 
-
 ## Table of Contents
 
 - [Quick Start](#quick-start)
