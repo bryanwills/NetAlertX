@@ -12,28 +12,41 @@ If your ntfy instance sits behind a reverse proxy or tunnel that authenticates r
 
 Both are independent of `NTFY_TOKEN` / `NTFY_USER` / `NTFY_PASSWORD` — those still control authentication against ntfy itself and are unaffected.
 
-### Custom header
+### Custom headers
 
-Sends an extra HTTP header with the request. Prefer this over the query string for anything secret.
+Sends extra HTTP headers with the request. Prefer this over the query string for anything secret.
 
-| Setting | Sample value |
-|---|---|
-| `NTFY_CUSTOMHEADER_NAME` | `X-Proxy-Token` |
-| `NTFY_CUSTOMHEADER_VALUE` | `p_abc123.def456ghi789` |
+`NTFY_CUSTOM_HEADERS` is a list. Add one entry per header, in the format `Name: Value`:
+
+```text
+X-Proxy-Token: p_abc123.def456ghi789
+```
+
+Proxies that need more than one header work the same way — add a second entry. Pangolin, for example:
+
+```text
+P-Access-Token-Id: abc123
+P-Access-Token: def456ghi789
+```
 
 Other common examples:
 
-| Proxy | Header name | Header value |
-|---|---|---|
-| Pangolin | `P-Token` | `tokenId.tokenValue` |
-| Cloudflare Access | `CF-Access-Client-Id` | `abc123.access` |
-| Generic bearer gateway | `X-Auth-Token` | `eyJhbGciOi...` |
+| Proxy | Entry |
+|---|---|
+| Pangolin (single token) | `P-Token: tokenId.tokenValue` |
+| Cloudflare Access | `CF-Access-Client-Id: abc123.access` |
+| Generic bearer gateway | `X-Auth-Token: eyJhbGciOi...` |
 
-Both settings must be filled in — setting only one of them does nothing.
+The first `:` separates the name from the value, so a value may itself contain colons. Whitespace around the name and around the value is trimmed, so a stray space or a trailing newline pasted in from a text file is harmless.
 
-The header value must be a valid HTTP header value: plain ASCII, no newlines, and no leading or trailing whitespace. A trailing newline pasted in from a text file is the most common mistake and the plugin will report it as an invalid custom header.
+An entry is skipped, with a warning in the log, when:
 
-If the header name collides with one the plugin has already set for this request (`Title`, `Actions`, `Priority`, `Tags`, plus `Authorization` when an ntfy token or username/password is configured), the custom header is skipped and a warning is logged, so it can never clobber your ntfy credentials. With no ntfy credentials configured there is no `Authorization` header to clash with, so you are free to use that name for the proxy.
+- it is not in `Name: Value` form, or either side is empty
+- the same name is listed twice
+- the name collides with a header the plugin has already set for this request (`Title`, `Actions`, `Priority`, `Tags`, plus `Authorization` when an ntfy token or username/password is configured)
+- after trimming, the name or the value still contains a newline or a non-ASCII character, neither of which can be sent in an HTTP header
+
+Skipping applies to that entry only — the remaining headers are still sent and the notification still goes out. The collision rule means a custom header can never clobber your ntfy credentials. With no ntfy credentials configured there is no `Authorization` header to clash with, so you are free to use that name for the proxy.
 
 ### URL query string
 
@@ -45,4 +58,4 @@ Appends a query string to the ntfy request URL, for proxies that authenticate vi
 
 A leading `?` is optional — both `p_token=...` and `?p_token=...` work. Multiple parameters are supported: `p_token=abc&source=netalertx`.
 
-Note that query strings are commonly recorded in proxy and web-server access logs, so for secrets the custom header above is the safer option. The plugin redacts the query string from any error message it logs.
+Note that query strings are commonly recorded in proxy and web-server access logs, so for secrets the custom headers above are the safer option. The plugin redacts the query string from any error message it logs.

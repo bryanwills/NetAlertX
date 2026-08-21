@@ -1385,7 +1385,9 @@ function getDevicesList()
 // -----------------------------------------------------------------------------
 // apply theme
 
-$(document).ready(function() {
+// Gated on callAfterAppInitialized() rather than raw $(document).ready, so this
+// can't race clearCache()'s reload and force-override the theme to Light. See #943.
+function applyTheme() {
   let theme = getSetting("UI_theme");
   if (theme) {
     theme = theme.replace("['","").replace("']","");
@@ -1402,6 +1404,10 @@ $(document).ready(function() {
   } else {
     setCookie("UI_theme", "Light");
   }
+}
+
+$(document).ready(function() {
+  callAfterAppInitialized(applyTheme);
 });
 
 // -----------------------------------------------------------
