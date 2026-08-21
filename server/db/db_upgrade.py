@@ -146,6 +146,74 @@ def ensure_mac_lowercase_triggers(sql):
         return False
 
 
+# Sentinel devParentMAC values that are never actual device references
+PARENT_MAC_SENTINELS = ("", "internet", "null")
+
+
+def ensure_dangling_parentmac_cleanup_trigger(sql):
+    """
+    Ensures a trigger exists that clears devParentMAC/devParentMACSource on any
+    device that referenced a device MAC which was just deleted, preventing
+    dangling Parent Node references.
+
+    Note: this intentionally does NOT touch the NEWDEV_devParentMAC setting.
+    Settings are sourced from app.conf and get re-imported verbatim on every
+    restart (see importConfigs()), so a DB-only fix here would be silently
+    reverted. Stale NEWDEV_devParentMAC values are instead guarded against at
+    the point of use in create_new_devices() (server/scan/device_handling.py).
+    """
+    try:
+        sql.execute(
+            "SELECT name FROM sqlite_master WHERE type='trigger' AND name='trg_clear_dangling_parentmac_on_delete'"
+        )
+        if not sql.fetchone():
+            mylog("verbose", ["[db_upgrade] Creating trigger 'trg_clear_dangling_parentmac_on_delete'"])
+            sql.execute("""
+                CREATE TRIGGER trg_clear_dangling_parentmac_on_delete
+                AFTER DELETE ON Devices
+                FOR EACH ROW
+                WHEN OLD.devMac IS NOT NULL AND OLD.devMac != ''
+                BEGIN
+                    UPDATE Devices
+                    SET devParentMAC = '', devParentMACSource = ''
+                    WHERE LOWER(devParentMAC) = LOWER(OLD.devMac);
+                END;
+            """)
+
+        return True
+
+    except Exception as e:
+        mylog("none", [f"[db_upgrade] ERROR while ensuring dangling parentMAC trigger: {e}"])
+        return False
+
+
+def cleanup_existing_dangling_parentmac(sql) -> bool:
+    """
+    One-time/idempotent cleanup for installations that already have devParentMAC
+    values pointing to a MAC no longer present in Devices. The delete trigger
+    only prevents new dangling references going forward, so this repairs data
+    left over from before the trigger existed.
+    """
+    try:
+        sentinel_list = ", ".join(f"'{v}'" for v in PARENT_MAC_SENTINELS)
+
+        sql.execute(f"""
+            UPDATE Devices
+            SET devParentMAC = '', devParentMACSource = ''
+            WHERE devParentMAC IS NOT NULL
+              AND LOWER(devParentMAC) NOT IN ({sentinel_list})
+              AND LOWER(devParentMAC) NOT IN (SELECT LOWER(devMac) FROM Devices)
+        """)
+        if sql.rowcount > 0:
+            mylog("verbose", [f"[db_upgrade] Cleared {sql.rowcount} dangling devParentMAC reference(s)"])
+
+        return True
+
+    except Exception as e:
+        mylog("none", [f"[db_upgrade] ERROR while cleaning up dangling parentMAC references: {e}"])
+        return False
+
+
 def ensure_views(sql) -> bool:
     """
     Ensures required views exist.

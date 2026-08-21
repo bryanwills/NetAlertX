@@ -231,6 +231,66 @@ def test_create_new_devices_sets_sources(scan_db_for_new_devices):
     assert row["devVlanSource"] == "NEWDEV"
 
 
+def test_create_new_devices_ignores_dangling_newdev_parentmac(scan_db_for_new_devices):
+    """A stale NEWDEV_devParentMAC pointing to a since-deleted device is treated as unset,
+    instead of seeding the new device with another dangling Parent Node reference."""
+    cur = scan_db_for_new_devices.cursor()
+    cur.execute(
+        """
+        INSERT INTO CurrentScan (
+            scanMac, scanName, scanVendor, scanSourcePlugin, scanLastIP,
+            scanSyncHubNode, scanParentMAC, scanParentPort,
+            scanSite, scanSSID, scanType
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            "aa:bb:cc:dd:ee:11",
+            "DeviceTwo",
+            "AcmeVendor",
+            "ARPSCAN",
+            "192.168.1.11",
+            "",
+            "",  # no parent reported by the scan itself
+            "",
+            "",
+            "",
+            "",
+        ),
+    )
+    scan_db_for_new_devices.commit()
+
+    settings = {
+        "NEWDEV_devType": "default-type",
+        # points to a MAC that does not (and never did, in this test) exist in Devices
+        "NEWDEV_devParentMAC": "99:99:99:99:99:99",
+        "NEWDEV_devOwner": "owner",
+        "NEWDEV_devGroup": "group",
+        "NEWDEV_devComments": "",
+        "NEWDEV_devLocation": "",
+        "NEWDEV_devCustomProps": "",
+        "NEWDEV_devParentRelType": "uplink",
+        "SYNC_node_name": "SYNCNODE",
+    }
+
+    db = Mock()
+    db.sql_connection = scan_db_for_new_devices
+    db.sql = cur
+    db.commitDB = scan_db_for_new_devices.commit
+
+    with patch.multiple(
+        device_handling,
+        get_setting_value=Mock(side_effect=lambda key: settings.get(key, "")),
+        safe_int=Mock(return_value=0),
+    ):
+        device_handling.create_new_devices(db)
+
+    row = cur.execute(
+        "SELECT devParentMAC FROM Devices WHERE devMac = ?", ("aa:bb:cc:dd:ee:11",)
+    ).fetchone()
+
+    assert row["devParentMAC"] == ""
+
+
 def test_scan_updates_newdev_device_name(scan_db, mock_device_handlers):
     """Scanner discovers name for device with NEWDEV source."""
     cur = scan_db.cursor()
