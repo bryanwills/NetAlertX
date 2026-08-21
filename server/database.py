@@ -16,6 +16,8 @@ from db.db_upgrade import (
     ensure_Settings,
     ensure_Indexes,
     ensure_mac_lowercase_triggers,
+    ensure_dangling_parentmac_cleanup_trigger,
+    cleanup_existing_dangling_parentmac,
     migrate_to_camelcase,
     migrate_timestamps_to_utc,
 )
@@ -224,6 +226,10 @@ class DB:
 
             # Normalization triggers
             ensure_mac_lowercase_triggers(self.sql)
+
+            # Prevent/repair dangling devParentMAC references left by deleted devices
+            ensure_dangling_parentmac_cleanup_trigger(self.sql)
+            cleanup_existing_dangling_parentmac(self.sql)
 
             # Device history table + audit triggers
             ensure_deviceshistory_table(self.sql)

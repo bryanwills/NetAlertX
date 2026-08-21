@@ -989,14 +989,14 @@ function renderDeviceLink(data, container, useName = false) {
       'data-alertdown': device.devAlertDown,
       'data-sleeping': device.devIsSleeping || 0,
       'data-archived': device.devIsArchived || 0,
-      'data-isnew':    device.devIsNew       || 0,
+      'data-isnew':    device.devIsNew      || 0,
       'data-icon': device.devIcon
     });
 
   return `
     <a href="${badge.url}" target="_blank">
       <span class="custom-chip">
-        <span class="iconPreview">${atob(device.devIcon)}</span>
+        <span class="iconPreview">${device.devIcon ? atob(device.devIcon) : ''}</span>
         ${useName ? encodeSpecialChars(device.devName) : data.text}
         <span>
           (${badge.iconHtml})
