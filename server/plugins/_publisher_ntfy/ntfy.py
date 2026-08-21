@@ -85,6 +85,23 @@ def check_config():
 
 
 # -------------------------------------------------------------------------------
+def header_is_sendable(name, value):
+    """Whether requests can put this header on the wire without raising.
+
+    A newline raises InvalidHeader, and a non-ASCII character raises UnicodeEncodeError
+    from deep inside http.client, which is not a RequestException and so escapes the
+    handling in send().
+    """
+
+    try:
+        f'{name}{value}'.encode('ascii')
+    except UnicodeEncodeError:
+        return False
+
+    return '\r' not in f'{name}{value}' and '\n' not in f'{name}{value}'
+
+
+# -------------------------------------------------------------------------------
 def build_custom_headers(entries, reserved_headers):
     """Turn "Name: Value" setting entries into a header dict.
 
@@ -104,6 +121,8 @@ def build_custom_headers(entries, reserved_headers):
             mylog('none', [f'[{pluginName}] ⚠ Ignoring custom header #{position}, expected the format "Name: Value".'])
         elif name.lower() in taken:
             mylog('none', [f'[{pluginName}] ⚠ Custom header "{name}" collides with a header that is already set; skipping it.'])
+        elif not header_is_sendable(name, value):
+            mylog('none', [f'[{pluginName}] ⚠ Custom header "{name}" contains a newline or a non-ASCII character, which is not valid in an HTTP header; skipping it.'])
         else:
             taken.add(name.lower())
             custom_headers[name] = value
@@ -170,18 +189,12 @@ def send(html, text):
         else:
             response_text = json.dumps(response.text)
 
-    except requests.exceptions.InvalidHeader:
-        # requests echoes the offending header value in this exception's message,
-        # so the message itself is never logged - it would leak the configured
-        # custom header value. Report the problem without quoting the value.
-        if custom_headers:
-            names = ', '.join(f'"{name}"' for name in custom_headers)
-            error_text = (f'Invalid custom header - one of {names} has a name or value containing characters '
-                          f'that are not allowed in an HTTP header (e.g. a newline, a leading space, or a '
-                          f'non-ASCII character). Check for trailing whitespace on the value.')
-        else:
-            error_text = ('A request header contains characters that are not allowed in an HTTP header. Check the '
-                          'NTFY_* settings for stray newlines or non-ASCII characters.')
+    except (requests.exceptions.InvalidHeader, UnicodeEncodeError):
+        # requests echoes the offending header value in InvalidHeader's message, so that
+        # message is never logged - it would leak a configured secret. Custom headers are
+        # already filtered by build_custom_headers, so this is one of the plugin's own.
+        error_text = ('A request header contains characters that are not allowed in an HTTP header. Check '
+                      'REPORT_DASHBOARD_URL and the NTFY_* settings for stray newlines or non-ASCII characters.')
 
         mylog('none', [f'[{pluginName}] ⚠ ERROR: ', error_text])
 

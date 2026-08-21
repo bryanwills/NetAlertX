@@ -12,7 +12,7 @@ import os
 import sys
 import tempfile
 import types
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 # ---------------------------------------------------------------------------
 # Stub NetAlertX-specific modules so tests can run outside the container.
@@ -54,6 +54,7 @@ if "requests" not in sys.modules:
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "server", "plugins", "_publisher_ntfy"))
 
+import ntfy  # noqa: E402
 from ntfy import build_custom_headers  # noqa: E402
 
 BUILT_IN = {"Title": "NetAlertX Notification", "Authorization": "Bearer secret"}
@@ -108,3 +109,68 @@ def test_a_bad_entry_does_not_discard_the_good_ones():
 
 def test_no_entries_produces_no_headers():
     assert build_custom_headers([], BUILT_IN) == {}
+
+
+def test_skips_values_containing_a_newline():
+    assert build_custom_headers(["X-Token: abc\ndef"], {}) == {}
+
+
+def test_skips_values_containing_a_carriage_return():
+    assert build_custom_headers(["X-Token: abc\r\nInjected: 1"], {}) == {}
+
+
+def test_skips_non_ascii_names_and_values():
+    assert build_custom_headers(["X-Token: caf\u00e9", "X-T\u00e9st: abc"], {}) == {}
+
+
+def test_an_unsendable_entry_does_not_discard_the_good_ones():
+    entries = ["X-Bad: abc\ndef", "P-Access-Token: token456"]
+
+    assert build_custom_headers(entries, {}) == {"P-Access-Token": "token456"}
+
+
+SEND_SETTINGS = {
+    "NTFY_HOST": "https://ntfy.example.com",
+    "NTFY_TOPIC": "netalertx",
+    "NTFY_TOKEN": "tk_secret",
+    "NTFY_USER": "",
+    "NTFY_PASSWORD": "",
+    "NTFY_VERIFY_SSL": True,
+    "NTFY_URL_QUERY_STRING": "",
+    "NTFY_PRIORITY": "default",
+    "NTFY_RUN_TIMEOUT": 10,
+    "REPORT_DASHBOARD_URL": "http://localhost:20211",
+}
+
+
+def send_with(custom_headers):
+    settings = dict(SEND_SETTINGS, NTFY_CUSTOM_HEADERS=custom_headers)
+    response = MagicMock(status_code=200, text="ok")
+
+    with patch.object(ntfy, "get_setting_value", lambda key: settings[key]), \
+            patch.object(ntfy.requests, "post", return_value=response) as post:
+        ntfy.send("<b>html</b>", "text")
+
+    return post.call_args.kwargs["headers"]
+
+
+def test_send_passes_accepted_custom_headers_to_requests():
+    headers = send_with(["P-Access-Token-Id: id123", "P-Access-Token: token456"])
+
+    assert headers["P-Access-Token-Id"] == "id123"
+    assert headers["P-Access-Token"] == "token456"
+
+
+def test_send_keeps_plugin_managed_headers_intact():
+    headers = send_with(["Authorization: Bearer mine", "P-Access-Token: token456"])
+
+    assert headers["Authorization"] == "Bearer tk_secret"
+    assert headers["Title"] == "NetAlertX Notification"
+    assert headers["P-Access-Token"] == "token456"
+
+
+def test_send_drops_an_unsendable_custom_header_but_still_posts():
+    headers = send_with(["X-Bad: abc\ndef", "P-Access-Token: token456"])
+
+    assert "X-Bad" not in headers
+    assert headers["P-Access-Token"] == "token456"
