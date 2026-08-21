@@ -10,6 +10,7 @@ from models.device_instance import DeviceInstance
 from scan.name_resolution import NameResolver
 from scan.device_heuristics import guess_icon, guess_type
 from db.db_helper import sanitize_SQL_input, list_to_where, safe_int
+from db.db_upgrade import PARENT_MAC_SENTINELS
 from db.authoritative_handler import (
     get_overwrite_sql_clause,
     can_overwrite_field,
@@ -734,7 +735,7 @@ def create_new_devices(db):
     # to a MAC that no longer exists (e.g. that device was since deleted) -
     # falling back to unset rather than seeding new devices with a dangling reference.
     default_parent_mac_setting = get_setting_value("NEWDEV_devParentMAC")
-    if default_parent_mac_setting:
+    if default_parent_mac_setting and default_parent_mac_setting.lower() not in PARENT_MAC_SENTINELS:
         existing_device_macs = {
             str(row[0]).lower() for row in sql.execute("SELECT devMac FROM Devices").fetchall() if row[0]
         }

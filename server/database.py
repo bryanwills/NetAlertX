@@ -228,7 +228,6 @@ class DB:
             ensure_mac_lowercase_triggers(self.sql)
 
             # Prevent/repair dangling devParentMAC references left by deleted devices
-            ensure_dangling_parentmac_cleanup_trigger(self.sql)
             cleanup_existing_dangling_parentmac(self.sql)
 
             # Device history table + audit triggers
@@ -246,9 +245,10 @@ class DB:
         AppEvent_obj(self)
 
         # AppEvent_obj.drop_all_triggers() wipes every trigger in the DB
-        # (including trg_devhist_*) as part of its clean-start routine.
-        # Re-create the device history audit triggers here so they survive.
+        # (including trg_devhist_* and trg_clear_dangling_parentmac_on_delete)
+        # as part of its clean-start routine. Re-create them here so they survive.
         ensure_deviceshistory_triggers(self.sql)
+        ensure_dangling_parentmac_cleanup_trigger(self.sql)
         self.commitDB()
 
     def get_table_as_json(self, sqlQuery, parameters=None):
