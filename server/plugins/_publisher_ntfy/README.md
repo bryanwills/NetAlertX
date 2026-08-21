@@ -18,13 +18,13 @@ Sends extra HTTP headers with the request. Prefer this over the query string for
 
 `NTFY_CUSTOM_HEADERS` is a list. Add one entry per header, in the format `Name: Value`:
 
-```
+```text
 X-Proxy-Token: p_abc123.def456ghi789
 ```
 
 Proxies that need more than one header work the same way — add a second entry. Pangolin, for example:
 
-```
+```text
 P-Access-Token-Id: abc123
 P-Access-Token: def456ghi789
 ```
@@ -37,11 +37,16 @@ Other common examples:
 | Cloudflare Access | `CF-Access-Client-Id: abc123.access` |
 | Generic bearer gateway | `X-Auth-Token: eyJhbGciOi...` |
 
-The first `:` separates the name from the value, so a value may itself contain colons. Surrounding whitespace is trimmed.
+The first `:` separates the name from the value, so a value may itself contain colons. Whitespace around the name and around the value is trimmed, so a stray space or a trailing newline pasted in from a text file is harmless.
 
-Each header value must be a valid HTTP header value: plain ASCII, no newlines, and no leading or trailing whitespace. A trailing newline pasted in from a text file is the most common mistake and the plugin will report it as an invalid custom header.
+An entry is skipped, with a warning in the log, when:
 
-An entry is skipped, with a warning in the log, when it is not in `Name: Value` form, when the same name is listed twice, or when the name collides with a header the plugin has already set for this request (`Title`, `Actions`, `Priority`, `Tags`, plus `Authorization` when an ntfy token or username/password is configured). That last rule means a custom header can never clobber your ntfy credentials. With no ntfy credentials configured there is no `Authorization` header to clash with, so you are free to use that name for the proxy.
+- it is not in `Name: Value` form, or either side is empty
+- the same name is listed twice
+- the name collides with a header the plugin has already set for this request (`Title`, `Actions`, `Priority`, `Tags`, plus `Authorization` when an ntfy token or username/password is configured)
+- after trimming, the name or the value still contains a newline or a non-ASCII character, neither of which can be sent in an HTTP header
+
+Skipping applies to that entry only — the remaining headers are still sent and the notification still goes out. The collision rule means a custom header can never clobber your ntfy credentials. With no ntfy credentials configured there is no `Authorization` header to clash with, so you are free to use that name for the proxy.
 
 ### URL query string
 
