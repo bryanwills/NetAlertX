@@ -971,6 +971,9 @@ function renderDeviceLink(data, container, useName = false) {
   // Build and return badge parts
   const badge = badgeFromDevice(device);
 
+  // Decode once (with a safe fallback) and reuse for both the chip and hover preview
+  const decodedIcon = safeAtob(device.devIcon);
+
   // badge class and hover-info class to container
   $(container)
     .addClass(`${badge.cssClass} hover-node-info`)
@@ -989,14 +992,14 @@ function renderDeviceLink(data, container, useName = false) {
       'data-alertdown': device.devAlertDown,
       'data-sleeping': device.devIsSleeping || 0,
       'data-archived': device.devIsArchived || 0,
-      'data-isnew':    device.devIsNew       || 0,
-      'data-icon': device.devIcon
+      'data-isnew':    device.devIsNew      || 0,
+      'data-icon': decodedIcon
     });
 
   return `
     <a href="${badge.url}" target="_blank">
       <span class="custom-chip">
-        <span class="iconPreview">${atob(device.devIcon)}</span>
+        <span class="iconPreview">${decodedIcon}</span>
         ${useName ? encodeSpecialChars(device.devName) : data.text}
         <span>
           (${badge.iconHtml})
@@ -1004,6 +1007,17 @@ function renderDeviceLink(data, container, useName = false) {
       </span>
     </a>
   `;
+}
+
+// ------------------------------------------
+// Base64-decode a devIcon value, tolerating missing/empty/malformed input
+function safeAtob(value) {
+  if (!value) return '';
+  try {
+    return atob(value);
+  } catch (e) {
+    return '';
+  }
 }
 
 // ------------------------------------------
@@ -1063,7 +1077,7 @@ function initHoverNodeInfo() {
 
       const html = `
         <div>
-          <b> <div class="iconPreview">${atob(icon)}</div> </b><b class="devName"> ${encodeSpecialChars(name)}</b><br>
+          <b> <div class="iconPreview">${icon || ''}</div> </b><b class="devName"> ${encodeSpecialChars(name)}</b><br>
         </div>
         <hr/>
         <div class="line">

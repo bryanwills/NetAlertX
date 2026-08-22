@@ -220,6 +220,35 @@
       ]
     },
     {
+      "function": "SCAN_PAUSE",
+      "type": {
+        "dataType": "integer",
+        "elements": [
+          {
+            "elementType": "input",
+            "elementOptions": [{ "type": "number" }],
+            "transformers": []
+          }
+        ]
+      },
+      "maxLength": 50,
+      "default_value": 30,
+      "options": [],
+      "localized": [],
+      "name": [
+        {
+          "language_code": "en_us",
+          "string": "Scan pause duration"
+        }
+      ],
+      "description": [
+        {
+          "language_code": "en_us",
+          "string": "How long (in minutes) should scans be paused when the user clicks the Pause button. Accepts values from <code>1</code> to <code>1440</code>."
+        }
+      ]
+    },
+    {
       "function": "REFRESH",
       "type": {
         "dataType": "integer",
@@ -271,7 +300,7 @@
       "description": [
         {
           "language_code": "en_us",
-          "string": "Default number of items shown in tables per page, for example in teh Devices lists."
+          "string": "Default number of items shown in tables per page, for example in the Devices lists."
         }
       ]
     },

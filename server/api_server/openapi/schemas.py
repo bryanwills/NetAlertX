@@ -519,6 +519,26 @@ class TriggerScanResponse(BaseResponse):
     scan_type: Optional[str] = Field(None, description="Type of scan that was triggered")
 
 
+class PauseScanRequest(BaseModel):
+    """Request to pause the automatic scan scheduler for a number of minutes."""
+    minutes: int = Field(
+        ...,
+        ge=1,
+        le=1440,
+        description="Number of minutes to pause automatic scans for (1-1440)"
+    )
+
+
+class PauseScanResponse(BaseResponse):
+    """Response for pausing the automatic scan scheduler."""
+    pause_until: Optional[str] = Field(None, description="ISO timestamp scans are paused until")
+
+
+class ResumeScanResponse(BaseResponse):
+    """Response for resuming the automatic scan scheduler."""
+    pause_until: Optional[str] = Field(None, description="Always empty; confirms the pause was cleared")
+
+
 class OpenPortsRequest(BaseModel):
     """Request for getting open ports."""
     target: str = Field(

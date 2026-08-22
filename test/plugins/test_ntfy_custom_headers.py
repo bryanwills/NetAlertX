@@ -16,10 +16,15 @@ from unittest.mock import MagicMock, patch
 
 # ---------------------------------------------------------------------------
 # Stub NetAlertX-specific modules so tests can run outside the container.
-# sys.modules.setdefault() is a no-op when the real module is already loaded,
-# so this is safe to run inside the container too.
+# These stubs are only placeholders for the duration of the `import ntfy`
+# below - they are popped from sys.modules again right after, so they don't
+# leak into other test files sharing the same pytest session (which would
+# otherwise shadow the real modules, e.g. models.notification_instance, for
+# every subsequent test).
 # ---------------------------------------------------------------------------
 _tmp_log = tempfile.mkdtemp()
+
+_stubbed_module_names = []
 
 
 def _stub(name: str, **attrs):
@@ -28,6 +33,7 @@ def _stub(name: str, **attrs):
         for k, v in attrs.items():
             setattr(mod, k, v)
         sys.modules[name] = mod
+        _stubbed_module_names.append(name)
 
 
 _stub("pytz", timezone=lambda tz: tz)
@@ -56,6 +62,13 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "server",
 
 import ntfy  # noqa: E402
 from ntfy import build_custom_headers  # noqa: E402
+
+# `ntfy` has already resolved its module-level `from x import y` bindings at
+# this point, so removing these fake entries from sys.modules doesn't affect
+# it - it just stops them from shadowing the real modules for other test
+# files collected later in the same pytest session.
+for _name in _stubbed_module_names:
+    sys.modules.pop(_name, None)
 
 BUILT_IN = {"Title": "NetAlertX Notification", "Authorization": "Bearer secret"}
 

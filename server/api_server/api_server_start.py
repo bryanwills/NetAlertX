@@ -1,6 +1,7 @@
 import threading
 import sys
 import os
+from datetime import timedelta
 
 # flake8: noqa: E402
 
@@ -18,6 +19,7 @@ from logger import mylog  # noqa: E402 [flake8 lint suppression]
 from helper import get_setting_value, get_env_setting_value, getBuildTimeStampAndVersion  # noqa: E402 [flake8 lint suppression]
 from db.db_helper import get_date_from_period  # noqa: E402 [flake8 lint suppression]
 from app_state import updateState  # noqa: E402 [flake8 lint suppression]
+from utils.datetime_utils import timeNowUTC  # noqa: E402 [flake8 lint suppression]
 
 from .graphql_endpoint import devicesSchema  # noqa: E402 [flake8 lint suppression]
 from .history_endpoint import delete_online_history  # noqa: E402 [flake8 lint suppression]
@@ -82,6 +84,7 @@ from .openapi.schemas import (  # noqa: E402 [flake8 lint suppression]
     DeviceImportResponse, UpdateDeviceColumnRequest,
     LockDeviceFieldRequest, UnlockDeviceFieldsRequest,
     CopyDeviceRequest, TriggerScanRequest,
+    PauseScanRequest, PauseScanResponse, ResumeScanResponse,
     OpenPortsRequest,
     OpenPortsResponse, WakeOnLanRequest,
     WakeOnLanResponse, TracerouteRequest,
@@ -1166,6 +1169,44 @@ def api_trigger_scan(payload=None):
     queue.add_event(action)
 
     return jsonify({"success": True, "message": f"Scan triggered for type: {scan_type}"}), 200
+
+
+@app.route("/scan/pause", methods=["POST"])
+@validate_request(
+    operation_id="pause_scan_scheduler",
+    summary="Pause Scan Scheduler",
+    description="Pause the automatic scheduled scan loop for a number of minutes. "
+                 "Manually-triggered scans (e.g. /nettools/trigger-scan) are not affected.",
+    request_model=PauseScanRequest,
+    response_model=PauseScanResponse,
+    tags=["nettools"],
+    validation_error_code=400,
+    auth_callable=is_authorized
+)
+def api_pause_scan(payload=None):
+    minutes = payload.minutes
+
+    pause_until = (timeNowUTC(as_string=False) + timedelta(minutes=minutes)).replace(microsecond=0).isoformat()
+
+    updateState(f"Process: Paused for {minutes} min", pause_until=pause_until)
+
+    return jsonify({"success": True, "message": f"Scans paused for {minutes} minutes", "pause_until": pause_until}), 200
+
+
+@app.route("/scan/resume", methods=["POST"])
+@validate_request(
+    operation_id="resume_scan_scheduler",
+    summary="Resume Scan Scheduler",
+    description="Clear any active scan pause and resume the automatic scan scheduler. Idempotent — "
+                 "succeeds even if scans were not paused.",
+    response_model=ResumeScanResponse,
+    tags=["nettools"],
+    auth_callable=is_authorized
+)
+def api_resume_scan(payload=None):
+    updateState("Process: Idle", pause_until="")
+
+    return jsonify({"success": True, "message": "Scans resumed", "pause_until": ""}), 200
 
 
 # def trigger_scan(scan_type):

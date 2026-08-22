@@ -54,6 +54,7 @@
   <script src="js/db_methods.js?v=<?php include 'php/templates/version.php'; ?>"></script>
   <script src="js/settings_utils.js?v=<?php include 'php/templates/version.php'; ?>"></script>
   <script src="js/device.js?v=<?php include 'php/templates/version.php'; ?>"></script>
+  <script src="js/scan_control.js?v=<?php include 'php/templates/version.php'; ?>"></script>
 
   <!-- iCheck -->
 
@@ -208,11 +209,17 @@
           <li>
             <a id="fullscreen-button" href='#' role="button" span class='fa fa-arrows-alt' onclick='toggleFullscreen()'></a>
           </li>
+          <!-- Pause / Resume automatic scans -->
+          <li>
+            <a id="pause-resume-button" href="#" role="button" title="<?= lang('Header_PauseScans_Tooltip') ?>" onclick="togglePauseScans(); return false;">
+              <i id="pause-resume-icon" class="fa-solid fa-pause"></i>
+            </a>
+          </li>
           <!-- Notifications -->
           <li>
             <a id="notifications-button" href='userNotifications.php' role="button" span class='fa-solid fa-bell'></a>
             <span  id="unread-notifications-bell-count" title="" class="badge bg-red unread-notifications-bell" >0</span>
-          </li>
+          </li>         
           <!-- Server Status -->
           <li>
             <a onclick="setCache('activeMaintenanceTab', 'tab_Logging_id')" href="maintenance.php#tab_Logging">
@@ -482,15 +489,13 @@
 
   function toggleFullscreen() {
 
-   if (document.fullscreenElement) {
-     document.exitFullscreen();
+    if (document.fullscreenElement) {
+      document.exitFullscreen();
+      }
+    else {
+      document.documentElement.requestFullscreen();
     }
-   else {
-     document.documentElement.requestFullscreen();
-	}
    }
-
-  //--------------------------------------------------------------
 
   // Update server time in the header
   update_servertime()

@@ -13,7 +13,7 @@ function renderNetworkTabs(nodes) {
                       (node.devAlertDown == 1 ? "text-red" : "text-gray50"));
 
     const portLabel = node.node_ports_count ? ` (${node.node_ports_count})` : '';
-    const icon = atob(node.devIcon);
+    const icon = safeAtob(node.devIcon);
     const id = node.devMac.replace(/:/g, '_');
 
     html += `
