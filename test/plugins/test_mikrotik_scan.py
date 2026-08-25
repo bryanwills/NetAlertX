@@ -8,14 +8,15 @@ from unittest.mock import MagicMock, patch
 
 
 def _load_mikrotik_module():
-    stubbed_module_names = []
+    missing_module = object()
+    previous_modules = {}
 
     def stub(name, **attributes):
+        previous_modules[name] = sys.modules.get(name, missing_module)
         module = types.ModuleType(name)
         for attribute, value in attributes.items():
             setattr(module, attribute, value)
         sys.modules[name] = module
-        stubbed_module_names.append(name)
 
     class TrapError(Exception):
         pass
@@ -23,7 +24,7 @@ def _load_mikrotik_module():
     stub(
         "plugin_helper",
         Plugin_Objects=MagicMock,
-        normalize_mac=lambda mac: mac.strip().lower(),
+        normalize_mac=lambda mac: mac.strip().lower().replace("-", ":"),
     )
     stub("logger", mylog=MagicMock(), Logger=MagicMock())
     stub("helper", get_setting_value=MagicMock(return_value="UTC"))
@@ -36,10 +37,14 @@ def _load_mikrotik_module():
     module_path = Path(__file__).resolve().parents[2] / "server" / "plugins" / "mikrotik_scan" / "mikrotik.py"
     spec = importlib.util.spec_from_file_location("mikrotik_scan", module_path)
     module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-
-    for name in stubbed_module_names:
-        sys.modules.pop(name, None)
+    try:
+        spec.loader.exec_module(module)
+    finally:
+        for name, previous_module in previous_modules.items():
+            if previous_module is missing_module:
+                sys.modules.pop(name, None)
+            else:
+                sys.modules[name] = previous_module
 
     return module
 
@@ -63,15 +68,15 @@ def _lease(lease_id, address, mac_address, status="bound"):
 
 def test_disabled_lease_without_mac_does_not_abort_remaining_leases():
     leases = [
-        _lease("*1", "192.168.1.2", "aa:bb:cc:dd:ee:01"),
+        _lease("*1", "192.168.1.2", "aa-bb-cc-dd-ee-01"),
         _lease("*2", "192.168.1.5", None, status="waiting"),
-        _lease("*3", "192.168.1.8", "aa:bb:cc:dd:ee:03"),
+        _lease("*3", "192.168.1.8", "aa-bb-cc-dd-ee-03"),
     ]
     api = MagicMock(return_value=leases)
     plugin_objects = MagicMock()
 
     mikrotik.MT_USER = "user"
-    mikrotik.MT_PASS = "password"
+    mikrotik.MT_PASS = None
     mikrotik.MT_HOST = "192.168.1.1"
     mikrotik.MT_PORT = 8728
 
