@@ -66,11 +66,12 @@ def _lease(lease_id, address, mac_address, status="bound"):
     return lease
 
 
-def test_disabled_lease_without_mac_does_not_abort_remaining_leases():
+def test_leases_without_mac_do_not_abort_remaining_leases():
     leases = [
         _lease("*1", "192.168.1.2", "aa-bb-cc-dd-ee-01"),
         _lease("*2", "192.168.1.5", None, status="waiting"),
-        _lease("*3", "192.168.1.8", "aa-bb-cc-dd-ee-03"),
+        _lease("*3", "192.168.1.6", None),
+        _lease("*4", "192.168.1.8", "aa-bb-cc-dd-ee-04"),
     ]
     api = MagicMock(return_value=leases)
     plugin_objects = MagicMock()
@@ -85,4 +86,4 @@ def test_disabled_lease_without_mac_does_not_abort_remaining_leases():
 
     assert result is plugin_objects
     assert plugin_objects.add_object.call_count == 2
-    assert [call.kwargs["primaryId"] for call in plugin_objects.add_object.call_args_list] == ["aa:bb:cc:dd:ee:01", "aa:bb:cc:dd:ee:03"]
+    assert [call.kwargs["primaryId"] for call in plugin_objects.add_object.call_args_list] == ["aa:bb:cc:dd:ee:01", "aa:bb:cc:dd:ee:04"]
