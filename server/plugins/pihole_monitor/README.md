@@ -21,6 +21,10 @@ We looked into this first. `pihole_api_scan.py` hardcodes its settings-key prefi
 * You are running **Pi-hole v6** or newer on every instance you configure (this plugin uses `/api/auth`, `/api/network/devices`, and `/api/stats/top_clients`, none of which exist in v5).
 * An **App Password** is generated on each Pi-hole (`Settings → Web Interface / API → App Password`) - recommended over using the admin login password directly.
 
+#### 🔒 A note on `http://` vs `https://`
+
+Most home Pi-hole setups (including the one this plugin was developed and tested against) run over plain `http://` on a trusted LAN, and that's what the examples below use - this plugin doesn't require `https://` or refuse an `http://` URL. Know the trade-off either way, though: over `http://`, the App Password/admin password is sent in cleartext on every run, readable by anything else that can see that network segment (a compromised device, a hostile guest network, etc.). If your Pi-hole's admin interface is reachable from anywhere less trusted than your own LAN, either put it behind `https://` (Pi-hole's own self-signed cert, or a reverse proxy with a real one) or keep it LAN-only. **PIHOLEMON_VERIFY_SSL** only matters once you're on `https://` - it's on by default, and turning it off to tolerate a self-signed cert accepts *any* certificate, including an attacker's; installing that self-signed CA as trusted on the machine running NetAlertX is the safer way to use a self-signed cert if you need one.
+
 ### Usage
 
 - Head to **Settings** > **Pi-hole Monitor** to fill in the values below.
@@ -33,7 +37,7 @@ We looked into this first. `pihole_api_scan.py` hardcodes its settings-key prefi
 | **PIHOLEMON_SECONDARY_PASSWORD**   | Only used if a secondary URL is set.                                                                |
 | **PIHOLEMON_GET_OFFLINE**          | Import devices even if not recently seen. Default off.                                             |
 | **PIHOLEMON_CONSIDER_ONLINE**      | Seconds since last seen to still count a device as online. Default `300`.                          |
-| **PIHOLEMON_VERIFY_SSL**           | Verify TLS certificates. Disable for self-signed certs. Default off.                               |
+| **PIHOLEMON_VERIFY_SSL**           | Verify TLS certificates on an `https://` URL. Default **on**. Only disable if a Pi-hole uses a self-signed certificate you can't install as trusted - see the security note below. |
 | **PIHOLEMON_API_MAXCLIENTS**       | Maximum devices requested **per instance**'s device list. Default `500`.                            |
 | **PIHOLEMON_FAKE_MAC**             | Generate a fake MAC from the IP for devices with a non-standard hardware address. Default off.     |
 | **PIHOLEMON_GRAPHQL_URL**          | NetAlertX's own GraphQL endpoint, for the optional owner lookup. Defaults to `http://127.0.0.1:20212/graphql` (this plugin runs inside the NetAlertX container). |

@@ -222,12 +222,15 @@
           { "elementType": "input", "elementOptions": [{ "type": "checkbox" }], "transformers": [] }
         ]
       },
-      "default_value": false,
+      "default_value": true,
       "options": [],
       "localized": ["name", "description"],
       "name": [{ "language_code": "en_us", "string": "Verify SSL" }],
       "description": [
-        { "language_code": "en_us", "string": "Disable if either Pi-hole uses a self-signed certificate." }
+        {
+          "language_code": "en_us",
+          "string": "Only relevant for an <code>https://</code> URL. Disabling this accepts any certificate, including one from an attacker on the network - install the self-signed CA as trusted instead if possible. Leave on unless you understand the trade-off."
+        }
       ]
     },
     {

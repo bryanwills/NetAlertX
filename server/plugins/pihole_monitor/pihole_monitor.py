@@ -74,6 +74,8 @@ class PiholeSource:
     any other instance so two can run side by side without interfering."""
 
     def __init__(self, label, url, password, verify_ssl, run_timeout):
+        """Store this instance's connection details. Does not connect -
+        call auth() to actually log in."""
         self.label = label
         self.url = url.rstrip('/') + '/' if url else None
         self.password = password
@@ -84,9 +86,15 @@ class PiholeSource:
 
     @property
     def configured(self):
+        """True if a URL was set for this instance (the secondary one is
+        optional and left unconfigured in most setups)."""
         return bool(self.url)
 
     def auth(self):
+        """Log in to this instance's /api/auth, storing the session id and
+        CSRF token for subsequent requests. Returns False (and logs why)
+        on any failure - never raises, so one bad source doesn't abort
+        the whole run."""
         if not self.configured:
             return False
 
@@ -133,6 +141,9 @@ class PiholeSource:
         return True
 
     def deauth(self):
+        """Best-effort logout so this instance doesn't accumulate sessions
+        across runs. Never raises - a failed logout isn't worth failing
+        the run over."""
         if not self.configured or not self.sid:
             return
         try:
@@ -148,6 +159,7 @@ class PiholeSource:
         self.csrf = None
 
     def _headers(self):
+        """Auth headers for an authenticated request against this instance."""
         headers = {"X-FTL-SID": self.sid}
         if self.csrf:
             headers["X-FTL-CSRF"] = self.csrf
@@ -175,10 +187,20 @@ class PiholeSource:
             mylog('none', [f'[{pluginName}] {self.label}: failed to fetch devices: {e}'])
             return []
 
-    def fetch_top_blocked_clients(self, count=50):
-        """{ip: blocked_count} for this instance. Used for anomaly detection."""
+    def fetch_top_blocked_clients(self, count):
+        """{ip: blocked_count} for this instance, used for anomaly detection.
+
+        `count` should cover every client Pi-hole is tracking, not just a
+        handful - Pi-hole's own API default (10) truncates silently, so a
+        caller that doesn't pass an explicit count would never see clients
+        past that cutoff. Returns None (not {}) on any failure to fetch or
+        parse the response, so callers can tell "no source authenticated
+        for this instance right now" apart from "this instance genuinely
+        has no blocked queries this run" - treating the two the same would
+        write a false zero into a device's history and dilute its baseline.
+        """
         if not self.sid:
-            return {}
+            return None
         try:
             resp = requests.get(
                 self.url + 'api/stats/top_clients',
@@ -192,7 +214,7 @@ class PiholeSource:
             return {c["ip"]: c.get("count", 0) for c in clients if c.get("ip")}
         except Exception as e:
             mylog('none', [f'[{pluginName}] {self.label}: failed to fetch top_clients: {e}'])
-            return {}
+            return None
 
 
 def gather_device_entries(source, consider_online, fake_mac, max_clients):
@@ -260,6 +282,31 @@ def merge_device_entries(all_entries):
     return merged
 
 
+def build_ip_to_mac(all_entries):
+    """Map every IP Pi-hole has ever associated with a device to that
+    device's MAC, for attributing blocked-query counts (which only come
+    back as IPs) to the right device.
+
+    Deliberately built from every gathered entry, not from
+    merge_device_entries()'s output: a device with more than one IP gets
+    one entry per IP in `all_entries`, but merge_device_entries() keeps
+    only the single freshest entry per MAC - so deriving the IP map from
+    its result would silently drop that device's other IPs, and any
+    blocked-query traffic seen from those would fall back to being
+    tracked under a bare IP instead of the device's real MAC. If two
+    different MACs were ever seen on the same IP (e.g. a DHCP
+    reassignment), the entry with the freshest lastSeen wins that IP.
+    """
+    ip_to_mac = {}
+    ip_last_seen = {}
+    for entry in all_entries:
+        ip = entry['ip']
+        if ip not in ip_to_mac or entry['lastSeen'] > ip_last_seen[ip]:
+            ip_to_mac[ip] = entry['mac']
+            ip_last_seen[ip] = entry['lastSeen']
+    return ip_to_mac
+
+
 def netalertx_device_owner(graphql_url, token, mac, run_timeout):
     """Best-effort lookup of an already-known device's owner, purely for a
     friendlier anomaly label. Returns '' if unavailable, unset, or on any
@@ -293,6 +340,8 @@ def netalertx_device_owner(graphql_url, token, mac, run_timeout):
 
 
 def load_state():
+    """Per-key blocked-query history from the last run, or {} on first run
+    / a missing or corrupt state file (never fatal - just starts fresh)."""
     try:
         with open(STATE_FILE, "r") as f:
             return json.load(f)
@@ -301,12 +350,17 @@ def load_state():
 
 
 def save_state(state):
+    """Persist per-key blocked-query history for next run's baseline."""
     os.makedirs(os.path.dirname(STATE_FILE), exist_ok=True)
     with open(STATE_FILE, "w") as f:
         json.dump(state, f)
 
 
 def main():
+    """Entry point: authenticate to every configured Pi-hole instance,
+    import its devices, evaluate blocked-query anomalies against each
+    device's rolling history, and write both out. Returns 0 on a normal
+    run, 1 if no Pi-hole instance is configured at all."""
     verify_ssl = bool(get_setting_value('PIHOLEMON_VERIFY_SSL'))
     run_timeout = get_setting_value('PIHOLEMON_RUN_TIMEOUT') or REQUEST_TIMEOUT_DEFAULT
     get_offline = bool(get_setting_value('PIHOLEMON_GET_OFFLINE'))
@@ -320,7 +374,10 @@ def main():
     graphql_token = get_setting_value('PIHOLEMON_GRAPHQL_TOKEN')
     multiplier = float(get_setting_value('PIHOLEMON_MULTIPLIER') or 4)
     min_blocked = int(get_setting_value('PIHOLEMON_MIN_BLOCKED') or 20)
-    history_length = int(get_setting_value('PIHOLEMON_HISTORY_LENGTH') or 28)
+    # Clamp to at least 1: 0 already falls back to 28 via `or`, but a
+    # negative setting would otherwise reach the history[-history_length:]
+    # slice below and silently produce a nonsensical, hard-to-debug slice.
+    history_length = max(1, int(get_setting_value('PIHOLEMON_HISTORY_LENGTH') or 28))
 
     sources = [
         PiholeSource(
@@ -345,24 +402,36 @@ def main():
 
     all_device_entries = []
     blocked_by_ip = {}
+    # False if any configured source failed to authenticate or its
+    # top_clients fetch failed - the blocked-query counts for this run are
+    # then incomplete for reasons unrelated to real traffic, so anomaly
+    # evaluation and history persistence are skipped below rather than
+    # risk writing a false "quiet run" into a device's baseline.
+    stats_complete = True
 
     for source in configured_sources:
         if not source.auth():
             mylog('none', [f'[{pluginName}] {source.label}: authentication failed - skipping this source.'])
+            stats_complete = False
             continue
         try:
             all_device_entries.extend(
                 gather_device_entries(source, consider_online, fake_mac, max_clients)
             )
-            for ip, count in source.fetch_top_blocked_clients().items():
-                blocked_by_ip[ip] = blocked_by_ip.get(ip, 0) + count
+            top_blocked = source.fetch_top_blocked_clients(count=max_clients)
+            if top_blocked is None:
+                stats_complete = False
+            else:
+                for ip, count in top_blocked.items():
+                    blocked_by_ip[ip] = blocked_by_ip.get(ip, 0) + count
         finally:
             source.deauth()
 
     # IP->MAC identity mapping uses every device Pi-hole knows about,
-    # online or not (see gather_device_entries docstring for why).
-    devices_by_mac_all = merge_device_entries(all_device_entries)
-    ip_to_mac = {entry['ip']: mac for mac, entry in devices_by_mac_all.items()}
+    # online or not (see gather_device_entries docstring for why), and is
+    # built from every entry rather than the by-MAC merge below so a
+    # multi-IP device doesn't lose its other IPs (see build_ip_to_mac).
+    ip_to_mac = build_ip_to_mac(all_device_entries)
 
     # Device-import rows (name/vendor) still respect GET_OFFLINE.
     importable_entries = [e for e in all_device_entries if e['is_online'] or get_offline]
@@ -379,6 +448,15 @@ def main():
         key = ip_to_mac.get(ip, ip)
         blocked_by_mac[key] = blocked_by_mac.get(key, 0) + count
 
+    if not stats_complete:
+        mylog(
+            'none',
+            [f'[{pluginName}] Blocked-query data is incomplete for this run '
+             '(a source failed to authenticate or its top_clients fetch failed) - '
+             'skipping anomaly evaluation and history updates so a real outage '
+             'doesn\'t get recorded as a quiet run.'],
+        )
+
     state = load_state()
     plugin_objects = Plugin_Objects(RESULT_FILE)
     all_keys = set(devices_by_mac.keys()) | set(blocked_by_mac.keys())
@@ -390,7 +468,7 @@ def main():
 
         history = state.get(key, [])
         baseline = sum(history) / len(history) if history else None
-        is_anomaly = bool(baseline and blocked_count >= min_blocked and blocked_count > baseline * multiplier)
+        is_anomaly = bool(stats_complete and baseline and blocked_count >= min_blocked and blocked_count > baseline * multiplier)
 
         owner = netalertx_device_owner(graphql_url, graphql_token, mac, run_timeout) if mac else ''
         detail = f"blocked={blocked_count}"
@@ -434,8 +512,9 @@ def main():
         if is_anomaly:
             mylog('none', [f'[{pluginName}] Anomaly: {key} - {detail}'])
 
-        history.append(blocked_count)
-        state[key] = history[-history_length:]
+        if stats_complete:
+            history.append(blocked_count)
+            state[key] = history[-history_length:]
 
     save_state(state)
     plugin_objects.write_result_file()
