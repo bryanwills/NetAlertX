@@ -30,6 +30,7 @@ front/api/*
 **/plugins/heartbeat/*
 **/%40eaDir/
 **/@eaDir/
+.claude/settings.local.json
 
 __pycache__/
 *.py[cod]

@@ -296,6 +296,27 @@ To always map a static value (not read from plugin output):
 
 ---
 
+## Persisting Plugin Data (State & Config Files)
+
+Plugin settings (`config.json`) are already persisted for you. If your plugin also needs to write its **own files** to disk between runs — a cache, a "what did I already do" tracker, an exported artifact — pick the right base path from `const.py` rather than hardcoding one:
+
+| Purpose | Import from `const` | Default path | Use for |
+|---|---|---|---|
+| Internal state | `dbFolderPath` | `/data/db` | Bookkeeping the user never edits directly: sync state, dedupe caches, "managed items" trackers, etc. |
+| Config artifacts | `configPath` | `/data/config` | Files that are conceptually configuration: exports meant to be reviewed/edited by the user, generated config snippets, backups. |
+
+```python
+from const import dbFolderPath, configPath
+
+STATE_FILE = os.path.join(dbFolderPath, f"state.{pluginName}.json")
+```
+
+**Why it matters:** `/data/db` and `/data/config` are separate mount points. Users can point `/data/db` at fast/ephemeral storage (its contents are usually rebuildable) and `/data/config` at durable, backed-up storage — or the reverse, depending on their setup. Don't hardcode `/app/db`, `/app/config`, or write loose files directly under the bare data root (`dataPath`); those bypass this separation, and `/app/...` paths are the pre-`v25.10.1` legacy layout (see [MIGRATION.md](MIGRATION.md)).
+
+If you rename or move where a plugin stores its state file across a release, migrate the old file on startup instead of silently dropping user state — see `server/plugins/adguard_export/script.py` for a worked example.
+
+---
+
 ## UI Component Types
 
 Plugin results are displayed in the web interface using various component types. See **[PLUGINS_DEV_UI_COMPONENTS.md](PLUGINS_DEV_UI_COMPONENTS.md)** for complete documentation.
@@ -353,6 +374,8 @@ See: [UI Components](PLUGINS_DEV_UI_COMPONENTS.md)
 - **Example Plugins:** `/app/server/plugins/*/` - Study working implementations
 - **Logs:** `/tmp/log/plugins/` - Plugin output and execution logs
 - **Backend Logs:** `/tmp/log/app.log` - Core system logs
+- **Persistent state:** `dbFolderPath` (`/data/db`) via `from const import dbFolderPath` - see [Persisting Plugin Data](#persisting-plugin-data-state--config-files)
+- **Config artifacts:** `configPath` (`/data/config`) via `from const import configPath` - see [Persisting Plugin Data](#persisting-plugin-data-state--config-files)
 
 ---
 

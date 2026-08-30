@@ -9,6 +9,11 @@ INSTALL_PATH = os.getenv('NETALERTX_APP', '/app')
 sys.path.extend([f"{INSTALL_PATH}/server/plugins", f"{INSTALL_PATH}/server"])
 
 from const import logPath # noqa: E402, E261 [flake8 lint suppression]
+# If your plugin needs to persist its own files between runs, import dbFolderPath
+# (internal state, e.g. "/data/db") and/or configPath (user-facing config
+# artifacts, e.g. "/data/config") instead of hardcoding a path — see
+# docs/PLUGINS_DEV.md#persisting-plugin-data-state--config-files
+# from const import dbFolderPath, configPath
 from plugin_helper import Plugin_Objects # noqa: E402, E261 [flake8 lint suppression]
 from logger import mylog, Logger # noqa: E402, E261 [flake8 lint suppression]
 from helper import get_setting_value # noqa: E402, E261 [flake8 lint suppression]
@@ -27,6 +32,9 @@ pluginName = '<unique_prefix>'
 LOG_PATH = logPath + '/plugins'
 LOG_FILE = os.path.join(LOG_PATH, f'script.{pluginName}.log')
 RESULT_FILE = os.path.join(LOG_PATH, f'last_result.{pluginName}.log')
+
+# Example: a plugin-managed state file (uncomment and adjust if you need one)
+# STATE_FILE = os.path.join(dbFolderPath, f'state.{pluginName}.json')
 
 # Initialize the Plugin obj output file
 plugin_objects = Plugin_Objects(RESULT_FILE)

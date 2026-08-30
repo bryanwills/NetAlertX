@@ -23,6 +23,8 @@ import pytest
 # so this is safe to run inside the container too.
 # ---------------------------------------------------------------------------
 _tmp_log = tempfile.mkdtemp()
+_tmp_data = tempfile.mkdtemp()
+_tmp_db = tempfile.mkdtemp()
 
 
 def _stub(name: str, **attrs):
@@ -35,7 +37,13 @@ def _stub(name: str, **attrs):
 
 _stub("pytz", timezone=lambda tz: tz)
 _stub("conf")
-_stub("const", dataPath=_tmp_log, logPath=_tmp_log, fullDbPath=os.path.join(_tmp_log, "test.db"))
+_stub(
+    "const",
+    dataPath=_tmp_data,
+    dbFolderPath=_tmp_db,
+    logPath=_tmp_log,
+    fullDbPath=os.path.join(_tmp_db, "test.db"),
+)
 _stub("plugin_helper", Plugin_Objects=MagicMock)
 _stub("logger", mylog=lambda *a: None, Logger=MagicMock)
 _stub("helper", get_setting_value=lambda k: "")
@@ -62,6 +70,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "server",
 from script import (  # noqa: E402
     AdGuardClient,
     _TYPE_TAG_MAP,
+    _migrate_legacy_state_file,
     build_agrd_client,
     device_type_to_tag,
     get_netalertx_devices,
@@ -203,6 +212,40 @@ class TestManagedNames:
             save_managed_names({"zebra", "apple", "mango"})
             data = json.loads(state.read_text())
         assert data["managed"] == ["apple", "mango", "zebra"]
+
+
+# ---------------------------------------------------------------------------
+# _migrate_legacy_state_file
+# ---------------------------------------------------------------------------
+
+
+class TestMigrateLegacyStateFile:
+    def test_migrates_legacy_file_to_new_location(self, tmp_path):
+        legacy = tmp_path / "state.json"
+        new = tmp_path / "db" / "state.json"
+        new.parent.mkdir()
+        legacy.write_text(json.dumps({"managed": ["alpha"]}))
+        with patch("script.STATE_FILE", str(new)), patch("script._LEGACY_STATE_FILE", str(legacy)):
+            _migrate_legacy_state_file()
+        assert not legacy.exists()
+        assert json.loads(new.read_text())["managed"] == ["alpha"]
+
+    def test_does_not_overwrite_existing_new_file(self, tmp_path):
+        legacy = tmp_path / "legacy.json"
+        new = tmp_path / "new.json"
+        legacy.write_text(json.dumps({"managed": ["old"]}))
+        new.write_text(json.dumps({"managed": ["current"]}))
+        with patch("script.STATE_FILE", str(new)), patch("script._LEGACY_STATE_FILE", str(legacy)):
+            _migrate_legacy_state_file()
+        assert legacy.exists()
+        assert json.loads(new.read_text())["managed"] == ["current"]
+
+    def test_no_op_when_neither_file_exists(self, tmp_path):
+        legacy = tmp_path / "legacy.json"
+        new = tmp_path / "new.json"
+        with patch("script.STATE_FILE", str(new)), patch("script._LEGACY_STATE_FILE", str(legacy)):
+            _migrate_legacy_state_file()
+        assert not new.exists()
 
 
 # ---------------------------------------------------------------------------
