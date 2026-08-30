@@ -1,0 +1,451 @@
+#!/usr/bin/env python
+"""NetAlertX plugin: PIHOLEMON — Pi-hole Monitor
+
+Does two jobs against the same Pi-hole connection(s), instead of two
+separately configured plugins:
+
+  1. Device import (same job as the official PIHOLEAPI/pihole_api_scan
+     plugin): pulls the device list from Pi-hole's `/api/network/devices`
+     and feeds it into NetAlertX's normal device-scanner pipeline
+     (mapped_to_table=CurrentScan), so devices Pi-hole knows about but
+     NetAlertX doesn't get created automatically.
+
+  2. Query anomaly detection: pulls `/api/stats/top_clients?blocked=true`
+     and flags a device whose blocked-query count spikes well above its
+     own recent rolling average - the signature of malware/a compromised
+     device beaconing out, not just "a lot of DNS traffic".
+
+Why one plugin instead of two: they need the exact same Pi-hole session
+(auth once, reuse for both endpoints) and the exact same "primary +
+optional secondary" source list, so splitting them would mean either two
+logins per source or two separately configured URL/password pairs to keep
+in sync. One plugin, one settings page, one login per source.
+
+Why not just run two copies of the official PIHOLEAPI plugin for two
+Pi-holes: we looked into this first. `pihole_api_scan.py` hardcodes its
+settings-key prefix (`PIHOLEAPI_URL`, `PIHOLEAPI_PASSWORD`, ...) as literal
+strings throughout the script rather than reading it from `config.json`.
+Duplicating the plugin folder gives you two copies that both read and
+write the *same* settings keys - not two independent instances - and
+NetAlertX's own plugin docs don't describe an officially supported way to
+run multiple instances of one plugin. Making a real second instance would
+mean forking the script and renaming every occurrence of the prefix by
+hand, then keeping that fork in sync with any upstream changes by hand
+too. This plugin exists so none of that is necessary: it accepts a second
+set of credentials natively, and the secondary instance is entirely
+optional - leave its URL blank and this behaves like a single-Pi-hole
+import, which covers most setups.
+"""
+
+import os
+import sys
+import json
+
+import requests
+from requests.packages.urllib3.exceptions import InsecureRequestWarning
+
+INSTALL_PATH = os.getenv('NETALERTX_APP', '/app')
+sys.path.extend([f"{INSTALL_PATH}/server/plugins", f"{INSTALL_PATH}/server"])
+
+from plugin_helper import Plugin_Objects, is_mac  # noqa: E402
+from utils.datetime_utils import timeNowUTC  # noqa: E402
+from logger import mylog, Logger  # noqa: E402
+from helper import get_setting_value  # noqa: E402
+from const import logPath  # noqa: E402
+import conf  # noqa: E402
+from pytz import timezone  # noqa: E402
+from utils.crypto_utils import string_to_fake_mac  # noqa: E402
+
+conf.tz = timezone(get_setting_value('TIMEZONE'))
+Logger(get_setting_value('LOG_LEVEL'))
+
+pluginName = 'PIHOLEMON'
+VERSION_DATE = "NAX-PIHOLEMON-1.0"
+
+LOG_PATH = logPath + '/plugins'
+RESULT_FILE = os.path.join(LOG_PATH, f'last_result.{pluginName}.log')
+STATE_FILE = os.path.join(LOG_PATH, f'state.{pluginName}.json')
+
+REQUEST_TIMEOUT_DEFAULT = 30
+
+
+class PiholeSource:
+    """One Pi-hole instance's connection + auth state, kept isolated from
+    any other instance so two can run side by side without interfering."""
+
+    def __init__(self, label, url, password, verify_ssl, run_timeout):
+        self.label = label
+        self.url = url.rstrip('/') + '/' if url else None
+        self.password = password
+        self.verify_ssl = verify_ssl
+        self.run_timeout = run_timeout
+        self.sid = None
+        self.csrf = None
+
+    @property
+    def configured(self):
+        return bool(self.url)
+
+    def auth(self):
+        if not self.configured:
+            return False
+
+        if not self.verify_ssl:
+            requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
+
+        headers = {
+            "accept": "application/json",
+            "content-type": "application/json",
+            "User-Agent": "NetAlertX/" + VERSION_DATE,
+        }
+        try:
+            resp = requests.post(
+                self.url + 'api/auth',
+                headers=headers,
+                json={"password": self.password},
+                verify=self.verify_ssl,
+                timeout=self.run_timeout,
+            )
+            resp.raise_for_status()
+        except requests.exceptions.Timeout:
+            mylog('none', [f'[{pluginName}] {self.label}: auth request timed out. Try increasing the run timeout.'])
+            return False
+        except requests.exceptions.ConnectionError:
+            mylog('none', [f'[{pluginName}] {self.label}: connection error during auth. Check the URL and password.'])
+            return False
+        except Exception as e:
+            mylog('none', [f'[{pluginName}] {self.label}: unexpected auth error: {e}'])
+            return False
+
+        try:
+            session_data = resp.json().get('session', {})
+        except Exception:
+            mylog('none', [f'[{pluginName}] {self.label}: unable to parse auth response JSON.'])
+            return False
+
+        if not session_data.get('valid', False):
+            mylog('none', [f'[{pluginName}] {self.label}: auth required or failed.'])
+            return False
+
+        self.sid = session_data.get('sid')
+        self.csrf = session_data.get('csrf')
+        mylog('verbose', [f'[{pluginName}] {self.label}: authenticated (sid present).'])
+        return True
+
+    def deauth(self):
+        if not self.configured or not self.sid:
+            return
+        try:
+            requests.delete(
+                self.url + 'api/auth',
+                headers={"X-FTL-SID": self.sid},
+                verify=self.verify_ssl,
+                timeout=self.run_timeout,
+            )
+        except Exception:
+            pass  # best-effort logout
+        self.sid = None
+        self.csrf = None
+
+    def _headers(self):
+        headers = {"X-FTL-SID": self.sid}
+        if self.csrf:
+            headers["X-FTL-CSRF"] = self.csrf
+        return headers
+
+    def fetch_devices(self, max_clients):
+        """Raw 'devices' list from Pi-hole's network/devices endpoint - MAC,
+        IP(s), hostname, vendor, last-seen. Used for device import."""
+        if not self.sid:
+            return []
+        params = {'max_devices': str(max_clients), 'max_addresses': '2'}
+        try:
+            resp = requests.get(
+                self.url + 'api/network/devices',
+                headers=self._headers(),
+                params=params,
+                verify=self.verify_ssl,
+                timeout=self.run_timeout,
+            )
+            resp.raise_for_status()
+            data = resp.json()
+            mylog('debug', [f'[{pluginName}] {self.label}: devices API returned data: {json.dumps(data)}'])
+            return data.get('devices', [])
+        except Exception as e:
+            mylog('none', [f'[{pluginName}] {self.label}: failed to fetch devices: {e}'])
+            return []
+
+    def fetch_top_blocked_clients(self, count=50):
+        """{ip: blocked_count} for this instance. Used for anomaly detection."""
+        if not self.sid:
+            return {}
+        try:
+            resp = requests.get(
+                self.url + 'api/stats/top_clients',
+                headers=self._headers(),
+                params={"blocked": "true", "count": count},
+                verify=self.verify_ssl,
+                timeout=self.run_timeout,
+            )
+            resp.raise_for_status()
+            clients = resp.json().get("clients", [])
+            return {c["ip"]: c.get("count", 0) for c in clients if c.get("ip")}
+        except Exception as e:
+            mylog('none', [f'[{pluginName}] {self.label}: failed to fetch top_clients: {e}'])
+            return {}
+
+
+def gather_device_entries(source, consider_online, fake_mac, max_clients):
+    """Same parsing logic as the official PIHOLEAPI plugin, scoped to one source.
+
+    Returns every device/IP pair Pi-hole knows about, each tagged with
+    is_online. Callers decide separately what to do with that flag:
+    device-import rows should skip offline devices unless GET_OFFLINE is
+    set, but the IP->MAC identity mapping (used to attribute blocked-query
+    counts to the right device) must NOT skip them - Pi-hole's own "last
+    seen" can lag behind real DNS activity, so a device it currently calls
+    offline can still be the one generating the blocked queries in this
+    same run. Dropping it there would misattribute the traffic to a bare
+    IP instead of the device's real MAC.
+    """
+    entries = []
+    devices = source.fetch_devices(max_clients)
+    now_ts = int(timeNowUTC(as_string=False).timestamp())
+
+    for device in devices:
+        hwaddr = device.get('hwaddr')
+        if not hwaddr or hwaddr in ["00:00:00:00:00:00", "ip-::"]:
+            continue
+
+        device_ips = device.get('ips', [])
+        if not device_ips:
+            continue
+
+        max_last_seen = max((ip_info.get('lastSeen', 0) for ip_info in device_ips), default=0)
+        is_online = (now_ts - max_last_seen) <= consider_online
+
+        mac_vendor = device.get('macVendor', '')
+
+        for ip_info in device_ips:
+            ip = ip_info.get('ip')
+            if not ip or ip in ["0.0.0.0", "::"]:
+                continue
+
+            name = ip_info.get('name') or ''
+            tmp_mac = hwaddr.lower()
+
+            if fake_mac and not is_mac(tmp_mac):
+                tmp_mac = string_to_fake_mac(ip)
+
+            entries.append({
+                'mac': tmp_mac,
+                'ip': ip,
+                'name': name,
+                'macVendor': mac_vendor,
+                'lastSeen': max_last_seen,
+                'is_online': is_online,
+            })
+
+    return entries
+
+
+def merge_device_entries(all_entries):
+    """One entry per MAC - the freshest, if the same device shows up on both
+    Pi-hole instances (usually with the same IP, but not always)."""
+    merged = {}
+    for entry in all_entries:
+        current = merged.get(entry['mac'])
+        if current is None or entry['lastSeen'] > current['lastSeen']:
+            merged[entry['mac']] = entry
+    return merged
+
+
+def netalertx_device_owner(graphql_url, token, mac, run_timeout):
+    """Best-effort lookup of an already-known device's owner, purely for a
+    friendlier anomaly label. Returns '' if unavailable, unset, or on any
+    error - never blocks device import or anomaly detection."""
+    if not graphql_url:
+        return ''
+
+    query = """
+    query GetDevice($options: PageQueryOptionsInput) {
+      devices(options: $options) {
+        devices { devMac devOwner }
+      }
+    }
+    """
+    variables = {"options": {"filters": [{"filterColumn": "devMac", "filterValue": mac}]}}
+
+    try:
+        headers = {"Authorization": f"Bearer {token}"} if token else {}
+        resp = requests.post(
+            graphql_url,
+            json={"query": query, "variables": variables},
+            headers=headers,
+            timeout=run_timeout,
+        )
+        resp.raise_for_status()
+        devices = resp.json().get("data", {}).get("devices", {}).get("devices", [])
+        return devices[0].get("devOwner") or '' if devices else ''
+    except Exception as e:
+        mylog('debug', [f'[{pluginName}] GraphQL owner lookup failed for {mac}: {e}'])
+        return ''
+
+
+def load_state():
+    try:
+        with open(STATE_FILE, "r") as f:
+            return json.load(f)
+    except Exception:
+        return {}
+
+
+def save_state(state):
+    os.makedirs(os.path.dirname(STATE_FILE), exist_ok=True)
+    with open(STATE_FILE, "w") as f:
+        json.dump(state, f)
+
+
+def main():
+    verify_ssl = bool(get_setting_value('PIHOLEMON_VERIFY_SSL'))
+    run_timeout = get_setting_value('PIHOLEMON_RUN_TIMEOUT') or REQUEST_TIMEOUT_DEFAULT
+    get_offline = bool(get_setting_value('PIHOLEMON_GET_OFFLINE'))
+    fake_mac = bool(get_setting_value('PIHOLEMON_FAKE_MAC'))
+    max_clients = get_setting_value('PIHOLEMON_API_MAXCLIENTS') or 500
+    consider_online = get_setting_value('PIHOLEMON_CONSIDER_ONLINE')
+    if not isinstance(consider_online, int):
+        consider_online = 300
+
+    graphql_url = get_setting_value('PIHOLEMON_GRAPHQL_URL')
+    graphql_token = get_setting_value('PIHOLEMON_GRAPHQL_TOKEN')
+    multiplier = float(get_setting_value('PIHOLEMON_MULTIPLIER') or 4)
+    min_blocked = int(get_setting_value('PIHOLEMON_MIN_BLOCKED') or 20)
+    history_length = int(get_setting_value('PIHOLEMON_HISTORY_LENGTH') or 28)
+
+    sources = [
+        PiholeSource(
+            'primary',
+            get_setting_value('PIHOLEMON_PRIMARY_URL'),
+            get_setting_value('PIHOLEMON_PRIMARY_PASSWORD'),
+            verify_ssl,
+            run_timeout,
+        ),
+        PiholeSource(
+            'secondary',
+            get_setting_value('PIHOLEMON_SECONDARY_URL'),
+            get_setting_value('PIHOLEMON_SECONDARY_PASSWORD'),
+            verify_ssl,
+            run_timeout,
+        ),
+    ]
+    configured_sources = [s for s in sources if s.configured]
+    if not configured_sources:
+        mylog('none', [f'[{pluginName}] No Pi-hole URL configured - nothing to do.'])
+        return 1
+
+    all_device_entries = []
+    blocked_by_ip = {}
+
+    for source in configured_sources:
+        if not source.auth():
+            mylog('none', [f'[{pluginName}] {source.label}: authentication failed - skipping this source.'])
+            continue
+        try:
+            all_device_entries.extend(
+                gather_device_entries(source, consider_online, fake_mac, max_clients)
+            )
+            for ip, count in source.fetch_top_blocked_clients().items():
+                blocked_by_ip[ip] = blocked_by_ip.get(ip, 0) + count
+        finally:
+            source.deauth()
+
+    # IP->MAC identity mapping uses every device Pi-hole knows about,
+    # online or not (see gather_device_entries docstring for why).
+    devices_by_mac_all = merge_device_entries(all_device_entries)
+    ip_to_mac = {entry['ip']: mac for mac, entry in devices_by_mac_all.items()}
+
+    # Device-import rows (name/vendor) still respect GET_OFFLINE.
+    importable_entries = [e for e in all_device_entries if e['is_online'] or get_offline]
+    for entry in all_device_entries:
+        if not entry['is_online'] and not get_offline:
+            mylog('verbose', [f"[{pluginName}]: skipping offline device import for {entry['mac']} ({entry['ip']})."])
+    devices_by_mac = merge_device_entries(importable_entries)
+
+    # Combine blocked-query counts per MAC. An IP Pi-hole has genuinely never
+    # associated with any MAC (not even an offline one) falls back to being
+    # tracked under its own IP, so the signal isn't silently dropped.
+    blocked_by_mac = {}
+    for ip, count in blocked_by_ip.items():
+        key = ip_to_mac.get(ip, ip)
+        blocked_by_mac[key] = blocked_by_mac.get(key, 0) + count
+
+    state = load_state()
+    plugin_objects = Plugin_Objects(RESULT_FILE)
+    all_keys = set(devices_by_mac.keys()) | set(blocked_by_mac.keys())
+
+    for key in all_keys:
+        device = devices_by_mac.get(key)
+        mac = key if is_mac(key) else None
+        blocked_count = blocked_by_mac.get(key, 0)
+
+        history = state.get(key, [])
+        baseline = sum(history) / len(history) if history else None
+        is_anomaly = bool(baseline and blocked_count >= min_blocked and blocked_count > baseline * multiplier)
+
+        owner = netalertx_device_owner(graphql_url, graphql_token, mac, run_timeout) if mac else ''
+        detail = f"blocked={blocked_count}"
+        if baseline:
+            detail += f", avg={round(baseline, 1)}, ratio={round(blocked_count / baseline, 2)}x"
+        if owner:
+            detail += f" - owner: {owner}"
+
+        if device:
+            if not is_mac(device['mac']):
+                mylog('verbose', [f"[{pluginName}] Skipping invalid MAC (see Generate fake MAC setting): {device}"])
+                continue
+            plugin_objects.add_object(
+                primaryId=str(device['mac']),
+                secondaryId=str(device['ip']),
+                watched1=str(device['name']),
+                watched2=str(device['macVendor']),
+                watched3=str(blocked_count),
+                watched4='anomaly' if is_anomaly else 'normal',
+                extra=detail,
+                foreignKey=str(device['mac']),
+            )
+        else:
+            # No device-import row this run for `key` - either it's a real,
+            # known MAC that's just offline-filtered above (still link the
+            # anomaly to that device's existing page via foreignKey), or a
+            # bare IP Pi-hole has never associated with any MAC at all
+            # (nothing to link to, foreignKey stays 'null').
+            known_mac = key if is_mac(key) else None
+            plugin_objects.add_object(
+                primaryId=key,
+                secondaryId=key,
+                watched1='',
+                watched2='',
+                watched3=str(blocked_count),
+                watched4='anomaly' if is_anomaly else 'normal',
+                extra=detail,
+                foreignKey=str(known_mac) if known_mac else 'null',
+            )
+
+        if is_anomaly:
+            mylog('none', [f'[{pluginName}] Anomaly: {key} - {detail}'])
+
+        history.append(blocked_count)
+        state[key] = history[-history_length:]
+
+    save_state(state)
+    plugin_objects.write_result_file()
+    mylog(
+        'verbose',
+        [f'[{pluginName}] Script finished. {len(devices_by_mac)} device(s) imported, '
+         f'{len(blocked_by_mac)} with blocked-query data, from {len(configured_sources)} source(s).'],
+    )
+    return 0
+
+
+if __name__ == '__main__':
+    sys.exit(main())
