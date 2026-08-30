@@ -469,21 +469,30 @@ def test_main_records_anomaly_when_stats_are_complete(isolated_state, settings):
     assert state_after["aa:bb:cc:dd:ee:01"] == [10, 10, 10, 50]
 
 
-@pytest.mark.parametrize("configured_length", [-5, 0, 1, 28])
-def test_main_history_length_never_produces_empty_or_growing_unbounded(isolated_state, settings, configured_length):
-    """0 already falls back to 28 via `or`; negative values must clamp to
-    at least 1 rather than reach a nonsensical slice."""
+@pytest.mark.parametrize(
+    ("configured_length", "expected_history"),
+    [
+        (-5, [40]),              # negative - must clamp to 1, keeping only the newest sample
+        (0, [10, 20, 30, 40]),   # falsy - already falls back to 28 via `or`, nothing trimmed
+        (1, [40]),               # explicit 1 - only the newest sample survives
+        (28, [10, 20, 30, 40]),  # the documented default - well under the cap, nothing trimmed
+    ],
+)
+def test_main_history_length_clamps_and_trims_exactly(isolated_state, settings, configured_length, expected_history):
+    """Distinct, ordered seed values (not len() alone) so a wrong slice
+    window - e.g. a length-1 clamp that actually kept 4 items, which a
+    bare `len(history) >= 1` check would miss - shows up as a mismatch."""
     settings["PIHOLEMON_HISTORY_LENGTH"] = configured_length
     device = [_device_payload("aa:bb:cc:dd:ee:01", "10.0.0.5")]
 
     with patch.object(pihole_monitor.PiholeSource, "fetch_devices", return_value=device), \
-         patch.object(pihole_monitor.PiholeSource, "fetch_top_blocked_clients", return_value={"10.0.0.5": 1}), \
+         patch.object(pihole_monitor.PiholeSource, "fetch_top_blocked_clients", return_value={"10.0.0.5": 40}), \
          patch.object(pihole_monitor, "Plugin_Objects"):
-        pihole_monitor.save_state({"aa:bb:cc:dd:ee:01": [1, 1, 1]})
+        pihole_monitor.save_state({"aa:bb:cc:dd:ee:01": [10, 20, 30]})
         assert pihole_monitor.main() == 0
 
     history = pihole_monitor.load_state()["aa:bb:cc:dd:ee:01"]
-    assert len(history) >= 1  # never empty - a 0/negative slice length would be a bug
+    assert history == expected_history
 
 
 def test_main_returns_1_when_no_source_is_configured(isolated_state, settings):
