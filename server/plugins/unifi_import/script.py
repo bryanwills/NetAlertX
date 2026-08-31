@@ -19,7 +19,7 @@ from logger import mylog, Logger  # noqa: E402 [flake8 lint suppression]
 from helper import get_setting_value, normalize_string   # noqa: E402 [flake8 lint suppression]
 import conf  # noqa: E402 [flake8 lint suppression]
 from pytz import timezone  # noqa: E402 [flake8 lint suppression]
-from const import logPath  # noqa: E402 [flake8 lint suppression]
+from const import dbFolderPath, logPath  # noqa: E402 [flake8 lint suppression]
 
 # Make sure the TIMEZONE for logging is correct
 conf.tz = timezone(get_setting_value('TIMEZONE'))
@@ -32,7 +32,21 @@ pluginName = 'UNFIMP'
 LOG_PATH = logPath + '/plugins'
 LOG_FILE = os.path.join(LOG_PATH, f'script.{pluginName}.log')
 RESULT_FILE = os.path.join(LOG_PATH, f'last_result.{pluginName}.log')
-LOCK_FILE = os.path.join(LOG_PATH, f'full_run.{pluginName}.lock')
+LOCK_FILE = os.path.join(dbFolderPath, f'full_run.{pluginName}.lock')
+
+# LOG_PATH (/tmp/log) is ephemeral (tmpfs) - a lock file rooted there gets
+# wiped on every container restart, silently re-triggering a "once"-mode
+# full import each time. Migrate any pre-existing lock file to dbFolderPath
+# (/data/db) once so upgrading doesn't lose the current lock state.
+_LEGACY_LOCK_FILE = os.path.join(LOG_PATH, f'full_run.{pluginName}.lock')
+
+
+def _migrate_legacy_lock_file() -> None:
+    if not os.path.exists(LOCK_FILE) and os.path.exists(_LEGACY_LOCK_FILE):
+        os.rename(_LEGACY_LOCK_FILE, LOCK_FILE)
+
+
+_migrate_legacy_lock_file()
 
 urllib3.disable_warnings(InsecureRequestWarning)
 

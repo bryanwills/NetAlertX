@@ -28,11 +28,19 @@ _tmp_db = tempfile.mkdtemp()
 
 
 def _stub(name: str, **attrs):
-    if name not in sys.modules:
+    # Additive: several plugin test files stub the same generic module names
+    # (helper, plugin_helper, const, ...) with different attribute subsets.
+    # If another test already registered this name, add whatever attributes
+    # it doesn't have yet instead of skipping outright - a plain skip-if-
+    # present guard makes collection order decide which test's dependencies
+    # win, breaking whichever test runs later in the same pytest session.
+    mod = sys.modules.get(name)
+    if mod is None:
         mod = types.ModuleType(name)
-        for k, v in attrs.items():
-            setattr(mod, k, v)
         sys.modules[name] = mod
+    for k, v in attrs.items():
+        if not hasattr(mod, k):
+            setattr(mod, k, v)
 
 
 _stub("pytz", timezone=lambda tz: tz)

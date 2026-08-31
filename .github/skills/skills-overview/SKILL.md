@@ -22,7 +22,7 @@ Skills with the same purpose exist in both, sometimes under different names and 
 | Settings & config | `settings-management` | `settings` | Gemini version is more comprehensive (22-point guide + PR checklist); Copilot version covers `ccd()` and `get_setting_value()` usage |
 | MCP activation | `mcp-activation` | `mcp-activation` | Copilot version covers VS Code window reload; Gemini version covers Gemini CLI session restart |
 | Project navigation | `project-navigation` | `project-navigation` | Copilot version has full path tables and env vars; Gemini version is a brief reference |
-| Plugin dev | `plugin-run-development` | `plugin-development` | Copilot version is comprehensive (data contract, phases, formats); Gemini version is a brief checklist pointing to `docs/PLUGINS_DEV.md` |
+| Plugin dev | `plugin-run-development` | `plugin-development` | Both cover data contract, phases, formats, the `RUN_TIMEOUT` kill-timer gotcha, and a pre-PR pointer to the Conventions Checklist in `docs/PLUGINS_DEV.md`; kept in sync manually |
 | Devcontainer | `devcontainer-services` + `devcontainer-setup` + `devcontainer-configs` | `devcontainer-management` | Copilot splits into 3 focused skills; Gemini combines into one (uses `docker exec`) |
 | PR review | `pr-analysis` | `pr-analysis` | How to classify and respond to PR comments; pre-flight skill loading checklist |
 | Logging | `logging-standards` | `logging-standards` | `mylog` levels, message format, what not to log |

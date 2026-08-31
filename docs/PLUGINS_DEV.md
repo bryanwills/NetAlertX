@@ -229,6 +229,18 @@ These control core plugin behavior:
 
 See [PLUGINS_DEV_SETTINGS.md](PLUGINS_DEV_SETTINGS.md) for full component types and examples.
 
+### Conventions Checklist
+
+Check your plugin against these repo-wide conventions before opening a PR (verified against `server/plugins/*/config.json`):
+
+- **`RUN` defaults to `"disabled"`.** True for the large majority of plugins; only core maintenance plugins (`csv_backup`, `db_cleanup`, `maintenance`, `vendor_update`) default to `schedule`. A new optional plugin should load disabled until the user configures it.
+- **Pick `RUN_SCHD` from precedent, not an arbitrary value.** Check the closest existing plugin for its schedule (e.g. `pihole_api_scan` uses `*/5 * * * *`) rather than inventing a new cadence — consistency keeps first-time setup predictable across plugins.
+- **`RUN_TIMEOUT` is a subprocess kill-timer, not a per-request budget.** The core plugin runner (`server/plugin.py`) passes this same value as the hard timeout for the *entire* script (`subprocess` `timeout=`). If your script makes multiple sequential network calls (e.g. two upstream instances, or a per-device lookup in a loop), don't also reuse `RUN_TIMEOUT` as each individual call's timeout — one slow call can then consume the whole budget and get the process killed before it writes its result file, silently dropping the entire run.
+- **Reuse existing core settings instead of duplicating them.** If NetAlertX already has a concept your plugin needs (e.g. `API_TOKEN` for its own GraphQL/API endpoint), read it with `get_setting_value("API_TOKEN")` rather than adding a plugin-specific `<PREFIX>_API_TOKEN` — see `server/plugins/sync/sync.py` for the pattern.
+- **Keep `description` strings short.** They render directly in the Settings UI. Put implementation rationale and design trade-offs in the plugin's README or code comments, not the UI-facing description.
+- **For "one or more instances of the same thing," use the nested array + popup-form settings pattern**, not a fixed hardcoded count (e.g. "primary"/"secondary"). See `rest_import` (`RSTIMPRT`)'s `imports` setting for a working example — it also gives each instance its own sub-settings (URL, credentials, per-instance flags) for free.
+- **Persist plugin state under `dbFolderPath`, config artifacts under `configPath`** — see [Persisting Plugin Data](#persisting-plugin-data-state--config-files) below.
+
 ---
 
 ## Filters & Data Display

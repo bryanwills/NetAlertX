@@ -42,7 +42,7 @@ server/plugins/<code_name>/
 - `<PREF>_RUN`: execution phase
 - `<PREF>_RUN_SCHD`: cron-like schedule
 - `<PREF>_CMD`: script path
-- `<PREF>_RUN_TIMEOUT`: timeout in seconds
+- `<PREF>_RUN_TIMEOUT`: timeout in seconds — **this is enforced by the core plugin runner as the whole script's kill-timeout** (`server/plugin.py` passes it straight to `subprocess(..., timeout=...)`). It is not a safe per-HTTP-call timeout — don't reuse it for individual network calls in a loop, or one slow call can burn the whole budget and get the process killed before it writes its result file.
 - `<PREF>_WATCH`: columns to watch for changes
 
 ## Data Contract
@@ -79,6 +79,10 @@ plugin_objects.write_result_file()  # Exactly once at end
 | name discovery | Discover device names | `before_name_updates` |
 | importer | Import from services | `schedule` |
 | system | Core functionality | `schedule` |
+
+## Before Opening a PR
+
+Check the plugin against the [Conventions Checklist](../../../docs/PLUGINS_DEV.md#conventions-checklist) in `docs/PLUGINS_DEV.md` — `RUN` default, schedule precedent, `RUN_TIMEOUT` semantics, reusing core settings, description length, and the multi-instance settings pattern. Most plugin PR review comments trace back to one of these.
 
 ## Starting Point
 

@@ -92,7 +92,14 @@ def get_device_data(some_setting):
     device_data = []
 
     # do some processing, call exteranl APIs, and return a device_data list
-    #  ...
+    # ...
+    #
+    # If you call a network API here, remember RUN_TIMEOUT is the whole
+    # script's kill-timeout (enforced by server/plugin.py), not a safe
+    # per-request timeout - don't reuse its value as the timeout for each
+    # individual HTTP call if you might make several in a loop, or one slow
+    # call can burn the whole budget and get the process killed before it
+    # writes RESULT_FILE. See docs/PLUGINS_DEV.md#conventions-checklist.
     #
     # Sample data for testing purposes, you can adjust the processing in main() as needed
     # ... before adding it to the plugin_objects.add_object(...)
