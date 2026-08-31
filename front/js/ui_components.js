@@ -1077,7 +1077,7 @@ function initHoverNodeInfo() {
 
       const html = `
         <div>
-          <b> <div class="iconPreview">${icon || ''}</div> </b><b class="devName"> ${encodeSpecialChars(name)}</b><br>
+          <b> <div class="iconPreview">${safeAtob(icon) || ''}</div> </b><b class="devName"> ${encodeSpecialChars(name)}</b><br>
         </div>
         <hr/>
         <div class="line">
