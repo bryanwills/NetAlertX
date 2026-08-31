@@ -20,21 +20,16 @@ from unittest.mock import MagicMock
 _tmp_log = tempfile.mkdtemp()
 _tmp_db = tempfile.mkdtemp()
 
+_stubbed_module_names = []
+
 
 def _stub(name: str, **attrs):
-    # Additive: several plugin test files stub the same generic module names
-    # (helper, plugin_helper, const, ...) with different attribute subsets.
-    # If another test already registered this name, add whatever attributes
-    # it doesn't have yet instead of skipping outright - a plain skip-if-
-    # present guard makes collection order decide which test's dependencies
-    # win, breaking whichever test runs later in the same pytest session.
-    mod = sys.modules.get(name)
-    if mod is None:
+    if name not in sys.modules:
         mod = types.ModuleType(name)
-        sys.modules[name] = mod
-    for k, v in attrs.items():
-        if not hasattr(mod, k):
+        for k, v in attrs.items():
             setattr(mod, k, v)
+        sys.modules[name] = mod
+        _stubbed_module_names.append(name)
 
 
 _stub("pytz", timezone=lambda tz: tz)
@@ -47,6 +42,12 @@ _stub("helper", get_setting_value=lambda k: "")
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "server", "plugins", "__template"))
 
 import rename_me  # noqa: E402
+
+# Stops these fake entries from shadowing the real modules for other test
+# files collected later in the same pytest session (rename_me's own
+# module-level `from x import y` bindings are already resolved by now).
+for _name in _stubbed_module_names:
+    sys.modules.pop(_name, None)
 
 
 class TestGetDeviceData:

@@ -85,6 +85,8 @@ The library automatically:
 | 11 | `helpVal3` | string | *conditional* | Helper value 3. If used, all help values must be supplied |
 | 12 | `helpVal4` | string | *conditional* | Helper value 4. If used, all help values must be supplied |
 
+> **Gotcha:** `plugin_helper.py`'s `Plugin_Object.__init__` applies `helpVal1-4 or ""` internally, collapsing any falsy value (`0`, `False`, `""`) to `""` - indistinguishable from "not supplied." `watchedValue1-4` are stored as-is with no such coercion. If a real `0` or `False` is a meaningful value you need to preserve (not just "absent"), put it in a `watchedValue*` column instead of a `helpVal*` one.
+
 ## Usage Guide
 
 ### Empty/Null Values

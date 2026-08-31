@@ -26,21 +26,16 @@ _tmp_log = tempfile.mkdtemp()
 _tmp_data = tempfile.mkdtemp()
 _tmp_db = tempfile.mkdtemp()
 
+_stubbed_module_names = []
+
 
 def _stub(name: str, **attrs):
-    # Additive: several plugin test files stub the same generic module names
-    # (helper, plugin_helper, const, ...) with different attribute subsets.
-    # If another test already registered this name, add whatever attributes
-    # it doesn't have yet instead of skipping outright - a plain skip-if-
-    # present guard makes collection order decide which test's dependencies
-    # win, breaking whichever test runs later in the same pytest session.
-    mod = sys.modules.get(name)
-    if mod is None:
+    if name not in sys.modules:
         mod = types.ModuleType(name)
-        sys.modules[name] = mod
-    for k, v in attrs.items():
-        if not hasattr(mod, k):
+        for k, v in attrs.items():
             setattr(mod, k, v)
+        sys.modules[name] = mod
+        _stubbed_module_names.append(name)
 
 
 _stub("pytz", timezone=lambda tz: tz)
@@ -60,6 +55,9 @@ _stub("models.device_instance", DeviceInstance=MagicMock)
 
 # Stub requests only when it isn't installed (e.g. bare system Python locally).
 # In the container and CI, the real package is present and will be used.
+# Tracked via _stubbed_module_names (not the real package) so it gets popped
+# below like the other stubs, instead of leaking an incomplete fake `requests`
+# (missing .post/.get) to other test files collected later in the same run.
 if "requests" not in sys.modules:
     _req = types.ModuleType("requests")
     _req.Session = MagicMock
@@ -69,6 +67,7 @@ if "requests" not in sys.modules:
     _req.exceptions = _req_exc
     sys.modules["requests"] = _req
     sys.modules["requests.exceptions"] = _req_exc
+    _stubbed_module_names.extend(["requests", "requests.exceptions"])
 
 # ---------------------------------------------------------------------------
 # Import the functions under test (must come after the stubs above).
@@ -86,6 +85,12 @@ from script import (  # noqa: E402
     save_managed_names,
     sync_to_adguard,
 )
+
+# Stops these fake entries from shadowing the real modules for other test
+# files collected later in the same pytest session (script's own
+# module-level `from x import y` bindings are already resolved by now).
+for _name in _stubbed_module_names:
+    sys.modules.pop(_name, None)
 
 
 # ---------------------------------------------------------------------------

@@ -39,7 +39,7 @@ def _stub(name: str, **attrs):
 _stub("pytz", timezone=lambda tz: tz)
 _stub("conf", tz=None)
 _stub("const", confFileName="app.conf", logPath=_tmp_log)
-_stub("plugin_helper", Plugin_Objects=MagicMock, handleEmpty=lambda v: v)
+_stub("plugin_helper", Plugin_Objects=MagicMock, handleEmpty=lambda v: v, per_item_timeout=lambda run_timeout, count, floor=1: run_timeout)
 _stub("utils")
 _stub("utils.datetime_utils", timeNowUTC=lambda: "2026-01-01 00:00:00")
 _stub("logger", mylog=lambda *a: None, Logger=MagicMock)
@@ -57,6 +57,7 @@ if "requests" not in sys.modules:
     _req.exceptions = _req_exc
     sys.modules["requests"] = _req
     sys.modules["requests.exceptions"] = _req_exc
+    _stubbed_module_names.extend(["requests", "requests.exceptions"])
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "server", "plugins", "_publisher_ntfy"))
 

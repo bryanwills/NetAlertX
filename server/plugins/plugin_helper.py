@@ -265,6 +265,28 @@ def normalize_mac(mac):
 
 
 # -------------------------------------------------------------------
+def per_item_timeout(run_timeout, item_count, floor=1):
+    """
+    Divide a RUN_TIMEOUT budget evenly across `item_count` sequential
+    operations (e.g. one HTTP call per queued notification) so no single
+    item can consume the whole script's kill-timeout - the core plugin
+    runner (server/plugin.py) enforces RUN_TIMEOUT as the entire
+    subprocess's hard timeout, not a per-call one.
+
+    Returns run_timeout unchanged when there's 0 or 1 items, so the common
+    single-item case sees no behavior change. For a config-declared,
+    known-length list (e.g. a subnets/IPs setting), prefer the config.json
+    "timeoutMultiplier" mechanism instead - it scales the outer timeout up
+    rather than dividing the inner one down. Use this helper for
+    runtime-variable-length loops (e.g. a notification queue) where
+    timeoutMultiplier doesn't apply.
+    """
+    if item_count <= 1:
+        return run_timeout
+    return max(floor, run_timeout // item_count)
+
+
+# -------------------------------------------------------------------
 class Plugin_Object:
     """
     Plugin_Object class to manage one object introduced by the plugin.

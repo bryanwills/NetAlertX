@@ -374,7 +374,7 @@ def main():
     # Read settings
     # ------------------------------------------------------------------
     agrd_url        = get_setting_value("ADGUARDEXP_URL")       or "http://localhost:3000"
-    agrd_user       = get_setting_value("ADGUARDEXP_USER")      or ""
+    agrd_user       = get_setting_value("ADGUARDEXP_USER")      or "admin"
     agrd_pass       = get_setting_value("ADGUARDEXP_PASSWORD")  or ""
     verify_ssl_str      = get_setting_value("ADGUARDEXP_VERIFYSSL")       or "true"
     include_offline_str = get_setting_value("ADGUARDEXP_INCLUDE_OFFLINE") or "true"
