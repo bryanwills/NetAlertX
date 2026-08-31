@@ -329,9 +329,13 @@ function initTree(myHierarchy)
       linkStyle: (nodeData) => {
         // Return "solid", "dashed", "dotted", or "dashdot"
         // Can vary per link based on node data:
-        console.log(nodeData.data.devIsEthernet);
-        
-        return nodeData.data.devIsEthernet ? "solid" : "dashed";
+        if(nodeData.data.devParentRelType == "virtual")
+        {
+          return "dotted";
+        } else
+        {
+          return nodeData.data.devIsEthernet ? "solid" : "dashed";
+        }        
       },
       linkLabel: {
       render: (parent, child) => {
