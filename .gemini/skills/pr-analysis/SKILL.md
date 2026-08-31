@@ -53,6 +53,7 @@ For each comment, determine:
 - **No local DB helpers** — no `DummyDB`, `make_db`, or inline DDL defined outside `test/db_test_helpers.py`.
 - No inline imports — all imports at the top of the file.
 - Tests live under a subdirectory of `test/` matching the source path, not in `test/` root.
+- Secret scan (`runtime-tools-secret_scanning`) before committing.
 
 ## Stacked / Base-Branch Issues
 

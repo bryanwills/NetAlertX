@@ -1,4 +1,4 @@
-from server.plugins.plugin_helper import is_mac, normalize_mac, per_item_timeout
+from server.plugins.plugin_helper import Plugin_Object, is_mac, normalize_mac, per_item_timeout
 
 
 def test_is_mac_accepts_wildcard():
@@ -45,3 +45,23 @@ def test_per_item_timeout_never_goes_below_floor():
     # A large queue must not divide the per-item timeout down to 0.
     assert per_item_timeout(10, 100) == 1
     assert per_item_timeout(10, 100, floor=2) == 2
+
+
+def test_helpval_preserves_real_zero_and_false():
+    # A device with a legitimate 0/False value (e.g. VLAN 0, an "inactive"
+    # flag) must not have it silently collapsed to "" - only an actually
+    # omitted (None) value should fall back to the empty-string default.
+    obj = Plugin_Object(helpVal1=0, helpVal2=False, helpVal3="", helpVal4=None)
+    assert obj.helpVal1 == 0
+    assert obj.helpVal2 is False
+    assert obj.helpVal3 == ""
+    assert obj.helpVal4 == ""
+
+
+def test_watched_columns_unaffected_by_helpval_fix():
+    # watchedValue1-4 were never coerced and must stay that way.
+    obj = Plugin_Object(watched1=0, watched2=False, watched3="", watched4=None)
+    assert obj.watched1 == 0
+    assert obj.watched2 is False
+    assert obj.watched3 == ""
+    assert obj.watched4 is None

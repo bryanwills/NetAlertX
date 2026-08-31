@@ -322,10 +322,13 @@ class Plugin_Object:
         self.extra = extra
         self.userData = ""
         self.foreignKey = foreignKey
-        self.helpVal1 = helpVal1 or ""
-        self.helpVal2 = helpVal2 or ""
-        self.helpVal3 = helpVal3 or ""
-        self.helpVal4 = helpVal4 or ""
+        # `is not None` (not `or`) so a real 0/False passed by a plugin
+        # survives - only an actually-omitted value (None) falls back to the
+        # empty-string default. See docs/PLUGINS_DEV_DATA_CONTRACT.md.
+        self.helpVal1 = helpVal1 if helpVal1 is not None else ""
+        self.helpVal2 = helpVal2 if helpVal2 is not None else ""
+        self.helpVal3 = helpVal3 if helpVal3 is not None else ""
+        self.helpVal4 = helpVal4 if helpVal4 is not None else ""
 
     def write(self):
         """
