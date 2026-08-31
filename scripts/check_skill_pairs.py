@@ -1,15 +1,18 @@
 #!/usr/bin/env python3
 """
-Flag PRs that touch one half of a paired .gemini/.github skill file without
-touching the other. `.gemini/skills/skills-index/SKILL.md` documents these
-pairs and says to "keep body content identical between both files" - but
-nothing previously enforced that, and the plugin-development pair had
-already drifted apart before this check existed.
+Flag PRs that touch some but not all files in a group of mirrored skill
+files (`.gemini/skills/`, `.github/skills/`, `.claude/skills/`) without
+touching the others. `.gemini/skills/skills-index/SKILL.md` documents these
+groups and says to "keep body content identical" across them - but nothing
+previously enforced that, and the plugin-development pair had already
+drifted apart before this check existed.
 
-This can't verify the two files still say the *same thing* (that needs
-judgment - some pairs are intentionally different in depth), only that a
-change to one side didn't forget the other exists. Exit non-zero (but the
-CI step calling this is non-blocking) when a pair looks one-sided.
+This can't verify the files still say the *same thing* (that needs
+judgment - some groups are intentionally different in depth, and the three
+devcontainer-management targets each cover only part of the Gemini file),
+only that a change to one file didn't forget the others exist. Exit
+non-zero (but the CI step calling this is non-blocking) when a group looks
+one-sided.
 
     python3 scripts/check_skill_pairs.py origin/main
 """
@@ -18,18 +21,19 @@ import subprocess
 import sys
 
 # Kept in sync with the tables in .gemini/skills/skills-index/SKILL.md and
-# .github/skills/skills-overview/SKILL.md.
-PAIRS = [
-    (".gemini/skills/plugin-development/plugin-skill.md", ".github/skills/plugin-run-development/SKILL.md"),
-    (".gemini/skills/testing-workflow/SKILL.md", ".github/skills/testing-workflow/SKILL.md"),
-    (".gemini/skills/settings/SKILL.md", ".github/skills/settings-management/SKILL.md"),
-    (".gemini/skills/mcp-activation/SKILL.md", ".github/skills/mcp-activation/SKILL.md"),
-    (".gemini/skills/project-navigation/SKILL.md", ".github/skills/project-navigation/SKILL.md"),
-    (".gemini/skills/pr-analysis/SKILL.md", ".github/skills/pr-analysis/SKILL.md"),
-    (".gemini/skills/logging-standards/SKILL.md", ".github/skills/logging-standards/SKILL.md"),
-    (".gemini/skills/devcontainer-management/SKILL.md", ".github/skills/devcontainer-services/SKILL.md"),
-    (".gemini/skills/devcontainer-management/SKILL.md", ".github/skills/devcontainer-setup/SKILL.md"),
-    (".gemini/skills/devcontainer-management/SKILL.md", ".github/skills/devcontainer-configs/SKILL.md"),
+# .github/skills/skills-overview/SKILL.md. Most groups are 2 files (Gemini +
+# Copilot); a few skills are also mirrored to .claude/skills/ as a 3rd member.
+GROUPS = [
+    [".gemini/skills/plugin-development/plugin-skill.md", ".github/skills/plugin-run-development/SKILL.md", ".claude/skills/plugin-development/SKILL.md"],
+    [".gemini/skills/testing-workflow/SKILL.md", ".github/skills/testing-workflow/SKILL.md", ".claude/skills/testing-workflow/SKILL.md"],
+    [".gemini/skills/pr-analysis/SKILL.md", ".github/skills/pr-analysis/SKILL.md", ".claude/skills/pr-analysis/SKILL.md"],
+    [".gemini/skills/settings/SKILL.md", ".github/skills/settings-management/SKILL.md"],
+    [".gemini/skills/mcp-activation/SKILL.md", ".github/skills/mcp-activation/SKILL.md"],
+    [".gemini/skills/project-navigation/SKILL.md", ".github/skills/project-navigation/SKILL.md"],
+    [".gemini/skills/logging-standards/SKILL.md", ".github/skills/logging-standards/SKILL.md"],
+    [".gemini/skills/devcontainer-management/SKILL.md", ".github/skills/devcontainer-services/SKILL.md"],
+    [".gemini/skills/devcontainer-management/SKILL.md", ".github/skills/devcontainer-setup/SKILL.md"],
+    [".gemini/skills/devcontainer-management/SKILL.md", ".github/skills/devcontainer-configs/SKILL.md"],
 ]
 
 
@@ -48,21 +52,22 @@ def main():
 
     changed = changed_files(sys.argv[1])
     problems = []
-    for gemini_path, github_path in PAIRS:
-        gemini_changed = gemini_path in changed
-        github_changed = github_path in changed
-        if gemini_changed != github_changed:
-            touched, untouched = (gemini_path, github_path) if gemini_changed else (github_path, gemini_path)
-            problems.append(f"- {touched} changed but its pair {untouched} wasn't.")
+    for group in GROUPS:
+        touched = [path for path in group if path in changed]
+        untouched = [path for path in group if path not in changed]
+        if touched and untouched:
+            problems.append(
+                f"- touched {', '.join(touched)} but not {', '.join(untouched)}."
+            )
 
     if problems:
-        print("Possible skill-pair drift (only one side of a pair was touched):")
+        print("Possible skill-group drift (only some mirrored files were touched):")
         print("\n".join(problems))
-        print("\nIf the change is Gemini/Copilot-specific on purpose, ignore this. "
-              "Otherwise update both sides - see .gemini/skills/skills-index/SKILL.md.")
+        print("\nIf the change is genuinely tool-specific, ignore this. "
+              "Otherwise update the other file(s) too - see .gemini/skills/skills-index/SKILL.md.")
         return 1
 
-    print("No skill-pair drift detected.")
+    print("No skill-group drift detected.")
     return 0
 
 

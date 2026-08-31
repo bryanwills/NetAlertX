@@ -21,7 +21,7 @@ The setup script forcefully resets all runtime state. It is idempotent—every r
 4. Links `/entrypoint.d` and `/app` symlinks
 5. Creates `/data`, `/data/config`, `/data/db` directories
 6. Creates all log files
-7. Runs `/entrypoint.sh` to start services
+7. Runs `/entrypoint.sh` to start services - by default this **preserves** existing DB/config content; `entrypoint.d/25-first-run-db.sh` and `20-first-run-config.sh` only wipe them when `ALWAYS_FRESH_INSTALL=true` is set in the environment
 8. Writes version to `.VERSION`
 
 ## When to Use
