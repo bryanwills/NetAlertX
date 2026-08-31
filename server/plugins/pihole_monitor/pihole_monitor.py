@@ -355,10 +355,11 @@ def netalertx_device_owners(graphql_url, token, run_timeout):
 
 
 def load_state():
-    """Per-key {"last_raw": int, "history": [[timestamp, delta], ...]} from
-    past runs, or {} on first run / a missing or corrupt state file (never
-    fatal - just starts fresh). See compute_delta() for why the raw Pi-hole
-    total and the per-run delta history are tracked separately."""
+    """Per-key {"last_raw": {source_label: int}, "history": [[timestamp,
+    delta], ...]} from past runs, or {} on first run / a missing or corrupt
+    state file (never fatal - just starts fresh). last_raw is keyed by
+    source, not a single number, so each Pi-hole instance gets its own
+    diff reference point - see aggregate_source_deltas()."""
     try:
         with open(STATE_FILE, "r") as f:
             return json.load(f)
@@ -402,6 +403,44 @@ def compute_delta(last_raw, current_raw):
     if last_raw is None or current_raw < last_raw:
         return None
     return current_raw - last_raw
+
+
+def aggregate_source_deltas(last_raw_by_source, raw_by_source):
+    """Combine each configured source's raw count into one delta for a
+    device, computing every source's delta independently (via
+    compute_delta()) before summing - never by summing the raw totals
+    first and diffing once. Summing raw totals first would let one
+    source's counter reset silently net out against real traffic on
+    another: e.g. primary +2000 (a real spike) and secondary resetting
+    from 1000 to 5 (-995) would combine into a raw delta of only 1005,
+    hiding most of the primary's actual spike behind the secondary's
+    unrelated restart.
+
+    `raw_by_source` only needs entries for sources that reported this
+    device this run - a source that didn't (auth failed, or the device
+    simply wasn't in that instance's top_clients) is skipped for this run
+    without affecting the others.
+
+    Returns (delta, updated_last_raw_by_source):
+      - delta is None only if none of the sources present this run
+        produced a valid delta (e.g. all are bootstrapping or just
+        reset) - same None-means-"can't tell" contract as
+        compute_delta(). If at least one source has a valid delta, it's
+        included even if another source in the same run doesn't.
+      - updated_last_raw_by_source carries every source's newest raw
+        value forward (valid delta or not), so each source keeps its own
+        independent reference point for the next run.
+    """
+    updated = dict(last_raw_by_source)
+    total = 0
+    any_valid = False
+    for label, raw in raw_by_source.items():
+        delta = compute_delta(last_raw_by_source.get(label), raw)
+        updated[label] = raw
+        if delta is not None:
+            total += delta
+            any_valid = True
+    return (total if any_valid else None), updated
 
 
 def main():
@@ -460,9 +499,11 @@ def main():
 
     all_device_entries = []
     # Pi-hole's raw, cumulative-since-FTL-started counts (see
-    # compute_delta()'s docstring) - not yet the per-run increment used
-    # for anomaly detection below, just combined across sources first.
-    blocked_by_ip = {}
+    # compute_delta()'s docstring), kept separate per source until each
+    # source's own delta is computed - see aggregate_source_deltas()'
+    # docstring for why combining the raw totals across sources first
+    # (before diffing) would be wrong.
+    blocked_by_source_ip = {}
     # False if any configured source failed to authenticate or its
     # top_clients fetch failed - the blocked-query counts for this run are
     # then incomplete for reasons unrelated to real traffic, so anomaly
@@ -483,8 +524,7 @@ def main():
             if top_blocked is None:
                 stats_complete = False
             else:
-                for ip, count in top_blocked.items():
-                    blocked_by_ip[ip] = blocked_by_ip.get(ip, 0) + count
+                blocked_by_source_ip[source.label] = top_blocked
         finally:
             source.deauth()
 
@@ -501,13 +541,17 @@ def main():
             mylog('verbose', [f"[{pluginName}]: skipping offline device import for {entry['mac']} ({entry['ip']})."])
     devices_by_mac = merge_device_entries(importable_entries)
 
-    # Combine blocked-query counts per MAC. An IP Pi-hole has genuinely never
+    # Combine blocked-query counts per MAC, still kept separate per source
+    # (see aggregate_source_deltas()). An IP Pi-hole has genuinely never
     # associated with any MAC (not even an offline one) falls back to being
     # tracked under its own IP, so the signal isn't silently dropped.
-    blocked_by_mac = {}
-    for ip, count in blocked_by_ip.items():
-        key = ip_to_mac.get(ip, ip)
-        blocked_by_mac[key] = blocked_by_mac.get(key, 0) + count
+    blocked_by_mac_by_source = {}
+    for label, ip_counts in blocked_by_source_ip.items():
+        mac_counts = {}
+        for ip, count in ip_counts.items():
+            key = ip_to_mac.get(ip, ip)
+            mac_counts[key] = mac_counts.get(key, 0) + count
+        blocked_by_mac_by_source[label] = mac_counts
 
     if not stats_complete:
         mylog(
@@ -520,7 +564,8 @@ def main():
 
     state = load_state()
     plugin_objects = Plugin_Objects(RESULT_FILE)
-    all_keys = set(devices_by_mac.keys()) | set(blocked_by_mac.keys())
+    blocked_keys = {key for mac_counts in blocked_by_mac_by_source.values() for key in mac_counts}
+    all_keys = set(devices_by_mac.keys()) | blocked_keys
     # One batched lookup for the whole run instead of one per device - see
     # netalertx_device_owners' docstring.
     owners_by_mac = netalertx_device_owners(graphql_url, graphql_token, run_timeout)
@@ -529,9 +574,15 @@ def main():
     for key in all_keys:
         device = devices_by_mac.get(key)
         mac = key if is_mac(key) else None
-        raw_count = blocked_by_mac.get(key, 0)
 
         entry = state.get(key, {})
+        # A plain number here is a pre-existing state file from before
+        # last_raw was tracked per source - treat it the same as no prior
+        # reference point at all (every source bootstraps fresh) rather
+        # than crash on it.
+        last_raw_by_source = entry.get("last_raw", {})
+        if not isinstance(last_raw_by_source, dict):
+            last_raw_by_source = {}
         history = trim_history(entry.get("history", []), now_ts, history_days)
         values = [sample[1] for sample in history]
         # `baseline is not None` (not a truthy check): a device with a real,
@@ -541,11 +592,20 @@ def main():
         # silently exempt exactly the devices most worth watching.
         baseline = sum(values) / len(values) if values else None
 
-        # None (not 0) when there's no valid per-run increment yet - first
-        # time seen, or a counter reset (see compute_delta()). blocked_count
-        # is only a display fallback for that case; is_anomaly is gated on
-        # the real delta, not on this substitute.
-        delta = compute_delta(entry.get("last_raw"), raw_count) if stats_complete else None
+        # None (not 0) when there's no valid per-run increment yet from any
+        # source - first time seen, or every reporting source just reset
+        # (see aggregate_source_deltas()). blocked_count is only a display
+        # fallback for that case; is_anomaly is gated on the real delta,
+        # not on this substitute.
+        if stats_complete:
+            raw_by_source = {
+                label: mac_counts[key]
+                for label, mac_counts in blocked_by_mac_by_source.items()
+                if key in mac_counts
+            }
+            delta, updated_last_raw_by_source = aggregate_source_deltas(last_raw_by_source, raw_by_source)
+        else:
+            delta = None
         blocked_count = delta if delta is not None else 0
         is_anomaly = bool(stats_complete and baseline is not None and delta is not None and blocked_count >= min_blocked and blocked_count > baseline * multiplier)
 
@@ -597,21 +657,22 @@ def main():
             mylog('none', [f'[{pluginName}] Anomaly: {key} - {detail}'])
 
         if stats_complete:
-            # Always reset the diff reference point, even on a bootstrap or
-            # reset run (delta is None) - that's exactly what makes the
-            # *next* run's delta valid again instead of repeating the same
-            # "no valid delta" state indefinitely. Only append to the
-            # baseline history when this run actually produced a real delta.
+            # Always reset each source's diff reference point, even on a
+            # bootstrap or reset run (delta is None) - that's exactly what
+            # makes the *next* run's delta valid again instead of repeating
+            # the same "no valid delta" state indefinitely. Only append to
+            # the baseline history when this run actually produced a real
+            # (aggregate) delta.
             if delta is not None:
                 history.append([now_ts, delta])
-            state[key] = {"last_raw": raw_count, "history": history}
+            state[key] = {"last_raw": updated_last_raw_by_source, "history": history}
 
     save_state(state)
     plugin_objects.write_result_file()
     mylog(
         'verbose',
         [f'[{pluginName}] Script finished. {len(devices_by_mac)} device(s) imported, '
-         f'{len(blocked_by_mac)} with blocked-query data, from {len(configured_sources)} source(s).'],
+         f'{len(blocked_keys)} with blocked-query data, from {len(configured_sources)} source(s).'],
     )
     return 0
 

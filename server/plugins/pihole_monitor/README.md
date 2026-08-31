@@ -113,8 +113,8 @@ Waiting for real, organic beaconing traffic to confirm notifications actually ar
 
 #### ❌ Getting flagged for normal usage / not getting flagged for a real spike
 
-* Both `PIHOLEMON_MULTIPLIER` and `PIHOLEMON_MIN_BLOCKED` are starting values, not tuned defaults - let it run for a week and adjust based on what's actually normal for your network. They apply *per run*, so if you change `PIHOLEMON_RUN_SCHD` to something much less frequent than the default, `PIHOLEMON_MIN_BLOCKED` in particular may need lowering (fewer, larger runs mean more blocked queries naturally accumulate in each one).
-* A device with little to no query history yet won't be flagged (no baseline to compare against) - expected for the first `PIHOLEMON_HISTORY_DAYS` days after enabling the plugin.
+* Both `PIHOLEMON_MULTIPLIER` and `PIHOLEMON_MIN_BLOCKED` are starting values, not tuned defaults - let it run for a week and adjust based on what's actually normal for your network. They apply *per run*, so if you change `PIHOLEMON_RUN_SCHD` to something much less frequent than the default, `PIHOLEMON_MIN_BLOCKED` in particular may need raising (fewer, larger runs mean more blocked queries naturally accumulate in each one).
+* `PIHOLEMON_HISTORY_DAYS` is a retention window, not a detection delay. A new device becomes evaluable after its 3rd successful run: the 1st anchors the raw counter, the 2nd records the first delta into the baseline history, and the 3rd is the first one with a baseline to compare against.
 * A device is also never flagged on the one run right after it's first seen, or right after Pi-hole/FTL restarts - see the delta note above the settings table.
 
 ### Notes

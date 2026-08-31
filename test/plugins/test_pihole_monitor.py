@@ -19,6 +19,10 @@ Layout:
     cumulative-since-FTL-started count into a real per-run increment -
     None (not 0) on a first-ever run or a counter reset, a genuine 0
     distinct from that None otherwise.
+  - aggregate_source_deltas(): pure-function unit tests for combining
+    per-source deltas correctly - a counter reset on one source must not
+    net out against real traffic on another (they're diffed
+    independently, then summed - never combined as raw totals first).
   - main(): integration tests with PiholeSource's network-touching
     methods stubbed at the object level, covering source aggregation,
     the stats_complete gate (a failed fetch must not corrupt a device's
@@ -26,8 +30,10 @@ Layout:
     (not a run count - see trim_history()), the zero-baseline anomaly fix
     (a device with an all-zero history must still be flagged, not silently
     exempted), the bootstrap/counter-reset runs that establish or
-    re-anchor last_raw without recording a bogus delta, and per-instance
-    Verify SSL.
+    re-anchor last_raw without recording a bogus delta, the dual-source
+    reset-masking regression, tolerance of a pre-per-source state file
+    (last_raw as a plain number, from before this round), and
+    per-instance Verify SSL.
 """
 
 import importlib.util
@@ -455,10 +461,11 @@ def test_main_aggregates_blocked_counts_from_both_sources(isolated_state, settin
     with patch.object(pihole_monitor.PiholeSource, "fetch_devices", _fetch_devices), \
          patch.object(pihole_monitor.PiholeSource, "fetch_top_blocked_clients", _fetch_top_blocked), \
          patch.object(pihole_monitor, "Plugin_Objects") as mock_plugin_objects:
-        # last_raw=0 so the combined raw total (30+15) comes straight
-        # through as this run's delta - this test is about the combining,
-        # not about compute_delta() itself (covered separately).
-        pihole_monitor.save_state({"aa:bb:cc:dd:ee:01": {"last_raw": 0, "history": []}})
+        # last_raw=0 for both sources so each source's raw count comes
+        # straight through as its own delta (30 and 15) - this test is
+        # about summing per-source deltas, not about compute_delta() or
+        # aggregate_source_deltas()' reset handling (covered separately).
+        pihole_monitor.save_state({"aa:bb:cc:dd:ee:01": {"last_raw": {"primary": 0, "secondary": 0}, "history": []}})
         assert pihole_monitor.main() == 0
 
     instance = mock_plugin_objects.return_value
@@ -482,7 +489,7 @@ def test_main_stats_complete_false_when_a_source_fetch_fails(isolated_state, set
         # against a written-in zero. Timestamp 1 matches the stubbed
         # timeNowUTC's default "now" (see module stub), so nothing is
         # trimmed by the day-window here - not what this test is about.
-        pihole_monitor.save_state({"aa:bb:cc:dd:ee:01": {"last_raw": 1000, "history": [[1, 40], [1, 42], [1, 38]]}})
+        pihole_monitor.save_state({"aa:bb:cc:dd:ee:01": {"last_raw": {"primary": 1000}, "history": [[1, 40], [1, 42], [1, 38]]}})
         assert pihole_monitor.main() == 0
 
     instance = mock_plugin_objects.return_value
@@ -492,7 +499,7 @@ def test_main_stats_complete_false_when_a_source_fetch_fails(isolated_state, set
     state_after = pihole_monitor.load_state()
     # Untouched, including last_raw - no false delta or reference-point
     # update from a run whose data was incomplete.
-    assert state_after["aa:bb:cc:dd:ee:01"] == {"last_raw": 1000, "history": [[1, 40], [1, 42], [1, 38]]}
+    assert state_after["aa:bb:cc:dd:ee:01"] == {"last_raw": {"primary": 1000}, "history": [[1, 40], [1, 42], [1, 38]]}
 
 
 def test_main_records_anomaly_when_stats_are_complete(isolated_state, settings):
@@ -505,7 +512,7 @@ def test_main_records_anomaly_when_stats_are_complete(isolated_state, settings):
          patch.object(pihole_monitor, "Plugin_Objects") as mock_plugin_objects:
         # last_raw=0 so this run's raw count (50) is also its delta -
         # baseline avg 10, 50 >> 2x.
-        pihole_monitor.save_state({"aa:bb:cc:dd:ee:01": {"last_raw": 0, "history": [[1, 10], [1, 10], [1, 10]]}})
+        pihole_monitor.save_state({"aa:bb:cc:dd:ee:01": {"last_raw": {"primary": 0}, "history": [[1, 10], [1, 10], [1, 10]]}})
         assert pihole_monitor.main() == 0
 
     instance = mock_plugin_objects.return_value
@@ -513,7 +520,7 @@ def test_main_records_anomaly_when_stats_are_complete(isolated_state, settings):
     assert call.kwargs["watched4"] == "anomaly"
 
     state_after = pihole_monitor.load_state()
-    assert state_after["aa:bb:cc:dd:ee:01"] == {"last_raw": 50, "history": [[1, 10], [1, 10], [1, 10], [1, 50]]}
+    assert state_after["aa:bb:cc:dd:ee:01"] == {"last_raw": {"primary": 50}, "history": [[1, 10], [1, 10], [1, 10], [1, 50]]}
 
 
 _DAY = 86400
@@ -548,7 +555,7 @@ def test_main_history_days_clamps_and_trims_by_age(isolated_state, settings, con
     device = [_device_payload("aa:bb:cc:dd:ee:01", "10.0.0.5")]
     # last_raw=0 so this run's raw count (40) is also its delta - this test
     # is about the day-based trim/clamp, not about compute_delta() itself.
-    seed = {"aa:bb:cc:dd:ee:01": {"last_raw": 0, "history": [
+    seed = {"aa:bb:cc:dd:ee:01": {"last_raw": {"primary": 0}, "history": [
         [_FIXED_NOW - 10 * _DAY, 30],
         [_FIXED_NOW - 3 * _DAY, 20],
         [_FIXED_NOW - 1 * _DAY, 10],
@@ -604,6 +611,123 @@ def test_compute_delta_zero_is_a_real_value_not_none():
     assert delta is not None
 
 
+# ---------------------------------------------------------------------------
+# aggregate_source_deltas() - per-source deltas summed independently, so one
+# source's counter reset can't net out against real traffic on another.
+# ---------------------------------------------------------------------------
+
+
+def test_aggregate_source_deltas_sums_valid_deltas_from_every_source():
+    delta, updated = pihole_monitor.aggregate_source_deltas(
+        {"primary": 100, "secondary": 200},
+        {"primary": 150, "secondary": 250},
+    )
+    assert delta == 100  # 50 + 50
+    assert updated == {"primary": 150, "secondary": 250}
+
+
+def test_aggregate_source_deltas_reset_source_does_not_mask_the_others_spike():
+    """Regression guard for the exact bug CodeRabbit flagged: combining raw
+    totals across sources before diffing would let a reset on one source
+    net against real growth on another (primary +2000, secondary resetting
+    1000->5 would combine into a raw delta of only 1005). Diffing each
+    source first and summing only the valid deltas must instead surface
+    the primary's full 2000, with the secondary contributing nothing this
+    run (not a corrective -995)."""
+    delta, updated = pihole_monitor.aggregate_source_deltas(
+        {"primary": 1000, "secondary": 1000},
+        {"primary": 3000, "secondary": 5},  # secondary: FTL restarted, counter reset
+    )
+    assert delta == 2000  # primary's real delta only, not 3000-1000+5-1000=1005
+    assert updated == {"primary": 3000, "secondary": 5}  # both re-anchored regardless
+
+
+def test_aggregate_source_deltas_none_when_every_source_is_invalid():
+    delta, updated = pihole_monitor.aggregate_source_deltas(
+        {},  # nothing seen before - every source is bootstrapping
+        {"primary": 100, "secondary": 200},
+    )
+    assert delta is None
+    assert updated == {"primary": 100, "secondary": 200}
+
+
+def test_aggregate_source_deltas_source_absent_this_run_keeps_its_old_last_raw():
+    """A source that authenticated last run but not this one (or whose
+    fetch failed) shouldn't have its reference point touched - only
+    sources actually present in raw_by_source are updated."""
+    delta, updated = pihole_monitor.aggregate_source_deltas(
+        {"primary": 100, "secondary": 200},
+        {"primary": 150},  # secondary absent this run
+    )
+    assert delta == 50  # primary only
+    assert updated == {"primary": 150, "secondary": 200}  # secondary untouched
+
+
+def test_main_dual_source_reset_does_not_mask_the_others_spike(isolated_state, settings):
+    """Integration-level version of the same regression: a real spike on
+    the primary instance must not be diluted by a simultaneous counter
+    reset on the secondary, when both instances report the same device."""
+    settings["PIHOLEMON_SECONDARY_URL"] = "http://ph2/"
+    settings["PIHOLEMON_SECONDARY_PASSWORD"] = "pw2"
+    settings["PIHOLEMON_MULTIPLIER"] = 2
+    settings["PIHOLEMON_MIN_BLOCKED"] = 100
+
+    devices_by_label = {
+        "primary": [_device_payload("aa:bb:cc:dd:ee:01", "10.0.0.5")],
+        "secondary": [_device_payload("aa:bb:cc:dd:ee:01", "10.0.0.5")],
+    }
+    # primary: real spike (1000 -> 3000). secondary: FTL restarted (1000 -> 5).
+    blocked_by_label = {"primary": {"10.0.0.5": 3000}, "secondary": {"10.0.0.5": 5}}
+
+    def _fetch_devices(self, max_clients):
+        return devices_by_label[self.label]
+
+    def _fetch_top_blocked(self, count):
+        return blocked_by_label[self.label]
+
+    with patch.object(pihole_monitor.PiholeSource, "fetch_devices", _fetch_devices), \
+         patch.object(pihole_monitor.PiholeSource, "fetch_top_blocked_clients", _fetch_top_blocked), \
+         patch.object(pihole_monitor, "Plugin_Objects") as mock_plugin_objects:
+        pihole_monitor.save_state({"aa:bb:cc:dd:ee:01": {
+            "last_raw": {"primary": 1000, "secondary": 1000},
+            "history": [[1, 50], [1, 50]],  # baseline avg 50
+        }})
+        assert pihole_monitor.main() == 0
+
+    instance = mock_plugin_objects.return_value
+    (call,) = instance.add_object.call_args_list
+    # The real signal (2000), not the raw-combined-first result (1005).
+    assert call.kwargs["watched3"] == "2000"
+    assert call.kwargs["watched4"] == "anomaly"
+
+    state_after = pihole_monitor.load_state()["aa:bb:cc:dd:ee:01"]
+    assert state_after["last_raw"] == {"primary": 3000, "secondary": 5}
+    assert state_after["history"][-1] == [1, 2000]
+
+
+def test_main_tolerates_pre_per_source_state_instead_of_crashing(isolated_state, settings):
+    """Before this round, last_raw was a single number, not a per-source
+    dict. A state file saved by that older version must not crash this
+    version - it's treated the same as no prior reference point (every
+    source bootstraps fresh this run) rather than raising."""
+    device = [_device_payload("aa:bb:cc:dd:ee:01", "10.0.0.5")]
+
+    with patch.object(pihole_monitor.PiholeSource, "fetch_devices", return_value=device), \
+         patch.object(pihole_monitor.PiholeSource, "fetch_top_blocked_clients", return_value={"10.0.0.5": 500}), \
+         patch.object(pihole_monitor, "Plugin_Objects") as mock_plugin_objects:
+        # Legacy shape: last_raw is a plain int, not {"primary": ...}.
+        pihole_monitor.save_state({"aa:bb:cc:dd:ee:01": {"last_raw": 1234, "history": [[1, 10], [1, 10]]}})
+        assert pihole_monitor.main() == 0  # must not raise
+
+    instance = mock_plugin_objects.return_value
+    (call,) = instance.add_object.call_args_list
+    assert call.kwargs["watched4"] == "normal"  # bootstrapping again, not an anomaly
+
+    state_after = pihole_monitor.load_state()["aa:bb:cc:dd:ee:01"]
+    assert state_after["last_raw"] == {"primary": 500}  # re-anchored in the new shape
+    assert state_after["history"] == [[1, 10], [1, 10]]  # old baseline history untouched
+
+
 def test_main_bootstrap_run_sets_last_raw_without_recording_a_delta(isolated_state, settings):
     """The first time a device is ever seen, there's no prior raw count to
     diff against - this run must establish the reference point (last_raw)
@@ -622,7 +746,7 @@ def test_main_bootstrap_run_sets_last_raw_without_recording_a_delta(isolated_sta
     assert "unknown" in call.kwargs["extra"]
 
     state_after = pihole_monitor.load_state()
-    assert state_after["aa:bb:cc:dd:ee:01"] == {"last_raw": 5000, "history": []}
+    assert state_after["aa:bb:cc:dd:ee:01"] == {"last_raw": {"primary": 5000}, "history": []}
 
 
 def test_main_counter_reset_updates_last_raw_without_touching_history(isolated_state, settings):
@@ -635,7 +759,7 @@ def test_main_counter_reset_updates_last_raw_without_touching_history(isolated_s
     with patch.object(pihole_monitor.PiholeSource, "fetch_devices", return_value=device), \
          patch.object(pihole_monitor.PiholeSource, "fetch_top_blocked_clients", return_value={"10.0.0.5": 5}), \
          patch.object(pihole_monitor, "Plugin_Objects") as mock_plugin_objects:
-        pihole_monitor.save_state({"aa:bb:cc:dd:ee:01": {"last_raw": 1000, "history": [[1, 10], [1, 10]]}})
+        pihole_monitor.save_state({"aa:bb:cc:dd:ee:01": {"last_raw": {"primary": 1000}, "history": [[1, 10], [1, 10]]}})
         assert pihole_monitor.main() == 0
 
     instance = mock_plugin_objects.return_value
@@ -645,7 +769,7 @@ def test_main_counter_reset_updates_last_raw_without_touching_history(isolated_s
     state_after = pihole_monitor.load_state()
     # last_raw re-anchored to the post-restart value; the pre-restart
     # baseline history is preserved exactly, not wiped or corrupted.
-    assert state_after["aa:bb:cc:dd:ee:01"] == {"last_raw": 5, "history": [[1, 10], [1, 10]]}
+    assert state_after["aa:bb:cc:dd:ee:01"] == {"last_raw": {"primary": 5}, "history": [[1, 10], [1, 10]]}
 
 
 def test_main_returns_1_when_no_source_is_configured(isolated_state, settings):
@@ -676,14 +800,14 @@ def test_main_marks_stats_incomplete_when_a_source_fails_to_authenticate(tmp_pat
          patch.object(pihole_monitor.PiholeSource, "fetch_devices", return_value=device), \
          patch.object(pihole_monitor.PiholeSource, "fetch_top_blocked_clients", return_value={"10.0.0.5": 999}), \
          patch.object(pihole_monitor, "Plugin_Objects") as mock_plugin_objects:
-        pihole_monitor.save_state({"aa:bb:cc:dd:ee:01": {"last_raw": 5, "history": [[1, 1], [1, 1], [1, 1]]}})
+        pihole_monitor.save_state({"aa:bb:cc:dd:ee:01": {"last_raw": {"primary": 5}, "history": [[1, 1], [1, 1], [1, 1]]}})
         assert pihole_monitor.main() == 0
 
         instance = mock_plugin_objects.return_value
         (call,) = instance.add_object.call_args_list
         assert call.kwargs["watched4"] == "normal"  # secondary's auth failure marks stats incomplete
         # Untouched, including last_raw - state.
-        assert pihole_monitor.load_state()["aa:bb:cc:dd:ee:01"] == {"last_raw": 5, "history": [[1, 1], [1, 1], [1, 1]]}
+        assert pihole_monitor.load_state()["aa:bb:cc:dd:ee:01"] == {"last_raw": {"primary": 5}, "history": [[1, 1], [1, 1], [1, 1]]}
 
 
 def test_main_links_offline_device_resolves_owner_skips_invalid_mac_and_tracks_unknown_ip(isolated_state, settings):
@@ -741,7 +865,7 @@ def test_main_flags_anomaly_against_an_all_zero_baseline(isolated_state, setting
          patch.object(pihole_monitor.PiholeSource, "fetch_top_blocked_clients", return_value={"10.0.0.5": 5}), \
          patch.object(pihole_monitor, "Plugin_Objects") as mock_plugin_objects:
         # last_raw=0 so this run's raw count (5) is also its delta.
-        pihole_monitor.save_state({"aa:bb:cc:dd:ee:01": {"last_raw": 0, "history": [[1, 0], [1, 0], [1, 0]]}})  # genuinely never blocked before
+        pihole_monitor.save_state({"aa:bb:cc:dd:ee:01": {"last_raw": {"primary": 0}, "history": [[1, 0], [1, 0], [1, 0]]}})  # genuinely never blocked before
         assert pihole_monitor.main() == 0
 
     instance = mock_plugin_objects.return_value
