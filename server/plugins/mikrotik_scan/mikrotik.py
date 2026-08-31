@@ -7,7 +7,7 @@ import sys
 INSTALL_PATH = os.getenv('NETALERTX_APP', '/app')
 sys.path.extend([f"{INSTALL_PATH}/server/plugins", f"{INSTALL_PATH}/server"])
 
-from plugin_helper import Plugin_Objects  # noqa: E402 [flake8 lint suppression]
+from plugin_helper import Plugin_Objects, normalize_mac  # noqa: E402 [flake8 lint suppression]
 from logger import mylog, Logger  # noqa: E402 [flake8 lint suppression]
 from helper import get_setting_value  # noqa: E402 [flake8 lint suppression]
 from const import logPath  # noqa: E402 [flake8 lint suppression]
@@ -64,16 +64,17 @@ def get_entries(plugin_objects: Plugin_Objects) -> Plugin_Objects:
         for lease in leases:
             lease_id = lease.get('.id')
             address = lease.get('address')
-            mac_address = lease.get('mac-address').lower()
+            raw_mac_address = lease.get('mac-address')
             host_name = lease.get('host-name')
             comment = lease.get('comment')
             last_seen = lease.get('last-seen')
             status = lease.get('status')
             device_name = comment or host_name or "(unknown)"
 
-            mylog('verbose', f"ID: {lease_id}, Address: {address}, MAC: {mac_address}, Host Name: {host_name}, Comment: {comment}, Last Seen: {last_seen}, Status: {status}")
+            mylog('verbose', f"ID: {lease_id}, Address: {address}, MAC: {raw_mac_address}, Host Name: {host_name}, Comment: {comment}, Last Seen: {last_seen}, Status: {status}")
 
-            if (status == "bound"):
+            if status == "bound" and raw_mac_address:
+                mac_address = normalize_mac(raw_mac_address)
                 plugin_objects.add_object(
                     primaryId   = mac_address,
                     secondaryId = address,
