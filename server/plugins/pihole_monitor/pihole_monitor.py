@@ -51,7 +51,7 @@ from plugin_helper import Plugin_Objects, is_mac  # noqa: E402
 from utils.datetime_utils import timeNowUTC  # noqa: E402
 from logger import mylog, Logger  # noqa: E402
 from helper import get_setting_value  # noqa: E402
-from const import logPath  # noqa: E402
+from const import logPath, dbFolderPath  # noqa: E402
 import conf  # noqa: E402
 from pytz import timezone  # noqa: E402
 from utils.crypto_utils import string_to_fake_mac  # noqa: E402
@@ -64,7 +64,9 @@ VERSION_DATE = "NAX-PIHOLEMON-1.0"
 
 LOG_PATH = logPath + '/plugins'
 RESULT_FILE = os.path.join(LOG_PATH, f'last_result.{pluginName}.log')
-STATE_FILE = os.path.join(LOG_PATH, f'state.{pluginName}.json')
+# Lives in the DB folder, not LOG_PATH: logs are routinely wiped on upgrade,
+# which would silently reset every device's anomaly baseline.
+STATE_FILE = os.path.join(dbFolderPath, f'state.{pluginName}.json')
 
 REQUEST_TIMEOUT_DEFAULT = 30
 
@@ -190,6 +192,13 @@ class PiholeSource:
     def fetch_top_blocked_clients(self, count):
         """{ip: blocked_count} for this instance, used for anomaly detection.
 
+        Each blocked_count is Pi-hole's raw counter value, cumulative since
+        FTL last started - not a per-interval or "since last poll" count,
+        and it does not reset daily. Callers must diff it against the
+        previous run's value (see compute_delta()) before comparing it to
+        anything; used raw, it would make any device's ordinary traffic
+        look like a runaway anomaly purely from the counter never resetting.
+
         `count` should cover every client Pi-hole is tracking, not just a
         handful - Pi-hole's own API default (10) truncates silently, so a
         caller that doesn't pass an explicit count would never see clients
@@ -236,7 +245,12 @@ def gather_device_entries(source, consider_online, fake_mac, max_clients):
 
     for device in devices:
         hwaddr = device.get('hwaddr')
-        if not hwaddr or hwaddr in ["00:00:00:00:00:00", "ip-::"]:
+        # "ip-<address>" is Pi-hole's own placeholder for "no real MAC known,
+        # falling back to identifying by IP" - not just the "ip-::" (IPv6)
+        # case, any address. Caught downstream by is_mac() either way, but
+        # this is the actual placeholder check, so it should recognize the
+        # whole pattern.
+        if not hwaddr or hwaddr == "00:00:00:00:00:00" or hwaddr.startswith("ip-"):
             continue
 
         device_ips = device.get('ips', [])
@@ -307,41 +321,44 @@ def build_ip_to_mac(all_entries):
     return ip_to_mac
 
 
-def netalertx_device_owner(graphql_url, token, mac, run_timeout):
-    """Best-effort lookup of an already-known device's owner, purely for a
-    friendlier anomaly label. Returns '' if unavailable, unset, or on any
-    error - never blocks device import or anomaly detection."""
+def netalertx_device_owners(graphql_url, token, run_timeout):
+    """{mac: devOwner} for every device NetAlertX already knows about, purely
+    for a friendlier anomaly label. Fetched once per run rather than once per
+    device - on a network with hundreds of devices, one query beats hundreds
+    of blocking round-trips to the same endpoint. Returns {} if unavailable,
+    unset, or on any error - never blocks device import or anomaly detection."""
     if not graphql_url:
-        return ''
+        return {}
 
     query = """
-    query GetDevice($options: PageQueryOptionsInput) {
-      devices(options: $options) {
+    query GetDevices {
+      devices {
         devices { devMac devOwner }
       }
     }
     """
-    variables = {"options": {"filters": [{"filterColumn": "devMac", "filterValue": mac}]}}
 
     try:
         headers = {"Authorization": f"Bearer {token}"} if token else {}
         resp = requests.post(
             graphql_url,
-            json={"query": query, "variables": variables},
+            json={"query": query},
             headers=headers,
             timeout=run_timeout,
         )
         resp.raise_for_status()
         devices = resp.json().get("data", {}).get("devices", {}).get("devices", [])
-        return devices[0].get("devOwner") or '' if devices else ''
+        return {d["devMac"]: d.get("devOwner") or '' for d in devices if d.get("devMac")}
     except Exception as e:
-        mylog('debug', [f'[{pluginName}] GraphQL owner lookup failed for {mac}: {e}'])
-        return ''
+        mylog('debug', [f'[{pluginName}] GraphQL owner lookup failed: {e}'])
+        return {}
 
 
 def load_state():
-    """Per-key blocked-query history from the last run, or {} on first run
-    / a missing or corrupt state file (never fatal - just starts fresh)."""
+    """Per-key {"last_raw": int, "history": [[timestamp, delta], ...]} from
+    past runs, or {} on first run / a missing or corrupt state file (never
+    fatal - just starts fresh). See compute_delta() for why the raw Pi-hole
+    total and the per-run delta history are tracked separately."""
     try:
         with open(STATE_FILE, "r") as f:
             return json.load(f)
@@ -350,10 +367,41 @@ def load_state():
 
 
 def save_state(state):
-    """Persist per-key blocked-query history for next run's baseline."""
+    """Persist per-key last-raw-count + delta history for next run's diff
+    and baseline."""
     os.makedirs(os.path.dirname(STATE_FILE), exist_ok=True)
     with open(STATE_FILE, "w") as f:
         json.dump(state, f)
+
+
+def trim_history(history, now_ts, history_days):
+    """Drop samples older than history_days from `history` ([timestamp,
+    delta] pairs). An age cutoff, not a count: the window means the same
+    real-world span regardless of how often this plugin happens to run - a
+    faster schedule just adds more samples inside that same window instead
+    of shrinking it, and a slower one doesn't stretch it out."""
+    cutoff = now_ts - history_days * 86400
+    return [sample for sample in history if sample[0] >= cutoff]
+
+
+def compute_delta(last_raw, current_raw):
+    """Turn Pi-hole's raw blocked-query count (cumulative since FTL last
+    started, *not* a per-interval count - confirmed against FTL's own
+    source and long-standing user reports that it doesn't reset at
+    midnight) into a per-run increment, which is what's actually
+    comparable against a rolling baseline.
+
+    Returns None (not 0) when there's nothing valid to diff against yet:
+    the first time this device is seen (last_raw is None), or when
+    current_raw < last_raw - Pi-hole/FTL restarted and the counter reset,
+    or the device simply dropped out of top_clients this run. A caller
+    must not treat None as a real zero: a genuine 0 means "no new blocked
+    queries since last run", while None means "we can't tell this run" -
+    conflating them would either manufacture a fake anomaly out of a
+    restart, or silently swallow a real one right after."""
+    if last_raw is None or current_raw < last_raw:
+        return None
+    return current_raw - last_raw
 
 
 def main():
@@ -361,7 +409,6 @@ def main():
     import its devices, evaluate blocked-query anomalies against each
     device's rolling history, and write both out. Returns 0 on a normal
     run, 1 if no Pi-hole instance is configured at all."""
-    verify_ssl = bool(get_setting_value('PIHOLEMON_VERIFY_SSL'))
     run_timeout = get_setting_value('PIHOLEMON_RUN_TIMEOUT') or REQUEST_TIMEOUT_DEFAULT
     get_offline = bool(get_setting_value('PIHOLEMON_GET_OFFLINE'))
     fake_mac = bool(get_setting_value('PIHOLEMON_FAKE_MAC'))
@@ -370,28 +417,39 @@ def main():
     if not isinstance(consider_online, int):
         consider_online = 300
 
-    graphql_url = get_setting_value('PIHOLEMON_GRAPHQL_URL')
-    graphql_token = get_setting_value('PIHOLEMON_GRAPHQL_TOKEN')
+    # The user only decides whether to look up the owner at all - the
+    # endpoint itself is derived from this app's own GRAPHQL_PORT (single
+    # source of truth) instead of being a second, easily stale copy of it.
+    graphql_url = f"http://127.0.0.1:{get_setting_value('GRAPHQL_PORT')}/graphql" if get_setting_value('PIHOLEMON_GET_OWNER') else None
+    # Reuse this app's own API token rather than keep a second, easily
+    # forgotten copy of it in this plugin's settings.
+    graphql_token = get_setting_value('API_TOKEN')
     multiplier = float(get_setting_value('PIHOLEMON_MULTIPLIER') or 4)
     min_blocked = int(get_setting_value('PIHOLEMON_MIN_BLOCKED') or 20)
-    # Clamp to at least 1: 0 already falls back to 28 via `or`, but a
-    # negative setting would otherwise reach the history[-history_length:]
-    # slice below and silently produce a nonsensical, hard-to-debug slice.
-    history_length = max(1, int(get_setting_value('PIHOLEMON_HISTORY_LENGTH') or 28))
+    # Days, not run count: a run-count window silently shrinks or stretches
+    # in real time whenever RUN_SCHD changes (or differs between users), so
+    # the baseline it produces means something different depending on how
+    # often the plugin happens to run. A day-based window means the same
+    # thing regardless of schedule, and a faster schedule only adds more
+    # data points within that same window instead of shortening it.
+    # Clamped to at least 1 for the same reason as elsewhere: 0 already
+    # falls back to 7 via `or`, but a negative setting would otherwise
+    # produce a nonsensical, hard-to-debug cutoff below.
+    history_days = max(1, int(get_setting_value('PIHOLEMON_HISTORY_DAYS') or 7))
 
     sources = [
         PiholeSource(
             'primary',
             get_setting_value('PIHOLEMON_PRIMARY_URL'),
             get_setting_value('PIHOLEMON_PRIMARY_PASSWORD'),
-            verify_ssl,
+            bool(get_setting_value('PIHOLEMON_PRIMARY_VERIFY_SSL')),
             run_timeout,
         ),
         PiholeSource(
             'secondary',
             get_setting_value('PIHOLEMON_SECONDARY_URL'),
             get_setting_value('PIHOLEMON_SECONDARY_PASSWORD'),
-            verify_ssl,
+            bool(get_setting_value('PIHOLEMON_SECONDARY_VERIFY_SSL')),
             run_timeout,
         ),
     ]
@@ -401,6 +459,9 @@ def main():
         return 1
 
     all_device_entries = []
+    # Pi-hole's raw, cumulative-since-FTL-started counts (see
+    # compute_delta()'s docstring) - not yet the per-run increment used
+    # for anomaly detection below, just combined across sources first.
     blocked_by_ip = {}
     # False if any configured source failed to authenticate or its
     # top_clients fetch failed - the blocked-query counts for this run are
@@ -460,20 +521,43 @@ def main():
     state = load_state()
     plugin_objects = Plugin_Objects(RESULT_FILE)
     all_keys = set(devices_by_mac.keys()) | set(blocked_by_mac.keys())
+    # One batched lookup for the whole run instead of one per device - see
+    # netalertx_device_owners' docstring.
+    owners_by_mac = netalertx_device_owners(graphql_url, graphql_token, run_timeout)
+    now_ts = int(timeNowUTC(as_string=False).timestamp())
 
     for key in all_keys:
         device = devices_by_mac.get(key)
         mac = key if is_mac(key) else None
-        blocked_count = blocked_by_mac.get(key, 0)
+        raw_count = blocked_by_mac.get(key, 0)
 
-        history = state.get(key, [])
-        baseline = sum(history) / len(history) if history else None
-        is_anomaly = bool(stats_complete and baseline and blocked_count >= min_blocked and blocked_count > baseline * multiplier)
+        entry = state.get(key, {})
+        history = trim_history(entry.get("history", []), now_ts, history_days)
+        values = [sample[1] for sample in history]
+        # `baseline is not None` (not a truthy check): a device with a real,
+        # all-zero history has baseline == 0.0, which is itself meaningful -
+        # any blocked traffic at all on such a device is a spike from its own
+        # established normal. `baseline` alone is falsy for 0.0 and would
+        # silently exempt exactly the devices most worth watching.
+        baseline = sum(values) / len(values) if values else None
 
-        owner = netalertx_device_owner(graphql_url, graphql_token, mac, run_timeout) if mac else ''
-        detail = f"blocked={blocked_count}"
-        if baseline:
-            detail += f", avg={round(baseline, 1)}, ratio={round(blocked_count / baseline, 2)}x"
+        # None (not 0) when there's no valid per-run increment yet - first
+        # time seen, or a counter reset (see compute_delta()). blocked_count
+        # is only a display fallback for that case; is_anomaly is gated on
+        # the real delta, not on this substitute.
+        delta = compute_delta(entry.get("last_raw"), raw_count) if stats_complete else None
+        blocked_count = delta if delta is not None else 0
+        is_anomaly = bool(stats_complete and baseline is not None and delta is not None and blocked_count >= min_blocked and blocked_count > baseline * multiplier)
+
+        owner = owners_by_mac.get(mac, '') if mac else ''
+        if stats_complete and delta is None:
+            detail = "blocked=unknown (establishing baseline - first run seen, or Pi-hole/FTL restarted)"
+        else:
+            detail = f"blocked={blocked_count}"
+            if baseline is not None:
+                detail += f", avg={round(baseline, 1)}"
+                if baseline > 0:
+                    detail += f", ratio={round(blocked_count / baseline, 2)}x"
         if owner:
             detail += f" - owner: {owner}"
 
@@ -513,8 +597,14 @@ def main():
             mylog('none', [f'[{pluginName}] Anomaly: {key} - {detail}'])
 
         if stats_complete:
-            history.append(blocked_count)
-            state[key] = history[-history_length:]
+            # Always reset the diff reference point, even on a bootstrap or
+            # reset run (delta is None) - that's exactly what makes the
+            # *next* run's delta valid again instead of repeating the same
+            # "no valid delta" state indefinitely. Only append to the
+            # baseline history when this run actually produced a real delta.
+            if delta is not None:
+                history.append([now_ts, delta])
+            state[key] = {"last_raw": raw_count, "history": history}
 
     save_state(state)
     plugin_objects.write_result_file()

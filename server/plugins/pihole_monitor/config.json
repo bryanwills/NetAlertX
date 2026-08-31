@@ -26,7 +26,7 @@
   "description": [
     {
       "language_code": "en_us",
-      "string": "Imports devices from one or two Pi-hole v6 instances (primary, plus an optional secondary/failover) and flags devices with an unusual spike in blocked DNS queries compared to their own recent baseline - one plugin, both jobs, so device discovery and query-anomaly detection share the same connection and settings instead of needing two separately configured pieces."
+      "string": "Flags devices with a spike in blocked DNS queries - a common malware/compromised-device signature - and imports devices from one or two Pi-hole v6 instances."
     }
   ],
   "icon": [
@@ -46,7 +46,7 @@
           { "elementType": "select", "elementOptions": [], "transformers": [] }
         ]
       },
-      "default_value": "schedule",
+      "default_value": "disabled",
       "options": [
         "disabled",
         "once",
@@ -60,7 +60,7 @@
       "description": [
         {
           "language_code": "en_us",
-          "string": "<code>schedule</code> is recommended over <code>always_after_scan</code> - the anomaly signal is a spike over a rolling average, not a real-time alarm, so checking every few hours is enough."
+          "string": "<code>schedule</code> is recommended over <code>always_after_scan</code>."
         }
       ]
     },
@@ -69,15 +69,30 @@
       "type": {
         "dataType": "string",
         "elements": [
-          { "elementType": "input", "elementOptions": [], "transformers": [] }
+          {
+            "elementType": "span",
+            "elementOptions": [
+              { "cssClasses": "input-group-addon validityCheck" },
+              { "getStringKey": "Gen_ValidIcon" }
+            ],
+            "transformers": []
+          },
+          {
+            "elementType": "input",
+            "elementOptions": [
+              { "focusout": "validateRegex(this)" },
+              { "base64Regex": "Xig/OlwqfCg/OlswLTldfFsxLTVdWzAtOV18WzAtOV0rLVswLTldKyg/Oi9bMC05XSspP3xcKi9bMC05XSspKSg/OiwoPzpbMC05XXxbMS01XVswLTldfFswLTldKy1bMC05XSsoPzovWzAtOV0rKT98XCovWzAtOV0rKSkqXHMrKD86XCp8KD86WzAtOV18MVswLTldfDJbMC0zXXxbMC05XSstWzAtOV0rKD86L1swLTldKyk/fFwqL1swLTldKykpKD86LCg/OlswLTldfDFbMC05XXwyWzAtM118WzAtOV0rLVswLTldKyg/Oi9bMC05XSspP3xcKi9bMC05XSspKSpccysoPzpcKnwoPzpbMS05XXxbMTJdWzAtOV18M1swMV18WzAtOV0rLVswLTldKyg/Oi9bMC05XSspP3xcKi9bMC05XSspKSg/OiwoPzpbMS05XXxbMTJdWzAtOV18M1swMV18WzAtOV0rLVswLTldKyg/Oi9bMC05XSspP3xcKi9bMC05XSspKSpccysoPzpcKnwoPzpbMS05XXwxWzAtMl18WzAtOV0rLVswLTldKyg/Oi9bMC05XSspP3xcKi9bMC05XSspKSg/OiwoPzpbMS05XXwxWzAtMl18WzAtOV0rLVswLTldKyg/Oi9bMC05XSspP3xcKi9bMC05XSspKSpccysoPzpcKnwoPzpbMC02XXxbMC02XS1bMC02XSg/Oi9bMC05XSspP3xcKi9bMC05XSspKSg/OiwoPzpbMC02XXxbMC02XS1bMC02XSg/Oi9bMC05XSspP3xcKi9bMC05XSspKSok" }
+            ],
+            "transformers": []
+          }
         ]
       },
-      "default_value": "0 */6 * * *",
+      "default_value": "*/5 * * * *",
       "options": [],
       "localized": ["name", "description"],
       "name": [{ "language_code": "en_us", "string": "Schedule" }],
       "description": [
-        { "language_code": "en_us", "string": "Only used when <code>RUN</code> is <code>schedule</code>. Default: every 6 hours." }
+        { "language_code": "en_us", "string": "Only used when <code>RUN</code> is <code>schedule</code>. Default: every 5 minutes." }
       ]
     },
     {
@@ -148,6 +163,25 @@
       ]
     },
     {
+      "function": "PRIMARY_VERIFY_SSL",
+      "type": {
+        "dataType": "boolean",
+        "elements": [
+          { "elementType": "input", "elementOptions": [{ "type": "checkbox" }], "transformers": [] }
+        ]
+      },
+      "default_value": true,
+      "options": [],
+      "localized": ["name", "description"],
+      "name": [{ "language_code": "en_us", "string": "Primary: Verify SSL" }],
+      "description": [
+        {
+          "language_code": "en_us",
+          "string": "Only relevant for an <code>https://</code> primary URL. Disabling this accepts any certificate, including one from an attacker on the network - install the self-signed CA as trusted instead if possible. Leave on unless you understand the trade-off."
+        }
+      ]
+    },
+    {
       "function": "SECONDARY_URL",
       "type": {
         "dataType": "string",
@@ -183,6 +217,25 @@
       ]
     },
     {
+      "function": "SECONDARY_VERIFY_SSL",
+      "type": {
+        "dataType": "boolean",
+        "elements": [
+          { "elementType": "input", "elementOptions": [{ "type": "checkbox" }], "transformers": [] }
+        ]
+      },
+      "default_value": true,
+      "options": [],
+      "localized": ["name", "description"],
+      "name": [{ "language_code": "en_us", "string": "Secondary: Verify SSL" }],
+      "description": [
+        {
+          "language_code": "en_us",
+          "string": "Only relevant for an <code>https://</code> secondary URL. Same trade-off as the primary instance's Verify SSL - independent because primary and secondary can each be on http:// or https:// separately."
+        }
+      ]
+    },
+    {
       "function": "GET_OFFLINE",
       "type": {
         "dataType": "boolean",
@@ -212,25 +265,6 @@
       "name": [{ "language_code": "en_us", "string": "Online if last seen (seconds)" }],
       "description": [
         { "language_code": "en_us", "string": "Time in seconds to consider a device online." }
-      ]
-    },
-    {
-      "function": "VERIFY_SSL",
-      "type": {
-        "dataType": "boolean",
-        "elements": [
-          { "elementType": "input", "elementOptions": [{ "type": "checkbox" }], "transformers": [] }
-        ]
-      },
-      "default_value": true,
-      "options": [],
-      "localized": ["name", "description"],
-      "name": [{ "language_code": "en_us", "string": "Verify SSL" }],
-      "description": [
-        {
-          "language_code": "en_us",
-          "string": "Only relevant for an <code>https://</code> URL. Disabling this accepts any certificate, including one from an attacker on the network - install the self-signed CA as trusted instead if possible. Leave on unless you understand the trade-off."
-        }
       ]
     },
     {
@@ -269,38 +303,22 @@
       ]
     },
     {
-      "function": "GRAPHQL_URL",
+      "function": "GET_OWNER",
       "type": {
-        "dataType": "string",
+        "dataType": "boolean",
         "elements": [
-          { "elementType": "input", "elementOptions": [], "transformers": [] }
+          { "elementType": "input", "elementOptions": [{ "type": "checkbox" }], "transformers": [] }
         ]
       },
-      "default_value": "http://127.0.0.1:20212/graphql",
+      "default_value": true,
       "options": [],
       "localized": ["name", "description"],
-      "name": [{ "language_code": "en_us", "string": "NetAlertX GraphQL URL (optional)" }],
+      "name": [{ "language_code": "en_us", "string": "Look up device owner" }],
       "description": [
         {
           "language_code": "en_us",
-          "string": "This app's own GraphQL endpoint, used only to look up an already-known device's owner (<code>devOwner</code>) for a friendlier anomaly label - device creation/import itself does not depend on this. Since this plugin runs inside the NetAlertX container, <code>127.0.0.1</code> with the configured <code>GRAPHQL_PORT</code> normally works. Leave as-is or blank to skip owner lookups."
+          "string": "If enabled, looks up an already-known device's owner (<code>devOwner</code>) - device import itself never depends on this. Disable if you don't use device owners or don't want the extra lookup."
         }
-      ]
-    },
-    {
-      "function": "GRAPHQL_TOKEN",
-      "type": {
-        "dataType": "string",
-        "elements": [
-          { "elementType": "input", "elementOptions": [{ "type": "password" }], "transformers": [] }
-        ]
-      },
-      "default_value": "",
-      "options": [],
-      "localized": ["name", "description"],
-      "name": [{ "language_code": "en_us", "string": "NetAlertX GraphQL token" }],
-      "description": [
-        { "language_code": "en_us", "string": "API token configured under Settings for the GraphQL endpoint, if one is set." }
       ]
     },
     {
@@ -316,7 +334,7 @@
       "localized": ["name", "description"],
       "name": [{ "language_code": "en_us", "string": "Anomaly multiplier" }],
       "description": [
-        { "language_code": "en_us", "string": "Flag a device when its blocked-query count exceeds this many times its own recent average. Starting value, tune after a week of real data." }
+        { "language_code": "en_us", "string": "Flag a device when the blocked queries it generated since the last run exceed this many times its own recent per-run average. Starting value, tune after a week of real data." }
       ]
     },
     {
@@ -332,23 +350,23 @@
       "localized": ["name", "description"],
       "name": [{ "language_code": "en_us", "string": "Minimum blocked queries" }],
       "description": [
-        { "language_code": "en_us", "string": "Ignore devices below this absolute count even if the multiplier is exceeded (e.g. 1 -> 5 is technically 5x but is statistical noise)." }
+        { "language_code": "en_us", "string": "Ignore devices below this many blocked queries since the last run, even if the multiplier is exceeded (e.g. 1 -> 5 is technically 5x but is statistical noise). Depends on your Schedule - a more frequent schedule means fewer blocked queries accumulate per run, so a lower value may be needed." }
       ]
     },
     {
-      "function": "HISTORY_LENGTH",
+      "function": "HISTORY_DAYS",
       "type": {
         "dataType": "string",
         "elements": [
           { "elementType": "input", "elementOptions": [{ "type": "number" }], "transformers": [] }
         ]
       },
-      "default_value": "28",
+      "default_value": "7",
       "options": [],
       "localized": ["name", "description"],
-      "name": [{ "language_code": "en_us", "string": "History length (samples)" }],
+      "name": [{ "language_code": "en_us", "string": "History window (days)" }],
       "description": [
-        { "language_code": "en_us", "string": "How many recent runs to keep per device for the rolling baseline. Default 28 (one week at the default 6-hour schedule)." }
+        { "language_code": "en_us", "string": "How many days of recent runs to keep per device for the rolling baseline. A real time window, not a sample count - it means the same thing regardless of your <code>Schedule</code> above, and a faster schedule only adds more data points inside it. Default 7 (one week)." }
       ]
     },
     {

@@ -11,12 +11,23 @@ Layout:
   - PiholeSource.auth() / fetch_top_blocked_clients(): unit tests against
     a mocked `requests`, covering the auth success/failure paths and the
     None-sentinel-on-failure contract (vs. a genuine empty {}).
+  - netalertx_device_owners(): unit tests for the batched (one request for
+    every device, not one per device) owner lookup.
   - build_ip_to_mac(): pure-function unit tests for the multi-IP-per-MAC
     fix (a device must not lose its other IPs to the by-MAC merge).
+  - compute_delta(): pure-function unit tests turning Pi-hole's raw,
+    cumulative-since-FTL-started count into a real per-run increment -
+    None (not 0) on a first-ever run or a counter reset, a genuine 0
+    distinct from that None otherwise.
   - main(): integration tests with PiholeSource's network-touching
     methods stubbed at the object level, covering source aggregation,
     the stats_complete gate (a failed fetch must not corrupt a device's
-    history with a false zero), and the history_length boundary clamp.
+    history with a false zero), the history_days age-based clamp/trim
+    (not a run count - see trim_history()), the zero-baseline anomaly fix
+    (a device with an all-zero history must still be flagged, not silently
+    exempted), the bootstrap/counter-reset runs that establish or
+    re-anchor last_raw without recording a bogus delta, and per-instance
+    Verify SSL.
 """
 
 import importlib.util
@@ -50,7 +61,7 @@ def _load_pihole_monitor_module():
     stub("plugin_helper", Plugin_Objects=MagicMock, is_mac=_is_mac)
     stub("logger", mylog=MagicMock(), Logger=MagicMock())
     stub("helper", get_setting_value=MagicMock(return_value="UTC"))
-    stub("const", logPath="/tmp")
+    stub("const", logPath="/tmp", dbFolderPath="/tmp/db")
     stub("conf", tz=None)
     stub("pytz", timezone=MagicMock(return_value="UTC"))
     stub("utils")
@@ -210,33 +221,50 @@ def test_fetch_devices_without_session_returns_empty_list():
 
 
 # ---------------------------------------------------------------------------
-# netalertx_device_owner()
+# netalertx_device_owners() - one batched request, not one per device
 # ---------------------------------------------------------------------------
 
 
-def test_netalertx_device_owner_returns_empty_without_url():
-    assert pihole_monitor.netalertx_device_owner(None, "token", "aa:bb:cc:dd:ee:01", 5) == ''
+def test_netalertx_device_owners_returns_empty_dict_without_url():
+    assert pihole_monitor.netalertx_device_owners(None, "token", 5) == {}
 
 
-def test_netalertx_device_owner_returns_owner_on_success():
-    payload = {"data": {"devices": {"devices": [{"devMac": "aa:bb:cc:dd:ee:01", "devOwner": "Mauricio"}]}}}
+def test_netalertx_device_owners_returns_mac_keyed_dict_on_success():
+    payload = {"data": {"devices": {"devices": [
+        {"devMac": "aa:bb:cc:dd:ee:01", "devOwner": "Mauricio"},
+        {"devMac": "aa:bb:cc:dd:ee:02", "devOwner": ""},
+    ]}}}
     with patch("requests.post", return_value=_resp(payload)) as mock_post:
-        owner = pihole_monitor.netalertx_device_owner("http://nax/graphql", "tok", "aa:bb:cc:dd:ee:01", 5)
-    assert owner == "Mauricio"
+        owners = pihole_monitor.netalertx_device_owners("http://nax/graphql", "tok", 5)
+    assert owners == {"aa:bb:cc:dd:ee:01": "Mauricio", "aa:bb:cc:dd:ee:02": ""}
     assert mock_post.call_args.kwargs["headers"] == {"Authorization": "Bearer tok"}
+    # No per-device filter - the whole device list comes back in one request.
+    assert "variables" not in mock_post.call_args.kwargs["json"]
 
 
-def test_netalertx_device_owner_returns_empty_when_device_unknown():
+def test_netalertx_device_owners_returns_empty_dict_when_none_known():
     payload = {"data": {"devices": {"devices": []}}}
     with patch("requests.post", return_value=_resp(payload)):
-        owner = pihole_monitor.netalertx_device_owner("http://nax/graphql", "", "aa:bb:cc:dd:ee:01", 5)
-    assert owner == ''
+        owners = pihole_monitor.netalertx_device_owners("http://nax/graphql", "", 5)
+    assert owners == {}
 
 
-def test_netalertx_device_owner_returns_empty_on_request_error():
+def test_netalertx_device_owners_returns_empty_dict_on_request_error():
     with patch("requests.post", side_effect=requests.exceptions.ConnectionError("down")):
-        owner = pihole_monitor.netalertx_device_owner("http://nax/graphql", "tok", "aa:bb:cc:dd:ee:01", 5)
-    assert owner == ''
+        owners = pihole_monitor.netalertx_device_owners("http://nax/graphql", "tok", 5)
+    assert owners == {}
+
+
+def test_netalertx_device_owners_fetches_once_regardless_of_device_count():
+    """Regression guard for the N-round-trips bug: on a network with many
+    devices, this must still be exactly one HTTP call, not one per device."""
+    payload = {"data": {"devices": {"devices": [
+        {"devMac": f"aa:bb:cc:dd:ee:{i:02x}", "devOwner": f"user{i}"} for i in range(50)
+    ]}}}
+    with patch("requests.post", return_value=_resp(payload)) as mock_post:
+        owners = pihole_monitor.netalertx_device_owners("http://nax/graphql", "tok", 5)
+    assert mock_post.call_count == 1
+    assert len(owners) == 50
 
 
 # ---------------------------------------------------------------------------
@@ -250,6 +278,8 @@ def test_gather_device_entries_skips_invalid_hwaddr_empty_ips_and_placeholder_ip
         {"hwaddr": "", "ips": [{"ip": "10.0.0.2"}]},                    # missing hwaddr
         {"hwaddr": "aa:bb:cc:dd:ee:01", "ips": []},                     # no ips at all
         {"hwaddr": "aa:bb:cc:dd:ee:02", "ips": [{"ip": "0.0.0.0"}]},    # only a placeholder ip
+        {"hwaddr": "ip-::", "ips": [{"ip": "10.0.0.4"}]},               # placeholder hwaddr, the ::-specific case
+        {"hwaddr": "ip-10.0.0.5", "ips": [{"ip": "10.0.0.5"}]},         # placeholder hwaddr, the general case
         {"hwaddr": "aa:bb:cc:dd:ee:03", "ips": [{"ip": "10.0.0.3", "lastSeen": 1000}]},  # the one real entry
     ]
     source = MagicMock()
@@ -360,17 +390,23 @@ class _Settings(dict):
     own defaults for anything a test doesn't override."""
 
     _DEFAULTS = {
-        "PIHOLEMON_VERIFY_SSL": True,
+        "PIHOLEMON_PRIMARY_VERIFY_SSL": True,
+        "PIHOLEMON_SECONDARY_VERIFY_SSL": True,
         "PIHOLEMON_RUN_TIMEOUT": 5,
         "PIHOLEMON_GET_OFFLINE": False,
         "PIHOLEMON_FAKE_MAC": False,
         "PIHOLEMON_API_MAXCLIENTS": 500,
         "PIHOLEMON_CONSIDER_ONLINE": 300,
-        "PIHOLEMON_GRAPHQL_URL": None,
-        "PIHOLEMON_GRAPHQL_TOKEN": None,
+        # False in tests by default (config.json's real default is True) so
+        # a plain main() test doesn't make a live-looking requests.post call
+        # nobody asked for - tests that exercise owner lookup opt in and
+        # mock requests.post themselves.
+        "PIHOLEMON_GET_OWNER": False,
+        "GRAPHQL_PORT": 20212,
+        "API_TOKEN": None,
         "PIHOLEMON_MULTIPLIER": 4,
         "PIHOLEMON_MIN_BLOCKED": 1,
-        "PIHOLEMON_HISTORY_LENGTH": 28,
+        "PIHOLEMON_HISTORY_DAYS": 7,
         "PIHOLEMON_PRIMARY_URL": "http://ph1/",
         "PIHOLEMON_PRIMARY_PASSWORD": "pw1",
         "PIHOLEMON_SECONDARY_URL": "",
@@ -419,6 +455,10 @@ def test_main_aggregates_blocked_counts_from_both_sources(isolated_state, settin
     with patch.object(pihole_monitor.PiholeSource, "fetch_devices", _fetch_devices), \
          patch.object(pihole_monitor.PiholeSource, "fetch_top_blocked_clients", _fetch_top_blocked), \
          patch.object(pihole_monitor, "Plugin_Objects") as mock_plugin_objects:
+        # last_raw=0 so the combined raw total (30+15) comes straight
+        # through as this run's delta - this test is about the combining,
+        # not about compute_delta() itself (covered separately).
+        pihole_monitor.save_state({"aa:bb:cc:dd:ee:01": {"last_raw": 0, "history": []}})
         assert pihole_monitor.main() == 0
 
     instance = mock_plugin_objects.return_value
@@ -437,9 +477,12 @@ def test_main_stats_complete_false_when_a_source_fetch_fails(isolated_state, set
     with patch.object(pihole_monitor.PiholeSource, "fetch_devices", return_value=device), \
          patch.object(pihole_monitor.PiholeSource, "fetch_top_blocked_clients", return_value=None), \
          patch.object(pihole_monitor, "Plugin_Objects") as mock_plugin_objects:
-        # Seed a history so a baseline exists and would trip the multiplier
-        # if (incorrectly) evaluated against a written-in zero.
-        pihole_monitor.save_state({"aa:bb:cc:dd:ee:01": [40, 42, 38]})
+        # Seed a history (and a last_raw reference point) so a baseline
+        # exists and would trip the multiplier if (incorrectly) evaluated
+        # against a written-in zero. Timestamp 1 matches the stubbed
+        # timeNowUTC's default "now" (see module stub), so nothing is
+        # trimmed by the day-window here - not what this test is about.
+        pihole_monitor.save_state({"aa:bb:cc:dd:ee:01": {"last_raw": 1000, "history": [[1, 40], [1, 42], [1, 38]]}})
         assert pihole_monitor.main() == 0
 
     instance = mock_plugin_objects.return_value
@@ -447,7 +490,9 @@ def test_main_stats_complete_false_when_a_source_fetch_fails(isolated_state, set
     assert call.kwargs["watched4"] == "normal"  # not "anomaly" - stats were incomplete
 
     state_after = pihole_monitor.load_state()
-    assert state_after["aa:bb:cc:dd:ee:01"] == [40, 42, 38]  # untouched, no false 0 appended
+    # Untouched, including last_raw - no false delta or reference-point
+    # update from a run whose data was incomplete.
+    assert state_after["aa:bb:cc:dd:ee:01"] == {"last_raw": 1000, "history": [[1, 40], [1, 42], [1, 38]]}
 
 
 def test_main_records_anomaly_when_stats_are_complete(isolated_state, settings):
@@ -458,7 +503,9 @@ def test_main_records_anomaly_when_stats_are_complete(isolated_state, settings):
     with patch.object(pihole_monitor.PiholeSource, "fetch_devices", return_value=device), \
          patch.object(pihole_monitor.PiholeSource, "fetch_top_blocked_clients", return_value={"10.0.0.5": 50}), \
          patch.object(pihole_monitor, "Plugin_Objects") as mock_plugin_objects:
-        pihole_monitor.save_state({"aa:bb:cc:dd:ee:01": [10, 10, 10]})  # baseline avg 10, 50 >> 2x
+        # last_raw=0 so this run's raw count (50) is also its delta -
+        # baseline avg 10, 50 >> 2x.
+        pihole_monitor.save_state({"aa:bb:cc:dd:ee:01": {"last_raw": 0, "history": [[1, 10], [1, 10], [1, 10]]}})
         assert pihole_monitor.main() == 0
 
     instance = mock_plugin_objects.return_value
@@ -466,33 +513,139 @@ def test_main_records_anomaly_when_stats_are_complete(isolated_state, settings):
     assert call.kwargs["watched4"] == "anomaly"
 
     state_after = pihole_monitor.load_state()
-    assert state_after["aa:bb:cc:dd:ee:01"] == [10, 10, 10, 50]
+    assert state_after["aa:bb:cc:dd:ee:01"] == {"last_raw": 50, "history": [[1, 10], [1, 10], [1, 10], [1, 50]]}
+
+
+_DAY = 86400
+_FIXED_NOW = 2_000_000  # arbitrary fixed epoch, for deterministic age-based trimming
+
+
+def _fixed_now_mock():
+    now = MagicMock()
+    now.timestamp.return_value = _FIXED_NOW
+    return now
 
 
 @pytest.mark.parametrize(
-    ("configured_length", "expected_history"),
+    ("configured_days", "expected_history"),
     [
-        (-5, [40]),              # negative - must clamp to 1, keeping only the newest sample
-        (0, [10, 20, 30, 40]),   # falsy - already falls back to 28 via `or`, nothing trimmed
-        (1, [40]),               # explicit 1 - only the newest sample survives
-        (28, [10, 20, 30, 40]),  # the documented default - well under the cap, nothing trimmed
+        # Seed has samples aged 10, 3, and 1 days; a new one lands at age 0.
+        (-5, [[_FIXED_NOW - 1 * _DAY, 10], [_FIXED_NOW, 40]]),                                              # negative - clamps to 1 day, only the freshest old sample survives
+        (0, [[_FIXED_NOW - 3 * _DAY, 20], [_FIXED_NOW - 1 * _DAY, 10], [_FIXED_NOW, 40]]),                  # falsy - falls back to 7 via `or`, drops only the 10-day-old sample
+        (1, [[_FIXED_NOW - 1 * _DAY, 10], [_FIXED_NOW, 40]]),                                               # explicit 1 - same cutoff as the clamped negative case
+        (7, [[_FIXED_NOW - 3 * _DAY, 20], [_FIXED_NOW - 1 * _DAY, 10], [_FIXED_NOW, 40]]),                  # the documented default - same as the 0/fallback case
+        (15, [[_FIXED_NOW - 10 * _DAY, 30], [_FIXED_NOW - 3 * _DAY, 20], [_FIXED_NOW - 1 * _DAY, 10], [_FIXED_NOW, 40]]),  # wide enough - nothing trimmed
     ],
 )
-def test_main_history_length_clamps_and_trims_exactly(isolated_state, settings, configured_length, expected_history):
-    """Distinct, ordered seed values (not len() alone) so a wrong slice
-    window - e.g. a length-1 clamp that actually kept 4 items, which a
-    bare `len(history) >= 1` check would miss - shows up as a mismatch."""
-    settings["PIHOLEMON_HISTORY_LENGTH"] = configured_length
+def test_main_history_days_clamps_and_trims_by_age(isolated_state, settings, configured_days, expected_history):
+    """Distinct, ordered seed values at distinct known ages (not len() alone)
+    so a wrong cutoff - e.g. a 1-day clamp that actually kept the 3-day-old
+    sample too, which a bare len() check would miss - shows up as a
+    mismatch. Also guards against day/second unit mixups (a classic
+    `history_days` vs `history_days * 86400` bug) since the exact surviving
+    ages are asserted, not just a count."""
+    settings["PIHOLEMON_HISTORY_DAYS"] = configured_days
+    device = [_device_payload("aa:bb:cc:dd:ee:01", "10.0.0.5")]
+    # last_raw=0 so this run's raw count (40) is also its delta - this test
+    # is about the day-based trim/clamp, not about compute_delta() itself.
+    seed = {"aa:bb:cc:dd:ee:01": {"last_raw": 0, "history": [
+        [_FIXED_NOW - 10 * _DAY, 30],
+        [_FIXED_NOW - 3 * _DAY, 20],
+        [_FIXED_NOW - 1 * _DAY, 10],
+    ]}}
+
+    with patch.object(pihole_monitor, "timeNowUTC", return_value=_fixed_now_mock()), \
+         patch.object(pihole_monitor.PiholeSource, "fetch_devices", return_value=device), \
+         patch.object(pihole_monitor.PiholeSource, "fetch_top_blocked_clients", return_value={"10.0.0.5": 40}), \
+         patch.object(pihole_monitor, "Plugin_Objects"):
+        pihole_monitor.save_state(seed)
+        assert pihole_monitor.main() == 0
+
+    history = pihole_monitor.load_state()["aa:bb:cc:dd:ee:01"]["history"]
+    assert history == expected_history
+
+
+def test_main_history_days_baseline_uses_only_samples_inside_the_window():
+    """The day-window must also gate the baseline itself, not just what
+    gets persisted - an old, out-of-window sample must not silently drag
+    the average up or down."""
+    stale = [_FIXED_NOW - 30 * _DAY, 1000]  # far outside any sane window
+    fresh = [_FIXED_NOW - 1 * _DAY, 10]
+    history = pihole_monitor.trim_history([stale, fresh], _FIXED_NOW, history_days=7)
+    assert history == [fresh]  # the stale, high-value sample must be gone
+
+
+# ---------------------------------------------------------------------------
+# compute_delta() - Pi-hole's raw cumulative-since-FTL-started count turned
+# into a real per-run increment (see its docstring for why this matters).
+# ---------------------------------------------------------------------------
+
+
+def test_compute_delta_none_when_never_seen_before():
+    assert pihole_monitor.compute_delta(None, 500) is None
+
+
+def test_compute_delta_none_when_counter_went_backwards():
+    """Pi-hole/FTL restarted (or the device dropped out of top_clients) -
+    current_raw < last_raw must not produce a negative delta."""
+    assert pihole_monitor.compute_delta(1000, 5) is None
+
+
+def test_compute_delta_returns_the_real_increment():
+    assert pihole_monitor.compute_delta(100, 150) == 50
+
+
+def test_compute_delta_zero_is_a_real_value_not_none():
+    """No new blocked queries since last run is a genuine 0, distinct from
+    None ('we can't tell this run') - a caller conflating them would either
+    silently drop a legitimate quiet period or treat it as untrustworthy."""
+    delta = pihole_monitor.compute_delta(100, 100)
+    assert delta == 0
+    assert delta is not None
+
+
+def test_main_bootstrap_run_sets_last_raw_without_recording_a_delta(isolated_state, settings):
+    """The first time a device is ever seen, there's no prior raw count to
+    diff against - this run must establish the reference point (last_raw)
+    for the next run, without fabricating a delta or evaluating an anomaly
+    off one."""
     device = [_device_payload("aa:bb:cc:dd:ee:01", "10.0.0.5")]
 
     with patch.object(pihole_monitor.PiholeSource, "fetch_devices", return_value=device), \
-         patch.object(pihole_monitor.PiholeSource, "fetch_top_blocked_clients", return_value={"10.0.0.5": 40}), \
-         patch.object(pihole_monitor, "Plugin_Objects"):
-        pihole_monitor.save_state({"aa:bb:cc:dd:ee:01": [10, 20, 30]})
+         patch.object(pihole_monitor.PiholeSource, "fetch_top_blocked_clients", return_value={"10.0.0.5": 5000}), \
+         patch.object(pihole_monitor, "Plugin_Objects") as mock_plugin_objects:
+        assert pihole_monitor.main() == 0  # no prior save_state() call - genuinely first-ever run
+
+    instance = mock_plugin_objects.return_value
+    (call,) = instance.add_object.call_args_list
+    assert call.kwargs["watched4"] == "normal"  # never an anomaly on a bootstrap run
+    assert "unknown" in call.kwargs["extra"]
+
+    state_after = pihole_monitor.load_state()
+    assert state_after["aa:bb:cc:dd:ee:01"] == {"last_raw": 5000, "history": []}
+
+
+def test_main_counter_reset_updates_last_raw_without_touching_history(isolated_state, settings):
+    """A Pi-hole/FTL restart resets the raw counter, so this run's raw value
+    can come back lower than what was last seen. That must reset the
+    reference point for future deltas, but not corrupt the existing
+    baseline history with a bogus negative or wrap-around delta."""
+    device = [_device_payload("aa:bb:cc:dd:ee:01", "10.0.0.5")]
+
+    with patch.object(pihole_monitor.PiholeSource, "fetch_devices", return_value=device), \
+         patch.object(pihole_monitor.PiholeSource, "fetch_top_blocked_clients", return_value={"10.0.0.5": 5}), \
+         patch.object(pihole_monitor, "Plugin_Objects") as mock_plugin_objects:
+        pihole_monitor.save_state({"aa:bb:cc:dd:ee:01": {"last_raw": 1000, "history": [[1, 10], [1, 10]]}})
         assert pihole_monitor.main() == 0
 
-    history = pihole_monitor.load_state()["aa:bb:cc:dd:ee:01"]
-    assert history == expected_history
+    instance = mock_plugin_objects.return_value
+    (call,) = instance.add_object.call_args_list
+    assert call.kwargs["watched4"] == "normal"
+
+    state_after = pihole_monitor.load_state()
+    # last_raw re-anchored to the post-restart value; the pre-restart
+    # baseline history is preserved exactly, not wiped or corrupted.
+    assert state_after["aa:bb:cc:dd:ee:01"] == {"last_raw": 5, "history": [[1, 10], [1, 10]]}
 
 
 def test_main_returns_1_when_no_source_is_configured(isolated_state, settings):
@@ -523,13 +676,14 @@ def test_main_marks_stats_incomplete_when_a_source_fails_to_authenticate(tmp_pat
          patch.object(pihole_monitor.PiholeSource, "fetch_devices", return_value=device), \
          patch.object(pihole_monitor.PiholeSource, "fetch_top_blocked_clients", return_value={"10.0.0.5": 999}), \
          patch.object(pihole_monitor, "Plugin_Objects") as mock_plugin_objects:
-        pihole_monitor.save_state({"aa:bb:cc:dd:ee:01": [1, 1, 1]})
+        pihole_monitor.save_state({"aa:bb:cc:dd:ee:01": {"last_raw": 5, "history": [[1, 1], [1, 1], [1, 1]]}})
         assert pihole_monitor.main() == 0
 
         instance = mock_plugin_objects.return_value
         (call,) = instance.add_object.call_args_list
         assert call.kwargs["watched4"] == "normal"  # secondary's auth failure marks stats incomplete
-        assert pihole_monitor.load_state()["aa:bb:cc:dd:ee:01"] == [1, 1, 1]  # history untouched
+        # Untouched, including last_raw - state.
+        assert pihole_monitor.load_state()["aa:bb:cc:dd:ee:01"] == {"last_raw": 5, "history": [[1, 1], [1, 1], [1, 1]]}
 
 
 def test_main_links_offline_device_resolves_owner_skips_invalid_mac_and_tracks_unknown_ip(isolated_state, settings):
@@ -539,8 +693,8 @@ def test_main_links_offline_device_resolves_owner_skips_invalid_mac_and_tracks_u
     invalid hardware address is skipped entirely, and blocked traffic on
     an IP no device was ever seen on falls back to being tracked under
     that bare IP."""
-    settings["PIHOLEMON_GRAPHQL_URL"] = "http://nax/graphql"
-    settings["PIHOLEMON_GRAPHQL_TOKEN"] = "tok"
+    settings["PIHOLEMON_GET_OWNER"] = True
+    settings["API_TOKEN"] = "tok"
 
     now = MagicMock()
     now.timestamp.return_value = 2_000_000
@@ -554,7 +708,9 @@ def test_main_links_offline_device_resolves_owner_skips_invalid_mac_and_tracks_u
          "ips": [{"ip": "10.0.0.3", "name": "bad-mac-dev", "lastSeen": 2_000_000 - 10}]},        # invalid MAC
     ]
     blocked = {"10.0.0.1": 5, "10.0.0.2": 5, "10.0.0.99": 5}  # .99: never any device's IP
-    owner_resp = _resp({"data": {"devices": {"devices": [{"devOwner": "Mauricio"}]}}})
+    owner_resp = _resp({"data": {"devices": {"devices": [
+        {"devMac": "aa:bb:cc:dd:ee:01", "devOwner": "Mauricio"}
+    ]}}})
 
     with patch.object(pihole_monitor, "timeNowUTC", return_value=now), \
          patch.object(pihole_monitor.PiholeSource, "fetch_devices", return_value=devices), \
@@ -570,3 +726,50 @@ def test_main_links_offline_device_resolves_owner_skips_invalid_mac_and_tracks_u
     assert calls_by_primary_id["aa:bb:cc:dd:ee:02"].kwargs["foreignKey"] == "aa:bb:cc:dd:ee:02"
     assert "not-a-real-mac" not in calls_by_primary_id
     assert calls_by_primary_id["10.0.0.99"].kwargs["foreignKey"] == "null"
+
+
+def test_main_flags_anomaly_against_an_all_zero_baseline(isolated_state, settings):
+    """Regression guard: baseline == 0.0 is falsy in Python, so a naive
+    `bool(... and baseline and ...)` check would silently exempt a device
+    with a real, all-zero history - exactly the device most worth flagging
+    the first time it blocks anything at all."""
+    settings["PIHOLEMON_MULTIPLIER"] = 4
+    settings["PIHOLEMON_MIN_BLOCKED"] = 1
+    device = [_device_payload("aa:bb:cc:dd:ee:01", "10.0.0.5")]
+
+    with patch.object(pihole_monitor.PiholeSource, "fetch_devices", return_value=device), \
+         patch.object(pihole_monitor.PiholeSource, "fetch_top_blocked_clients", return_value={"10.0.0.5": 5}), \
+         patch.object(pihole_monitor, "Plugin_Objects") as mock_plugin_objects:
+        # last_raw=0 so this run's raw count (5) is also its delta.
+        pihole_monitor.save_state({"aa:bb:cc:dd:ee:01": {"last_raw": 0, "history": [[1, 0], [1, 0], [1, 0]]}})  # genuinely never blocked before
+        assert pihole_monitor.main() == 0
+
+    instance = mock_plugin_objects.return_value
+    (call,) = instance.add_object.call_args_list
+    assert call.kwargs["watched4"] == "anomaly"
+    assert "avg=0.0" in call.kwargs["extra"]
+    assert "ratio=" not in call.kwargs["extra"]  # dividing by a zero baseline is skipped, not attempted
+
+
+def test_main_applies_independent_verify_ssl_per_instance(isolated_state, settings):
+    """PIHOLEMON_PRIMARY_VERIFY_SSL and PIHOLEMON_SECONDARY_VERIFY_SSL must
+    reach each instance independently - a self-signed secondary shouldn't
+    force verification off (or on) for the primary too."""
+    settings["PIHOLEMON_SECONDARY_URL"] = "http://ph2/"
+    settings["PIHOLEMON_SECONDARY_PASSWORD"] = "pw2"
+    settings["PIHOLEMON_PRIMARY_VERIFY_SSL"] = True
+    settings["PIHOLEMON_SECONDARY_VERIFY_SSL"] = False
+
+    seen_verify_ssl = {}
+
+    def _auth(self):
+        seen_verify_ssl[self.label] = self.verify_ssl
+        return True
+
+    with patch.object(pihole_monitor.PiholeSource, "auth", _auth), \
+         patch.object(pihole_monitor.PiholeSource, "fetch_devices", return_value=[]), \
+         patch.object(pihole_monitor.PiholeSource, "fetch_top_blocked_clients", return_value={}), \
+         patch.object(pihole_monitor, "Plugin_Objects"):
+        assert pihole_monitor.main() == 0
+
+    assert seen_verify_ssl == {"primary": True, "secondary": False}
