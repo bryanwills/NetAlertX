@@ -11,7 +11,7 @@ Run through this before creating or editing any file under `test/`:
 
 1. **Helpers first:** Check `test/db_test_helpers.py` for existing factories (`make_db`, `make_device_dict`, `insert_device_from_dict`, `DummyDB`). Use them. If what you need doesn't exist, add it there — never define it locally in the test file.
 2. **MAC literals must be lowercase:** Every MAC string in fixtures, parametrize, assertions, docstrings, and comments must be lowercase hex (e.g. `aa:bb:cc:dd:ee:01`). No exceptions.
-3. **Test file location:** Place tests under a subdirectory of `test/` that mirrors the source path (e.g. `test/scan/` for `server/scan/`). Never put test files directly in `test/`.
+3. **Test file location:** Place *new* tests under a subdirectory of `test/` that mirrors the source path (e.g. `test/scan/` for `server/scan/`). Don't add new files directly in `test/` root - a handful of existing ones there (e.g. `test_plugin_helper.py`, `test_wol_validation.py`) predate this convention; that's not license to add more, but don't migrate them unprompted either.
 4. **No inline imports:** All imports at the top of the file.
 
 ## Before Acting on Any PR Comment
@@ -53,6 +53,7 @@ For each comment, determine:
 - **No local DB helpers** — no `DummyDB`, `make_db`, or inline DDL defined outside `test/db_test_helpers.py`.
 - No inline imports — all imports at the top of the file.
 - Tests live under a subdirectory of `test/` matching the source path, not in `test/` root.
+- Secret scan (`runtime-tools-secret_scanning`) before committing.
 
 ## Stacked / Base-Branch Issues
 

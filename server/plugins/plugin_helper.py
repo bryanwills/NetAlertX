@@ -265,6 +265,28 @@ def normalize_mac(mac):
 
 
 # -------------------------------------------------------------------
+def per_item_timeout(run_timeout, item_count, floor=1):
+    """
+    Divide a RUN_TIMEOUT budget evenly across `item_count` sequential
+    operations (e.g. one HTTP call per queued notification) so no single
+    item can consume the whole script's kill-timeout - the core plugin
+    runner (server/plugin.py) enforces RUN_TIMEOUT as the entire
+    subprocess's hard timeout, not a per-call one.
+
+    Returns run_timeout unchanged when there's 0 or 1 items, so the common
+    single-item case sees no behavior change. For a config-declared,
+    known-length list (e.g. a subnets/IPs setting), prefer the config.json
+    "timeoutMultiplier" mechanism instead - it scales the outer timeout up
+    rather than dividing the inner one down. Use this helper for
+    runtime-variable-length loops (e.g. a notification queue) where
+    timeoutMultiplier doesn't apply.
+    """
+    if item_count <= 1:
+        return run_timeout
+    return max(floor, run_timeout // item_count)
+
+
+# -------------------------------------------------------------------
 class Plugin_Object:
     """
     Plugin_Object class to manage one object introduced by the plugin.
@@ -300,10 +322,13 @@ class Plugin_Object:
         self.extra = extra
         self.userData = ""
         self.foreignKey = foreignKey
-        self.helpVal1 = helpVal1 or ""
-        self.helpVal2 = helpVal2 or ""
-        self.helpVal3 = helpVal3 or ""
-        self.helpVal4 = helpVal4 or ""
+        # `is not None` (not `or`) so a real 0/False passed by a plugin
+        # survives - only an actually-omitted value (None) falls back to the
+        # empty-string default. See docs/PLUGINS_DEV_DATA_CONTRACT.md.
+        self.helpVal1 = helpVal1 if helpVal1 is not None else ""
+        self.helpVal2 = helpVal2 if helpVal2 is not None else ""
+        self.helpVal3 = helpVal3 if helpVal3 is not None else ""
+        self.helpVal4 = helpVal4 if helpVal4 is not None else ""
 
     def write(self):
         """

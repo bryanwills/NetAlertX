@@ -22,7 +22,7 @@ from typing import Dict, List, Optional, Set, Tuple
 INSTALL_PATH = os.getenv('NETALERTX_APP', '/app')
 sys.path.extend([f"{INSTALL_PATH}/server/plugins", f"{INSTALL_PATH}/server"])
 
-from const import dataPath, logPath  # noqa: E402, E261
+from const import dataPath, dbFolderPath, logPath  # noqa: E402, E261
 from plugin_helper import Plugin_Objects  # noqa: E402, E261
 from logger import mylog, Logger  # noqa: E402, E261
 from helper import get_setting_value  # noqa: E402, E261
@@ -43,7 +43,20 @@ Logger(get_setting_value("LOG_LEVEL"))
 # Define paths
 LOG_PATH = logPath + "/plugins"
 RESULT_FILE = os.path.join(LOG_PATH, f"last_result.{pluginName}.log")
-STATE_FILE = os.path.join(dataPath, f"state.{pluginName}.json")
+STATE_FILE = os.path.join(dbFolderPath, f"state.{pluginName}.json")
+
+# Pre-v25.10.1 builds stored the state file directly under the data root
+# (dataPath) instead of dbFolderPath (/data/db). Migrate it once so upgrading
+# doesn't silently reset which AdGuard clients we own.
+_LEGACY_STATE_FILE = os.path.join(dataPath, f"state.{pluginName}.json")
+
+
+def _migrate_legacy_state_file() -> None:
+    if not os.path.exists(STATE_FILE) and os.path.exists(_LEGACY_STATE_FILE):
+        os.rename(_LEGACY_STATE_FILE, STATE_FILE)
+
+
+_migrate_legacy_state_file()
 
 plugin_objects = Plugin_Objects(RESULT_FILE)
 
@@ -361,7 +374,7 @@ def main():
     # Read settings
     # ------------------------------------------------------------------
     agrd_url        = get_setting_value("ADGUARDEXP_URL")       or "http://localhost:3000"
-    agrd_user       = get_setting_value("ADGUARDEXP_USER")      or ""
+    agrd_user       = get_setting_value("ADGUARDEXP_USER")      or "admin"
     agrd_pass       = get_setting_value("ADGUARDEXP_PASSWORD")  or ""
     verify_ssl_str      = get_setting_value("ADGUARDEXP_VERIFYSSL")       or "true"
     include_offline_str = get_setting_value("ADGUARDEXP_INCLUDE_OFFLINE") or "true"

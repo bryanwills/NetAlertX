@@ -66,7 +66,7 @@ def main():
     user = get_setting_value("ADGUARDIMP_USER")
     pw = get_setting_value("ADGUARDIMP_PASS")
     fake_mac_enabled = get_setting_value("ADGUARDIMP_FAKE_MAC")
-    timeout = int(get_setting_value("ADGUARDIMP_RUN_TIMEOUT") or 5)
+    timeout = int(get_setting_value("ADGUARDIMP_RUN_TIMEOUT") or 30)
 
     auth = (user, pw) if user or pw else None
 

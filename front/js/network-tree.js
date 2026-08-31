@@ -81,6 +81,7 @@ function getChildren(node, list, path, visited = [])
         devParentRelType: node.devParentRelType,
         devVlan: node.devVlan,
         devSSID: node.devSSID,
+        devIsEthernet: !isNaN(node.devParentPort) && node.devParentPort !== "",
         hiddenChildren: hiddenMacs.includes(node.devMac),
         qty: children.length,
         children: children
@@ -208,7 +209,7 @@ function initTree(myHierarchy)
     // override original value
     let screenWidthEm = pxToEm(finalWidthPx);
 
-        // handle canvas and node size if only a few nodes
+    // handle canvas and node size if only a few nodes
     emSize > 1 ? emSize = 1 : emSize = emSize;
 
     let nodeHeightPx = emToPx(emSize*1);
@@ -231,7 +232,14 @@ function initTree(myHierarchy)
 
         (!emptyArr.includes(nodeData.data.devParentPort)) ? port = nodeData.data.devParentPort : port = "";
 
-        (port == "" || port == 0 || port == 'None' ) ? portBckgIcon = `<i class="fa fa-wifi"></i>` : portBckgIcon = `<i class="fa fa-ethernet"></i>`;
+        if (nodeData.data.devSSID !== ""){
+          portBckgIcon = `<i class="fa fa-wifi"></i>`;
+        } else if (nodeData.data.devIsEthernet) {
+          portBckgIcon = `<i class="fa fa-ethernet"></i>`;
+        } else {
+          portBckgIcon = `<i class="fa-solid fa-circle-question"></i>`;
+        }          
+          
 
         portHtml = (port == "" || port == 0 || port == 'None' ) ? " &nbsp " : port;
 
@@ -318,6 +326,17 @@ function initTree(myHierarchy)
       idKey: "devMac",
       hasFlatData: false,
       relationnalField: "children",
+      linkStyle: (nodeData) => {
+        // Return "solid", "dashed", "dotted", or "dashdot"
+        // Can vary per link based on node data:
+        if(nodeData.data.devParentRelType == "virtual")
+        {
+          return "dotted";
+        } else
+        {
+          return nodeData.data.devIsEthernet ? "solid" : "dashed";
+        }        
+      },
       linkLabel: {
       render: (parent, child) => {
         // Return text or HTML to display on the connection line

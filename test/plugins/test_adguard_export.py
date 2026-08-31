@@ -23,6 +23,10 @@ import pytest
 # so this is safe to run inside the container too.
 # ---------------------------------------------------------------------------
 _tmp_log = tempfile.mkdtemp()
+_tmp_data = tempfile.mkdtemp()
+_tmp_db = tempfile.mkdtemp()
+
+_stubbed_module_names = []
 
 
 def _stub(name: str, **attrs):
@@ -31,11 +35,18 @@ def _stub(name: str, **attrs):
         for k, v in attrs.items():
             setattr(mod, k, v)
         sys.modules[name] = mod
+        _stubbed_module_names.append(name)
 
 
 _stub("pytz", timezone=lambda tz: tz)
 _stub("conf")
-_stub("const", dataPath=_tmp_log, logPath=_tmp_log, fullDbPath=os.path.join(_tmp_log, "test.db"))
+_stub(
+    "const",
+    dataPath=_tmp_data,
+    dbFolderPath=_tmp_db,
+    logPath=_tmp_log,
+    fullDbPath=os.path.join(_tmp_db, "test.db"),
+)
 _stub("plugin_helper", Plugin_Objects=MagicMock)
 _stub("logger", mylog=lambda *a: None, Logger=MagicMock)
 _stub("helper", get_setting_value=lambda k: "")
@@ -44,6 +55,9 @@ _stub("models.device_instance", DeviceInstance=MagicMock)
 
 # Stub requests only when it isn't installed (e.g. bare system Python locally).
 # In the container and CI, the real package is present and will be used.
+# Tracked via _stubbed_module_names (not the real package) so it gets popped
+# below like the other stubs, instead of leaking an incomplete fake `requests`
+# (missing .post/.get) to other test files collected later in the same run.
 if "requests" not in sys.modules:
     _req = types.ModuleType("requests")
     _req.Session = MagicMock
@@ -53,6 +67,7 @@ if "requests" not in sys.modules:
     _req.exceptions = _req_exc
     sys.modules["requests"] = _req
     sys.modules["requests.exceptions"] = _req_exc
+    _stubbed_module_names.extend(["requests", "requests.exceptions"])
 
 # ---------------------------------------------------------------------------
 # Import the functions under test (must come after the stubs above).
@@ -62,6 +77,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "server",
 from script import (  # noqa: E402
     AdGuardClient,
     _TYPE_TAG_MAP,
+    _migrate_legacy_state_file,
     build_agrd_client,
     device_type_to_tag,
     get_netalertx_devices,
@@ -69,6 +85,12 @@ from script import (  # noqa: E402
     save_managed_names,
     sync_to_adguard,
 )
+
+# Stops these fake entries from shadowing the real modules for other test
+# files collected later in the same pytest session (script's own
+# module-level `from x import y` bindings are already resolved by now).
+for _name in _stubbed_module_names:
+    sys.modules.pop(_name, None)
 
 
 # ---------------------------------------------------------------------------
@@ -203,6 +225,40 @@ class TestManagedNames:
             save_managed_names({"zebra", "apple", "mango"})
             data = json.loads(state.read_text())
         assert data["managed"] == ["apple", "mango", "zebra"]
+
+
+# ---------------------------------------------------------------------------
+# _migrate_legacy_state_file
+# ---------------------------------------------------------------------------
+
+
+class TestMigrateLegacyStateFile:
+    def test_migrates_legacy_file_to_new_location(self, tmp_path):
+        legacy = tmp_path / "state.json"
+        new = tmp_path / "db" / "state.json"
+        new.parent.mkdir()
+        legacy.write_text(json.dumps({"managed": ["alpha"]}))
+        with patch("script.STATE_FILE", str(new)), patch("script._LEGACY_STATE_FILE", str(legacy)):
+            _migrate_legacy_state_file()
+        assert not legacy.exists()
+        assert json.loads(new.read_text())["managed"] == ["alpha"]
+
+    def test_does_not_overwrite_existing_new_file(self, tmp_path):
+        legacy = tmp_path / "legacy.json"
+        new = tmp_path / "new.json"
+        legacy.write_text(json.dumps({"managed": ["old"]}))
+        new.write_text(json.dumps({"managed": ["current"]}))
+        with patch("script.STATE_FILE", str(new)), patch("script._LEGACY_STATE_FILE", str(legacy)):
+            _migrate_legacy_state_file()
+        assert legacy.exists()
+        assert json.loads(new.read_text())["managed"] == ["current"]
+
+    def test_no_op_when_neither_file_exists(self, tmp_path):
+        legacy = tmp_path / "legacy.json"
+        new = tmp_path / "new.json"
+        with patch("script.STATE_FILE", str(new)), patch("script._LEGACY_STATE_FILE", str(legacy)):
+            _migrate_legacy_state_file()
+        assert not new.exists()
 
 
 # ---------------------------------------------------------------------------

@@ -36,8 +36,11 @@ plugin_objects = Plugin_Objects(RESULT_FILE)
 def main():
     mylog('verbose', [f'[{pluginName}] In script'])
 
-    # timeout = get_setting_value('NBLOOKUP_RUN_TIMEOUT')
-    timeout = 20
+    # The "ips" param in config.json is marked timeoutMultiplier: true, so the
+    # framework already scales the outer subprocess kill-timeout by device
+    # count - use the real per-device budget here instead of a hardcoded
+    # value that could exceed what the multiplier actually grants.
+    timeout = int(get_setting_value('NBTSCAN_RUN_TIMEOUT') or 10)
 
     # Initialize the Plugin obj output file
     plugin_objects = Plugin_Objects(RESULT_FILE)

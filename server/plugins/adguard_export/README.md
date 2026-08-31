@@ -94,8 +94,10 @@ Devices with an unrecognised or empty type are exported without a tag.
 When `ADGUARDEXP_DELETE=true`, the plugin only removes clients it previously created — it will never delete clients you added manually in AdGuard Home. Ownership is tracked in a local state file at:
 
 ```text
-/app/db/state.ADGUARDEXP.json
+/data/db/state.ADGUARDEXP.json
 ```
+
+> Upgrading from an older version? A state file found at the pre-`v25.10.1` legacy location (`/data/state.ADGUARDEXP.json`) is migrated to the path above automatically on first run — no manual action needed.
 
 ---
 

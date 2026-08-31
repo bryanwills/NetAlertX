@@ -85,6 +85,8 @@ The library automatically:
 | 11 | `helpVal3` | string | *conditional* | Helper value 3. If used, all help values must be supplied |
 | 12 | `helpVal4` | string | *conditional* | Helper value 4. If used, all help values must be supplied |
 
+> **Note:** `plugin_helper.py`'s `Plugin_Object.__init__` defaults an omitted/`None` `helpVal1-4` to `""` - a real `0` or `False` you pass explicitly is preserved as-is (checked via `is not None`, not truthiness), same as `watchedValue1-4`.
+
 ## Usage Guide
 
 ### Empty/Null Values

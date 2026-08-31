@@ -63,7 +63,6 @@
   require 'php/templates/footer.php';
 ?>
 
-<!-- <script src="lib/treeviz/bundle.js"></script> -->
 <script src="lib/treeviz/treeviz.iife.js"></script>
 
 <!-- Network Topology JavaScript Modules -->

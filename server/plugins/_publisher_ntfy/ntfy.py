@@ -13,7 +13,7 @@ sys.path.extend([f"{INSTALL_PATH}/server/plugins", f"{INSTALL_PATH}/server"])
 
 import conf  # noqa: E402 [flake8 lint suppression]
 from const import confFileName, logPath  # noqa: E402 [flake8 lint suppression]
-from plugin_helper import Plugin_Objects, handleEmpty  # noqa: E402 [flake8 lint suppression]
+from plugin_helper import Plugin_Objects, handleEmpty, per_item_timeout  # noqa: E402 [flake8 lint suppression]
 from utils.datetime_utils import timeNowUTC  # noqa: E402 [flake8 lint suppression]
 from logger import mylog, Logger  # noqa: E402 [flake8 lint suppression]
 from helper import get_setting_value  # noqa: E402 [flake8 lint suppression]
@@ -55,11 +55,18 @@ def main():
     # Retrieve new notifications
     new_notifications = notifications.getNew()
 
+    # RUN_TIMEOUT is enforced by the core plugin runner as this whole
+    # script's kill-timeout, not a safe per-request timeout - divide it
+    # across the queue so a burst of notifications can't let one slow send()
+    # call consume the whole budget and get the process killed mid-loop.
+    run_timeout = int(get_setting_value('NTFY_RUN_TIMEOUT') or 10)
+    per_call_timeout = per_item_timeout(run_timeout, len(new_notifications))
+
     # Process the new notifications (see the Notifications DB table for structure or check the /php/server/query_json.php?file=table_notifications.json endpoint)
     for notification in new_notifications:
 
         # Send notification
-        response_text, response_status_code = send(notification["HTML"], notification["Text"])
+        response_text, response_status_code = send(notification["HTML"], notification["Text"], per_call_timeout)
 
         # Log result
         plugin_objects.add_object(
@@ -131,10 +138,13 @@ def build_custom_headers(entries, reserved_headers):
 
 
 # -------------------------------------------------------------------------------
-def send(html, text):
+def send(html, text, timeout=None):
 
     response_text = ''
     response_status_code = ''
+
+    if timeout is None:
+        timeout = int(get_setting_value('NTFY_RUN_TIMEOUT') or 10)
 
     # settings
     token = get_setting_value('NTFY_TOKEN')
@@ -178,7 +188,7 @@ def send(html, text):
             headers = headers,
             params  = url_query_string if url_query_string != '' else None,
             verify  = verify_ssl,
-            timeout = get_setting_value('NTFY_RUN_TIMEOUT')
+            timeout = timeout
         )
 
         response_status_code = response.status_code

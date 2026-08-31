@@ -44,7 +44,8 @@
       "name": "subnets",
       "type": "setting",
       "value": "SCAN_SUBNETS",
-      "base64": true
+      "base64": true,
+      "timeoutMultiplier": true
     }
   ],
   "settings": [

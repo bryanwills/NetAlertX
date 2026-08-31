@@ -229,6 +229,20 @@ These control core plugin behavior:
 
 See [PLUGINS_DEV_SETTINGS.md](PLUGINS_DEV_SETTINGS.md) for full component types and examples.
 
+### Conventions Checklist
+
+Check your plugin against these repo-wide conventions before opening a PR (verified against `server/plugins/*/config.json`):
+
+- **`RUN` defaults to `"disabled"`.** True for the large majority of plugins; only core maintenance plugins (`csv_backup`, `db_cleanup`, `maintenance`, `vendor_update`) default to `schedule`. A new optional plugin should load disabled until the user configures it.
+- **Pick `RUN_SCHD` from precedent, not an arbitrary value.** Check the closest existing plugin for its schedule (e.g. `pihole_api_scan` uses `*/5 * * * *`) rather than inventing a new cadence — consistency keeps first-time setup predictable across plugins.
+- **`RUN_TIMEOUT` is a subprocess kill-timer, not a per-request budget.** The core plugin runner (`server/plugin.py`) passes this same value as the hard timeout for the *entire* script (`subprocess` `timeout=`). If your script makes multiple sequential network calls (e.g. two upstream instances, or a per-device lookup in a loop), don't also reuse `RUN_TIMEOUT` as each individual call's timeout — one slow call can then consume the whole budget and get the process killed before it writes its result file, silently dropping the entire run. Two correct alternatives, depending on the shape of your loop:
+  - **Looping over a config-declared, known-length list** (e.g. a subnets or IPs setting) — mark that `params` entry with `"timeoutMultiplier": true` in `config.json`. The framework then multiplies the *outer* kill-timeout by that list's length before running your script, so each iteration can safely use the full `RUN_TIMEOUT` internally. See `arp_scan/config.json`'s `subnets` param for a working example.
+  - **Looping over a runtime-variable-length collection** (e.g. a notification queue, where length isn't known until the script runs) — `timeoutMultiplier` doesn't apply here since there's no config-declared count. Instead, divide the *inner* per-call timeout down using `plugin_helper.per_item_timeout(run_timeout, item_count)`, so N sequential calls can't collectively exceed the outer budget. See `server/plugins/_publisher_ntfy/ntfy.py`'s notification loop for a working example.
+- **Reuse existing core settings instead of duplicating them.** If NetAlertX already has a concept your plugin needs (e.g. `API_TOKEN` for its own GraphQL/API endpoint), read it with `get_setting_value("API_TOKEN")` rather than adding a plugin-specific `<PREFIX>_API_TOKEN` — see `server/plugins/sync/sync.py` for the pattern.
+- **Keep `description` strings short.** They render directly in the Settings UI. Put implementation rationale and design trade-offs in the plugin's README or code comments, not the UI-facing description.
+- **For "one or more instances of the same thing," use the nested array + popup-form settings pattern**, not a fixed hardcoded count (e.g. "primary"/"secondary"). See `rest_import` (`RSTIMPRT`)'s `imports` setting for a working example — it also gives each instance its own sub-settings (URL, credentials, per-instance flags) for free.
+- **Persist plugin state under `dbFolderPath`, config artifacts under `configPath`** — see [Persisting Plugin Data](#persisting-plugin-data-state--config-files) below.
+
 ---
 
 ## Filters & Data Display
@@ -296,6 +310,27 @@ To always map a static value (not read from plugin output):
 
 ---
 
+## Persisting Plugin Data (State & Config Files)
+
+Plugin settings (`config.json`) are already persisted for you. If your plugin also needs to write its **own files** to disk between runs — a cache, a "what did I already do" tracker, an exported artifact — pick the right base path from `const.py` rather than hardcoding one:
+
+| Purpose | Import from `const` | Default path | Use for |
+|---|---|---|---|
+| Internal state | `dbFolderPath` | `/data/db` | Bookkeeping the user never edits directly: sync state, dedupe caches, "managed items" trackers, etc. |
+| Config artifacts | `configPath` | `/data/config` | Files that are conceptually configuration: exports meant to be reviewed/edited by the user, generated config snippets, backups. |
+
+```python
+from const import dbFolderPath, configPath
+
+STATE_FILE = os.path.join(dbFolderPath, f"state.{pluginName}.json")
+```
+
+**Why it matters:** `/data/db` and `/data/config` are separate mount points. Users can point `/data/db` at fast/ephemeral storage (its contents are usually rebuildable) and `/data/config` at durable, backed-up storage — or the reverse, depending on their setup. Don't hardcode `/app/db`, `/app/config`, or write loose files directly under the bare data root (`dataPath`); those bypass this separation, and `/app/...` paths are the pre-`v25.10.1` legacy layout (see [MIGRATION.md](MIGRATION.md)).
+
+If you rename or move where a plugin stores its state file across a release, migrate the old file on startup instead of silently dropping user state — see `server/plugins/adguard_export/script.py` for a worked example.
+
+---
+
 ## UI Component Types
 
 Plugin results are displayed in the web interface using various component types. See **[PLUGINS_DEV_UI_COMPONENTS.md](PLUGINS_DEV_UI_COMPONENTS.md)** for complete documentation.
@@ -353,6 +388,8 @@ See: [UI Components](PLUGINS_DEV_UI_COMPONENTS.md)
 - **Example Plugins:** `/app/server/plugins/*/` - Study working implementations
 - **Logs:** `/tmp/log/plugins/` - Plugin output and execution logs
 - **Backend Logs:** `/tmp/log/app.log` - Core system logs
+- **Persistent state:** `dbFolderPath` (`/data/db`) via `from const import dbFolderPath` - see [Persisting Plugin Data](#persisting-plugin-data-state--config-files)
+- **Config artifacts:** `configPath` (`/data/config`) via `from const import configPath` - see [Persisting Plugin Data](#persisting-plugin-data-state--config-files)
 
 ---
 
