@@ -57,7 +57,7 @@ Three distinct roots, each with a different persistence contract — get this wr
 - `configPath` (`/data/config`) — durable, user-facing. `app.conf` lives here; config-like plugin artifacts (exports, backups) belong here too.
 - `logPath` (`/tmp/log`, plus `/tmp/api`, `/tmp/db_is_locked`, nginx state) — **ephemeral tmpfs**, wiped on every container restart. Never put anything here you need to survive a restart. (`server/plugins/adguard_export`, `unifi_import` were both fixed this way after shipping with state files rooted in `logPath` — check any plugin that opens a file outside its `RESULT_FILE` against this before assuming it's fine.)
 
-All three are exported from `server/const.py` (`dbFolderPath`, `configPath`, `dataPath`, `logPath`) and importable by any plugin.
+All three, plus `dataPath` (`/data`, the bare parent of `dbFolderPath`/`configPath` - avoid writing loose files directly under it; pick one of the two subpaths above instead), are exported from `server/const.py` and importable by any plugin.
 
 ### Plugin system (`server/plugins/*/`)
 

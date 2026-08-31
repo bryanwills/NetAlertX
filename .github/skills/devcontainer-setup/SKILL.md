@@ -5,7 +5,7 @@ description: Reprovision and reset the devcontainer environment. Use this when a
 
 # Devcontainer Setup
 
-The setup script forcefully resets all runtime state. It is idempotent—every run wipes and recreates all relevant folders, symlinks, and files.
+The setup script forcefully resets all *runtime* state (services, tmpfs ramdisks, symlinks, log files) unconditionally on every run. Persistent DB/config content under `/data` is the one exception - it's preserved by default; see step 7 below.
 
 ## Command
 
@@ -29,8 +29,8 @@ The setup script forcefully resets all runtime state. It is idempotent—every r
 - After modifying setup scripts
 - After container rebuild
 - When environment is in broken state
-- After database reset
+- To pick up a database/config reset done another way (setup.sh itself won't reset them - see step 7)
 
 ## Philosophy
 
-No conditional logic. Everything is recreated unconditionally. If something doesn't work, run setup again.
+Runtime state (services, tmpfs, symlinks, logs) has no conditional logic - everything is recreated unconditionally, every run. DB/config are the one deliberate exception, gated behind `ALWAYS_FRESH_INSTALL`. If something in runtime state doesn't work, run setup again.
