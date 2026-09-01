@@ -14,7 +14,7 @@ from const import logPath # noqa: E402, E261 [flake8 lint suppression]
 # artifacts, e.g. "/data/config") instead of hardcoding a path — see
 # docs/PLUGINS_DEV.md#persisting-plugin-data-state--config-files
 # from const import dbFolderPath, configPath
-from plugin_helper import Plugin_Objects # noqa: E402, E261 [flake8 lint suppression]
+from plugin_helper import Plugin_Objects, decode_settings_base64 # noqa: E402, E261 [flake8 lint suppression]
 from logger import mylog, Logger # noqa: E402, E261 [flake8 lint suppression]
 from helper import get_setting_value # noqa: E402, E261 [flake8 lint suppression]
 
@@ -47,6 +47,15 @@ def main():
     some_setting = get_setting_value('SYNC_plugins')
 
     mylog('verbose', [f'[{pluginName}] some_setting value {some_setting}'])
+
+    # Example: reading the nested "one or more instances" setting pattern
+    # (config.json's "nested_form_example") instead of a fixed hardcoded
+    # "primary"/"secondary" pair - see docs/PLUGINS_DEV.md#conventions-checklist.
+    for instance in get_configured_instances():
+        mylog('verbose', [
+            f"[{pluginName}] configured instance: {instance['name']} -> {instance['url']} "
+            f"(enabled={instance['enabled']})"
+        ])
 
     # retrieve data
     device_data = get_device_data(some_setting)
@@ -84,6 +93,33 @@ def main():
     plugin_objects.write_result_file()
 
     return 0
+
+
+def get_configured_instances():
+    """
+    Example of processing the "nested_form_example" setting from config.json -
+    the multi-instance settings pattern (a popup form per list entry), used
+    when a plugin needs to support an arbitrary number of instances instead
+    of a fixed "primary"/"secondary" pair. See server/plugins/rest_import for
+    the full-featured version this is based on.
+
+    Each raw entry in the setting's list is a base64-encoded JSON blob;
+    decode_settings_base64() turns it into a dict keyed by the popupForm's
+    "function" names (here: TMP_instance_name/_url/_enabled).
+    """
+    raw_instances = get_setting_value('TMP_nested_form_example') or []
+
+    instances = []
+    for raw in raw_instances:
+        cfg = decode_settings_base64(raw)
+        instances.append({
+            'name':    cfg.get('TMP_instance_name', ''),
+            'url':     cfg.get('TMP_instance_url', ''),
+            'enabled': bool(cfg.get('TMP_instance_enabled', True)),
+        })
+
+    # Skip instances the user unchecked rather than deleted.
+    return [instance for instance in instances if instance['enabled']]
 
 
 #  retrieve data
