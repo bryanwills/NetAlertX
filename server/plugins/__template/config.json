@@ -279,6 +279,142 @@
       ]
     },
     {
+      "function": "nested_form_example",
+      "type": {
+        "dataType": "array",
+        "elements": [
+          {
+            "elementType": "button",
+            "elementOptions": [
+              { "sourceSuffixes": [] },
+              { "separator": "" },
+              { "cssClasses": "col-xs-12" },
+              { "onClick": "addViaPopupForm(this)" },
+              { "getStringKey": "Gen_Add" }
+            ],
+            "transformers": []
+          },
+          {
+            "elementType": "select",
+            "elementHasInputValue": 1,
+            "elementOptions": [
+              { "multiple": "true" },
+              { "readonly": "true" },
+              { "editable": "true" },
+              {
+                "popupForm": [
+                  {
+                    "function": "TMP_instance_name",
+                    "type": {
+                      "dataType": "string",
+                      "elements": [
+                        {
+                          "elementType": "input",
+                          "elementOptions": [
+                            { "placeholder": "e.g. Site A" },
+                            { "cssClasses": "col-sm-10" }
+                          ],
+                          "transformers": []
+                        }
+                      ]
+                    },
+                    "default_value": "",
+                    "options": [],
+                    "localized": ["name", "description"],
+                    "name": [{ "language_code": "en_us", "string": "Name" }],
+                    "description": [
+                      { "language_code": "en_us", "string": "Friendly name for this instance. Shown in logs." }
+                    ]
+                  },
+                  {
+                    "function": "TMP_instance_url",
+                    "type": {
+                      "dataType": "string",
+                      "elements": [
+                        {
+                          "elementType": "input",
+                          "elementOptions": [
+                            { "placeholder": "https://host:port" },
+                            { "cssClasses": "col-sm-10" }
+                          ],
+                          "transformers": []
+                        }
+                      ]
+                    },
+                    "default_value": "",
+                    "options": [],
+                    "localized": ["name", "description"],
+                    "name": [{ "language_code": "en_us", "string": "URL" }],
+                    "description": [
+                      { "language_code": "en_us", "string": "Base URL for this instance." }
+                    ]
+                  },
+                  {
+                    "function": "TMP_instance_enabled",
+                    "type": {
+                      "dataType": "boolean",
+                      "elements": [
+                        {
+                          "elementType": "input",
+                          "elementOptions": [{ "type": "checkbox" }],
+                          "transformers": []
+                        }
+                      ]
+                    },
+                    "default_value": 1,
+                    "options": [],
+                    "localized": ["name", "description"],
+                    "name": [{ "language_code": "en_us", "string": "Enabled" }],
+                    "description": [
+                      { "language_code": "en_us", "string": "Uncheck to keep the instance configured but skip it during a run." }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "transformers": ["name|base64"]
+          },
+          {
+            "elementType": "button",
+            "elementOptions": [
+              { "sourceSuffixes": [] },
+              { "separator": "" },
+              { "cssClasses": "col-xs-6" },
+              { "onClick": "removeFromList(this)" },
+              { "getStringKey": "Gen_Remove_Last" }
+            ],
+            "transformers": []
+          },
+          {
+            "elementType": "button",
+            "elementOptions": [
+              { "sourceSuffixes": [] },
+              { "separator": "" },
+              { "cssClasses": "col-xs-6" },
+              { "onClick": "removeAllOptions(this)" },
+              { "getStringKey": "Gen_Remove_All" }
+            ],
+            "transformers": []
+          }
+        ]
+      },
+      "default_value": [],
+      "options": [],
+      "localized": ["name", "description"],
+      "name": [
+        {
+          "language_code": "en_us",
+          "string": "Sample instances"
+        }
+      ],
+      "description": [
+        {
+          "language_code": "en_us",
+          "string": "Example of the nested multi-instance settings pattern (a popup form per list entry) - use this instead of a fixed 'primary'/'secondary' pair when a plugin needs to support an arbitrary number of instances. See docs/PLUGINS_DEV.md#conventions-checklist and server/plugins/rest_import/config.json for the full-featured version this is based on."
+        }
+      ]
+    },
+    {
       "function": "CMD",
       "type": {
         "dataType": "string",

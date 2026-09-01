@@ -11,14 +11,36 @@ modules are stubbed out automatically before the script is imported.
     pytest "test/plugins/test___template.py" -v
 """
 
+import base64
+import json
 import os
 import sys
 import tempfile
 import types
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 _tmp_log = tempfile.mkdtemp()
 _tmp_db = tempfile.mkdtemp()
+
+
+def _decode_settings_base64(encoded_str, convert_types=True):
+    """Mirrors plugin_helper.decode_settings_base64 - reimplemented here
+    (rather than importing the real plugin_helper.py) since that module's
+    other top-level imports need the full container environment."""
+    settings_list = json.loads(base64.b64decode(encoded_str).decode("utf-8"))
+    result = {}
+    for _, key, _type, value in settings_list:
+        result[key] = value.lower() == "true" if convert_types and _type.lower() == "boolean" else value
+    return result
+
+
+def _encode_instance(name, url, enabled):
+    payload = [
+        ["group", "TMP_instance_name", "string", name],
+        ["group", "TMP_instance_url", "string", url],
+        ["group", "TMP_instance_enabled", "boolean", str(enabled)],
+    ]
+    return base64.b64encode(json.dumps(payload).encode("utf-8")).decode("ascii")
 
 _stubbed_module_names = []
 
@@ -35,7 +57,7 @@ def _stub(name: str, **attrs):
 _stub("pytz", timezone=lambda tz: tz)
 _stub("conf")
 _stub("const", dataPath=_tmp_db, dbFolderPath=_tmp_db, configPath=_tmp_db, logPath=_tmp_log)
-_stub("plugin_helper", Plugin_Objects=MagicMock)
+_stub("plugin_helper", Plugin_Objects=MagicMock, decode_settings_base64=_decode_settings_base64)
 _stub("logger", mylog=lambda *a: None, Logger=MagicMock)
 _stub("helper", get_setting_value=lambda k: "")
 
@@ -58,6 +80,22 @@ class TestGetDeviceData:
         for device in data:
             for key in ("mac_address", "ip_address", "hostname", "vendor", "device_type", "last_seen"):
                 assert key in device
+
+
+class TestGetConfiguredInstances:
+    def test_decodes_and_returns_enabled_instances(self):
+        raw = [
+            _encode_instance("Site A", "https://a.example", True),
+            _encode_instance("Site B", "https://b.example", False),
+        ]
+        with patch("rename_me.get_setting_value", side_effect=lambda k: raw if k == "TMP_nested_form_example" else ""):
+            instances = rename_me.get_configured_instances()
+
+        assert instances == [{"name": "Site A", "url": "https://a.example", "enabled": True}]
+
+    def test_empty_setting_returns_no_instances(self):
+        with patch("rename_me.get_setting_value", return_value=""):
+            assert rename_me.get_configured_instances() == []
 
 
 class TestMain:
