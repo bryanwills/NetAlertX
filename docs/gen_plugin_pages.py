@@ -35,6 +35,7 @@ GITHUB_BLOB_BASE = "https://github.com/netalertx/NetAlertX/blob/main"
 IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp"}
 
 nav = mkdocs_gen_files.Nav()
+index_entries = []
 
 
 def generated_note(source_rel_to_repo):
@@ -74,6 +75,7 @@ for readme_path in sorted(PLUGINS_DIR.glob("*/README.md")):
     source_rel_to_repo = readme_path.relative_to(REPO_ROOT).as_posix()
 
     nav[title] = doc_path
+    index_entries.append((title, doc_path))
 
     readme_text = readme_path.read_text(encoding="utf-8")
 
@@ -138,3 +140,12 @@ for readme_path in sorted(PLUGINS_DIR.glob("*/README.md")):
 
 with mkdocs_gen_files.open("plugins/SUMMARY.md", "w") as nav_file:
     nav_file.writelines(nav.build_literate_nav())
+
+with mkdocs_gen_files.open("plugins/index.md", "w") as index_file:
+    index_file.write("# Plugins reference\n\n")
+    index_file.write(
+        "Generated automatically from each plugin's `README.md`. "
+        "See [Plugins](../PLUGINS.md) for the type/feature legend.\n\n"
+    )
+    for title, doc_path in index_entries:
+        index_file.write(f"- [{title}]({doc_path})\n")

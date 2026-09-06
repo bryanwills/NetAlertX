@@ -27,8 +27,8 @@ jobs:
             mkdocs-material==9.5.21 \
             mkdocs-github-admonitions-plugin==0.1.1 \
             mkdocs-glightbox \
-            mkdocs-gen-files \
-            mkdocs-literate-nav
+            mkdocs-gen-files==0.6.1 \
+            mkdocs-literate-nav==0.6.3
 
       - name: Build MkDocs
         run: mkdocs build
