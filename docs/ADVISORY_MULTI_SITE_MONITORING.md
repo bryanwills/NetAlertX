@@ -127,7 +127,7 @@ For best results in multi-site environments:
 ## Related Documentation
 
 * [Remote Networks](./REMOTE_NETWORKS.md)
-* [Sync Hub Plugin](https://github.com/netalertx/NetAlertX/tree/main/server/plugins/sync/README.md)
+* [Sync Hub Plugin](https://docs.netalertx.com/plugins/sync)
 * [Workflows](./WORKFLOWS.md)
 * [Metrics API](./API_METRICS.md)
 * [Eyes on Glass / NOC Dashboard](./ADVISORY_EYES_ON_GLASS.md)

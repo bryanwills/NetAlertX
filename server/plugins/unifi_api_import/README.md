@@ -1,6 +1,6 @@
 ## Overview
 
-Unifi import plugin using the Site Manager API.
+UniFi import plugin using the newer, API-key-based Site Manager API - the successor to the username/password controller login used by the older [`unifi_import`](https://docs.netalertx.com/plugins/unifi_import) plugin. Prefer this one where available; fall back to `unifi_import` if your controller doesn't expose the Site Manager integration API yet.
 
 > [!TIP]
 > The Site Manager API doesn't seems to have feature parity with the old API yet, so certain limitations apply.  
@@ -16,7 +16,7 @@ Navigate to your UniFi Site Manager _Settings -> Control Plane -> Integrations_.
 
 ### Usage
 
-- Head to **Settings** > **Plugin name** to adjust the default values.
+- Head to **Settings** > **UniFi import (API)** to adjust the default values.
 
 ### Notes
 

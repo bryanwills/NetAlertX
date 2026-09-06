@@ -58,10 +58,10 @@ Using supplementing plugins that employ alternate discovery methods is one of th
 
 ### Workaround: Multiple NetAlertX Instances if you have servers in all networks
 
-If you have servers in different networks, you can set up separate NetAlertX instances on those subnets and synchronize the results into one instance using the [`SYNC` plugin](https://github.com/netalertx/NetAlertX/tree/main/server/plugins/sync).
+If you have servers in different networks, you can set up separate NetAlertX instances on those subnets and synchronize the results into one instance using the [`SYNC` plugin](https://docs.netalertx.com/plugins/sync).
 
 > [!TIP]
-> The [`SYNC_BEHAVIOR`](https://github.com/netalertx/NetAlertX/tree/main/server/plugins/sync/README.md#hub-device-write-behavior-sync_behavior) setting controls how the hub handles newly discovered devices from nodes - whether it inherits node config, overwrites on every sync, or applies its own `NEWDEV` defaults.
+> The [`SYNC_BEHAVIOR`](https://docs.netalertx.com/plugins/sync#hub-device-write-behavior-sync_behavior) setting controls how the hub handles newly discovered devices from nodes - whether it inherits node config, overwrites on every sync, or applies its own `NEWDEV` defaults.
 
 ### Workaround: Manual Entry for devices you can `ping`
 
@@ -78,4 +78,4 @@ Scanning remote networks with NMAP is possible (via the `NMAPDEV` plugin), but s
 
 Because the generated MAC address is derived from the IP address, changing the IP can cause the device to appear as a new device or create duplicate records. If this setting is disabled, devices with a missing MAC addresses will be skipped.
 
-Check the [NMAPDEV plugin](https://github.com/netalertx/NetAlertX/tree/main/server/plugins/nmap_dev_scan) for details.
+Check the [NMAPDEV plugin](https://docs.netalertx.com/plugins/nmap_dev_scan) for details.

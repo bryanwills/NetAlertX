@@ -25,6 +25,7 @@ import sys
 # Copilot); a few skills are also mirrored to .claude/skills/ as a 3rd member.
 GROUPS = [
     [".gemini/skills/plugin-development/plugin-skill.md", ".github/skills/plugin-run-development/SKILL.md", ".claude/skills/plugin-development/SKILL.md"],
+    [".gemini/skills/plugin-readme/plugin-readme-skill.md", ".github/skills/plugin-readme/SKILL.md", ".claude/skills/plugin-readme/SKILL.md"],
     [".gemini/skills/testing-workflow/SKILL.md", ".github/skills/testing-workflow/SKILL.md", ".claude/skills/testing-workflow/SKILL.md"],
     [".gemini/skills/pr-analysis/SKILL.md", ".github/skills/pr-analysis/SKILL.md", ".claude/skills/pr-analysis/SKILL.md"],
     [".gemini/skills/settings/SKILL.md", ".github/skills/settings-management/SKILL.md"],

@@ -7,6 +7,8 @@ The **PIHOLEMON** plugin does two jobs against the same Pi-hole connection(s):
 
 Both share one login per Pi-hole instance and one settings page, instead of being two separately configured pieces that happen to need the same credentials.
 
+See the [Pi-hole guide](https://docs.netalertx.com/PIHOLE_GUIDE) for a walkthrough covering this plugin alongside the other Pi-hole integrations (`PIHOLE`, `PIHOLEAPI`, `DHCPLSS`).
+
 Two design choices worth knowing about:
 
 * **Both a primary and an optional secondary/failover Pi-hole are checked, and their results combined.** Watching only one leaves an obvious blind spot for the anomaly detection - a device can simply point at the other resolver and never show up. Leave the secondary URL blank if you only run one Pi-hole; most setups do.

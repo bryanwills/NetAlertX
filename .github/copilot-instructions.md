@@ -35,6 +35,7 @@ Procedural knowledge lives in `.github/skills/`. Load the appropriate skill when
 | Build Docker images | `docker-build` |
 | Reprovision devcontainer | `devcontainer-setup` |
 | Create or run plugins | `plugin-run-development` |
+| Write or review a plugin README | `plugin-readme` |
 | Analyze PR comments | `pr-analysis` |
 | Clean Docker resources | `docker-prune` |
 | Generate devcontainer configs | `devcontainer-configs` |

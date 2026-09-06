@@ -43,6 +43,7 @@ nav:
       - Getting started:
         - Subnets: SUBNETS.md
         - Enable Plugins: PLUGINS.md
+        - Plugins reference: plugins/
         - Backups: BACKUPS.md
         - Security features: SECURITY_FEATURES.md
         - Security considerations: SECURITY.md
@@ -227,6 +228,11 @@ plugins:
   - gh-admonitions
   - search
   - glightbox
+  - gen-files:
+      scripts:
+        - docs/gen_plugin_pages.py
+  - literate-nav:
+      nav_file: SUMMARY.md
 
 # Custom CSS
 extra_css:

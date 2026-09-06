@@ -2,6 +2,8 @@
 
 A plugin allowing for importing devices from the PiHole database. This is an import plugin using an SQLite database as a source.
 
+See the [Pi-hole guide](https://docs.netalertx.com/PIHOLE_GUIDE) for a walkthrough covering this plugin alongside the other Pi-hole integrations (`PIHOLEAPI`, `PIHOLEMON`, `DHCPLSS`).
+
 ### Usage
 
 - You need to specify the following settings:

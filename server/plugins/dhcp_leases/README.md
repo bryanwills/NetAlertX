@@ -2,6 +2,8 @@
 
 A plugin allowing for importing devices from DHCP.leases files.  
 
+See the [Pi-hole guide](https://docs.netalertx.com/PIHOLE_GUIDE) for a walkthrough covering this plugin alongside the other Pi-hole integrations (`PIHOLE`, `PIHOLEAPI`, `PIHOLEMON`). If you're using an ASUS router with the YazFi plugin, see [Configuring the DHCPLSS plugin to import clients from the YazFi plugin](https://docs.netalertx.com/plugins/dhcp_leases/ASUS_ROUTERS) for a workaround to import guest-network clients.
+
 ### Usage
 
 - Specify full paths of all `dhcp.leases` files you want to import and watch in the `DHCPLSS_paths_to_check`setting.
