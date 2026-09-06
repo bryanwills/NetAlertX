@@ -9,7 +9,7 @@ Refer to the [subnets documentation](https://docs.netalertx.com/SUBNETS) for hel
 > The `NMAPDEV` plugin is excellent for detecting device availability, but **ARP-scan** is better for scanning across multiple VLANs and subnets.
 > NMAP cannot retrieve MAC addresses from other subnets (an NMAP limitation), which are often required to identify devices.
 > You can safely combine different scan methods.
-> See all available network scanning options (marked with `🔍 dev scanner`) in the [Plugins overview](https://docs.netalertx.com/PLUGINS).
+> See all available network scanning options (marked with `🔍 dev scanner`) in the [Plugins overview](https://docs.netalertx.com/PLUGINS_OVERVIEW).
 
 This plugin is **not optimized for name resolution** (use `NSLOOKUP` or `AVAHISCAN` instead), but if a name is available it will appear in the **Resolved Name** column.
 

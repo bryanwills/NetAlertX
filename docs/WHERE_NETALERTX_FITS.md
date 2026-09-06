@@ -31,7 +31,7 @@ Depending on your configuration, it can collect information including:
 
 Because discovery runs continuously, your inventory stays up to date automatically.
 
-Learn more about the available discovery methods in the [Plugins](./PLUGINS.md) documentation.
+Learn more about the available discovery methods in the [Plugins](./PLUGINS_OVERVIEW.md) documentation.
 
 ---
 
@@ -48,7 +48,7 @@ NetAlertX continuously records changes such as:
 * IP address changes
 * Hostname changes
 * Vendor identification
-* Open port changes (via the `NMAP` [plugin](./PLUGINS.md))
+* Open port changes (via the `NMAP` [plugin](./PLUGINS_OVERVIEW.md))
 * Devices returning after long periods offline
 * Configuration updates
 
@@ -182,7 +182,7 @@ Others rely on:
 
 NetAlertX is built around a plugin architecture that allows multiple discovery sources to work together, improving accuracy while remaining flexible.
 
-See the complete list in [Plugins](./PLUGINS.md).
+See the complete list in [Plugins](./PLUGINS_OVERVIEW.md).
 
 ---
 
@@ -309,6 +309,6 @@ Instead, it complements these tools by providing continuous awareness of the dev
 Now that you understand where NetAlertX fits, continue with one of the following guides:
 
 * **[Installation](INSTALLATION.md)** — Install NetAlertX on your platform.
-* **[Plugins](./PLUGINS.md)** — Configure device discovery.
+* **[Plugins](./PLUGINS_OVERVIEW.md)** — Configure device discovery.
 * **[Features](FEATURES.md)** — Explore everything NetAlertX can do.
 * **[API](API.md)** — Integrate NetAlertX with your own applications.

@@ -54,7 +54,7 @@ The following workarounds should work for most complex network setups.
 
 ### Workaround: Supplementing Plugins
 
-Using supplementing plugins that employ alternate discovery methods is one of the easiest ways to extend your scan coverage. Protocols used by the `SNMPDSC` or `DHCPLSS` plugins are widely supported on different routers and can be effective as workarounds. Check the [plugins list](./PLUGINS.md) to find a plugin that works with your router and network setup.
+Using supplementing plugins that employ alternate discovery methods is one of the easiest ways to extend your scan coverage. Protocols used by the `SNMPDSC` or `DHCPLSS` plugins are widely supported on different routers and can be effective as workarounds. Check the [plugins list](./PLUGINS_OVERVIEW.md) to find a plugin that works with your router and network setup.
 
 ### Workaround: Multiple NetAlertX Instances if you have servers in all networks
 

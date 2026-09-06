@@ -409,4 +409,4 @@ Before submitting a PR, verify:
 
 - https://docs.netalertx.com/PLUGINS_DEV_SETTINGS/
 - https://docs.netalertx.com/SETTINGS_SYSTEM/
-- https://docs.netalertx.com/PLUGINS/
+- https://docs.netalertx.com/PLUGINS_OVERVIEW/

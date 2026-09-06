@@ -11,7 +11,7 @@
 <?php require 'php/templates/skel_plugins.php'; ?>
 <section class="content pluginsCore">
   <span class="helpIcon"> 
-    <a target="_blank" href="https://docs.netalertx.com/PLUGINS"><i class="fa fa-circle-question"></i></a>
+    <a target="_blank" href="https://docs.netalertx.com/PLUGINS_OVERVIEW"><i class="fa fa-circle-question"></i></a>
   </span>
   <div class="plugin-filters hidden" >
     <div class="input-group col-sm-12">

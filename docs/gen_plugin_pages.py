@@ -145,7 +145,7 @@ with mkdocs_gen_files.open("plugins/index.md", "w") as index_file:
     index_file.write("# Plugins reference\n\n")
     index_file.write(
         "Generated automatically from each plugin's `README.md`. "
-        "See [Plugins](../PLUGINS.md) for the type/feature legend.\n\n"
+        "See [Plugins](../PLUGINS_OVERVIEW.md) for the type/feature legend.\n\n"
     )
     for title, doc_path in index_entries:
         index_file.write(f"- [{title}]({doc_path})\n")

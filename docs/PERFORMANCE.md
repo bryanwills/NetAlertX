@@ -147,7 +147,7 @@ To improve performance, you can reduce or disable change log tracking. Use the `
 On devices with slower I/O, you can improve performance by storing temporary files (and optionally the database) in memory using `tmpfs`.
 
 > [!WARNING]
-> Storing the **database** in `tmpfs` is generally discouraged. Use this only if device data and historical records are not required to persist. If needed, you can pair this setup with the `SYNC` plugin to store important persistent data on another node. See the [Plugins docs](./PLUGINS.md) for details.
+> Storing the **database** in `tmpfs` is generally discouraged. Use this only if device data and historical records are not required to persist. If needed, you can pair this setup with the `SYNC` plugin to store important persistent data on another node. See the [Plugins docs](./PLUGINS_OVERVIEW.md) for details.
 
 Using `tmpfs` reduces disk writes and speeds up I/O, but **all data stored in memory will be lost on restart**.
 

@@ -42,7 +42,7 @@ nav:
   - Setup:
       - Getting started:
         - Subnets: SUBNETS.md
-        - Enable Plugins: PLUGINS.md
+        - Enable Plugins: PLUGINS_OVERVIEW.md
         - Plugins reference: plugins/
         - Backups: BACKUPS.md
         - Security features: SECURITY_FEATURES.md
@@ -233,6 +233,9 @@ plugins:
         - docs/gen_plugin_pages.py
   - literate-nav:
       nav_file: SUMMARY.md
+  - redirects:
+      redirect_maps:
+        'PLUGINS.md': 'PLUGINS_OVERVIEW.md'
 
 # Custom CSS
 extra_css:
