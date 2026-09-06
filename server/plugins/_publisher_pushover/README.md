@@ -1,8 +1,7 @@
 ## Overview
 
-A plugin to publish a notification via the Pushover gateway. Enable sending notifications via <a target="_blank" href="https://www.pushover.net/">Pushover</a>.
+A plugin to publish notifications via the [Pushover](https://pushover.net/) gateway.
 
 ### Usage
 
-- Go to settings and fill in relevant details.
-
+- Go to settings and provide your Pushover application token and user key (both come from your Pushover account/app dashboard).

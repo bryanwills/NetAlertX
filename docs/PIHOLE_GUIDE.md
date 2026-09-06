@@ -19,7 +19,7 @@ To use this approach, make sure a Web UI password is configured in **Pi-hole**.
 | `PIHOLEAPI_API_MAXCLIENTS` | Maximum number of devices to request from Pi-hole. The default value is usually sufficient.      | `500`                       |
 | `PIHOLEAPI_FAKE_MAC`       | Generate a deterministic fake MAC address from the IP address.                                   | `False`                     |
 
-Check the [PIHOLEAPI plugin README](https://github.com/netalertx/NetAlertX/tree/main/server/plugins/pihole_api_scan/) for additional details and troubleshooting.
+Check the [PIHOLEAPI plugin README](https://docs.netalertx.com/plugins/pihole_api_scan) for additional details and troubleshooting.
 
 ### docker-compose changes
 
@@ -41,7 +41,7 @@ This approach requires mounting the Pi-hole DHCP leases file (`dhcp.leases`) int
 | `DHCPLSS_RUN_SCHD`       | If you run multiple device scanner plugins, configure them to use the same schedule.                                                               | `*/5 * * * *`                 |
 | `DHCPLSS_paths_to_check` | Path to the mapped `dhcp.leases` file inside the container. The path must include `pihole` so the plugin can identify it as a Pi-hole leases file. | `['/etc/pihole/dhcp.leases']` |
 
-Check the [DHCPLSS plugin README](https://github.com/netalertx/NetAlertX/tree/main/server/plugins/dhcp_leases#overview) for additional details.
+Check the [DHCPLSS plugin README](https://docs.netalertx.com/plugins/dhcp_leases#overview) for additional details.
 
 ### docker-compose changes
 
@@ -65,7 +65,7 @@ This approach requires mounting the Pi-hole database file into the NetAlertX con
 | `PIHOLE_RUN_SCHD` | If you run multiple device scanner plugins, configure them to use the same schedule. | `*/5 * * * *`               |
 | `PIHOLE_DB_PATH`  | Path to the mapped Pi-hole database file inside the container.                       | `/etc/pihole/pihole-FTL.db` |
 
-Check the [PIHOLE plugin README](https://github.com/netalertx/NetAlertX/tree/main/server/plugins/pihole_scan) for additional details.
+Check the [PIHOLE plugin README](https://docs.netalertx.com/plugins/pihole_scan) for additional details.
 
 ### docker-compose changes
 
@@ -85,7 +85,7 @@ This plugin's main job is different from the other three above: it watches each 
 * **Two Pi-hole instances, not one.** A primary and an optional secondary/failover are both checked and their results combined under one set of settings - useful if you run more than one Pi-hole (e.g. two resolvers for redundancy) and want a single device list and a single anomaly baseline across both, instead of a blind spot on whichever instance isn't being watched.
 * **Choose `PIHOLEAPI`** if you only run one Pi-hole and just want device import - it's the simpler, more focused option. **Choose `PIHOLEMON`** if you want the anomaly detection, or run two Pi-holes needing one configuration, or both.
 
-Check the [PIHOLEMON plugin README](https://github.com/netalertx/NetAlertX/tree/main/server/plugins/pihole_monitor/) for the full settings reference, the `http://` vs `https://` trade-off, and troubleshooting.
+Check the [PIHOLEMON plugin README](https://docs.netalertx.com/plugins/pihole_monitor) for the full settings reference, the `http://` vs `https://` trade-off, and troubleshooting.
 
 ### docker-compose changes
 

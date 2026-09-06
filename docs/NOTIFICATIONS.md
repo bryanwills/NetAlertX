@@ -50,7 +50,7 @@ In Notification Processing settings, you can specify blanket rules. These allow 
 2. Alert down after (`NTFPRCS_alert_down_time`) is useful if you want to wait for some time before the system sends out a down notification for a device. This is related to the on-device **Alert down** setting and only devices with this checked will trigger a down notification.
 3. Alert down after (sleep) (`NTFPRCS_sleep_time`) sets the **sleep window** in minutes. If a device has **Can Sleep** enabled and goes offline, it is shown as **Sleeping** (aqua 🌙 badge) for this many minutes before down-alert logic kicks in. Default is `30` minutes. Changing this setting takes effect after saving — no restart required.
 
-You can filter out unwanted notifications globally. This could be because of a misbehaving device (GoogleNest/GoogleHub (See also [ARPSAN docs and the `--exclude-broadcast` flag](https://github.com/netalertx/NetAlertX/tree/main/server/plugins/arp_scan#ip-flipping-on-google-nest-devices))) which flips between IP addresses, or because you want to ignore new device notifications of a certain pattern.
+You can filter out unwanted notifications globally. This could be because of a misbehaving device (GoogleNest/GoogleHub (See also [ARPSAN docs and the `--exclude-broadcast` flag](https://docs.netalertx.com/plugins/arp_scan#ip-flipping-on-google-nest-devices))) which flips between IP addresses, or because you want to ignore new device notifications of a certain pattern.
 
 1. Events Filter (`NTFPRCS_event_condition`) - Filter out Events from notifications.
 2. New Devices Filter (`NTFPRCS_new_dev_condition`) - Filter out New Devices from notifications, but log and keep a new device in the system.

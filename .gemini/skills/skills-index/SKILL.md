@@ -24,6 +24,7 @@ Skills with the same purpose exist in more than one, sometimes under different n
 | MCP activation | `mcp-activation` | `mcp-activation` | — | Gemini version covers Gemini CLI session restart; Copilot version covers VS Code window reload |
 | Project navigation | `project-navigation` | `project-navigation` | — | Copilot version has full path tables and env vars; Gemini version is a brief reference |
 | Plugin dev | `plugin-development` | `plugin-run-development` | `plugin-development` | All three cover data contract, phases, formats, the `RUN_TIMEOUT` kill-timer gotcha (`timeoutMultiplier`/`per_item_timeout()`), and a pre-PR pointer to the Conventions Checklist in `docs/PLUGINS_DEV.md` |
+| Plugin README docs | `plugin-readme` | `plugin-readme` | `plugin-readme` | All three cover README structure, the "don't re-document settings" rule, the `docs.netalertx.com` cross-linking convention, and common defects (template leftovers, copy-paste errors) found during a full-repo audit |
 | Devcontainer | `devcontainer-management` | `devcontainer-services` + `devcontainer-setup` + `devcontainer-configs` | — | Gemini combines into one (uses `docker exec`); Copilot splits into 3 focused skills |
 | PR review | `pr-analysis` | `pr-analysis` | `pr-analysis` | How to classify and respond to PR comments; pre-flight skill loading checklist |
 | Logging | `logging-standards` | `logging-standards` | — | `mylog` levels, message format, what not to log |

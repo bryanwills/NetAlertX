@@ -43,57 +43,59 @@ NetAlertX supports additional plugins to extend its functionality, each with its
 
 Device-detecting plugins insert values into the `CurrentScan` database table.  The plugins that are not required are safe to ignore, however, it makes sense to have at least some device-detecting plugins enabled, such as `ARPSCAN` or `NMAPDEV`.
 
+The **Plugin docs** links below open each plugin's README rendered as part of this site (see the [Plugins reference](./plugins/) section) - generated automatically from `server/plugins/<name>/README.md`.
+
 | ID              | Plugin docs                                                                                                      | Type     | Description                               | Features | Required |
 | --------------- | ------------------------------------------------------------------------------------------------------------------ | -------- | ----------------------------------------- | -------- | -------- |
-| `APPRISE`       | [_publisher_apprise](https://github.com/netalertx/NetAlertX/tree/main/server/plugins/_publisher_apprise/)          | ▶️       | Apprise notification proxy                |          |          |
-| `ARPSCAN`       | [arp_scan](https://github.com/netalertx/NetAlertX/tree/main/server/plugins/arp_scan/)                               | 🔍       | ARP-scan on current network               |          |          |
-| `AVAHISCAN`     | [avahi_scan](https://github.com/netalertx/NetAlertX/tree/main/server/plugins/avahi_scan/)                           | 🆎       | Avahi (mDNS-based) name resolution        |          |          |
-| `ASUSWRT`       | [asuswrt_import](https://github.com/netalertx/NetAlertX/tree/main/server/plugins/asuswrt_import/)                   | 📥       | Import connected devices from AsusWRT     |          |          |
-| `CSVBCKP`       | [csv_backup](https://github.com/netalertx/NetAlertX/tree/main/server/plugins/csv_backup/)                           | ⚙        | CSV devices backup                        |          |          |
-| `CUSTPROP`      | [custom_props](https://github.com/netalertx/NetAlertX/tree/main/server/plugins/custom_props/)                       | ⚙        | Managing custom device properties values  |          | Yes      |
-| `DBCLNP`        | [db_cleanup](https://github.com/netalertx/NetAlertX/tree/main/server/plugins/db_cleanup/)                           | ⚙        | Database cleanup                          |          | Yes\*    |
-| `DDNS`          | [ddns_update](https://github.com/netalertx/NetAlertX/tree/main/server/plugins/ddns_update/)                         | ⚙        | DDNS update                               |          |          |
-| `DHCPLSS`       | [dhcp_leases](https://github.com/netalertx/NetAlertX/tree/main/server/plugins/dhcp_leases/)                         | 📥/🆎   | Import devices from DHCP leases           |          |          |
-| `DHCPSRVS`      | [dhcp_servers](https://github.com/netalertx/NetAlertX/tree/main/server/plugins/dhcp_servers/)                       | ♻        | DHCP servers                              |          |          |
-| `DIGSCAN`       | [dig_scan](https://github.com/netalertx/NetAlertX/tree/main/server/plugins/dig_scan/)                               | 🆎       | Dig (DNS) Name resolution                 |          |          |
-| `FREEBOX`       | [freebox](https://github.com/netalertx/NetAlertX/tree/main/server/plugins/freebox/)                                  |📥/♻/🆎  | Pull data and names from Freebox/Iliadbox |          |          |
-| `FRITZBOX`      | [fritzbox](https://github.com/netalertx/NetAlertX/tree/main/server/plugins/fritzbox/)                                | 📥       | Fritz!Box device scanner via TR-064       |          |          |
-| `ICMP`          | [icmp_scan](https://github.com/netalertx/NetAlertX/tree/main/server/plugins/icmp_scan/)                             | ♻        | ICMP (ping) status checker                |          |          |
-| `INTRNT`        | [internet_ip](https://github.com/netalertx/NetAlertX/tree/main/server/plugins/internet_ip/)                         | 🔍       | Internet IP scanner                       |          |          |
-| `INTRSPD`       | [internet_speedtest](https://github.com/netalertx/NetAlertX/tree/main/server/plugins/internet_speedtest/)           | ♻        | Internet speed test                       |          |          |
-| `IPNEIGH`       | [ipneigh](https://github.com/netalertx/NetAlertX/tree/main/server/plugins/ipneigh/)                                  | 🔍       | Scan ARP (IPv4) and NDP (IPv6) tables     |          |          |
-| `KEALSS`        | [kea_api](https://github.com/netalertx/NetAlertX/tree/main/server/plugins/kea_api/)                                  | 📥/🆎     | Pull lease data from the Kea DHCP API   |          |          |
-| `LUCIRPC`       | [luci_import](https://github.com/netalertx/NetAlertX/tree/main/server/plugins/luci_import/)                         | 📥       | Import connected devices from OpenWRT     |          |          |
-| `MAINT`         | [maintenance](https://github.com/netalertx/NetAlertX/tree/main/server/plugins/maintenance/)                          | ⚙        | Maintenance of logs, etc.                 |          |          |
-| `MQTT`          | [_publisher_mqtt](https://github.com/netalertx/NetAlertX/tree/main/server/plugins/_publisher_mqtt/)                | ▶️       | MQTT for syncing to Home Assistant         |          |          |
-| `MTSCAN`        | [mikrotik_scan](https://github.com/netalertx/NetAlertX/tree/main/server/plugins/mikrotik_scan/)                    | 🔍       | Mikrotik device import & sync              |          |          |
-| `NBTSCAN`       | [nbtscan_scan](https://github.com/netalertx/NetAlertX/tree/main/server/plugins/nbtscan_scan/)                       | 🆎       | Nbtscan (NetBIOS-based) name resolution   |          |          |
-| `NEWDEV`        | [newdev_template](https://github.com/netalertx/NetAlertX/tree/main/server/plugins/newdev_template/)                 | ⚙        | New device template                       |          | Yes      |
-| `NMAP`          | [nmap_scan](https://github.com/netalertx/NetAlertX/tree/main/server/plugins/nmap_scan/)                             | ♻        | Nmap port scanning & discovery            |          |          |
-| `NMAPDEV`       | [nmap_dev_scan](https://github.com/netalertx/NetAlertX/tree/main/server/plugins/nmap_dev_scan/)                    | 🔍       | Nmap dev scan on current network           |          |          |
-| `NSLOOKUP`      | [nslookup_scan](https://github.com/netalertx/NetAlertX/tree/main/server/plugins/nslookup_scan/)                     | 🆎       | NSLookup (DNS-based) name resolution      |          |          |
-| `NTFPRCS`       | [notification_processing](https://github.com/netalertx/NetAlertX/tree/main/server/plugins/notification_processing/) | ⚙        | Notification processing                   |          | Yes      |
-| `NTFY`          | [_publisher_ntfy](https://github.com/netalertx/NetAlertX/tree/main/server/plugins/_publisher_ntfy/)                | ▶️       | NTFY notifications                        |          |          |
-| `OMDSDN`        | [omada_sdn_imp](https://github.com/netalertx/NetAlertX/tree/main/server/plugins/omada_sdn_imp/)                    | 📥/🆎 ❌  | UNMAINTAINED use `OMDSDNOPENAPI`        | 🖧 🔄    |          |
-| `OMDSDNOPENAPI` | [omada_sdn_openapi](https://github.com/netalertx/NetAlertX/tree/main/server/plugins/omada_sdn_openapi/)            | 📥/🆎    | OMADA TP-Link import via OpenAPI          | 🖧       |          |
-| `PIHOLE`        | [pihole_scan](https://github.com/netalertx/NetAlertX/tree/main/server/plugins/pihole_scan/)                         | 🆎/📥 | Pi-hole device import & sync               |          |          |
-| `PIHOLEAPI`     | [pihole_api_scan](https://github.com/netalertx/NetAlertX/tree/main/server/plugins/pihole_api_scan/)                 | 🆎/📥 | Pi-hole device import & sync via API v6+   |          |          |
-| `PIHOLEMON`     | [pihole_monitor](https://github.com/netalertx/NetAlertX/tree/main/server/plugins/pihole_monitor/)                   | 🆎/📥 | Blocked-query anomaly detection (includes primary and secondary DNS import from Pi-hole) |          |          |
-| `PUSHSAFER`     | [_publisher_pushsafer](https://github.com/netalertx/NetAlertX/tree/main/server/plugins/_publisher_pushsafer/)      | ▶️       | Pushsafer notifications                   |          |          |
-| `PUSHOVER`      | [_publisher_pushover](https://github.com/netalertx/NetAlertX/tree/main/server/plugins/_publisher_pushover/)        | ▶️       | Pushover notifications                    |          |          |
-| `RSTIMPRT`      | [rest_import](https://github.com/netalertx/NetAlertX/tree/main/server/plugins/rest_import/)                        | 📥/🆎   | Import via a REST API endpoint             |  🖧      |          |
-| `SETPWD`        | [set_password](https://github.com/netalertx/NetAlertX/tree/main/server/plugins/set_password/)                       | ⚙        | Set password                              |          | Yes      |
-| `SMTP`          | [_publisher_email](https://github.com/netalertx/NetAlertX/tree/main/server/plugins/_publisher_email/)              | ▶️       | Email notifications                       |          |          |
-| `SNMPDSC`       | [snmp_discovery](https://github.com/netalertx/NetAlertX/tree/main/server/plugins/snmp_discovery/)                   | 🔍/📥    | SNMP device import & sync                 |          |          |
-| `SYNC`          | [sync](https://github.com/netalertx/NetAlertX/tree/main/server/plugins/sync/)                                      | ⚙/📥     | Sync & import from NetAlertX instances    | 🖧 🔄    | Yes      |
-| `TELEGRAM`      | [_publisher_telegram](https://github.com/netalertx/NetAlertX/tree/main/server/plugins/_publisher_telegram/)        | ▶️       | Telegram notifications                    |          |          |
-| `UI`            | [ui_settings](https://github.com/netalertx/NetAlertX/tree/main/server/plugins/ui_settings/)                         | ♻        | UI specific settings                      |          | Yes      |
-| `UNFIMP`        | [unifi_import](https://github.com/netalertx/NetAlertX/tree/main/server/plugins/unifi_import/)                       | 📥/🆎 | UniFi device import & sync                  | 🖧       |          |
-| `UNIFIAPI`      | [unifi_api_import](https://github.com/netalertx/NetAlertX/tree/main/server/plugins/unifi_api_import/)               | 📥/🆎 | UniFi device import (SM API, multi-site)   |           |         |
-| `VNDRPDT`       | [vendor_update](https://github.com/netalertx/NetAlertX/tree/main/server/plugins/vendor_update/)                     | ⚙        | Vendor database update                    |          |          |
-| `WEBHOOK`       | [_publisher_webhook](https://github.com/netalertx/NetAlertX/tree/main/server/plugins/_publisher_webhook/)          | ▶️       | Webhook notifications                     |          |          |
-| `WEBMON`        | [website_monitor](https://github.com/netalertx/NetAlertX/tree/main/server/plugins/website_monitor/)                 | ♻        | Website down monitoring                   |          |          |
-| `WOL`           | [wake_on_lan](https://github.com/netalertx/NetAlertX/tree/main/server/plugins/wake_on_lan/)                        | ♻        | Automatic wake-on-lan                     |          |          |
+| `APPRISE`       | [_publisher_apprise](plugins/_publisher_apprise.md)          | ▶️       | Apprise notification proxy                |          |          |
+| `ARPSCAN`       | [arp_scan](plugins/arp_scan.md)                               | 🔍       | ARP-scan on current network               |          |          |
+| `AVAHISCAN`     | [avahi_scan](plugins/avahi_scan.md)                           | 🆎       | Avahi (mDNS-based) name resolution        |          |          |
+| `ASUSWRT`       | [asuswrt_import](plugins/asuswrt_import.md)                   | 📥       | Import connected devices from AsusWRT     |          |          |
+| `CSVBCKP`       | [csv_backup](plugins/csv_backup.md)                           | ⚙        | CSV devices backup                        |          |          |
+| `CUSTPROP`      | [custom_props](plugins/custom_props.md)                       | ⚙        | Managing custom device properties values  |          | Yes      |
+| `DBCLNP`        | [db_cleanup](plugins/db_cleanup.md)                           | ⚙        | Database cleanup                          |          | Yes\*    |
+| `DDNS`          | [ddns_update](plugins/ddns_update.md)                         | ⚙        | DDNS update                               |          |          |
+| `DHCPLSS`       | [dhcp_leases](plugins/dhcp_leases.md)                         | 📥/🆎   | Import devices from DHCP leases           |          |          |
+| `DHCPSRVS`      | [dhcp_servers](plugins/dhcp_servers.md)                       | ♻        | DHCP servers                              |          |          |
+| `DIGSCAN`       | [dig_scan](plugins/dig_scan.md)                               | 🆎       | Dig (DNS) Name resolution                 |          |          |
+| `FREEBOX`       | [freebox](plugins/freebox.md)                                  |📥/♻/🆎  | Pull data and names from Freebox/Iliadbox |          |          |
+| `FRITZBOX`      | [fritzbox](plugins/fritzbox.md)                                | 📥       | Fritz!Box device scanner via TR-064       |          |          |
+| `ICMP`          | [icmp_scan](plugins/icmp_scan.md)                             | ♻        | ICMP (ping) status checker                |          |          |
+| `INTRNT`        | [internet_ip](plugins/internet_ip.md)                         | 🔍       | Internet IP scanner                       |          |          |
+| `INTRSPD`       | [internet_speedtest](plugins/internet_speedtest.md)           | ♻        | Internet speed test                       |          |          |
+| `IPNEIGH`       | [ipneigh](plugins/ipneigh.md)                                  | 🔍       | Scan ARP (IPv4) and NDP (IPv6) tables     |          |          |
+| `KEALSS`        | [kea_api](plugins/kea_api.md)                                  | 📥/🆎     | Pull lease data from the Kea DHCP API   |          |          |
+| `LUCIRPC`       | [luci_import](plugins/luci_import.md)                         | 📥       | Import connected devices from OpenWRT     |          |          |
+| `MAINT`         | [maintenance](plugins/maintenance.md)                          | ⚙        | Maintenance of logs, etc.                 |          |          |
+| `MQTT`          | [_publisher_mqtt](plugins/_publisher_mqtt.md)                | ▶️       | MQTT for syncing to Home Assistant         |          |          |
+| `MTSCAN`        | [mikrotik_scan](plugins/mikrotik_scan.md)                    | 🔍       | Mikrotik device import & sync              |          |          |
+| `NBTSCAN`       | [nbtscan_scan](plugins/nbtscan_scan.md)                       | 🆎       | Nbtscan (NetBIOS-based) name resolution   |          |          |
+| `NEWDEV`        | [newdev_template](plugins/newdev_template.md)                 | ⚙        | New device template                       |          | Yes      |
+| `NMAP`          | [nmap_scan](plugins/nmap_scan.md)                             | ♻        | Nmap port scanning & discovery            |          |          |
+| `NMAPDEV`       | [nmap_dev_scan](plugins/nmap_dev_scan.md)                    | 🔍       | Nmap dev scan on current network           |          |          |
+| `NSLOOKUP`      | [nslookup_scan](plugins/nslookup_scan.md)                     | 🆎       | NSLookup (DNS-based) name resolution      |          |          |
+| `NTFPRCS`       | [notification_processing](plugins/notification_processing.md) | ⚙        | Notification processing                   |          | Yes      |
+| `NTFY`          | [_publisher_ntfy](plugins/_publisher_ntfy.md)                | ▶️       | NTFY notifications                        |          |          |
+| `OMDSDN`        | [omada_sdn_imp](plugins/omada_sdn_imp.md)                    | 📥/🆎 ❌  | UNMAINTAINED use `OMDSDNOPENAPI`        | 🖧 🔄    |          |
+| `OMDSDNOPENAPI` | [omada_sdn_openapi](plugins/omada_sdn_openapi.md)            | 📥/🆎    | OMADA TP-Link import via OpenAPI          | 🖧       |          |
+| `PIHOLE`        | [pihole_scan](plugins/pihole_scan.md)                         | 🆎/📥 | Pi-hole device import & sync               |          |          |
+| `PIHOLEAPI`     | [pihole_api_scan](plugins/pihole_api_scan.md)                 | 🆎/📥 | Pi-hole device import & sync via API v6+   |          |          |
+| `PIHOLEMON`     | [pihole_monitor](plugins/pihole_monitor.md)                   | 🆎/📥 | Blocked-query anomaly detection (includes primary and secondary DNS import from Pi-hole) |          |          |
+| `PUSHSAFER`     | [_publisher_pushsafer](plugins/_publisher_pushsafer.md)      | ▶️       | Pushsafer notifications                   |          |          |
+| `PUSHOVER`      | [_publisher_pushover](plugins/_publisher_pushover.md)        | ▶️       | Pushover notifications                    |          |          |
+| `RSTIMPRT`      | [rest_import](plugins/rest_import.md)                        | 📥/🆎   | Import via a REST API endpoint             |  🖧      |          |
+| `SETPWD`        | [set_password](plugins/set_password.md)                       | ⚙        | Set password                              |          | Yes      |
+| `SMTP`          | [_publisher_email](plugins/_publisher_email.md)              | ▶️       | Email notifications                       |          |          |
+| `SNMPDSC`       | [snmp_discovery](plugins/snmp_discovery.md)                   | 🔍/📥    | SNMP device import & sync                 |          |          |
+| `SYNC`          | [sync](plugins/sync.md)                                      | ⚙/📥     | Sync & import from NetAlertX instances    | 🖧 🔄    | Yes      |
+| `TELEGRAM`      | [_publisher_telegram](plugins/_publisher_telegram.md)        | ▶️       | Telegram notifications                    |          |          |
+| `UI`            | [ui_settings](plugins/ui_settings.md)                         | ♻        | UI specific settings                      |          | Yes      |
+| `UNFIMP`        | [unifi_import](plugins/unifi_import.md)                       | 📥/🆎 | UniFi device import & sync                  | 🖧       |          |
+| `UNIFIAPI`      | [unifi_api_import](plugins/unifi_api_import.md)               | 📥/🆎 | UniFi device import (SM API, multi-site)   |           |         |
+| `VNDRPDT`       | [vendor_update](plugins/vendor_update.md)                     | ⚙        | Vendor database update                    |          |          |
+| `WEBHOOK`       | [_publisher_webhook](plugins/_publisher_webhook.md)          | ▶️       | Webhook notifications                     |          |          |
+| `WEBMON`        | [website_monitor](plugins/website_monitor.md)                 | ♻        | Website down monitoring                   |          |          |
+| `WOL`           | [wake_on_lan](plugins/wake_on_lan.md)                        | ♻        | Automatic wake-on-lan                     |          |          |
 
 
 > \* The database cleanup plugin (`DBCLNP`) is not _required_ but the app will become unusable after a while if not executed.

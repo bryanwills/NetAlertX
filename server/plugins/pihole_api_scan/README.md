@@ -13,6 +13,8 @@ The plugin connects to your Pi-hole’s API and retrieves:
 
 NetAlertX then uses this information to match or create devices in your system.
 
+See the [Pi-hole guide](https://docs.netalertx.com/PIHOLE_GUIDE) for a walkthrough covering this plugin alongside the other Pi-hole integrations (`PIHOLE`, `PIHOLEMON`, `DHCPLSS`).
+
 ### Quick setup guide
 
 * You are running **Pi-hole v6** or newer.

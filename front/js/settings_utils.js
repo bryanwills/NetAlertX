@@ -265,9 +265,31 @@ function cloneDataTableRow(el){
   // Clone the row (including its data and controls)
   let clonedRow = $(row).clone(true, true); // The true arguments copy the data and event handlers
 
+  // Use max(my-index) + 1, not rows().count(), so a clone made after a row was
+  // removed can't collide with a surviving row's index (count() shrinks on removal,
+  // indices don't get renumbered).
+  let newIndex = 0;
+  table.rows().nodes().to$().each(function () {
+    const idx = parseInt($(this).attr("my-index"));
+    if (!isNaN(idx) && idx >= newIndex) { newIndex = idx + 1; }
+  });
 
-  $(clonedRow).attr("my-index",table.rows().count())
+  $(clonedRow).attr("my-index", newIndex);
 
+  // jQuery's clone() copies every descendant id/name/data-* attribute verbatim,
+  // so the clone's inputs/select/action-icons still carry the SOURCE row's
+  // "<key>_<myIndex>" identifiers - e.g. two elements now share the same id.
+  // That breaks anything that looks an element up by id (e.g. the icon picker's
+  // document.getElementById(setKey) in showIconSelection()), which then always
+  // resolves to the first (source) row instead of the new clone. Re-key every
+  // such attribute on the clone to use the new index instead.
+  const idxSuffix = new RegExp(`_${myIndex}(?!\\d)`, 'g');
+  clonedRow.find('[id], [name], [data-myparam-setkey], [data-myparam]').each(function () {
+    ['id', 'name', 'data-myparam-setkey', 'data-myparam'].forEach(attr => {
+      const v = $(this).attr(attr);
+      if (v) { $(this).attr(attr, v.replace(idxSuffix, `_${newIndex}`)); }
+    });
+  });
 
   console.log(clonedRow);
 
