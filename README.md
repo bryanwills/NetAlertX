@@ -76,14 +76,14 @@ For Home Assistant users: [Click here to add NetAlertX](https://my.home-assistan
 For other install methods, check the [installation docs](#documentation)
 
 ---
-### || [Docker guide](https://docs.netalertx.com/DOCKER_INSTALLATION) || [Releases](https://github.com/netalertx/NetAlertX/releases) || [Docs](https://docs.netalertx.com/) || [Plugins](https://docs.netalertx.com/PLUGINS) || [Website](https://netalertx.com)
+### || [Docker guide](https://docs.netalertx.com/DOCKER_INSTALLATION) || [Releases](https://github.com/netalertx/NetAlertX/releases) || [Docs](https://docs.netalertx.com/) || [Plugins](https://docs.netalertx.com/PLUGINS_OVERVIEW) || [Website](https://netalertx.com)
 ---
 
 ## Features
 
 ### Discovery & Asset Intelligence
 
-Continuous monitoring for unauthorized asset discovery, connection state changes, and IP address management (IPAM) drift. Discovery & scan methods include: **arp-scan**,  **Pi-hole - DB import**,  **Pi-hole - DHCP leases import**, **Generic DHCP leases import**, **UNIFI controller import**, **SNMP-enabled router import**. Check the [Plugins](https://docs.netalertx.com/PLUGINS#readme) docs for a full list of avaliable plugins.
+Continuous monitoring for unauthorized asset discovery, connection state changes, and IP address management (IPAM) drift. Discovery & scan methods include: **arp-scan**,  **Pi-hole - DB import**,  **Pi-hole - DHCP leases import**, **Generic DHCP leases import**, **UNIFI controller import**, **SNMP-enabled router import**. Check the [Plugins](https://docs.netalertx.com/PLUGINS_OVERVIEW#readme) docs for a full list of avaliable plugins.
 
 ### Notification gateways
 
@@ -92,7 +92,7 @@ Send notifications to more than 80+ services, including Telegram via [Apprise](h
 ### Integrations and Plugins
 
 Feed your data and device changes into [Home Assistant](https://docs.netalertx.com/HOME_ASSISTANT), read [API endpoints](https://docs.netalertx.com/API), or use [Webhooks](https://docs.netalertx.com/WEBHOOK_N8N) to setup custom automation flows. You can also
-build your own scanners with the [Plugin system](https://docs.netalertx.com/PLUGINS#readme) in as little as [15 minutes](https://www.youtube.com/watch?v=cdbxlwiWhv8).
+build your own scanners with the [Plugin system](https://docs.netalertx.com/PLUGINS_OVERVIEW#readme) in as little as [15 minutes](https://www.youtube.com/watch?v=cdbxlwiWhv8).
 
 ### Workflows
 

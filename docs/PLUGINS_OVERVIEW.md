@@ -12,7 +12,7 @@ NetAlertX supports additional plugins to extend its functionality, each with its
 > ![Loaded plugins settings](./img/PLUGINS/enable_plugin.gif)
 
 1. Pick your `🔍 dev scanner` plugin (e.g. `ARPSCAN` or `NMAPDEV`), or import devices into the application with an `📥 importer` plugin. (See **Enabling plugins** below)
-2. Pick a `▶️ publisher` plugin, if you want to send notifications. If you don't see a publisher you'd like to use, look at the  [📚_publisher_apprise](https://docs.netalertx.com/PLUGINS/?h=APPRISE#available-plugins) plugin which is a proxy for over 80 notification services.
+2. Pick a `▶️ publisher` plugin, if you want to send notifications. If you don't see a publisher you'd like to use, look at the  [📚_publisher_apprise](https://docs.netalertx.com/PLUGINS_OVERVIEW/?h=APPRISE#available-plugins) plugin which is a proxy for over 80 notification services.
 3. Setup your [Network topology diagram](./NETWORK_TREE.md)
 4. Fine-tune [Notifications](./NOTIFICATIONS.md)
 5. Setup [Workflows](./WORKFLOWS.md)
@@ -43,7 +43,7 @@ NetAlertX supports additional plugins to extend its functionality, each with its
 
 Device-detecting plugins insert values into the `CurrentScan` database table.  The plugins that are not required are safe to ignore, however, it makes sense to have at least some device-detecting plugins enabled, such as `ARPSCAN` or `NMAPDEV`.
 
-The **Plugin docs** links below open each plugin's README rendered as part of this site (see the [Plugins reference](./plugins/) section) - generated automatically from `server/plugins/<name>/README.md`.
+The **Plugin docs** links below open each plugin's README rendered as part of this site (see the [Plugins reference](./plugins/index.md) section) - generated automatically from `server/plugins/<name>/README.md`.
 
 | ID              | Plugin docs                                                                                                      | Type     | Description                               | Features | Required |
 | --------------- | ------------------------------------------------------------------------------------------------------------------ | -------- | ----------------------------------------- | -------- | -------- |

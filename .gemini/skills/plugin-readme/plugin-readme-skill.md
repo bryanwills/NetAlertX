@@ -44,5 +44,5 @@ Before concluding a plugin has no attribution to record, grep its script for a c
 
 ## Reference
 
-- Repo-wide plugin catalog with icon/type legend: `docs/PLUGINS.md`
+- Repo-wide plugin catalog with icon/type legend: `docs/PLUGINS_OVERVIEW.md`
 - Full plugin authoring reference (settings schema, execution phases, data contract): `docs/PLUGINS_DEV.md` and the `plugin-development` skill.
