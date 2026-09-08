@@ -140,7 +140,8 @@
               { "placeholder": "Enter value" },
               { "suffix": "_in" },
               { "cssClasses": "col-sm-10" },
-              { "prefillValue": "null" }
+              { "prefillValue": "null" },
+              { "type": "hidden" }
             ],
             "transformers": []
           },
@@ -150,7 +151,7 @@
               { "sourceSuffixes": ["_in"] },
               { "separator": "" },
               { "cssClasses": "col-xs-12" },
-              { "onClick": "addList(this,false)" },
+              { "onClick": "addIconViaModal(this)" },
               { "getStringKey": "Gen_Add" }
             ],
             "transformers": []
