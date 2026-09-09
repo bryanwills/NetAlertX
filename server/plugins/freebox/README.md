@@ -5,6 +5,7 @@ Plugin to pull devices, IPs, and their names from a Freebox or Iliadbox gateway.
 ### Pairing
 
 Requirements:
+
 - Physical access to the Freebox
 - Network access to the same lan as the Freebox
 
@@ -24,6 +25,7 @@ Note: read [pairing](#pairing) first.
 By default the plugin will connect to the address `mafreebox.freebox.fr` on the HTTPS port `443`, if you have an Iliadbox, replace the address with `myiliadbox.iliad.it`. This will work in most cases, but has some limitations.
 
 Limitations:
+
 - It requires internet access
 - The Freebox must be your gateway
 - The device must be in the same lan as the Freebox

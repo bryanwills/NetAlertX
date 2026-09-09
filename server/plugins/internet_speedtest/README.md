@@ -5,6 +5,7 @@ A plugin allowing for executing regular internet speed tests.
 ### Usage
 
 This plugin supports two engines:
+
 1.  **Baseline Engine**: Uses the Python `speedtest-cli` library (default).
 2.  **Native Engine (Optimized)**: Uses the official native Ookla Speedtest binary.
 
@@ -22,6 +23,7 @@ If this variable is left unset, the plugin assumes `/usr/bin/speedtest`.
 To use the native engine, you must provide the official binary to the container. The native binary is **strongly recommended** for internet connections > 100 Mbps to ensure CPU bottlenecks don't affect your results.
 
 **Setup Instructions:**
+
 1. **Download:** Get the official binary for your architecture from the [Speedtest CLI Homepage](https://www.speedtest.net/apps/cli).
 2. **Place & Prepare:** Place the binary on your host machine (e.g., in `/opt/netalertx/`) and ensure it has executable permissions:
 
