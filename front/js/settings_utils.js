@@ -352,6 +352,26 @@ function addViaPopupForm(element) {
 }
 
 // ---------------------------------------------------------
+// Commit a value as a new interactive option on a target select,
+// shared by addList (typed value) and addIconViaModal (pasted/encoded value)
+function appendListOption(toId, value, label = value) {
+  const newOption = $("<option class='interactable-option'></option>")
+    .attr("value", value)
+    .text(label);
+
+  // add new option
+  $(`#${toId}`).append(newOption);
+
+  // Initialize interaction options only for the newly added option
+  initListInteractionOptions(newOption);
+
+  // flag something changes to prevent navigating from page
+  settingsChanged();
+
+  return newOption;
+}
+
+// ---------------------------------------------------------
 // Add item to list
 function addList(element, clearInput = true) {
   const fromId = $(element).attr("my-input-from");
@@ -361,23 +381,33 @@ function addList(element, clearInput = true) {
 
   console.log(`fromId | toId | input : ${fromId} | ${toId} | ${input}`);
 
-  const newOption = $("<option class='interactable-option'></option>")
-    .attr("value", input)
-    .text(input);
-
-  // add new option
-  $(`#${toId}`).append(newOption);
+  appendListOption(toId, input);
 
   // clear input
   if (clearInput) {
     $(`#${fromId}`).val("");
   }
+}
 
-  // Initialize interaction options only for the newly added option
-  initListInteractionOptions(newOption);
+// ---------------------------------------------------------
+// Add a new icon to a target select by pasting raw SVG/Font-Awesome HTML
+// in a modal and base64-encoding it automatically, instead of requiring
+// the value to already be base64-encoded in the (hidden) input.
+function addIconViaModal(button) {
+  const toId = $(button).attr("my-input-to");
 
-  // flag something changes to prevent navigating from page
-  settingsChanged();
+  showModalInput(
+    '<i class="fa fa-square-plus pointer"></i> ' + getString('DevDetail_button_AddIcon'),
+    getString('DevDetail_button_AddIcon_Help'),
+    getString('Gen_Cancel'),
+    getString('Gen_Okay'),
+    () => {
+      const raw = $('#modal-input-textarea').val();
+      const encoded = btoa(raw.replace(/"/g, "'"));
+      appendListOption(toId, encoded);
+    },
+    null
+  );
 }
 
 // ---------------------------------------------------------
