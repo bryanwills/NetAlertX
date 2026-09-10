@@ -21,8 +21,13 @@ class Condition:
         appEvent_value = (
             trigger.event[self.field] if self.field in trigger.event.keys() else None
         )
+        # trigger.object is None when the referenced Devices/Plugins_Objects row no
+        # longer exists by the time this event is processed (e.g. deleted between
+        # AppEvent creation and workflow processing) - fall back to the event value only.
         eveObj_value = (
-            trigger.object[self.field] if self.field in trigger.object.keys() else None
+            trigger.object[self.field]
+            if trigger.object is not None and self.field in trigger.object.keys()
+            else None
         )
 
         # proceed only if value found

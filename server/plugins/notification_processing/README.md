@@ -56,5 +56,5 @@ Certain notifications can be disabled per device:
 - Review the **Settings** page to configure which notification types should be enabled.
 - Ensure that device-specific alert settings align with your requirements.
 
-For additional details, check the [Notifications Guide](/docs/NOTIFICATIONS.md).
+For additional details, check the [Notifications Guide](/NOTIFICATIONS).
 

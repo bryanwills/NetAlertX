@@ -165,7 +165,10 @@ CREATE TABLE CurrentScan (
                                 scanParentMAC STRING(250),
                                 scanParentPort STRING(250),
                                 scanFQDN STRING(250),
-                                scanType STRING(250)
+                                scanType STRING(250),
+                                scanCreatesDevice BOOLEAN NOT NULL DEFAULT (1) CHECK (scanCreatesDevice IN (0, 1)),
+                                scanNotificationMode STRING(10) NOT NULL DEFAULT ('normal'),
+                                scanPresence BOOLEAN NOT NULL DEFAULT (1) CHECK (scanPresence IN (0, 1))
                             );
 CREATE INDEX idx_currentscan_scanmac ON CurrentScan(scanMac);
 CREATE TABLE IF NOT EXISTS AppEvents (

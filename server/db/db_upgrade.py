@@ -572,16 +572,22 @@ def ensure_CurrentScan(sql) -> bool:
                                 scanParentMAC STRING(250),
                                 scanParentPort STRING(250),
                                 scanFQDN STRING(250),
-                                scanType STRING(250)
+                                scanType STRING(250),
+                                scanCreatesDevice BOOLEAN NOT NULL DEFAULT (1) CHECK (scanCreatesDevice IN (0, 1)),
+                                scanNotificationMode STRING(10) NOT NULL DEFAULT ('normal'),
+                                scanPresence BOOLEAN NOT NULL DEFAULT (1) CHECK (scanPresence IN (0, 1))
                             );
                         """)
     # scanMac has no uniqueness constraint - multiple plugins commonly report
     # the same MAC in one cycle (e.g. arp_scan + nslookup), so every lookup
     # keyed on scanMac (update_presence_from_CurrentScan, insert_events, the
     # LatestDeviceScan/LatestEventsPerMAC views) was a full table scan without
-    # this. Table is dropped every cycle, so the index is rebuilt with it -
-    # cheap insurance against O(n^2) scans at NOC-scale device counts (10k+ in
-    # real deployments).
+    # this. ensure_CurrentScan() itself only runs once, at app startup
+    # (DB.initDB() -> __main__.py) - each scan cycle only does
+    # DELETE FROM CurrentScan (session_events.py), which does not drop the
+    # table or its index, so this index is built once and then maintained
+    # incrementally, not rebuilt every cycle. Still cheap insurance against
+    # O(n^2) scans at NOC-scale device counts (10k+ in real deployments).
     sql.execute("CREATE INDEX IF NOT EXISTS idx_currentscan_scanmac ON CurrentScan(scanMac);")
 
     return True

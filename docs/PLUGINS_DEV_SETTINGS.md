@@ -92,6 +92,7 @@ These function names have special meaning and control core plugin behavior:
 | `WATCH` | **Which columns to monitor for changes** | multi-select | optional | Column names from data contract |
 | `REPORT_ON` | **When to send notifications** | select | optional | `"new"`, `"watched-changed"`, `"watched-not-changed"`, `"missing-in-last-scan"` |
 | `DB_PATH` | **External database path** | input | If using SQLite plugin | File path: `"/etc/pihole/pihole-FTL.db"` |
+| `IMPORT_ON` | **Gates whether this run's rows get promoted into `CurrentScan`** | checkbox | optional | Boolean. Only meaningful for plugins with `mapped_to_table: "CurrentScan"`. Absent = always import. `False` skips *only* the `CurrentScan` promotion — the plugin still runs, and its own data table (`Plugins_Objects`) still gets written. See [Data contract](PLUGINS_DEV_DATA_CONTRACT.md) for the related per-row `scanCreatesDevice`/`scanNotificationMode`/`scanPresence` columns, which control finer-grained behavior once a row *does* reach `CurrentScan`. |
 
 ### API & Data Settings
 

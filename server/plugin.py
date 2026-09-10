@@ -974,7 +974,18 @@ def process_plugin_events(db, plugin, plugEventsArr):
         raise e
 
     # Perform database table mapping if enabled for the plugin
-    if len(pluginEvents) > 0 and "mapped_to_table" in plugin:
+    # get_setting_value(default=None) distinguishes "IMPORT_ON never declared"
+    # (None, always import) from "declared and turned off" (falsy). Gate is
+    # scoped to CurrentScan specifically - it must not skip mapping to any
+    # other destination table.
+    import_on_key = pluginPref + "_IMPORT_ON"
+    import_on = get_setting_value(import_on_key, default=None)
+    import_disabled = import_on is not None and not import_on
+    skip_currentscan_promotion = import_disabled and plugin.get("mapped_to_table") == "CurrentScan"
+
+    if skip_currentscan_promotion:
+        mylog("debug", f"[Plugins] {import_on_key} is disabled - skipping table mapping for {pluginPref} this run")
+    elif len(pluginEvents) > 0 and "mapped_to_table" in plugin:
         # Initialize an empty list to store SQL parameters.
         sqlParams = []
 

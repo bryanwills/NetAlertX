@@ -192,6 +192,7 @@ def insert_events(db):
                       AND {_SQL_NOT_FORCED_ONLINE}
                       AND NOT EXISTS (SELECT 1 FROM CurrentScan
                                       WHERE devMac = scanMac
+                                        AND scanPresence = 1
                                          ) """)
 
     # Check device down – sleeping devices whose sleep window has expired
@@ -207,7 +208,8 @@ def insert_events(db):
                       AND devPresentLastScan = 0
                       AND {_SQL_NOT_FORCED_ONLINE}
                       AND NOT EXISTS (SELECT 1 FROM CurrentScan
-                                      WHERE devMac = scanMac)
+                                      WHERE devMac = scanMac
+                                        AND scanPresence = 1)
                       AND NOT EXISTS (SELECT 1 FROM Events
                                       WHERE eveMac = devMac
                                         AND eveEventType = 'Device Down'
@@ -216,19 +218,49 @@ def insert_events(db):
 
     # Check new Connections or Down Reconnections
     mylog("debug", "[Events] - 2 - New Connections")
+    # Two separate per-MAC aggregates, deliberately not one:
+    # - present_agg: scanPresence = 1 rows only. Gates whether this MAC
+    #   counts as "just connected" (abstain, not override - a sibling
+    #   non-presence row never blocks it), and MIN() picks one deterministic
+    #   scanLastIP so two plugins reporting different IPs for one MAC don't
+    #   each insert their own Connected event.
+    # - quiet_agg: unrestricted by scanPresence on purpose - a plugin's quiet
+    #   preference counts even from a row that isn't the one asserting
+    #   presence (most-restrictive-wins is a separate axis from presence).
+    # This runs before create_new_devices(), so a legitimately new device
+    # (scanCreatesDevice=1 this cycle) has no Devices row yet either - the
+    # final WHERE clause treats "will be created this cycle" the same as
+    # "already exists" rather than requiring a Devices row, or a
+    # scanCreatesDevice=0-only MAC would suppress the mainline case too.
     sql.execute(f"""    INSERT OR IGNORE INTO Events (eveMac, eveIp, eveDateTime,
                                             eveEventType, eveAdditionalInfo,
                                             evePendingAlertEmail)
-                        SELECT DISTINCT c.scanMac, c.scanLastIP, '{startTime}',
+                        SELECT present_agg.scanMac, present_agg.scanLastIP, '{startTime}',
                                         CASE
                                             WHEN last_event.eveEventType = 'Device Down' and  last_event.evePendingAlertEmail = 0 THEN 'Down Reconnected'
                                             ELSE 'Connected'
                                         END,
                                         '',
-                                        1
-                        FROM CurrentScan AS c
-                        LEFT JOIN LatestEventsPerMAC AS last_event ON c.scanMac = last_event.eveMac
-                        WHERE last_event.devPresentLastScan = 0 OR last_event.eveMac IS NULL
+                                        CASE WHEN quiet_agg.scanQuiet = 1 THEN 0 ELSE 1 END
+                        FROM (
+                            SELECT scanMac, MIN(scanLastIP) AS scanLastIP
+                            FROM CurrentScan
+                            WHERE scanPresence = 1
+                            GROUP BY scanMac
+                        ) present_agg
+                        JOIN (
+                            SELECT scanMac,
+                                   MAX(CASE WHEN scanNotificationMode = 'quiet' THEN 1 ELSE 0 END) AS scanQuiet,
+                                   MAX(scanCreatesDevice) AS scanCreates
+                            FROM CurrentScan
+                            GROUP BY scanMac
+                        ) quiet_agg ON quiet_agg.scanMac = present_agg.scanMac
+                        LEFT JOIN LatestEventsPerMAC AS last_event ON present_agg.scanMac = last_event.eveMac
+                        WHERE (last_event.devPresentLastScan = 0 OR last_event.eveMac IS NULL)
+                          AND (
+                                quiet_agg.scanCreates = 1
+                                OR EXISTS (SELECT 1 FROM Devices WHERE devMac = present_agg.scanMac)
+                              )
                         """)
 
     # Check disconnections
@@ -244,22 +276,43 @@ def insert_events(db):
                       AND {_SQL_NOT_FORCED_ONLINE}
                       AND NOT EXISTS (SELECT 1 FROM CurrentScan
                                       WHERE devMac = scanMac
+                                        AND scanPresence = 1
                                          ) """)
 
     # Check IP Changed
     mylog("debug", "[Events] - 4 - IP Changes")
+    # Unlike Device Down/Disconnected (which fire on row *absence*), IP
+    # Changed fires from a present row, so quiet is consulted additively here:
+    # suppress if EITHER the live aggregate says quiet OR devAlertEvents is
+    # off. Same present_agg/quiet_agg split as the New Connections query
+    # above, for the same reasons - present_agg must require scanPresence = 1
+    # or an abstain-only row with a differing IP would look like a live
+    # change, and MIN(scanLastIP) keeps two presence-asserting plugins with
+    # different IPs from each inserting their own event.
     sql.execute(f"""INSERT OR IGNORE INTO Events (eveMac, eveIp, eveDateTime,
                         eveEventType, eveAdditionalInfo,
                         evePendingAlertEmail)
-                    SELECT scanMac, scanLastIP, '{startTime}', 'IP Changed',
-                        'Previous IP: '|| devLastIP, devAlertEvents
-                    FROM Devices, CurrentScan
-                    WHERE devMac = scanMac
-                      AND scanLastIP IS NOT NULL
-                      AND scanLastIP NOT IN ({NULL_EQUIVALENTS_SQL})
-                      AND scanLastIP <> COALESCE(devPrimaryIPv4, '')
-                      AND scanLastIP <> COALESCE(devPrimaryIPv6, '')
-                      AND scanLastIP <> COALESCE(devLastIP, '') """)
+                    SELECT present_agg.scanMac, present_agg.scanLastIP, '{startTime}', 'IP Changed',
+                        'Previous IP: '|| devLastIP,
+                        CASE WHEN quiet_agg.scanQuiet = 1 THEN 0 ELSE devAlertEvents END
+                    FROM Devices
+                    JOIN (
+                        SELECT scanMac, MIN(scanLastIP) AS scanLastIP
+                        FROM CurrentScan
+                        WHERE scanPresence = 1
+                          AND scanLastIP IS NOT NULL
+                          AND scanLastIP NOT IN ({NULL_EQUIVALENTS_SQL})
+                        GROUP BY scanMac
+                    ) present_agg ON present_agg.scanMac = devMac
+                    JOIN (
+                        SELECT scanMac,
+                               MAX(CASE WHEN scanNotificationMode = 'quiet' THEN 1 ELSE 0 END) AS scanQuiet
+                        FROM CurrentScan
+                        GROUP BY scanMac
+                    ) quiet_agg ON quiet_agg.scanMac = devMac
+                    WHERE present_agg.scanLastIP <> COALESCE(devPrimaryIPv4, '')
+                      AND present_agg.scanLastIP <> COALESCE(devPrimaryIPv6, '')
+                      AND present_agg.scanLastIP <> COALESCE(devLastIP, '') """)
     mylog("debug", "[Events] - Events end")
 
 

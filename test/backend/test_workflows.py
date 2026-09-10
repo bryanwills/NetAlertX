@@ -432,5 +432,38 @@ class TestCascadePrevention(unittest.TestCase):
         self.assertIn("guid-mutated", mgr._mutated_guids)
 
 
+class TestConditionHandlesMissingTriggerObject(unittest.TestCase):
+    """Regression test: trigger.object is None whenever the AppEvent's
+    objectGuid no longer matches any Devices/Plugins_Objects row by the time
+    the event is processed (e.g. the device was deleted between AppEvent
+    creation and workflow processing - see workflows/triggers.py's own None
+    branches). Condition.evaluate() must not crash on it."""
+
+    def _make_trigger(self, event, obj=None):
+        from types import SimpleNamespace
+        return SimpleNamespace(event=event, object=obj)
+
+    def test_condition_on_missing_field_returns_false_not_crash(self):
+        from workflows.conditions import Condition
+
+        event = _make_app_event()
+        trigger = self._make_trigger(event, obj=None)
+
+        condition = Condition({"field": "devLocation", "operator": "equals", "value": "Office"})
+        # must not raise AttributeError: 'NoneType' object has no attribute 'keys'
+        self.assertFalse(condition.evaluate(trigger))
+
+    def test_condition_on_event_field_still_works_when_object_missing(self):
+        """A field present on the AppEvent itself must still evaluate correctly
+        even when trigger.object is None."""
+        from workflows.conditions import Condition
+
+        event = _make_app_event(event_type="update")
+        trigger = self._make_trigger(event, obj=None)
+
+        condition = Condition({"field": "appEventType", "operator": "equals", "value": "update"})
+        self.assertTrue(condition.evaluate(trigger))
+
+
 if __name__ == "__main__":
     unittest.main()
