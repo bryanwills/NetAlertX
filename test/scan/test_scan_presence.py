@@ -149,6 +149,79 @@ class TestNewConnectionsRespectsPresence:
         assert rows == [], "scanPresence=0 must not generate a Connected event"
 
 
+class TestNewConnectionsNoOrphanForCreatesDeviceZero:
+    """A never-before-seen MAC reported only by scanCreatesDevice=0 rows must
+    not get a Connected event either - create_new_devices() will never turn
+    it into a Devices row, so the event would be a permanent orphan (shows up
+    in Events_Devices via its LEFT JOIN with every devName/devVendor field
+    NULL). Distinct from TestNewConnectionsRespectsPresence: this MAC does
+    assert presence, it's the creation gate that must suppress it."""
+
+    def test_unknown_mac_creates_device_zero_no_connected_event(self):
+        conn = make_db()
+        insert_current_scan_row_from_dict(
+            conn, make_current_scan_dict(MAC, scanPresence=1, scanCreatesDevice=0)
+        )
+        db = DummyDB(conn)
+
+        insert_events(db)
+
+        rows = conn.execute(
+            "SELECT * FROM Events WHERE eveMac = ? AND eveEventType IN ('Connected','Down Reconnected')",
+            (MAC,),
+        ).fetchall()
+        assert rows == [], (
+            "a MAC with no Devices row that will never get one "
+            "(scanCreatesDevice=0 on every contributing row) must not get a Connected event"
+        )
+
+    def test_unknown_mac_creates_device_one_still_connects(self):
+        """Regression guard for the fix above: insert_events() runs before
+        create_new_devices(), so a legitimately new device (scanCreatesDevice=1)
+        also has no Devices row yet at this point - it must still get a
+        Connected event same-cycle as its New Device event, unaffected by the
+        orphan-suppression fix."""
+        conn = make_db()
+        insert_current_scan_row_from_dict(
+            conn, make_current_scan_dict(MAC, scanPresence=1, scanCreatesDevice=1)
+        )
+        db = DummyDB(conn)
+
+        insert_events(db)
+
+        rows = conn.execute(
+            "SELECT * FROM Events WHERE eveMac = ? AND eveEventType = 'Connected'",
+            (MAC,),
+        ).fetchall()
+        assert len(rows) == 1, (
+            "a brand-new device that create_new_devices() will create later "
+            "this same cycle must still get its Connected event"
+        )
+
+    def test_existing_device_reconnect_via_creates_device_zero_row_still_connects(self):
+        """An already-existing device (created in a prior cycle) reconnecting
+        this cycle only via an enrich-only-for-creation plugin must still get
+        a Connected event - scanCreatesDevice only gates origination of new
+        devices, not updates/reconnects of ones that already exist."""
+        conn = make_db()
+        insert_device(conn, MAC, alert_down=1, present_last_scan=0)
+        insert_current_scan_row_from_dict(
+            conn, make_current_scan_dict(MAC, scanPresence=1, scanCreatesDevice=0)
+        )
+        db = DummyDB(conn)
+
+        insert_events(db)
+
+        rows = conn.execute(
+            "SELECT * FROM Events WHERE eveMac = ? AND eveEventType = 'Connected'",
+            (MAC,),
+        ).fetchall()
+        assert len(rows) == 1, (
+            "scanCreatesDevice=0 must not block a Connected event for a device "
+            "that already exists"
+        )
+
+
 class TestOnlineToPresenceZeroTransitionClosesSession:
     """The regression this PRD review round specifically caught: a device
     going from online to a scanPresence=0-only report must still get a

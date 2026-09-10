@@ -1,6 +1,6 @@
 ## Overview
 
-A simple EMail (SMTP) notification gateway publisher. Check the [SMTP docs](/docs/SMTP.md) for additional help.
+A simple EMail (SMTP) notification gateway publisher. Check the [SMTP docs](./SMTP.md) for additional help.
 
 ### Usage
 

@@ -7,7 +7,7 @@ The synchronization plugin is designed to synchronize data across multiple insta
 
 
 > [!TIP]
-> This plugin is usually used if you need to monitor inaccessible networks (WAN, VLAN etc.). Read the [Remote networks documentation](/docs/REMOTE_NETWORKS.md) for more details about these scenarios.
+> This plugin is usually used if you need to monitor inaccessible networks (WAN, VLAN etc.). Read the [Remote networks documentation](./REMOTE_NETWORKS.md) for more details about these scenarios.
 
 ### Synchronization Modes
 

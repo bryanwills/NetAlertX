@@ -227,6 +227,11 @@ def insert_events(db):
     # - quiet_agg: unrestricted by scanPresence on purpose - a plugin's quiet
     #   preference counts even from a row that isn't the one asserting
     #   presence (most-restrictive-wins is a separate axis from presence).
+    # This runs before create_new_devices(), so a legitimately new device
+    # (scanCreatesDevice=1 this cycle) has no Devices row yet either - the
+    # final WHERE clause treats "will be created this cycle" the same as
+    # "already exists" rather than requiring a Devices row, or a
+    # scanCreatesDevice=0-only MAC would suppress the mainline case too.
     sql.execute(f"""    INSERT OR IGNORE INTO Events (eveMac, eveIp, eveDateTime,
                                             eveEventType, eveAdditionalInfo,
                                             evePendingAlertEmail)
@@ -245,12 +250,17 @@ def insert_events(db):
                         ) present_agg
                         JOIN (
                             SELECT scanMac,
-                                   MAX(CASE WHEN scanNotificationMode = 'quiet' THEN 1 ELSE 0 END) AS scanQuiet
+                                   MAX(CASE WHEN scanNotificationMode = 'quiet' THEN 1 ELSE 0 END) AS scanQuiet,
+                                   MAX(scanCreatesDevice) AS scanCreates
                             FROM CurrentScan
                             GROUP BY scanMac
                         ) quiet_agg ON quiet_agg.scanMac = present_agg.scanMac
                         LEFT JOIN LatestEventsPerMAC AS last_event ON present_agg.scanMac = last_event.eveMac
-                        WHERE last_event.devPresentLastScan = 0 OR last_event.eveMac IS NULL
+                        WHERE (last_event.devPresentLastScan = 0 OR last_event.eveMac IS NULL)
+                          AND (
+                                quiet_agg.scanCreates = 1
+                                OR EXISTS (SELECT 1 FROM Devices WHERE devMac = present_agg.scanMac)
+                              )
                         """)
 
     # Check disconnections
