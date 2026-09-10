@@ -96,6 +96,7 @@ When **Report Guest WiFi** is enabled and guest WiFi is active on your Fritz!Box
 - Status: Only appears when guest WiFi is enabled
 
 This allows you to:
+
 - Monitor when guest WiFi is active
 - Set up notifications when guest network is enabled/disabled
 - Track guest network status alongside other network devices
@@ -110,6 +111,7 @@ This allows you to:
 **Symptoms**: Plugin logs show "Failed to connect to Fritz!Box" or timeout errors
 
 **Solutions**:
+
 1. Verify Fritz!Box is reachable:
    ```bash
    ping fritz.box
@@ -135,6 +137,7 @@ This allows you to:
 **Symptoms**: "Authentication error" or "Invalid credentials"
 
 **Solutions**:
+
 1. Verify password is correct
 2. Try leaving **Username** empty (some models allow this from local network)
 3. Create a dedicated user in Fritz!Box:
@@ -147,6 +150,7 @@ This allows you to:
 **Symptoms**: Plugin runs successfully but reports 0 devices
 
 **Solutions**:
+
 1. Check **Active Devices Only** setting:
    - If enabled, only connected devices appear
    - Disable to see all devices in Fritz!Box memory
@@ -159,6 +163,7 @@ This allows you to:
 **Symptoms**: Guest WiFi enabled but no Access Point device appears
 
 **Solutions**:
+
 1. Ensure **Report Guest WiFi** is enabled
 2. Guest WiFi must be **active** (not just configured)
 3. Some Fritz!Box models don't expose guest network via TR-064
@@ -183,6 +188,7 @@ This allows you to:
 **Library**: [fritzconnection](https://github.com/kbr/fritzconnection) >= 1.15.1
 
 **Services Used**:
+
 - `FritzHosts`: Device discovery and information
 - `WLANConfiguration`: Guest WiFi status detection
 - `DeviceInfo`: Fritz!Box MAC address retrieval
@@ -207,5 +213,6 @@ This allows you to:
 ### Support
 
 For issues, questions, or feature requests:
+
 - NetAlertX GitHub: [https://github.com/netalertx/NetAlertX](https://github.com/netalertx/NetAlertX)
 - Fritz!Box TR-064 Documentation: [https://avm.de/service/schnittstellen/](https://avm.de/service/schnittstellen/)

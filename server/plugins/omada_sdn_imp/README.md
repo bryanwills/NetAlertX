@@ -42,12 +42,14 @@ The OMADA SDN plugin aims at synchronizing data between NetAlertX and a TPLINK O
  
 #### know limitations:
 OMADA SDN limitation fixed by the plugin:
+
 0. OMADA SDN can't use DNS for names and keep using MAC ref: https://community.tp-link.com/en/business/forum/topic/503782
 - when you use an OMADA user Role =  Administrator, the plugin will attempt to fix OMADA's shortcoming and populat the NAME field from NetAlertX (from DNS/DHCP/...)
 ![OMADA SDN account page](omada_account_sample.png)
 
 
 can not fix some of tplinks OMADA SDN own limitations/bugs:
+
 1. OMADA SDN switches uplinks/downlinks is broken if the default router is not an OMADA native device 
 - (I try to circumvent that through a tree parsing heuristic but your mileage might vary...)
 - ref: https://community.tp-link.com/en/business/forum/topic/673628

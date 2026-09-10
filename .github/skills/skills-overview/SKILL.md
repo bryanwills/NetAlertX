@@ -28,6 +28,9 @@ Skills with the same purpose exist in more than one, sometimes under different n
 | Devcontainer | `devcontainer-services` + `devcontainer-setup` + `devcontainer-configs` | `devcontainer-management` | — | Copilot splits into 3 focused skills; Gemini combines into one (uses `docker exec`) |
 | PR review | `pr-analysis` | `pr-analysis` | `pr-analysis` | How to classify and respond to PR comments; pre-flight skill loading checklist |
 | Logging | `logging-standards` | `logging-standards` | — | `mylog` levels, message format, what not to log |
+| Scan pipeline internals | `scan-pipeline` | `scan-pipeline` | `scan-pipeline` | `process_scan()` call order and why it's load-bearing, `CurrentScan`/`Events`/`Sessions`/`DevicesView` relationships, how a session actually closes (no `close_session()` exists), and the `FIELD_SPECS` field-write authority mechanism. Complements `database-patterns` (Devices write-path/`*Source` attribution) rather than duplicating it. |
+| Database patterns | `database-patterns` | `database-patterns` | `database-patterns` | Devices table write-path inventory, the `FIELD_SOURCE_MAP`/`*Source` attribution system in `server/db/authoritative_handler.py`, SQLite trigger vs. Python-hook tradeoffs, and event-sourced vs. snapshot audit logging. |
+| PRD writing | `prd-writing` | `prd-writing` | `prd-writing` | Methodology for writing a design doc: challenge the idea, verify every claim against actual code, trace every downstream consumer of a new mechanism, evaluate performance impact against the real schema/indexes, record rejected alternatives and open-issue decisions explicitly, final-check pass before done. Distilled from the `plugin-import-behavior-controls` PRD process, including real mistakes caught mid-review. |
 
 ---
 
@@ -40,7 +43,6 @@ No Gemini equivalent yet:
 | `api-development` | Creating REST API endpoints |
 | `authentication` | API tokens and 401/403 debugging |
 | `code-standards` | Coding conventions and style rules |
-| `database-patterns` | Device table write paths, SQLite triggers, audit logging, `*Source` attribution |
 | `database-reset` | Wipe and regenerate the database and config |
 | `docker-build` | Build Docker images for testing or production |
 | `docker-prune` | Clean unused Docker resources (destructive — requires confirmation) |

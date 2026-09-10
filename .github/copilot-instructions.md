@@ -45,6 +45,8 @@ Procedural knowledge lives in `.github/skills/`. Load the appropriate skill when
 | Find files and paths | `project-navigation` |
 | Coding standards | `code-standards` |
 | Devices table write paths, SQLite triggers, audit logging, `*Source` attribution | `database-patterns` |
+| `process_scan()` call order, CurrentScan/Events/Sessions internals, device presence lifecycle | `scan-pipeline` |
+| Write a PRD, design doc, or feature proposal | `prd-writing` |
 
 ## Execution Protocol
 

@@ -3,6 +3,7 @@
 This plugin reads from the ARP and NDP tables using the `ip neigh` command.
 
 This differs from the `ARPSCAN` plugin because
+
 * It does *not* send arp requests, it just reads the table
 * It supports IPv6
 * It sends an IPv6 multicast ping to solicit IPv6 neighbour discovery

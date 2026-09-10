@@ -575,6 +575,14 @@ def ensure_CurrentScan(sql) -> bool:
                                 scanType STRING(250)
                             );
                         """)
+    # scanMac has no uniqueness constraint - multiple plugins commonly report
+    # the same MAC in one cycle (e.g. arp_scan + nslookup), so every lookup
+    # keyed on scanMac (update_presence_from_CurrentScan, insert_events, the
+    # LatestDeviceScan/LatestEventsPerMAC views) was a full table scan without
+    # this. Table is dropped every cycle, so the index is rebuilt with it -
+    # cheap insurance against O(n^2) scans at NOC-scale device counts (10k+ in
+    # real deployments).
+    sql.execute("CREATE INDEX IF NOT EXISTS idx_currentscan_scanmac ON CurrentScan(scanMac);")
 
     return True
 

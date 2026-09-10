@@ -164,9 +164,10 @@ CREATE TABLE CurrentScan (
                                 scanVlan STRING(250),
                                 scanParentMAC STRING(250),
                                 scanParentPort STRING(250),
-                                scanType STRING(250),
-                                UNIQUE(scanMac)
+                                scanFQDN STRING(250),
+                                scanType STRING(250)
                             );
+CREATE INDEX idx_currentscan_scanmac ON CurrentScan(scanMac);
 CREATE TABLE IF NOT EXISTS AppEvents (
                 "index" INTEGER PRIMARY KEY AUTOINCREMENT,
                 guid TEXT UNIQUE,
