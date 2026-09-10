@@ -671,6 +671,7 @@ def create_new_devices(db):
         GROUP BY scanMac
     ) agg
     WHERE agg.scanCreates = 1
+      AND agg.scanMac NOT IN ({NULL_EQUIVALENTS_SQL})
       AND NOT EXISTS (
         SELECT 1 FROM Devices
         WHERE devMac = agg.scanMac
@@ -791,8 +792,12 @@ def create_new_devices(db):
     # if another row for the same MAC says 0 (enrich-only). Rows for
     # already-existing devices pass through harmlessly too - the INSERT OR
     # IGNORE below is already a no-op for them regardless of this filter.
-    query = """SELECT scanMac, scanName, scanVendor, scanSourcePlugin, scanLastIP, scanSyncHubNode, scanParentMAC, scanParentPort, scanSite, scanSSID, scanType
-                FROM CurrentScan WHERE scanCreatesDevice = 1"""
+    # scanMac NOT IN NULL_EQUIVALENTS blocks creating a device from a blank/
+    # null-equivalent MAC - a plugin reporting a row it can't originate a
+    # device from (no real MAC available) should set scanCreatesDevice = 0
+    # itself, but this is the backstop for one that doesn't.
+    query = f"""SELECT scanMac, scanName, scanVendor, scanSourcePlugin, scanLastIP, scanSyncHubNode, scanParentMAC, scanParentPort, scanSite, scanSSID, scanType
+                FROM CurrentScan WHERE scanCreatesDevice = 1 AND scanMac NOT IN ({NULL_EQUIVALENTS_SQL})"""
 
     mylog("debug", f"[New Devices] Collecting New Devices Query: {query}")
     current_scan_data = sql.execute(query).fetchall()

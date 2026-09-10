@@ -170,3 +170,50 @@ class TestNewDeviceEventNoDuplicatesAcrossPlugins:
             "differing scanLastIP/scanVendor across plugin rows for the same "
             "new MAC must not produce duplicate New Device events"
         )
+
+
+class TestBlankMacNeverCreatesDevice:
+    """A row with a blank/null-equivalent scanMac must never originate a
+    Devices row, even with scanCreatesDevice = 1 (the default) - this is the
+    backstop for a plugin that has rows it can't attach a real MAC to but
+    forgot to (or can't) set scanCreatesDevice = 0 itself. A well-behaved
+    plugin should still set scanCreatesDevice = 0 for such rows (see
+    plugin-import-behavior-controls.md) - this guard exists for the case
+    where it doesn't, so a blank MAC can never create a device regardless."""
+
+    def test_blank_scanmac_with_creates_device_one_creates_nothing(self):
+        conn = make_db()
+        insert_current_scan_row_from_dict(
+            conn, make_current_scan_dict("", scanCreatesDevice=1)
+        )
+        db = DummyDB(conn)
+
+        device_handling.create_new_devices(db)
+
+        assert _devices(db) == set()
+        rows = conn.execute(
+            "SELECT * FROM Events WHERE eveMac = '' AND eveEventType = 'New Device'"
+        ).fetchall()
+        assert rows == [], "a blank scanMac must not produce an orphan New Device event either"
+
+    def test_multiple_plugins_sharing_blank_scanmac_creates_nothing(self):
+        """The scenario this guard was actually written for: several
+        unrelated rows (e.g. containers with no routable MAC) all reporting
+        scanMac = '' collapse into one CurrentScan group - that group must
+        never create a device, regardless of how many rows are in it."""
+        conn = make_db()
+        insert_current_scan_row_from_dict(
+            conn, make_current_scan_dict("", scanSourcePlugin="PLUGINA", scanCreatesDevice=0)
+        )
+        insert_current_scan_row_from_dict(
+            conn, make_current_scan_dict("", scanSourcePlugin="PLUGINB", scanCreatesDevice=1)
+        )
+        db = DummyDB(conn)
+
+        device_handling.create_new_devices(db)
+
+        assert _devices(db) == set(), (
+            "even a single row asserting scanCreatesDevice = 1 for a blank MAC "
+            "must not create a device - most-permissive-wins does not override "
+            "the blank-MAC guard"
+        )
