@@ -28,6 +28,8 @@ GROUPS = [
     [".gemini/skills/plugin-readme/plugin-readme-skill.md", ".github/skills/plugin-readme/SKILL.md", ".claude/skills/plugin-readme/SKILL.md"],
     [".gemini/skills/testing-workflow/SKILL.md", ".github/skills/testing-workflow/SKILL.md", ".claude/skills/testing-workflow/SKILL.md"],
     [".gemini/skills/pr-analysis/SKILL.md", ".github/skills/pr-analysis/SKILL.md", ".claude/skills/pr-analysis/SKILL.md"],
+    [".gemini/skills/scan-pipeline/SKILL.md", ".github/skills/scan-pipeline/SKILL.md", ".claude/skills/scan-pipeline/SKILL.md"],
+    [".gemini/skills/database-patterns/SKILL.md", ".github/skills/database-patterns/SKILL.md", ".claude/skills/database-patterns/SKILL.md"],
     [".gemini/skills/settings/SKILL.md", ".github/skills/settings-management/SKILL.md"],
     [".gemini/skills/mcp-activation/SKILL.md", ".github/skills/mcp-activation/SKILL.md"],
     [".gemini/skills/project-navigation/SKILL.md", ".github/skills/project-navigation/SKILL.md"],
