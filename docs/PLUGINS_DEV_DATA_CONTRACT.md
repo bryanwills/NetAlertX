@@ -149,11 +149,44 @@ CREATE TABLE CurrentScan (
                                 scanParentMAC STRING(250),
                                 scanParentPort STRING(250),
                                 scanType STRING(250),
-                                UNIQUE(scanMac)
+                                scanCreatesDevice BOOLEAN NOT NULL DEFAULT (1) CHECK (scanCreatesDevice IN (0, 1)),
+                                scanNotificationMode STRING(10) NOT NULL DEFAULT ('normal'),
+                                scanPresence BOOLEAN NOT NULL DEFAULT (1) CHECK (scanPresence IN (0, 1))
 )
 ```
 
-As the documentation might become outdated, it's good practice to check the latest definition of the `CurrentScan` table in the `app.sql` script in the code base.
+As the documentation might become outdated, it's good practice to check the latest definition of the `CurrentScan` table in `server/db/db_upgrade.py`'s `ensure_CurrentScan()` (the version that actually runs) in the code base — not `app.sql`, which is a reference-only copy the running application never loads.
+
+### Import Behavior Columns
+
+Three optional `CurrentScan` columns, all independent of each other, control what happens once a row reaches the table.
+
+| Column | Type | Default | Meaning |
+|---|---|---|---|
+| `scanCreatesDevice` | boolean | `1` | Whether this row can originate a *new* `Devices` entry. `0` lets an enrich-only plugin (e.g. a hostname resolver) update an already-existing device's fields without ever being able to create one. |
+| `scanNotificationMode` | text (`normal` \| `quiet`) | `normal` | Whether creating/reconnecting this device should dispatch a notification. `quiet` still writes the `Events` row (audit trail intact) but suppresses the outbound email/push. Creation-time-only: it seeds `devAlertDown`/`devAlertEvents` to `0` on the device when it's first created, rather than being an ongoing, per-cycle re-evaluated policy — reclassifying a plugin's row later does not retroactively change an already-created device's alert settings. |
+| `scanPresence` | boolean | `1` | Whether this row asserts the device is *currently online*. `0` means "identity/inventory data, no presence claim" — not "offline". A reservation, a lease record, or a static IPAM entry are typical `0` cases. |
+
+**Fallback for missing/invalid values** 
+
+| Column | Missing/invalid value → |
+|---|---|
+| `scanCreatesDevice` | `1` (create) |
+| `scanNotificationMode` | `normal` |
+| `scanPresence` | `1` (asserts presence) |
+
+**Multiple plugins reporting the same MAC in the same scan cycle** (the normal case, not an edge case — see the `scan-pipeline` skill) resolve per column, not uniformly: `scanCreatesDevice` and `scanPresence` are most-permissive-wins (any row saying `1` wins), while `scanNotificationMode` is most-*restrictive*-wins (any row saying `quiet` suppresses the notification, even if a sibling row says `normal`) — erring toward under-notifying rather than spamming.
+
+**Combination matrix** — not every combination is meaningful for every plugin; pick the one that matches what your plugin actually knows:
+
+| `scanCreatesDevice` | `scanPresence` | Meaning |
+|---|---|---|
+| 1 | 1 | Normal discovery (the default) |
+| 1 | 0 | Inventory/identity import — create the device, but don't claim it's online right now |
+| 0 | 1 | Presence-confirming enrichment — never originate a device, but assert presence for one that exists |
+| 0 | 0 | Silent enrichment — never originate a device, no presence claim either |
+
+`scanNotificationMode` is orthogonal to both of the above and can be combined with any row in the table (e.g. inventory import + quiet, for a fully silent bulk import of known-offline devices).
 
 ## Examples
 

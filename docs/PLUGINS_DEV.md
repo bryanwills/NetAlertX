@@ -226,6 +226,7 @@ These control core plugin behavior:
 | `WATCH` | Monitor for changes | optional | Column names |
 | `REPORT_ON` | When to notify | optional | `new`, `watched-changed`, `watched-not-changed`, `missing-in-last-scan` |
 | `DB_PATH` | External DB path | If using SQLite | `/path/to/db.db` |
+| `IMPORT_ON` | Gate whether this run's rows are promoted into `CurrentScan` | optional | Boolean. Only affects plugins with `mapped_to_table: "CurrentScan"` — see [Database Mapping](#database-mapping) below. |
 
 See [PLUGINS_DEV_SETTINGS.md](PLUGINS_DEV_SETTINGS.md) for full component types and examples.
 
@@ -305,6 +306,31 @@ To always map a static value (not read from plugin output):
   "mapped_to_column_data": {
     "value": "MYPLN"
   }
+}
+```
+
+### Import Behavior Columns (`scanCreatesDevice`, `scanNotificationMode`, `scanPresence`)
+
+Three optional columns on `CurrentScan` control what happens once a row reaches it — see the [Data contract](PLUGINS_DEV_DATA_CONTRACT.md#import-behavior-columns) for the full contract (allowed values, defaults, downstream effects). All three default to today's behavior if never mapped, so existing plugins need no changes.
+
+Most plugins map a single static value for the whole import via `mapped_to_column_data` — e.g. an enrichment-only plugin that should never originate a new device:
+
+```json
+{
+  "column": "NameDoesntMatter",
+  "mapped_to_column": "scanCreatesDevice",
+  "mapped_to_column_data": {
+    "value": 0
+  }
+}
+```
+
+A plugin sophisticated enough to know per-row whether an entry is a live/active sighting (e.g. a DHCP lease with a `state` field) can instead map a per-row value via the normal `mapped_to_column` mechanism, the same way any other data-carrying column is mapped:
+
+```json
+{
+  "column": "watchedValue1",
+  "mapped_to_column": "scanPresence"
 }
 ```
 

@@ -6,6 +6,7 @@ Import from any test subdirectory with:
     import sys, os
     sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
     from db_test_helpers import make_db, insert_device, minutes_ago, DummyDB, down_event_macs, make_device_dict, sync_insert_devices
+    from db_test_helpers import make_current_scan_dict, insert_current_scan_row_from_dict
     from db_test_helpers import make_plugin_db, make_plugin_dict, make_plugin_event_row, seed_plugin_object, plugin_history_rows, plugin_objects_rows, PluginFakeDB
     from db_test_helpers import make_history_db
 """
@@ -94,19 +95,22 @@ CREATE_EVENTS = """
 
 CREATE_CURRENT_SCAN = """
     CREATE TABLE IF NOT EXISTS CurrentScan (
-        scanMac            TEXT,
-        scanLastIP         TEXT,
-        scanVendor         TEXT,
-        scanSourcePlugin   TEXT,
-        scanName           TEXT,
-        scanLastQuery      TEXT,
-        scanLastConnection TEXT,
-        scanSyncHubNode    TEXT,
-        scanSite           TEXT,
-        scanSSID           TEXT,
-        scanParentMAC      TEXT,
-        scanParentPort     TEXT,
-        scanType           TEXT
+        scanMac              TEXT,
+        scanLastIP           TEXT,
+        scanVendor           TEXT,
+        scanSourcePlugin     TEXT,
+        scanName             TEXT,
+        scanLastQuery        TEXT,
+        scanLastConnection   TEXT,
+        scanSyncHubNode      TEXT,
+        scanSite             TEXT,
+        scanSSID             TEXT,
+        scanParentMAC        TEXT,
+        scanParentPort       TEXT,
+        scanType             TEXT,
+        scanCreatesDevice    INTEGER NOT NULL DEFAULT 1,
+        scanNotificationMode TEXT NOT NULL DEFAULT 'normal',
+        scanPresence         INTEGER NOT NULL DEFAULT 1
     )
 """
 
@@ -114,6 +118,19 @@ CREATE_SETTINGS = """
     CREATE TABLE IF NOT EXISTS Settings (
         setKey   TEXT PRIMARY KEY,
         setValue TEXT
+    )
+"""
+
+CREATE_SESSIONS = """
+    CREATE TABLE IF NOT EXISTS Sessions (
+        sesMac                    TEXT,
+        sesIp                     TEXT,
+        sesEventTypeConnection    TEXT,
+        sesDateTimeConnection     TEXT,
+        sesEventTypeDisconnection TEXT,
+        sesDateTimeDisconnection  TEXT,
+        sesStillConnected         INTEGER,
+        sesAdditionalInfo         TEXT
     )
 """
 
@@ -136,6 +153,7 @@ def make_db(sleep_minutes: int = 30) -> sqlite3.Connection:
     cur.execute(CREATE_EVENTS)
     cur.execute(CREATE_CURRENT_SCAN)
     cur.execute(CREATE_SETTINGS)
+    cur.execute(CREATE_SESSIONS)
     cur.execute(
         "INSERT OR REPLACE INTO Settings (setKey, setValue) VALUES (?, ?)",
         ("NTFPRCS_sleep_time", str(sleep_minutes)),
@@ -431,6 +449,58 @@ def insert_device_from_dict(conn: sqlite3.Connection, device: dict) -> None:
 
     cur.execute(
         f"INSERT OR IGNORE INTO Devices ({col_list}) VALUES ({placeholders})",
+        values,
+    )
+    conn.commit()
+
+
+def make_current_scan_dict(mac: str = "aa:bb:cc:dd:ee:ff", **overrides) -> dict:
+    """
+    Return a CurrentScan row dict with safe defaults matching the real
+    schema's defaults (scanCreatesDevice=1, scanNotificationMode='normal',
+    scanPresence=1 — i.e. today's unconditional behavior for a plugin that
+    never heard of these columns). Pass keyword arguments to override.
+    """
+    base = {
+        "scanMac":              mac,
+        "scanLastIP":           "192.168.1.10",
+        "scanVendor":           "Acme",
+        "scanSourcePlugin":     "ARPSCAN",
+        "scanName":             "Test Device",
+        "scanLastQuery":        "2024-01-02 00:00:00",
+        "scanLastConnection":   "2024-01-02 00:00:00",
+        "scanSyncHubNode":      "",
+        "scanSite":             "",
+        "scanSSID":             "",
+        "scanParentMAC":        "",
+        "scanParentPort":       "",
+        "scanType":             "",
+        "scanCreatesDevice":    1,
+        "scanNotificationMode": "normal",
+        "scanPresence":         1,
+    }
+    base.update(overrides)
+    return base
+
+
+def insert_current_scan_row_from_dict(conn: sqlite3.Connection, row: dict) -> None:
+    """Insert a CurrentScan row dict (as produced by make_current_scan_dict).
+
+    No dedup/uniqueness — CurrentScan legitimately holds multiple rows per
+    MAC (one per contributing plugin), unlike Devices. Accepts any subset of
+    CurrentScan columns; only keys present in the table are written.
+    """
+    cur = conn.cursor()
+    cur.execute("PRAGMA table_info(CurrentScan)")
+    db_columns = {r[1] for r in cur.fetchall()}
+
+    cols = [k for k in row.keys() if k in db_columns]
+    placeholders = ", ".join("?" for _ in cols)
+    col_list = ", ".join(cols)
+    values = [row[c] for c in cols]
+
+    cur.execute(
+        f"INSERT INTO CurrentScan ({col_list}) VALUES ({placeholders})",
         values,
     )
     conn.commit()

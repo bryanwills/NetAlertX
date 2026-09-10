@@ -202,23 +202,29 @@ def update_presence_from_CurrentScan(db):
     sql = db.sql
     mylog("debug", "[Update Devices] - Updating devPresentLastScan")
 
-    # Mark present if exists in CurrentScan
+    # Mark present only if a CurrentScan row for this MAC actually asserts presence
+    # (scanPresence = 1). A row can exist purely as identity/inventory data
+    # (scanPresence = 0, e.g. a DHCP reservation) without claiming the device is
+    # online right now - "abstain, not override": any other row for the same MAC
+    # that does assert presence still wins via this same EXISTS check.
     sql.execute("""
         UPDATE Devices
         SET devPresentLastScan = 1
         WHERE EXISTS (
             SELECT 1 FROM CurrentScan
             WHERE devMac = scanMac
+              AND scanPresence = 1
         )
     """)
 
-    # Mark not present if not in CurrentScan
+    # Mark not present if no CurrentScan row for this MAC asserts presence
     sql.execute("""
         UPDATE Devices
         SET devPresentLastScan = 0
         WHERE NOT EXISTS (
             SELECT 1 FROM CurrentScan
             WHERE devMac = scanMac
+              AND scanPresence = 1
         )
     """)
 
@@ -647,17 +653,33 @@ def create_new_devices(db):
     # Insert events for new devices from CurrentScan (not yet in Devices)
 
     mylog("debug", '[New Devices] Insert "New Device" Events')
+    # scanCreates/scanQuiet are a per-MAC aggregate (one GROUP BY pass, not a
+    # correlated subquery re-evaluated per row - see prd-writing/scan-pipeline
+    # skills on why that matters at scale) so multiple plugins reporting the
+    # same never-before-seen MAC get one consistent decision instead of an
+    # arbitrary one: most-permissive-wins for whether it creates a device at
+    # all (skip the event entirely if nothing actually creates it below),
+    # most-restrictive-wins for whether it's quiet (evePendingAlertEmail).
     query_new_device_events = f"""
     INSERT OR IGNORE INTO Events  (
         eveMac, eveIp, eveDateTime,
         eveEventType, eveAdditionalInfo,
         evePendingAlertEmail
     )
-    SELECT DISTINCT scanMac, scanLastIP, '{startTime}', 'New Device', scanVendor, 1
-    FROM CurrentScan
-    WHERE NOT EXISTS (
+    SELECT DISTINCT c.scanMac, c.scanLastIP, '{startTime}', 'New Device', c.scanVendor,
+        CASE WHEN agg.scanQuiet = 1 THEN 0 ELSE 1 END
+    FROM CurrentScan c
+    JOIN (
+        SELECT scanMac,
+               MAX(scanCreatesDevice) AS scanCreates,
+               MAX(CASE WHEN scanNotificationMode = 'quiet' THEN 1 ELSE 0 END) AS scanQuiet
+        FROM CurrentScan
+        GROUP BY scanMac
+    ) agg ON agg.scanMac = c.scanMac
+    WHERE agg.scanCreates = 1
+      AND NOT EXISTS (
         SELECT 1 FROM Devices
-        WHERE devMac = scanMac
+        WHERE devMac = c.scanMac
     )
     """
 
@@ -674,7 +696,8 @@ def create_new_devices(db):
                     )
                     SELECT scanMac, scanLastIP, 'Connected', '{startTime}', NULL, NULL, 1, scanVendor
                     FROM CurrentScan
-                    WHERE EXISTS (
+                    WHERE scanPresence = 1
+                    AND EXISTS (
                         SELECT 1 FROM Devices
                         WHERE devMac = scanMac
                     )
@@ -706,7 +729,14 @@ def create_new_devices(db):
                         devReqNicsOnline
                         """
 
-    newDevDefaults = f"""{safe_int("NEWDEV_devAlertEvents")},
+    # Two variants of the same defaults, differing only in the alert-related
+    # leading two fields - devAlertDown/devAlertEvents are seeded to 0 instead
+    # of the NEWDEV_* globals when this MAC is quiet, so Down/Disconnected
+    # notifications are suppressed for the device's whole lifecycle "for free"
+    # through the existing devAlertDown/devAlertEvents gates in insert_events(),
+    # without needing an ongoing per-cycle re-classification (creation-time-only
+    # "quiet", not an import-owned ongoing policy - see the PRD's decision on this).
+    newDevDefaults_normal = f"""{safe_int("NEWDEV_devAlertEvents")},
                         {safe_int("NEWDEV_devAlertDown")},
                         {safe_int("NEWDEV_devPresentLastScan")},
                         {safe_int("NEWDEV_devIsArchived")},
@@ -724,9 +754,44 @@ def create_new_devices(db):
                         {safe_int("NEWDEV_devReqNicsOnline")}
                         """
 
-    # Fetch data from CurrentScan skipping ignored devices by IP and MAC
+    newDevDefaults_quiet = f"""0,
+                        0,
+                        {safe_int("NEWDEV_devPresentLastScan")},
+                        {safe_int("NEWDEV_devIsArchived")},
+                        {safe_int("NEWDEV_devIsNew")},
+                        {safe_int("NEWDEV_devSkipRepeated")},
+                        {safe_int("NEWDEV_devScan")},
+                        '{sanitize_SQL_input(get_setting_value("NEWDEV_devOwner"))}',
+                        {safe_int("NEWDEV_devFavorite")},
+                        '{sanitize_SQL_input(get_setting_value("NEWDEV_devGroup"))}',
+                        '{sanitize_SQL_input(get_setting_value("NEWDEV_devComments"))}',
+                        {safe_int("NEWDEV_devLogEvents")},
+                        '{sanitize_SQL_input(get_setting_value("NEWDEV_devLocation"))}',
+                        '{sanitize_SQL_input(get_setting_value("NEWDEV_devCustomProps"))}',
+                        '{sanitize_SQL_input(get_setting_value("NEWDEV_devParentRelType"))}',
+                        {safe_int("NEWDEV_devReqNicsOnline")}
+                        """
+
+    # Most-restrictive-wins across every row for a MAC, one GROUP BY pass -
+    # matches the aggregate used for the "New Device" Events insert above.
+    quiet_macs = {
+        str(row[0]).lower()
+        for row in sql.execute("""
+            SELECT scanMac
+            FROM CurrentScan
+            GROUP BY scanMac
+            HAVING SUM(CASE WHEN scanNotificationMode = 'quiet' THEN 1 ELSE 0 END) > 0
+        """).fetchall()
+    }
+
+    # Fetch data from CurrentScan skipping ignored devices by IP and MAC.
+    # scanCreatesDevice = 1 filter is most-permissive-wins: a MAC with at
+    # least one contributing row asserting creation still gets created, even
+    # if another row for the same MAC says 0 (enrich-only). Rows for
+    # already-existing devices pass through harmlessly too - the INSERT OR
+    # IGNORE below is already a no-op for them regardless of this filter.
     query = """SELECT scanMac, scanName, scanVendor, scanSourcePlugin, scanLastIP, scanSyncHubNode, scanParentMAC, scanParentPort, scanSite, scanSSID, scanType
-                FROM CurrentScan """
+                FROM CurrentScan WHERE scanCreatesDevice = 1"""
 
     mylog("debug", f"[New Devices] Collecting New Devices Query: {query}")
     current_scan_data = sql.execute(query).fetchall()
@@ -761,6 +826,10 @@ def create_new_devices(db):
             scanSSID,
             scanType,
         ) = row
+
+        newDevDefaults = (
+            newDevDefaults_quiet if scanMac.lower() in quiet_macs else newDevDefaults_normal
+        )
 
         # Preserve raw values to determine source attribution
         raw_name = str(scanName).strip() if scanName else ""

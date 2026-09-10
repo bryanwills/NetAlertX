@@ -192,6 +192,7 @@ def insert_events(db):
                       AND {_SQL_NOT_FORCED_ONLINE}
                       AND NOT EXISTS (SELECT 1 FROM CurrentScan
                                       WHERE devMac = scanMac
+                                        AND scanPresence = 1
                                          ) """)
 
     # Check device down – sleeping devices whose sleep window has expired
@@ -207,7 +208,8 @@ def insert_events(db):
                       AND devPresentLastScan = 0
                       AND {_SQL_NOT_FORCED_ONLINE}
                       AND NOT EXISTS (SELECT 1 FROM CurrentScan
-                                      WHERE devMac = scanMac)
+                                      WHERE devMac = scanMac
+                                        AND scanPresence = 1)
                       AND NOT EXISTS (SELECT 1 FROM Events
                                       WHERE eveMac = devMac
                                         AND eveEventType = 'Device Down'
@@ -216,6 +218,13 @@ def insert_events(db):
 
     # Check new Connections or Down Reconnections
     mylog("debug", "[Events] - 2 - New Connections")
+    # scanPresence = 1 filter: a row that doesn't assert presence never counts
+    # as "just connected", even if another row for the same MAC does (that
+    # row still passes the filter on its own - abstain, not override).
+    # evePendingAlertEmail comes from a per-MAC aggregate (one GROUP BY pass,
+    # not a correlated subquery - see the scan-pipeline skill): most-
+    # restrictive-wins, so any contributing row saying quiet suppresses the
+    # notification even if a sibling row for the same MAC says normal.
     sql.execute(f"""    INSERT OR IGNORE INTO Events (eveMac, eveIp, eveDateTime,
                                             eveEventType, eveAdditionalInfo,
                                             evePendingAlertEmail)
@@ -225,10 +234,17 @@ def insert_events(db):
                                             ELSE 'Connected'
                                         END,
                                         '',
-                                        1
+                                        CASE WHEN agg.scanQuiet = 1 THEN 0 ELSE 1 END
                         FROM CurrentScan AS c
                         LEFT JOIN LatestEventsPerMAC AS last_event ON c.scanMac = last_event.eveMac
-                        WHERE last_event.devPresentLastScan = 0 OR last_event.eveMac IS NULL
+                        JOIN (
+                            SELECT scanMac,
+                                   MAX(CASE WHEN scanNotificationMode = 'quiet' THEN 1 ELSE 0 END) AS scanQuiet
+                            FROM CurrentScan
+                            GROUP BY scanMac
+                        ) agg ON agg.scanMac = c.scanMac
+                        WHERE (last_event.devPresentLastScan = 0 OR last_event.eveMac IS NULL)
+                          AND c.scanPresence = 1
                         """)
 
     # Check disconnections
@@ -244,6 +260,7 @@ def insert_events(db):
                       AND {_SQL_NOT_FORCED_ONLINE}
                       AND NOT EXISTS (SELECT 1 FROM CurrentScan
                                       WHERE devMac = scanMac
+                                        AND scanPresence = 1
                                          ) """)
 
     # Check IP Changed
