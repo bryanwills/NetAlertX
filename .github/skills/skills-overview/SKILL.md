@@ -30,6 +30,7 @@ Skills with the same purpose exist in more than one, sometimes under different n
 | Logging | `logging-standards` | `logging-standards` | — | `mylog` levels, message format, what not to log |
 | Scan pipeline internals | `scan-pipeline` | `scan-pipeline` | `scan-pipeline` | `process_scan()` call order and why it's load-bearing, `CurrentScan`/`Events`/`Sessions`/`DevicesView` relationships, how a session actually closes (no `close_session()` exists), and the `FIELD_SPECS` field-write authority mechanism. Complements `database-patterns` (Devices write-path/`*Source` attribution) rather than duplicating it. |
 | Database patterns | `database-patterns` | `database-patterns` | `database-patterns` | Devices table write-path inventory, the `FIELD_SOURCE_MAP`/`*Source` attribution system in `server/db/authoritative_handler.py`, SQLite trigger vs. Python-hook tradeoffs, and event-sourced vs. snapshot audit logging. |
+| PRD writing | `prd-writing` | `prd-writing` | `prd-writing` | Methodology for writing a design doc: challenge the idea, verify every claim against actual code, trace every downstream consumer of a new mechanism, evaluate performance impact against the real schema/indexes, record rejected alternatives and open-issue decisions explicitly, final-check pass before done. Distilled from the `plugin-import-behavior-controls` PRD process, including real mistakes caught mid-review. |
 
 ---
 
