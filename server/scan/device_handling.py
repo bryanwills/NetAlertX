@@ -9,6 +9,7 @@ from const import vendorsPath, vendorsPathNewest, sql_generateGuid, NULL_EQUIVAL
 from models.device_instance import DeviceInstance
 from scan.name_resolution import NameResolver
 from scan.device_heuristics import guess_icon, guess_type
+from scan.presence import current_scan_presence_condition
 from db.db_helper import sanitize_SQL_input, list_to_where, safe_int
 from db.db_upgrade import PARENT_MAC_SENTINELS
 from db.authoritative_handler import (
@@ -206,26 +207,18 @@ def update_presence_from_CurrentScan(db):
     # (scanPresence = 1). A row can exist purely as identity/inventory data
     # (scanPresence = 0, e.g. a DHCP reservation) without claiming the device is
     # online right now - "abstain, not override": any other row for the same MAC
-    # that does assert presence still wins via this same EXISTS check.
-    sql.execute("""
+    # that does assert presence still wins via this same predicate.
+    sql.execute(f"""
         UPDATE Devices
         SET devPresentLastScan = 1
-        WHERE EXISTS (
-            SELECT 1 FROM CurrentScan
-            WHERE devMac = scanMac
-              AND scanPresence = 1
-        )
+        WHERE {current_scan_presence_condition("devMac")}
     """)
 
     # Mark not present if no CurrentScan row for this MAC asserts presence
-    sql.execute("""
+    sql.execute(f"""
         UPDATE Devices
         SET devPresentLastScan = 0
-        WHERE NOT EXISTS (
-            SELECT 1 FROM CurrentScan
-            WHERE devMac = scanMac
-              AND scanPresence = 1
-        )
+        WHERE NOT {current_scan_presence_condition("devMac")}
     """)
 
 
@@ -245,11 +238,7 @@ def update_devLastConnection_from_CurrentScan(db):
     sql.execute(f"""
         UPDATE Devices
         SET devLastConnection = '{startTime}'
-        WHERE EXISTS (
-            SELECT 1 FROM CurrentScan
-            WHERE devMac = scanMac
-              AND scanPresence = 1
-        )
+        WHERE {current_scan_presence_condition("devMac")}
     """)
 
 

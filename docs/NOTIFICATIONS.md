@@ -40,6 +40,10 @@ On almost all plugins there are 2 core settings, `<plugin>_WATCH` and `<plugin>_
 
 Click the **Read more in the docs.** Link at the top of each plugin to get more details on how the given plugin works.
 
+### Plugin-level per-row overrides
+
+A plugin author can also mark individual rows it reports as `quiet` via the `scanNotificationMode` data column, independent of any user-facing setting above - e.g. a bulk inventory import that shouldn't spam notifications for known-offline devices. This is a plugin-authoring concept, not something configured in the UI - see [Data contract](https://docs.netalertx.com/PLUGINS_DEV_DATA_CONTRACT#import-behavior-columns) for the full behavior (when it applies, and how it combines with the **Alert Events**/**Alert Down** device settings above when multiple plugins report the same device).
+
 ## Global settings ⚙
 
 ![Global notification settings](./img/NOTIFICATIONS/Global-notification-settings.png)
