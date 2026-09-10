@@ -188,6 +188,42 @@ Three optional `CurrentScan` columns, all independent of each other, control wha
 
 `scanNotificationMode` is orthogonal to both of the above and can be combined with any row in the table (e.g. inventory import + quiet, for a fully silent bulk import of known-offline devices).
 
+**Decision: does this row create a device?**
+
+```mermaid
+flowchart TD
+    A[Row reaches CurrentScan] --> B{scanMac blank or<br/>null-equivalent?}
+    B -- yes --> Z[Never creates a device]
+    B -- no --> C{Any row this cycle for this<br/>MAC has scanCreatesDevice = 1?}
+    C -- no, all say 0 --> Y[No device created<br/>enrich-only]
+    C -- yes, at least one --> D{Devices row already<br/>exists for this MAC?}
+    D -- yes --> E[No-op - existing device untouched<br/>by this check]
+    D -- no --> F[New Devices row created<br/>+ New Device event]
+```
+
+**Decision: is this event's notification suppressed?**
+
+```mermaid
+flowchart TD
+    A[Event about to fire] --> B{Fired from a row that IS present<br/>this cycle? New Device / Connected /<br/>Down Reconnected / IP Changed}
+    B -- yes --> C{Live aggregate: any CurrentScan row<br/>for this MAC says<br/>scanNotificationMode = quiet?}
+    C -- yes --> S[Suppressed<br/>evePendingAlertEmail = 0]
+    C -- no --> N[Notified<br/>evePendingAlertEmail = 1]
+    B -- no, fired from row ABSENCE<br/>Device Down / Disconnected --> D{Frozen device setting:<br/>devAlertDown / devAlertEvents,<br/>seeded at creation time}
+    D -- off --> S
+    D -- on --> N
+```
+
+**Worked scenarios:**
+
+| Scenario | `scanCreatesDevice` | `scanPresence` | `scanNotificationMode` | `scanMac` | Outcome |
+|---|---|---|---|---|---|
+| Normal discovery (default plugin behavior) | `1` (default) | `1` (default) | `normal` (default) | real MAC | Device created if new, notified normally, presence tracked live. |
+| Enrich-only plugin (e.g. a hostname resolver) | `0` | `1` (default) | `normal` (default) | real MAC | Never originates a device; still updates an existing device's fields via `FIELD_SPECS`. If another plugin reports the same MAC with `scanCreatesDevice = 1`, the device still gets created (most-permissive-wins) — this plugin's `0` doesn't block it. |
+| Bulk inventory import of known-offline devices | `1` | `0` | `quiet` | real MAC | Creates devices without claiming they're online, and without a wave of "New Device" notifications for a large batch import. |
+| Presence-confirming enrichment (e.g. a DHCP lease scanner) | `0` | `1` | `normal` | real MAC | Confirms an *existing* device is online without ever being the plugin that creates it. |
+| Row with no usable device identity (e.g. an object with no routable MAC available) | `0` | irrelevant | irrelevant | blank / null-equivalent | Never creates a device — the blank-MAC guard and `scanCreatesDevice = 0` both independently block it, so this stays safe even if unrelated rows from other objects/plugins collapse onto the same blank `scanMac` in one cycle. |
+
 ## Examples
 
 ### Valid Data (9 columns, minimal)
