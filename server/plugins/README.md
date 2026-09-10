@@ -1,1 +1,1 @@
-Plugins docs have been relocated. Check the new [Plugins Overview location](./PLUGINS_OVERVIEW.md). 
+Plugins docs have been relocated. Check the new [Plugins Overview location](../../docs/PLUGINS_OVERVIEW.md). 

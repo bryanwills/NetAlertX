@@ -149,7 +149,7 @@ def get_device_data(site, api):
     wifi_broadcasts = wifi_broadcasts_resp.get("data", [])
 
     mylog(
-        'verbose',
+        'trace',
         [f'[{pluginName}] WIFI BROADCASTS: '
          f'{json.dumps(wifi_broadcasts_resp, indent=2)}']
     )
