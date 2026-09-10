@@ -659,33 +659,32 @@ def create_new_devices(db):
     # Insert events for new devices from CurrentScan (not yet in Devices)
 
     mylog("debug", '[New Devices] Insert "New Device" Events')
-    # scanCreates/scanQuiet are a per-MAC aggregate (one GROUP BY pass, not a
-    # correlated subquery re-evaluated per row - see prd-writing/scan-pipeline
-    # skills on why that matters at scale) so multiple plugins reporting the
-    # same never-before-seen MAC get one consistent decision instead of an
-    # arbitrary one: most-permissive-wins for whether it creates a device at
-    # all (skip the event entirely if nothing actually creates it below),
-    # most-restrictive-wins for whether it's quiet (evePendingAlertEmail).
+    # One row per MAC via GROUP BY - a plain SELECT could produce a row per
+    # distinct scanLastIP/scanVendor when plugins disagree, and Events'
+    # unique index includes eveIp so those wouldn't dedupe. MIN() is just a
+    # deterministic tie-break; update_devices_data_from_scan()/FIELD_SPECS
+    # decides which plugin's value actually wins, separately.
     query_new_device_events = f"""
     INSERT OR IGNORE INTO Events  (
         eveMac, eveIp, eveDateTime,
         eveEventType, eveAdditionalInfo,
         evePendingAlertEmail
     )
-    SELECT DISTINCT c.scanMac, c.scanLastIP, '{startTime}', 'New Device', c.scanVendor,
+    SELECT agg.scanMac, agg.scanLastIP, '{startTime}', 'New Device', agg.scanVendor,
         CASE WHEN agg.scanQuiet = 1 THEN 0 ELSE 1 END
-    FROM CurrentScan c
-    JOIN (
+    FROM (
         SELECT scanMac,
                MAX(scanCreatesDevice) AS scanCreates,
-               MAX(CASE WHEN scanNotificationMode = 'quiet' THEN 1 ELSE 0 END) AS scanQuiet
+               MAX(CASE WHEN scanNotificationMode = 'quiet' THEN 1 ELSE 0 END) AS scanQuiet,
+               MIN(scanLastIP) AS scanLastIP,
+               MIN(scanVendor) AS scanVendor
         FROM CurrentScan
         GROUP BY scanMac
-    ) agg ON agg.scanMac = c.scanMac
+    ) agg
     WHERE agg.scanCreates = 1
       AND NOT EXISTS (
         SELECT 1 FROM Devices
-        WHERE devMac = c.scanMac
+        WHERE devMac = agg.scanMac
     )
     """
 
@@ -695,21 +694,28 @@ def create_new_devices(db):
 
     mylog("debug", "[New Devices] Insert Connection into session table")
 
+    # One row per MAC among presence-asserting rows - Sessions has no
+    # uniqueness constraint, so an unaggregated SELECT would open a duplicate
+    # row whenever two plugins report different scanLastIP/scanVendor.
     sql.execute(f"""INSERT INTO Sessions (
                         sesMac, sesIp, sesEventTypeConnection, sesDateTimeConnection,
                         sesEventTypeDisconnection, sesDateTimeDisconnection,
                         sesStillConnected, sesAdditionalInfo
                     )
-                    SELECT scanMac, scanLastIP, 'Connected', '{startTime}', NULL, NULL, 1, scanVendor
-                    FROM CurrentScan
-                    WHERE scanPresence = 1
-                    AND EXISTS (
+                    SELECT agg.scanMac, agg.scanLastIP, 'Connected', '{startTime}', NULL, NULL, 1, agg.scanVendor
+                    FROM (
+                        SELECT scanMac, MIN(scanLastIP) AS scanLastIP, MIN(scanVendor) AS scanVendor
+                        FROM CurrentScan
+                        WHERE scanPresence = 1
+                        GROUP BY scanMac
+                    ) agg
+                    WHERE EXISTS (
                         SELECT 1 FROM Devices
-                        WHERE devMac = scanMac
+                        WHERE devMac = agg.scanMac
                     )
                     AND NOT EXISTS (
                         SELECT 1 FROM Sessions
-                        WHERE sesMac = scanMac AND sesStillConnected = 1
+                        WHERE sesMac = agg.scanMac AND sesStillConnected = 1
                     )
                     """)
 

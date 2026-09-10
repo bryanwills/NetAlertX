@@ -128,3 +128,35 @@ class TestImportOnDeclaredFalse:
         process_plugin_events(db, plugin, events)
 
         assert _current_scan_macs(conn) == set()
+
+
+class TestImportOnScopedToCurrentScanOnly:
+    """IMPORT_ON's documented purpose is gating CurrentScan promotion only -
+    found in review that the original gate checked import_disabled alone,
+    without scoping it to mapped_to_table == 'CurrentScan'. No plugin maps
+    to another table today, but the gate must not silently widen to one that
+    does in the future."""
+
+    def test_non_currentscan_destination_still_written_when_import_on_false(
+        self, plugin_db, monkeypatch
+    ):
+        db, conn = plugin_db
+        conn.execute("CREATE TABLE IF NOT EXISTS OtherTable (otMac TEXT, otIp TEXT)")
+        conn.commit()
+        monkeypatch.setattr("plugin.get_setting_value", _settings(False))
+
+        plugin = make_plugin_dict(PREFIX)
+        plugin["mapped_to_table"] = "OtherTable"
+        plugin["database_column_definitions"] = [
+            {"column": "objectPrimaryId", "mapped_to_column": "otMac"},
+            {"column": "objectSecondaryId", "mapped_to_column": "otIp"},
+        ]
+        events = [make_plugin_event_row(PREFIX, "aa:bb:cc:dd:ee:05", secondary_id="1.2.3.4")]
+
+        process_plugin_events(db, plugin, events)
+
+        rows = conn.execute("SELECT otMac FROM OtherTable").fetchall()
+        assert {r[0] for r in rows} == {"aa:bb:cc:dd:ee:05"}, (
+            "IMPORT_ON only gates CurrentScan promotion - a plugin mapping to "
+            "any other destination table must still be written regardless of it"
+        )

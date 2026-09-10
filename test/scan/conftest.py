@@ -79,7 +79,10 @@ def scan_db():
             scanSSID TEXT,
             scanParentMAC TEXT,
             scanParentPort TEXT,
-            scanType TEXT
+            scanType TEXT,
+            scanCreatesDevice INTEGER NOT NULL DEFAULT 1,
+            scanNotificationMode TEXT NOT NULL DEFAULT 'normal',
+            scanPresence INTEGER NOT NULL DEFAULT 1
         )
     """)
 

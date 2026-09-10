@@ -128,3 +128,45 @@ class TestScanCreatesDeviceFieldAuthorityRegression:
             "scanCreatesDevice=0 must not block ordinary field updates on an "
             "existing device - identity/creation and field updates are separate paths"
         )
+
+
+class TestNewDeviceEventNoDuplicatesAcrossPlugins:
+    """Multiple plugins reporting the same brand-new MAC with *different*
+    scanLastIP/scanVendor values must still produce exactly one 'New Device'
+    Events row, not one per distinct (IP, vendor) pair - idx_events_unique
+    includes eveIp, so differing IPs are not deduped by the DB itself, and an
+    unaggregated SELECT DISTINCT over CurrentScan rows previously produced a
+    duplicate row per distinct value combination."""
+
+    def test_differing_ip_and_vendor_collapse_to_one_event(self):
+        conn = make_db()
+        insert_current_scan_row_from_dict(
+            conn,
+            make_current_scan_dict(
+                "aa:bb:cc:dd:ee:06",
+                scanSourcePlugin="ARPSCAN",
+                scanLastIP="192.168.1.20",
+                scanVendor="Acme",
+            ),
+        )
+        insert_current_scan_row_from_dict(
+            conn,
+            make_current_scan_dict(
+                "aa:bb:cc:dd:ee:06",
+                scanSourcePlugin="DOCKER",
+                scanLastIP="192.168.1.21",
+                scanVendor="Other",
+            ),
+        )
+        db = DummyDB(conn)
+
+        device_handling.create_new_devices(db)
+
+        rows = conn.execute(
+            "SELECT * FROM Events WHERE eveMac = ? AND eveEventType = 'New Device'",
+            ("aa:bb:cc:dd:ee:06",),
+        ).fetchall()
+        assert len(rows) == 1, (
+            "differing scanLastIP/scanVendor across plugin rows for the same "
+            "new MAC must not produce duplicate New Device events"
+        )

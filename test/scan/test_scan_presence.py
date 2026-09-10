@@ -221,3 +221,60 @@ class TestPresenceZeroSessionsInsertGate:
             "SELECT * FROM Sessions WHERE sesMac = ? AND sesStillConnected = 1", (MAC,)
         ).fetchall()
         assert rows == [], "scanPresence=0 must not open a session for a reconnecting device"
+
+
+class TestSessionsInsertNoDuplicatesAcrossPlugins:
+    """create_new_devices()'s raw Sessions insert must collapse multiple
+    presence-asserting plugin rows for the same reconnecting MAC into one
+    session row - Sessions has no uniqueness constraint at all, so an
+    unaggregated SELECT previously opened one row per distinct scanLastIP."""
+
+    def test_differing_ip_across_plugins_collapses_to_one_session_row(self):
+        conn = make_db()
+        insert_device(conn, MAC, alert_down=1, present_last_scan=0)
+        insert_current_scan_row_from_dict(
+            conn,
+            make_current_scan_dict(
+                MAC, scanSourcePlugin="ARPSCAN", scanLastIP="192.168.1.30"
+            ),
+        )
+        insert_current_scan_row_from_dict(
+            conn,
+            make_current_scan_dict(
+                MAC, scanSourcePlugin="DOCKER", scanLastIP="192.168.1.31"
+            ),
+        )
+        db = DummyDB(conn)
+
+        device_handling.create_new_devices(db)
+
+        rows = conn.execute(
+            "SELECT * FROM Sessions WHERE sesMac = ? AND sesStillConnected = 1", (MAC,)
+        ).fetchall()
+        assert len(rows) == 1, (
+            "differing scanLastIP across plugin rows for the same reconnecting "
+            "MAC must not open duplicate Sessions rows"
+        )
+
+
+class TestIpChangedRespectsPresence:
+    """IP Changed query was found missing 'AND scanPresence = 1' entirely - a
+    scanPresence=0 (abstain/inventory) row reporting a different IP must not
+    fire an IP Changed event, consistent with scanPresence's abstain-not-
+    override semantics used everywhere else in this file."""
+
+    def test_presence_zero_differing_ip_no_ip_changed_event(self):
+        conn = make_db()
+        insert_device(conn, MAC, alert_down=1, present_last_scan=1, last_ip="192.168.1.10")
+        insert_current_scan_row_from_dict(
+            conn, make_current_scan_dict(MAC, scanPresence=0, scanLastIP="192.168.1.99")
+        )
+        db = DummyDB(conn)
+
+        insert_events(db)
+
+        rows = conn.execute(
+            "SELECT * FROM Events WHERE eveMac = ? AND eveEventType = 'IP Changed'",
+            (MAC,),
+        ).fetchall()
+        assert rows == [], "scanPresence=0 must not trigger an IP Changed event"

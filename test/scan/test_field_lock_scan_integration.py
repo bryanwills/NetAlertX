@@ -109,7 +109,10 @@ def scan_db_for_new_devices():
             scanParentPort TEXT,
             scanSite TEXT,
             scanSSID TEXT,
-            scanType TEXT
+            scanType TEXT,
+            scanCreatesDevice INTEGER NOT NULL DEFAULT 1,
+            scanNotificationMode TEXT NOT NULL DEFAULT 'normal',
+            scanPresence INTEGER NOT NULL DEFAULT 1
         )
         """
     )

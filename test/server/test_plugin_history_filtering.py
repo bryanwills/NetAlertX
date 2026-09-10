@@ -51,9 +51,17 @@ def plugin_db():
     conn.close()
 
 
-def _no_report_on(key):
-    """Monkeypatch target: return empty REPORT_ON so no events are generated."""
-    return [] if key.endswith("_REPORT_ON") else ""
+def _no_report_on(key, default=""):
+    """Monkeypatch target: return empty REPORT_ON so no events are generated.
+
+    Accepts `default` to match the real get_setting_value(key, default="")
+    signature - process_plugin_events() now calls it with an explicit
+    `default=None` for the optional IMPORT_ON setting, and a mock narrower
+    than the function it replaces breaks on that call with a TypeError.
+    """
+    if key.endswith("_REPORT_ON"):
+        return []
+    return default
 
 
 # ---------------------------------------------------------------------------

@@ -183,9 +183,13 @@ class TestQuietDeviceDownSuppressedForFree:
 class TestQuietReconnection:
     def test_quiet_reconnect_event_is_suppressed(self):
         conn = make_db()
+        # last_ip must match make_current_scan_dict()'s default scanLastIP
+        # (192.168.1.10) - a mismatch here also fires an unrelated "IP
+        # Changed" event alongside "Connected", which isn't what this test
+        # is isolating (found by a real test run, not caught in review).
         insert_device(
             conn, MAC, alert_down=1, present_last_scan=0,
-            last_connection=minutes_ago(60),
+            last_connection=minutes_ago(60), last_ip="192.168.1.10",
         )
         insert_current_scan_row_from_dict(
             conn, make_current_scan_dict(MAC, scanNotificationMode="quiet")
