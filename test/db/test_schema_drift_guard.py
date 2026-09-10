@@ -36,23 +36,37 @@ _APP_SQL_PATH = os.path.join(
 
 
 def _columns_from_ddl(ddl_sql, table):
-    """Execute a CREATE TABLE (or full multi-statement schema) into a fresh
-    in-memory connection and return the resulting column name set - uses
-    SQLite's own DDL parser rather than a hand-rolled regex, so it can't be
-    fooled by formatting differences that a text-based diff would trip on."""
+    """Execute DDL into a fresh in-memory connection and return the
+    resulting {column: declared_type} map, via SQLite's own DDL parser
+    rather than a hand-rolled regex. Types normalized (stripped, uppercased)
+    so harmless casing differences aren't reported as drift."""
     conn = sqlite3.connect(":memory:")
     try:
         conn.executescript(ddl_sql)
-        return {row[1] for row in conn.execute(f'PRAGMA table_info("{table}")').fetchall()}
+        return {
+            row[1]: row[2].strip().upper()
+            for row in conn.execute(f'PRAGMA table_info("{table}")').fetchall()
+        }
     finally:
         conn.close()
 
 
 def _drift(ddl_sql, table):
-    """Column names present in one source but not the other. Empty = no drift."""
-    expected = set(TABLE_COLUMNS[table].keys())
+    """Column-level differences between TABLE_COLUMNS and ddl_sql's actual
+    schema for table - missing columns, extra columns, and type mismatches
+    on columns present in both. Empty set = no drift."""
+    expected = {name: t.strip().upper() for name, t in TABLE_COLUMNS[table].items()}
     actual = _columns_from_ddl(ddl_sql, table)
-    return expected.symmetric_difference(actual)
+
+    drift = set()
+    for name in expected.keys() - actual.keys():
+        drift.add(f"missing:{name}")
+    for name in actual.keys() - expected.keys():
+        drift.add(f"extra:{name}")
+    for name in expected.keys() & actual.keys():
+        if expected[name] != actual[name]:
+            drift.add(f"type:{name}({expected[name]!r} != {actual[name]!r})")
+    return drift
 
 
 class TestNoDriftAgainstRealAppSql:
@@ -72,17 +86,24 @@ class TestGuardActuallyDetectsDrift:
     passes regardless of what it's given."""
 
     def test_missing_columns_detected(self):
-        broken_sql = "CREATE TABLE Events (eveMac TEXT, eveIp TEXT);"
+        broken_sql = "CREATE TABLE Events (eveMac STRING (50), eveIp STRING (50));"
         drift = _drift(broken_sql, "Events")
         assert drift == {
-            "eveDateTime", "eveEventType", "eveAdditionalInfo",
-            "evePendingAlertEmail", "evePairEventRowid",
+            "missing:eveDateTime", "missing:eveEventType", "missing:eveAdditionalInfo",
+            "missing:evePendingAlertEmail", "missing:evePairEventRowid",
         }
 
     def test_extra_column_detected(self):
-        broken_sql = "CREATE TABLE Sessions (sesMac TEXT, sesUnexpectedNewColumn TEXT);"
+        broken_sql = (
+            "CREATE TABLE Sessions (sesMac STRING (50), sesUnexpectedNewColumn TEXT);"
+        )
         drift = _drift(broken_sql, "Sessions")
-        assert "sesUnexpectedNewColumn" in drift
+        assert "extra:sesUnexpectedNewColumn" in drift
+
+    def test_type_mismatch_detected(self):
+        broken_sql = "CREATE TABLE Events (eveMac INTEGER, eveIp TEXT);"
+        drift = _drift(broken_sql, "Events")
+        assert any(item.startswith("type:eveMac") for item in drift)
 
 
 class TestInlineDDLMatchesConstant:
@@ -136,8 +157,11 @@ class TestEnsureTableColumnsBackfill:
         ok = ensure_table_columns(cur, table)
         assert ok, f"ensure_table_columns({table}) reported failure"
 
-        cols = {row[1] for row in conn.execute(f'PRAGMA table_info("{table}")').fetchall()}
-        assert cols == set(columns.keys()), f"{table}: backfill did not restore {first_col}"
+        info = {row[1]: row[2] for row in conn.execute(f'PRAGMA table_info("{table}")').fetchall()}
+        assert set(info.keys()) == set(columns.keys()), f"{table}: backfill did not restore {first_col}"
+        assert info[first_col].strip().upper() == first_type.strip().upper(), (
+            f"{table}: {first_col} restored with type {info[first_col]!r}, expected {first_type!r}"
+        )
         conn.close()
 
     def test_missing_table_skips_without_error(self):

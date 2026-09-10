@@ -13,6 +13,13 @@ def current_scan_presence_condition(mac_column: str) -> str:
     function does raw string interpolation, not parameterized SQL. Never pass
     plugin data, user input, or any runtime string value here.
 
+    The inner CurrentScan is aliased as presence_scan so a qualified
+    mac_column like "CurrentScan.scanMac" resolves to the outer reference,
+    not this subquery's own row - without the alias the bare table name
+    shadows it, turning the comparison into a same-row tautology that's
+    true for any row with a non-NULL scanMac. mac_column may not reference
+    presence_scan itself for the same reason.
+
     Not usable everywhere a presence check appears: the "New Connections"
     query in session_events.py and the raw Sessions insert in
     create_new_devices() (device_handling.py) both need the actual
@@ -24,7 +31,12 @@ def current_scan_presence_condition(mac_column: str) -> str:
     """
     if not _SQL_IDENTIFIER_RE.match(mac_column):
         raise ValueError(f"mac_column must be a plain identifier, got: {mac_column!r}")
+    if mac_column == "presence_scan" or mac_column.startswith("presence_scan."):
+        raise ValueError(
+            f"mac_column must not reference presence_scan - that's this helper's own "
+            f"internal subquery alias, got: {mac_column!r}"
+        )
     return f"""EXISTS (
-        SELECT 1 FROM CurrentScan
-        WHERE scanMac = {mac_column} AND scanPresence = 1
+        SELECT 1 FROM CurrentScan AS presence_scan
+        WHERE presence_scan.scanMac = {mac_column} AND presence_scan.scanPresence = 1
     )"""

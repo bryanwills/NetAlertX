@@ -23,6 +23,7 @@ aggregation - see scan-pipeline-hardening.md Design §1's correction.
 import ast
 import inspect
 import os
+import sqlite3
 import sys
 import textwrap
 
@@ -59,6 +60,35 @@ class TestHelperCorrectness:
     def test_rejects_non_identifier_input(self, bad_value):
         with pytest.raises(ValueError):
             current_scan_presence_condition(bad_value)
+
+    @pytest.mark.parametrize("bad_value", ["presence_scan", "presence_scan.scanMac"])
+    def test_rejects_presence_scan_qualifier(self, bad_value):
+        """presence_scan is this helper's own internal subquery alias."""
+        with pytest.raises(ValueError):
+            current_scan_presence_condition(bad_value)
+
+
+class TestQualifiedColumnExecutesCorrectly:
+    """Executes the fragment, not just checks the generated SQL text - proves
+    a qualified mac_column ("CurrentScan.scanMac") still discriminates
+    per-row rather than collapsing into "does any row assert presence"."""
+
+    def test_only_the_present_mac_matches(self):
+        conn = sqlite3.connect(":memory:")
+        conn.execute("CREATE TABLE CurrentScan (scanMac TEXT, scanPresence INTEGER)")
+        conn.execute("INSERT INTO CurrentScan VALUES ('aa', 1)")  # present
+        conn.execute("INSERT INTO CurrentScan VALUES ('bb', 0)")  # row exists, not present
+        conn.commit()
+
+        condition = current_scan_presence_condition("CurrentScan.scanMac")
+        rows = conn.execute(
+            f"SELECT scanMac, {condition} AS is_present FROM CurrentScan"
+        ).fetchall()
+
+        assert dict(rows) == {"aa": 1, "bb": 0}, (
+            "each row must be checked against its own scanMac, not collapse "
+            "into a table-wide 'does anything assert presence' check"
+        )
 
 
 def _call_count(func, target_name="current_scan_presence_condition"):
