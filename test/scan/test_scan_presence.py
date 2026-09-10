@@ -83,6 +83,51 @@ class TestPresenceGateOnExistingDevice:
         assert _present(db, MAC) == 1, "a contradicting presence=1 row must still win"
 
 
+class TestDevLastConnectionRespectsPresence:
+    """update_devLastConnection_from_CurrentScan() - found missing this check
+    during review of a shipped commit: an inventory/reservation row was
+    making offline devices look recently connected."""
+
+    def test_presence_zero_does_not_bump_last_connection(self):
+        conn = make_db()
+        insert_device(
+            conn, MAC, alert_down=1, present_last_scan=0,
+            last_connection="2020-01-01 00:00:00",
+        )
+        insert_current_scan_row_from_dict(
+            conn, make_current_scan_dict(MAC, scanPresence=0)
+        )
+        db = DummyDB(conn)
+
+        device_handling.update_devLastConnection_from_CurrentScan(db)
+
+        row = conn.execute(
+            "SELECT devLastConnection FROM Devices WHERE devMac = ?", (MAC,)
+        ).fetchone()
+        assert row["devLastConnection"] == "2020-01-01 00:00:00", (
+            "a scanPresence=0 row must not make an offline device look recently connected"
+        )
+
+    def test_presence_one_still_bumps_last_connection(self):
+        """Regression guard: default (1) preserves today's behavior."""
+        conn = make_db()
+        insert_device(
+            conn, MAC, alert_down=1, present_last_scan=0,
+            last_connection="2020-01-01 00:00:00",
+        )
+        insert_current_scan_row_from_dict(
+            conn, make_current_scan_dict(MAC, scanPresence=1)
+        )
+        db = DummyDB(conn)
+
+        device_handling.update_devLastConnection_from_CurrentScan(db)
+
+        row = conn.execute(
+            "SELECT devLastConnection FROM Devices WHERE devMac = ?", (MAC,)
+        ).fetchone()
+        assert row["devLastConnection"] != "2020-01-01 00:00:00"
+
+
 class TestNewConnectionsRespectsPresence:
     """insert_events()'s New Connections query must not fire Connected for a
     scanPresence=0-only row - this is what would otherwise leave a session

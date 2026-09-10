@@ -20,7 +20,7 @@ There are 4 ways how to influence notifications:
 
 The following device properties influence notifications. You can:
 
-1. **Alert Events** - Enables alerts of connections, disconnections, IP changes (down and down reconnected notifications are still sent even if this is disabled).
+1. **Alert Events** - Enables alerts of disconnections and IP changes (down and down reconnected notifications are still sent even if this is disabled). **Note:** a device *reconnecting* (coming back online without having triggered a Down alert first) currently always generates a notification regardless of this setting — Alert Events does not gate that case today, only disconnections and IP changes.
 2. **Alert Down** - Alerts when a device goes down. This setting overrides a disabled **Alert Events** setting, so you will get a notification of a device going down even if you don't have **Alert Events** ticked. Disabling this will disable down and down reconnected notifications on the device.
 3. **Can Sleep** - Marks the device as sleep-capable (e.g. a battery-powered sensor that deep-sleeps between readings). When enabled, offline periods within the **Alert down after (sleep)** (`NTFPRCS_sleep_time`) global window are shown as **Sleeping** (aqua badge 🌙) instead of **Down**, and no down alert is fired during that window. Once the window expires the device falls back to normal down-alert logic. ⚠ Requires **Alert Down** to be enabled — sleeping suppresses the alert during the window only.
 4. **Skip repeated notifications**, if for example you know there is a temporary issue and want to pause the same notification for this device for a given time.

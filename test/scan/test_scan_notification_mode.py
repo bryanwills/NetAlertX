@@ -199,3 +199,74 @@ class TestQuietReconnection:
         ).fetchall()
         assert len(rows) == 1
         assert rows[0]["evePendingAlertEmail"] == 0
+
+
+class TestQuietSuppressesIpChangedToo:
+    """IP Changed fires from a present CurrentScan row (unlike Device Down/
+    Disconnected, which fire on absence and have no live value to read) - a
+    live scanNotificationMode check is possible here and, per the decision
+    recorded in the PRD's open issue, should apply additively on top of the
+    device's own devAlertEvents toggle."""
+
+    def test_quiet_row_suppresses_ip_changed(self):
+        conn = make_db()
+        insert_device(conn, MAC, alert_down=1, last_ip="192.168.1.10")
+        conn.execute("UPDATE Devices SET devAlertEvents = 1 WHERE devMac = ?", (MAC,))
+        insert_current_scan_row_from_dict(
+            conn, make_current_scan_dict(
+                MAC, scanLastIP="192.168.1.99", scanNotificationMode="quiet"
+            )
+        )
+        db = DummyDB(conn)
+
+        insert_events(db)
+
+        row = conn.execute(
+            "SELECT evePendingAlertEmail FROM Events WHERE eveMac = ? AND eveEventType = 'IP Changed'",
+            (MAC,),
+        ).fetchone()
+        assert row is not None, "IP Changed event should still be logged (audit trail intact)"
+        assert row["evePendingAlertEmail"] == 0
+
+    def test_normal_row_with_alert_events_on_does_not_suppress(self):
+        """Regression guard: existing devAlertEvents-driven behavior unchanged."""
+        conn = make_db()
+        insert_device(conn, MAC, alert_down=1, last_ip="192.168.1.10")
+        conn.execute("UPDATE Devices SET devAlertEvents = 1 WHERE devMac = ?", (MAC,))
+        insert_current_scan_row_from_dict(
+            conn, make_current_scan_dict(
+                MAC, scanLastIP="192.168.1.99", scanNotificationMode="normal"
+            )
+        )
+        db = DummyDB(conn)
+
+        insert_events(db)
+
+        row = conn.execute(
+            "SELECT evePendingAlertEmail FROM Events WHERE eveMac = ? AND eveEventType = 'IP Changed'",
+            (MAC,),
+        ).fetchone()
+        assert row is not None
+        assert row["evePendingAlertEmail"] == 1
+
+    def test_devalertevents_off_still_suppresses_regardless_of_quiet(self):
+        """The plugin-level quiet check is additive, not a replacement for
+        the user's own toggle."""
+        conn = make_db()
+        insert_device(conn, MAC, alert_down=1, last_ip="192.168.1.10")
+        conn.execute("UPDATE Devices SET devAlertEvents = 0 WHERE devMac = ?", (MAC,))
+        insert_current_scan_row_from_dict(
+            conn, make_current_scan_dict(
+                MAC, scanLastIP="192.168.1.99", scanNotificationMode="normal"
+            )
+        )
+        db = DummyDB(conn)
+
+        insert_events(db)
+
+        row = conn.execute(
+            "SELECT evePendingAlertEmail FROM Events WHERE eveMac = ? AND eveEventType = 'IP Changed'",
+            (MAC,),
+        ).fetchone()
+        assert row is not None
+        assert row["evePendingAlertEmail"] == 0

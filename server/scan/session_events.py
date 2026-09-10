@@ -265,18 +265,32 @@ def insert_events(db):
 
     # Check IP Changed
     mylog("debug", "[Events] - 4 - IP Changes")
+    # Unlike Device Down/Disconnected (which fire on row *absence* and have no
+    # live scanNotificationMode to read), IP Changed fires from a present row -
+    # a live value is available, so quiet is consulted here too, additively:
+    # suppress if EITHER the live aggregate says quiet OR the device's own
+    # devAlertEvents is off. Doesn't replace the user's toggle, only adds a
+    # plugin-level reason to suppress on top of it - most-restrictive-wins,
+    # same as the New Connections query's aggregate.
     sql.execute(f"""INSERT OR IGNORE INTO Events (eveMac, eveIp, eveDateTime,
                         eveEventType, eveAdditionalInfo,
                         evePendingAlertEmail)
-                    SELECT scanMac, scanLastIP, '{startTime}', 'IP Changed',
-                        'Previous IP: '|| devLastIP, devAlertEvents
+                    SELECT CurrentScan.scanMac, CurrentScan.scanLastIP, '{startTime}', 'IP Changed',
+                        'Previous IP: '|| devLastIP,
+                        CASE WHEN agg.scanQuiet = 1 THEN 0 ELSE devAlertEvents END
                     FROM Devices, CurrentScan
-                    WHERE devMac = scanMac
-                      AND scanLastIP IS NOT NULL
-                      AND scanLastIP NOT IN ({NULL_EQUIVALENTS_SQL})
-                      AND scanLastIP <> COALESCE(devPrimaryIPv4, '')
-                      AND scanLastIP <> COALESCE(devPrimaryIPv6, '')
-                      AND scanLastIP <> COALESCE(devLastIP, '') """)
+                    JOIN (
+                        SELECT scanMac,
+                               MAX(CASE WHEN scanNotificationMode = 'quiet' THEN 1 ELSE 0 END) AS scanQuiet
+                        FROM CurrentScan
+                        GROUP BY scanMac
+                    ) agg ON agg.scanMac = CurrentScan.scanMac
+                    WHERE devMac = CurrentScan.scanMac
+                      AND CurrentScan.scanLastIP IS NOT NULL
+                      AND CurrentScan.scanLastIP NOT IN ({NULL_EQUIVALENTS_SQL})
+                      AND CurrentScan.scanLastIP <> COALESCE(devPrimaryIPv4, '')
+                      AND CurrentScan.scanLastIP <> COALESCE(devPrimaryIPv6, '')
+                      AND CurrentScan.scanLastIP <> COALESCE(devLastIP, '') """)
     mylog("debug", "[Events] - Events end")
 
 

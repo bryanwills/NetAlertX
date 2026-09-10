@@ -231,7 +231,12 @@ def update_presence_from_CurrentScan(db):
 
 def update_devLastConnection_from_CurrentScan(db):
     """
-    Update devLastConnection to current time for all devices seen in CurrentScan.
+    Update devLastConnection to current time for devices with a presence-
+    asserting CurrentScan row (scanPresence = 1) - a row that only carries
+    identity/inventory data (scanPresence = 0) must not make an offline
+    device look recently connected. Same predicate as
+    update_presence_from_CurrentScan(); found missing this check during
+    review of a shipped commit - see scan-pipeline-hardening.md.
     """
     sql = db.sql
     startTime = timeNowUTC()
@@ -243,6 +248,7 @@ def update_devLastConnection_from_CurrentScan(db):
         WHERE EXISTS (
             SELECT 1 FROM CurrentScan
             WHERE devMac = scanMac
+              AND scanPresence = 1
         )
     """)
 

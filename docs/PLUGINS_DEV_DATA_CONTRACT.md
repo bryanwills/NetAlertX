@@ -155,7 +155,7 @@ CREATE TABLE CurrentScan (
 )
 ```
 
-As the documentation might become outdated, it's good practice to check the latest definition of the `CurrentScan` table in `server/db/db_upgrade.py`'s `ensure_CurrentScan()` (the version that actually runs) in the code base — not `app.sql`, which is a reference-only copy the running application never loads.
+As the documentation might become outdated, it's good practice to check the latest definition of the `CurrentScan` table in `server/db/db_upgrade.py`'s `ensure_CurrentScan()` (the version that actually runs) in the code base. `app.sql` bootstraps the schema for every fresh install, but `CurrentScan` is one of the few tables `ensure_CurrentScan()` unconditionally drops and recreates on every startup, so `app.sql`'s copy of it never actually persists.
 
 ### Import Behavior Columns
 
@@ -167,13 +167,13 @@ Three optional `CurrentScan` columns, all independent of each other, control wha
 | `scanNotificationMode` | text (`normal` \| `quiet`) | `normal` | Whether creating/reconnecting this device should dispatch a notification. `quiet` still writes the `Events` row (audit trail intact) but suppresses the outbound email/push. Creation-time-only: it seeds `devAlertDown`/`devAlertEvents` to `0` on the device when it's first created, rather than being an ongoing, per-cycle re-evaluated policy — reclassifying a plugin's row later does not retroactively change an already-created device's alert settings. |
 | `scanPresence` | boolean | `1` | Whether this row asserts the device is *currently online*. `0` means "identity/inventory data, no presence claim" — not "offline". A reservation, a lease record, or a static IPAM entry are typical `0` cases. |
 
-**Fallback for missing/invalid values** 
+**Missing vs. invalid values — these behave differently, not interchangeably:**
 
-| Column | Missing/invalid value → |
-|---|---|
-| `scanCreatesDevice` | `1` (create) |
-| `scanNotificationMode` | `normal` |
-| `scanPresence` | `1` (asserts presence) |
+| Column | Column never mapped (missing) | Mapped but sent an unexpected value (invalid) |
+|---|---|---|
+| `scanCreatesDevice` | `1` (schema `DEFAULT`) | `CHECK (scanCreatesDevice IN (0, 1))` — anything else fails the `INSERT` outright, it does not silently fall back to `1` |
+| `scanNotificationMode` | `normal` (schema `DEFAULT`) | No `CHECK` constraint — any string other than the literal `'quiet'` is treated as `normal`, since the SQL only special-cases that exact value |
+| `scanPresence` | `1` (schema `DEFAULT`) | `CHECK (scanPresence IN (0, 1))` — same as `scanCreatesDevice`, invalid values fail the `INSERT`, they don't default |
 
 **Multiple plugins reporting the same MAC in the same scan cycle** (the normal case, not an edge case — see the `scan-pipeline` skill) resolve per column, not uniformly: `scanCreatesDevice` and `scanPresence` are most-permissive-wins (any row saying `1` wins), while `scanNotificationMode` is most-*restrictive*-wins (any row saying `quiet` suppresses the notification, even if a sibling row says `normal`) — erring toward under-notifying rather than spamming.
 
