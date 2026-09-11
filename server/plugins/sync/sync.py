@@ -307,6 +307,8 @@ def main():
             else:
                 # Fire "New Device" events for genuinely new MACs before the Devices
                 # INSERT pre-seeds the table (which would block create_new_devices()).
+                # This bypasses the standard scan pipeline on purpose - see the
+                # scan-pipeline skill's sync.py bypass gotcha.
                 if new_devices:
                     now = timeNowUTC()
                     cursor.executemany(
@@ -341,7 +343,9 @@ def main():
                         # that contract by leaving devPresentLastScan to the normal pipeline.
                         # NOTE: this raw SQL bypasses can_overwrite_field() — ALL other fields
                         # including USER/LOCKED-sourced ones are overwritten. Node is fully
-                        # authoritative in this mode.
+                        # authoritative in this mode. Also bypasses the standard scan
+                        # pipeline on purpose - see the scan-pipeline skill's sync.py
+                        # bypass gotcha.
                         _CARBON_COPY_SKIP = {'devMac', 'devPresentLastScan'}
                         update_cols   = [col for col in insert_cols if col not in _CARBON_COPY_SKIP]
                         update_clause = ', '.join(f'{col}=excluded.{col}' for col in update_cols)

@@ -3,6 +3,7 @@ from zoneinfo import ZoneInfo
 import datetime as dt
 from logger import mylog  # noqa: E402 [flake8 lint suppression]
 from messaging.in_app import write_notification  # noqa: E402 [flake8 lint suppression]
+from db.schema_columns import TABLE_COLUMNS  # noqa: E402 [flake8 lint suppression]
 
 
 # Define the expected Devices table columns (hardcoded base schema) [v26.1/2.XX]
@@ -81,7 +82,7 @@ def ensure_column(sql, table: str, column_name: str, column_type: str) -> bool:
             return True  # Already exists
 
         # Validate that this column is in the expected schema
-        expected = EXPECTED_DEVICES_COLUMNS if table == "Devices" else []
+        expected = EXPECTED_DEVICES_COLUMNS if table == "Devices" else TABLE_COLUMNS.get(table, {})
         if not expected or column_name not in expected:
             msg = (
                 f"[db_upgrade] ⚠ ERROR: Column '{column_name}' is not in expected schema - "
@@ -100,6 +101,37 @@ def ensure_column(sql, table: str, column_name: str, column_type: str) -> bool:
     except Exception as e:
         mylog("none", [f"[db_upgrade] ERROR while adding '{column_name}': {e}"])
         return False
+
+
+def ensure_table_columns(sql, table: str) -> bool:
+    """
+    Backfill every column in TABLE_COLUMNS[table] (server/db/schema_columns.py)
+    that's missing from the live table, via ensure_column() - the same
+    drift-repair pattern Devices already has, generalized instead of
+    hand-writing one ensure_column() call per column per table (the mirrored
+    duplication that pattern would otherwise reintroduce - see
+    scan-pipeline-hardening.md Design §3).
+
+    Skips silently (returns True) if the table doesn't exist yet - these
+    four tables are normally created by app.sql's first-run bootstrap before
+    this ever runs, but this must not turn a not-yet-created table into a
+    hard failure that rolls back the whole initDB() transaction.
+    """
+    columns = TABLE_COLUMNS.get(table)
+    if not columns:
+        mylog("none", [f"[db_upgrade] ensure_table_columns: no column list registered for '{table}'"])
+        return False
+
+    sql.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?", (table,))
+    if not sql.fetchone():
+        mylog("debug", [f"[db_upgrade] ensure_table_columns: '{table}' does not exist yet, skipping"])
+        return True
+
+    ok = True
+    for column_name, column_type in columns.items():
+        if not ensure_column(sql, table, column_name, column_type):
+            ok = False
+    return ok
 
 
 def ensure_mac_lowercase_triggers(sql):

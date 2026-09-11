@@ -164,7 +164,7 @@ Three optional `CurrentScan` columns, all independent of each other, control wha
 | Column | Type | Default | Meaning |
 |---|---|---|---|
 | `scanCreatesDevice` | boolean | `1` | Whether this row can originate a *new* `Devices` entry. `0` lets an enrich-only plugin (e.g. a hostname resolver) update an already-existing device's fields without ever being able to create one. |
-| `scanNotificationMode` | text (`normal` \| `quiet`) | `normal` | Whether creating/reconnecting this device should dispatch a notification. `quiet` still writes the `Events` row (audit trail intact) but suppresses the outbound email/push. Creation-time-only: it seeds `devAlertDown`/`devAlertEvents` to `0` on the device when it's first created, rather than being an ongoing, per-cycle re-evaluated policy — reclassifying a plugin's row later does not retroactively change an already-created device's alert settings. |
+| `scanNotificationMode` | text (`normal` \| `quiet`) | `normal` | Whether this row's notifications are suppressed. `quiet` always suppresses the outbound email/push; whether the `Events` row itself still gets written depends on the event. **Live** (per-cycle aggregate, reclassifying a row changes future events): `New Device`, `Connected`, `Down Reconnected`, `IP Changed` — audit trail always written. `New Device` isn't gated on `scanPresence = 1` like the other three (see flowcharts below). **Frozen** (`devAlertDown`/`devAlertEvents` seeded at device creation, reclassifying later has no retroactive effect): `Device Down`, `Disconnected` — not symmetric. `Disconnected` always writes its `Events` row (`evePendingAlertEmail = 0` when quiet). `Device Down` writes **no row at all** when `devAlertDown = 0`. |
 | `scanPresence` | boolean | `1` | Whether this row asserts the device is *currently online*. `0` means "identity/inventory data, no presence claim" — not "offline". A reservation, a lease record, or a static IPAM entry are typical `0` cases. |
 
 **Missing vs. invalid values — these behave differently, not interchangeably:**
@@ -187,6 +187,42 @@ Three optional `CurrentScan` columns, all independent of each other, control wha
 | 0 | 0 | Silent enrichment — never originate a device, no presence claim either |
 
 `scanNotificationMode` is orthogonal to both of the above and can be combined with any row in the table (e.g. inventory import + quiet, for a fully silent bulk import of known-offline devices).
+
+**Decision: does this row create a device?**
+
+```mermaid
+flowchart TD
+    A[Row reaches CurrentScan] --> B{scanMac blank or<br/>null-equivalent?}
+    B -- yes --> Z[Never creates a device]
+    B -- no --> C{Any row this cycle for this<br/>MAC has scanCreatesDevice = 1?}
+    C -- no, all say 0 --> Y[No device created<br/>enrich-only]
+    C -- yes, at least one --> D{Devices row already<br/>exists for this MAC?}
+    D -- yes --> E[No-op - existing device untouched<br/>by this check]
+    D -- no --> F[New Devices row created<br/>+ New Device event]
+```
+
+**Decision: is this event's notification suppressed?**
+
+```mermaid
+flowchart TD
+    A[Event about to fire] --> B{Fired from a row that exists in<br/>CurrentScan this cycle? New Device /<br/>Connected / Down Reconnected / IP Changed}
+    B -- yes --> C{Live aggregate: any CurrentScan row<br/>for this MAC says<br/>scanNotificationMode = quiet?}
+    C -- yes --> S[Suppressed<br/>evePendingAlertEmail = 0]
+    C -- no --> N[Notified<br/>evePendingAlertEmail = 1]
+    B -- no, fired from row ABSENCE<br/>Device Down / Disconnected --> D{Frozen device setting:<br/>devAlertDown / devAlertEvents,<br/>seeded at creation time}
+    D -- off --> S
+    D -- on --> N
+```
+
+**Worked scenarios:**
+
+| Scenario | `scanCreatesDevice` | `scanPresence` | `scanNotificationMode` | `scanMac` | Outcome |
+|---|---|---|---|---|---|
+| Normal discovery (default plugin behavior) | `1` (default) | `1` (default) | `normal` (default) | real MAC | Device created if new, notified normally, presence tracked live. |
+| Enrich-only plugin (e.g. a hostname resolver) | `0` | `1` (default) | `normal` (default) | real MAC | Never originates a device; still updates an existing device's fields via `FIELD_SPECS`. If another plugin reports the same MAC with `scanCreatesDevice = 1`, the device still gets created (most-permissive-wins) — this plugin's `0` doesn't block it. |
+| Bulk inventory import of known-offline devices | `1` | `0` | `quiet` | real MAC | Creates devices without claiming they're online, and without a wave of "New Device" notifications for a large batch import. |
+| Presence-confirming enrichment (e.g. a DHCP lease scanner) | `0` | `1` | `normal` | real MAC | Confirms an *existing* device is online without ever being the plugin that creates it. |
+| Row with no usable device identity (e.g. an object with no routable MAC available) | `0` | irrelevant | irrelevant | blank / null-equivalent | Never creates a device — but not for symmetric reasons. The blank-MAC guard blocks the whole aggregated group by its shared `scanMac` value, regardless of any individual row's `scanCreatesDevice` (even a stray `1` from an unrelated plugin sharing the same blank `scanMac` can't override it). Setting `scanCreatesDevice = 0` here is still correct practice, but on its own is only this row's vote — most-permissive-wins means a sibling row for the same `scanMac` asserting `1` would still win. The blank-MAC guard is what actually guarantees safety regardless of what other contributors do. |
 
 ## Examples
 

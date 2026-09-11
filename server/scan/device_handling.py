@@ -9,6 +9,7 @@ from const import vendorsPath, vendorsPathNewest, sql_generateGuid, NULL_EQUIVAL
 from models.device_instance import DeviceInstance
 from scan.name_resolution import NameResolver
 from scan.device_heuristics import guess_icon, guess_type
+from scan.presence import current_scan_presence_condition
 from db.db_helper import sanitize_SQL_input, list_to_where, safe_int
 from db.db_upgrade import PARENT_MAC_SENTINELS
 from db.authoritative_handler import (
@@ -206,26 +207,18 @@ def update_presence_from_CurrentScan(db):
     # (scanPresence = 1). A row can exist purely as identity/inventory data
     # (scanPresence = 0, e.g. a DHCP reservation) without claiming the device is
     # online right now - "abstain, not override": any other row for the same MAC
-    # that does assert presence still wins via this same EXISTS check.
-    sql.execute("""
+    # that does assert presence still wins via this same predicate.
+    sql.execute(f"""
         UPDATE Devices
         SET devPresentLastScan = 1
-        WHERE EXISTS (
-            SELECT 1 FROM CurrentScan
-            WHERE devMac = scanMac
-              AND scanPresence = 1
-        )
+        WHERE {current_scan_presence_condition("devMac")}
     """)
 
     # Mark not present if no CurrentScan row for this MAC asserts presence
-    sql.execute("""
+    sql.execute(f"""
         UPDATE Devices
         SET devPresentLastScan = 0
-        WHERE NOT EXISTS (
-            SELECT 1 FROM CurrentScan
-            WHERE devMac = scanMac
-              AND scanPresence = 1
-        )
+        WHERE NOT {current_scan_presence_condition("devMac")}
     """)
 
 
@@ -245,11 +238,7 @@ def update_devLastConnection_from_CurrentScan(db):
     sql.execute(f"""
         UPDATE Devices
         SET devLastConnection = '{startTime}'
-        WHERE EXISTS (
-            SELECT 1 FROM CurrentScan
-            WHERE devMac = scanMac
-              AND scanPresence = 1
-        )
+        WHERE {current_scan_presence_condition("devMac")}
     """)
 
 
@@ -682,6 +671,7 @@ def create_new_devices(db):
         GROUP BY scanMac
     ) agg
     WHERE agg.scanCreates = 1
+      AND agg.scanMac NOT IN ({NULL_EQUIVALENTS_SQL})
       AND NOT EXISTS (
         SELECT 1 FROM Devices
         WHERE devMac = agg.scanMac
@@ -802,8 +792,12 @@ def create_new_devices(db):
     # if another row for the same MAC says 0 (enrich-only). Rows for
     # already-existing devices pass through harmlessly too - the INSERT OR
     # IGNORE below is already a no-op for them regardless of this filter.
-    query = """SELECT scanMac, scanName, scanVendor, scanSourcePlugin, scanLastIP, scanSyncHubNode, scanParentMAC, scanParentPort, scanSite, scanSSID, scanType
-                FROM CurrentScan WHERE scanCreatesDevice = 1"""
+    # scanMac NOT IN NULL_EQUIVALENTS blocks creating a device from a blank/
+    # null-equivalent MAC - a plugin reporting a row it can't originate a
+    # device from (no real MAC available) should set scanCreatesDevice = 0
+    # itself, but this is the backstop for one that doesn't.
+    query = f"""SELECT scanMac, scanName, scanVendor, scanSourcePlugin, scanLastIP, scanSyncHubNode, scanParentMAC, scanParentPort, scanSite, scanSSID, scanType
+                FROM CurrentScan WHERE scanCreatesDevice = 1 AND scanMac NOT IN ({NULL_EQUIVALENTS_SQL})"""
 
     mylog("debug", f"[New Devices] Collecting New Devices Query: {query}")
     current_scan_data = sql.execute(query).fetchall()

@@ -10,6 +10,7 @@ from db.db_helper import get_table_json, json_obj
 from workflows.app_events import AppEvent_obj
 from db.db_upgrade import (
     ensure_column,
+    ensure_table_columns,
     ensure_CurrentScan,
     ensure_plugins_tables,
     ensure_Parameters,
@@ -201,6 +202,23 @@ class DB:
             # CamelCase column migration (must run before UTC migration and
             # before ensure_plugins_tables which uses IF NOT EXISTS with new names)
             migrate_to_camelcase(self.sql)
+
+            # Backfill Events/Sessions/Notifications columns that may be
+            # missing from an older app.sql snapshot - same drift-repair
+            # pattern as the Devices columns above, generalized instead of
+            # duplicated (see scan-pipeline-hardening.md Design §3). Must run
+            # after the camelCase migration above, or a pre-migration table's
+            # old-style column names would make every new-style column look
+            # "missing" and get added alongside the stale ones.
+            #
+            # AppEvents is deliberately NOT in this list: AppEvent_obj(self)
+            # below unconditionally drops and recreates it on every startup
+            # (its own equivalent of ensure_CurrentScan()'s drop/recreate
+            # pattern), so backfilling it here would be wasted work on a
+            # table about to be discarded a few lines later.
+            for _drift_table in ("Events", "Sessions", "Notifications"):
+                if not ensure_table_columns(self.sql, _drift_table):
+                    raise RuntimeError(f"ensure_table_columns({_drift_table}) failed")
 
             # Settings table setup
             ensure_Settings(self.sql)
