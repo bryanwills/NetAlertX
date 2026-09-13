@@ -1459,11 +1459,11 @@
     {
       "function": "devParentRelType",
       "type": {
-        "dataType": "array",
+        "dataType": "string",
         "elements": [
           {
             "elementType": "select",
-            "elementOptions": [{ "orderable": "true"}],
+            "elementOptions": [],
             "transformers": ["deviceRelType"]
           }
         ]

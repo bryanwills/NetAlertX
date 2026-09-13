@@ -34,6 +34,7 @@ server/plugins/<code_name>/
 - `<PREF>_RUN_TIMEOUT`: timeout in seconds — **enforced by the core plugin runner as the whole script's kill-timeout** (`server/plugin.py` passes it straight to `subprocess(..., timeout=...)`). Not a safe per-HTTP-call timeout — don't reuse it for individual network calls in a loop, or one slow call can burn the whole budget and get the process killed before it writes its result file. Two correct alternatives: `config.json`'s `"timeoutMultiplier": true` on a `params[]` entry for a config-declared, known-length loop (see `arp_scan`); `plugin_helper.per_item_timeout()` for a runtime-variable-length loop (see the `_publisher_*` plugins).
 - `<PREF>_WATCH`: columns to watch for changes.
 - `<PREF>_IMPORT_ON`: optional — gates whether this run's rows get promoted into `CurrentScan` (only relevant if `mapped_to_table: "CurrentScan"`). See `docs/PLUGINS_IMPORT_BEHAVIOR.md` for the related per-row `scanCreatesDevice`/`scanNotificationMode`/`scanPresence` columns.
+- **`dataType` and `default_value` must actually agree.** `dataType: "array"`/`"object"` means `default_value` needs a real JSON literal (`'["default"]'`), not a bare string (`"default"`) — `setting_value_to_python_type()` (`server/helper.py`) `json.loads()`s the default at runtime, and a bare string fails that silently: caught, logged, and `[]` is returned instead of your intended default. This shipped for real in `devParentRelType`/`UI_theme`/`UI_TOPOLOGY_ORDER`. If `elementOptions` already sets `multiple`/`orderable: "false"`, that's a signal the setting is scalar and `dataType` should be `"string"` instead.
 
 ## Data Contract
 
@@ -70,7 +71,7 @@ Full column spec: `docs/PLUGINS_DEV_DATA_CONTRACT.md`. Note `helpVal1-4`/`watche
 
 ## Before Opening a PR
 
-Check the plugin against the [Conventions Checklist](../../../docs/PLUGINS_DEV.md#conventions-checklist) — `RUN` default, schedule precedent, `RUN_TIMEOUT` semantics, reusing core settings instead of duplicating them, description length (renders in the Settings UI — keep it short), and the multi-instance settings pattern (nested array + popup-form, see `rest_import`, not a hardcoded "primary"/"secondary" pair). Most plugin PR review comments trace back to one of these, and `test/plugins/test_plugin_conventions.py` mechanically enforces the RUN-default, description-length, hardcoded-default-drift, and RUN_TIMEOUT-reuse-in-loop items — run it after touching a plugin.
+Check the plugin against the [Conventions Checklist](../../../docs/PLUGINS_DEV.md#conventions-checklist) — `RUN` default, schedule precedent, `RUN_TIMEOUT` semantics, reusing core settings instead of duplicating them, description length (renders in the Settings UI — keep it short), and the multi-instance settings pattern (nested array + popup-form, see `rest_import`, not a hardcoded "primary"/"secondary" pair). Most plugin PR review comments trace back to one of these, and `test/plugins/test_plugin_conventions.py` mechanically enforces the RUN-default, description-length, hardcoded-default-drift, RUN_TIMEOUT-reuse-in-loop, and array/object dataType-default_value-mismatch items — run it after touching a plugin.
 
 ## Starting Point
 

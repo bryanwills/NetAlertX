@@ -76,6 +76,38 @@ def test_config_json_is_valid_json(plugin_name):
 
 
 @pytest.mark.parametrize('plugin_name', _PLUGIN_NAMES)
+def test_array_object_default_value_parses(plugin_name):
+    """A setting declared `dataType: "array"` or `"object"` must have a
+    `default_value` that actually parses as that type - the same
+    `json.loads()` `setting_value_to_python_type()` (server/helper.py)
+    performs on it at runtime. A bare-string default_value (e.g. "default"
+    instead of the JSON literal '["default"]' or '"default"') fails silently:
+    the JSONDecodeError is caught, logged, and [] is returned - this is the
+    exact bug fixed for devParentRelType/UI_theme/UI_TOPOLOGY_ORDER (all three
+    declared dataType:"array" with a plain-string default_value)."""
+    config = _load_config(plugin_name)
+    for setting in config.get('settings', []):
+        dtype = (setting.get('type') or {}).get('dataType')
+        if dtype not in ('array', 'object'):
+            continue
+        default = setting.get('default_value')
+        if default is None:
+            continue
+        try:
+            json.loads(str(default).replace("'", '"'))
+        except json.JSONDecodeError as e:
+            pytest.fail(
+                f"{plugin_name}: setting '{setting.get('function')}' declares "
+                f"dataType={dtype!r} but default_value={default!r} does not "
+                f"parse as {dtype} ({e}). Either fix default_value to a real "
+                f"{dtype} literal, or change dataType to 'string' if the "
+                f"setting is actually always scalar (check whether "
+                f"elementOptions already says multiple/orderable:false - if "
+                f"so that's a strong signal it should be 'string', not 'array')."
+            )
+
+
+@pytest.mark.parametrize('plugin_name', _PLUGIN_NAMES)
 def test_run_defaults_to_disabled(plugin_name):
     config = _load_config(plugin_name)
     run_setting = next(
