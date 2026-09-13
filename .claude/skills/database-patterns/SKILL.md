@@ -9,7 +9,7 @@ description: Read before designing a feature that writes to the Devices table, a
 
 Before implementing any feature that reads or writes the `Devices` table, audit ALL write paths. The table is modified from many locations — missing one path is a correctness bug.
 
-**Known production write paths (as of 2026-07-04):**
+**Known production write paths:**
 
 | File | Function | Fields written |
 |---|---|---|

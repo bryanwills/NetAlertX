@@ -469,6 +469,11 @@ class DeviceInstance:
         if limit is not None:
             query += " LIMIT ? OFFSET ?"
             params.extend([limit, offset or 0])
+        elif offset is not None:
+            # SQLite's unlimited-limit form - an offset with no limit still
+            # needs a LIMIT clause for OFFSET to take effect.
+            query += " LIMIT -1 OFFSET ?"
+            params.append(offset)
         sql.execute(query, params)
 
         table_data = []

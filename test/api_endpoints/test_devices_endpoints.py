@@ -240,6 +240,14 @@ def test_devices_by_status_pagination(client, api_token):
         paged_macs = [d["id"] for d in page1] + [d["id"] for d in page2]
         assert paged_macs == full_macs
 
+        # offset alone (no limit) must still take effect, not be silently
+        # dropped - regression guard for the LIMIT -1 OFFSET ? fallback.
+        offset_only = client.get(
+            f"/devices/by-status?status=my&offset={half}",
+            headers=auth_headers(api_token),
+        ).json
+        assert [d["id"] for d in offset_only] == full_macs[half:]
+
         # Invalid limit/offset are rejected, not silently clamped.
         resp_bad_limit = client.get(
             "/devices/by-status?status=my&limit=0", headers=auth_headers(api_token)

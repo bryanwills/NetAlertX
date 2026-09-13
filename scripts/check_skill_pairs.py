@@ -32,6 +32,7 @@ GROUPS = [
     [".gemini/skills/database-patterns/SKILL.md", ".github/skills/database-patterns/SKILL.md", ".claude/skills/database-patterns/SKILL.md"],
     [".gemini/skills/prd-writing/SKILL.md", ".github/skills/prd-writing/SKILL.md", ".claude/skills/prd-writing/SKILL.md"],
     [".gemini/skills/ux-design-patterns/SKILL.md", ".github/skills/ux-design-patterns/SKILL.md", ".claude/skills/ux-design-patterns/SKILL.md"],
+    [".gemini/skills/skill-hygiene/SKILL.md", ".github/skills/skill-hygiene/SKILL.md", ".claude/skills/skill-hygiene/SKILL.md"],
     [".gemini/skills/settings/SKILL.md", ".github/skills/settings-management/SKILL.md"],
     [".gemini/skills/mcp-activation/SKILL.md", ".github/skills/mcp-activation/SKILL.md"],
     [".gemini/skills/project-navigation/SKILL.md", ".github/skills/project-navigation/SKILL.md"],

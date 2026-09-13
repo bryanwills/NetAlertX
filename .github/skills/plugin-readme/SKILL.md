@@ -21,7 +21,7 @@ Exception: call out a *specific* setting by name, in prose, only when its behavi
 
 ## Verify against the actual code first
 
-Read `config.json` (`unique_prefix`, `plugin_type`, `data_source`, `settings`) and the plugin's script before writing anything - don't guess at mechanism from the plugin's name alone. Real bugs found this way during a past audit: `dig_scan/README.md` described the `nbtscan` utility (copy-paste from a sibling plugin); `adguard_import/README.md` was a byte-for-byte copy of `__template/README.md`, never actually written.
+Read `config.json` (`unique_prefix`, `plugin_type`, `data_source`, `settings`) and the plugin's script before writing anything - don't guess at mechanism from the plugin's name alone. A README copied from a sibling plugin or left as the unedited `__template/README.md` describes the wrong plugin's behavior.
 
 ## Backfilling missing "Other info"
 

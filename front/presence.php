@@ -166,10 +166,10 @@
               <div class="dataTables_wrapper">
                 <div class="dataTables_paginate">
                   <ul class="pagination">
-                    <li id="presencePrev" class="paginate_button previous">
+                    <li id="presencePrev" class="paginate_button previous disabled">
                       <a href="#" onclick="changePresencePage(-1); return false;"><?= lang('Gen_Prev');?></a>
                     </li>
-                    <li id="presenceNext" class="paginate_button next">
+                    <li id="presenceNext" class="paginate_button next disabled">
                       <a href="#" onclick="changePresencePage(1); return false;"><?= lang('Gen_Next');?></a>
                     </li>
                   </ul>
@@ -226,6 +226,7 @@ switch ($UI_THEME) {
 
   var deviceStatus = 'all';
   var presencePage = 0;
+  var presenceRequestSeq = 0;
 
   // Read parameters & Initialize components
   main();
@@ -498,6 +499,11 @@ function getDevicesPresence (status) {
   const devicesUrl = `${apiBaseUrl}/devices/by-status?status=${deviceStatus}`
     + `&limit=${pageSize + 1}&offset=${presencePage * pageSize}`;
 
+  // Tag this request so a stale response (e.g. a fast Next-then-Prev click
+  // whose first request resolves after the second) can be discarded instead
+  // of overwriting the page the user is actually looking at.
+  const requestSeq = ++presenceRequestSeq;
+
   $.ajax({
     url: devicesUrl,
     method: "GET",
@@ -505,6 +511,11 @@ function getDevicesPresence (status) {
       "Authorization": `Bearer ${apiToken}`
     },
     success: function(devices) {
+      // A newer request has been fired since this one went out - discard.
+      if (requestSeq !== presenceRequestSeq) {
+        return;
+      }
+
       // Peek-ahead: requested one extra device to know if there's a next page
       // without a separate count request.
       const hasNextPage = devices.length > pageSize;
