@@ -650,12 +650,15 @@ def is_random_mac(mac):
 
 
 # -------------------------------------------------------------------------------
-# Helper function to calculate number of children
-def get_number_of_children(mac, devices):
-    # Count children by checking devParentMAC for each device
-    return sum(
-        1 for dev in devices if dev.get("devParentMAC", "").strip() == mac.strip()
-    )
+def count_children_by_parent_mac(devices):
+    """Return {parentMac: childCount} for a device list, keyed by devParentMAC exactly
+    as stored (already lowercased upstream by normalize_mac(), so no case-folding here)."""
+    counts = {}
+    for dev in devices:
+        parent_mac = dev.get("devParentMAC", "").strip()
+        if parent_mac:
+            counts[parent_mac] = counts.get(parent_mac, 0) + 1
+    return counts
 
 
 # -------------------------------------------------------------------------------

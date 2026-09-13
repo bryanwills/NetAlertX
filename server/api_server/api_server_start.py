@@ -832,6 +832,18 @@ def api_devices_totals_named(payload=None):
             "connected", "down", "favorites", "new", "archived", "all", "my",
             "offline"
         ]}
+    }, {
+        "name": "limit",
+        "in": "query",
+        "required": False,
+        "description": "Max devices to return",
+        "schema": {"type": "integer", "minimum": 1, "maximum": 1000}
+    }, {
+        "name": "offset",
+        "in": "query",
+        "required": False,
+        "description": "Number of devices to skip",
+        "schema": {"type": "integer", "minimum": 0}
     }],
     links={
         "GetOpenPorts": {
@@ -859,8 +871,10 @@ def api_devices_totals_named(payload=None):
 )
 def api_devices_by_status(payload: DeviceListRequest = None):
     status = payload.status if payload else request.args.get("status")
+    limit = payload.limit if payload else request.args.get("limit", type=int)
+    offset = payload.offset if payload else request.args.get("offset", type=int)
     device_handler = DeviceInstance()
-    return jsonify(device_handler.getByStatus(status))
+    return jsonify(device_handler.getByStatus(status, limit, offset))
 
 
 @app.route('/devices/search', methods=['POST'])

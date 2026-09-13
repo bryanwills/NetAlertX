@@ -11,39 +11,58 @@ var deviceListGlobal = null;
 var myTree;
 
 /**
+ * Build an index of children grouped by parent MAC in a single pass,
+ * so getChildren() doesn't have to rescan the full device list per node.
+ * @param {Array} list - Full device list
+ * @returns {Map<string, Array>} parentMac (lowercased) -> array of child devices
+ */
+function buildChildrenIndex(list)
+{
+    const index = new Map();
+    for (var i in list) {
+      const item = list[i];
+      const parentMac = item.devParentMAC?.toLowerCase() || "";       // null-safe
+      if (parentMac != "") {
+        if (!index.has(parentMac)) index.set(parentMac, []);
+        index.get(parentMac).push(item);
+      }
+    }
+    return index;
+}
+
+/**
  * Recursively get children nodes and build a tree
  * @param {Object} node - Current node
- * @param {Array} list - Full device list
+ * @param {Map} childrenIndex - Index built by buildChildrenIndex()
  * @param {string} path - Path to current node
  * @param {Array} visited - Visited nodes (for cycle detection)
  * @returns {Object} Tree node with children
  */
-function getChildren(node, list, path, visited = [])
+function getChildren(node, childrenIndex, path, visited = [])
 {
     var children = [];
+    const nodeMac = node.devMac?.toLowerCase() || "";               // null-safe
 
     // Check for infinite recursion by seeing if the node has been visited before
-    if (visited.includes(node.devMac.toLowerCase())) {
+    if (visited.includes(nodeMac)) {
         console.error("Infinite recursion detected at node:", node.devMac);
         write_notification("[ERROR] ⚠ Infinite recursion detected. You probably have assigned the Internet node to another children node or to itself. Please open a new issue on GitHub and describe how you did it.", 'interrupt')
         return { error: "Infinite recursion detected", node: node.devMac };
     }
 
     // Add current node to visited list
-    visited.push(node.devMac.toLowerCase());
+    visited.push(nodeMac);
 
-    // Loop through all items to find children of the current node
-    for (var i in list) {
-      const item = list[i];
-      const parentMac = item.devParentMAC?.toLowerCase() || "";       // null-safe
-      const nodeMac = node.devMac?.toLowerCase() || "";               // null-safe
-
-      if (parentMac != "" && parentMac == nodeMac && !hiddenMacs.includes(parentMac)) {
+    // Look up this node's children directly instead of scanning the full list
+    if (!hiddenMacs.includes(nodeMac)) {
+      const candidates = childrenIndex.get(nodeMac) || [];
+      for (var i in candidates) {
+        const item = candidates[i];
 
         visibleNodesCount++;
 
         // Process children recursively, passing a copy of the visited list
-        children.push(getChildren(list[i], list, path + ((path == "") ? "" : '|') + parentMac, visited));
+        children.push(getChildren(item, childrenIndex, path + ((path == "") ? "" : '|') + nodeMac, visited));
       }
     }
 
@@ -100,6 +119,7 @@ function getHierarchy()
   parentNodesCount = 0;
 
   let internetNode = null;
+  const childrenIndex = buildChildrenIndex(deviceListGlobal);
 
   for(i in deviceListGlobal)
   {
@@ -107,7 +127,7 @@ function getHierarchy()
     {
       internetNode = deviceListGlobal[i];
 
-      return (getChildren(internetNode, deviceListGlobal, ''))
+      return (getChildren(internetNode, childrenIndex, ''))
       break;
     }
   }

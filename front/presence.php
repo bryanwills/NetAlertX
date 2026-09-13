@@ -160,6 +160,21 @@
 
               <!-- Calendar -->
               <div id="calendar"></div>
+
+              <!-- Presence pager - same markup/classes DataTables generates for its own Previous/Next
+                   (wrapped in .dataTables_wrapper so the same vendor CSS right-aligns it identically) -->
+              <div class="dataTables_wrapper">
+                <div class="dataTables_paginate">
+                  <ul class="pagination">
+                    <li id="presencePrev" class="paginate_button previous">
+                      <a href="#" onclick="changePresencePage(-1); return false;"><?= lang('Gen_Prev');?></a>
+                    </li>
+                    <li id="presenceNext" class="paginate_button next">
+                      <a href="#" onclick="changePresencePage(1); return false;"><?= lang('Gen_Next');?></a>
+                    </li>
+                  </ul>
+                </div>
+              </div>
             </div>
 
           </div>
@@ -210,6 +225,7 @@ switch ($UI_THEME) {
 <script>
 
   var deviceStatus = 'all';
+  var presencePage = 0;
 
   // Read parameters & Initialize components
   main();
@@ -420,6 +436,11 @@ function getDevicesTotals () {
 
 // -----------------------------------------------------------------------------
 function getDevicesPresence (status) {
+  // Reset to the first page whenever a new status is selected (not on Prev/Next)
+  if (status !== deviceStatus) {
+    presencePage = 0;
+  }
+
   // Save status selected
   deviceStatus = status;
 
@@ -473,7 +494,9 @@ function getDevicesPresence (status) {
   // -----------------------------
   // Load Devices as Resources
   // -----------------------------
-  const devicesUrl = `${apiBaseUrl}/devices/by-status?status=${deviceStatus}`;
+  const pageSize = parseInt(getSetting("UI_DEFAULT_PAGE_SIZE"));
+  const devicesUrl = `${apiBaseUrl}/devices/by-status?status=${deviceStatus}`
+    + `&limit=${pageSize + 1}&offset=${presencePage * pageSize}`;
 
   $.ajax({
     url: devicesUrl,
@@ -482,14 +505,20 @@ function getDevicesPresence (status) {
       "Authorization": `Bearer ${apiToken}`
     },
     success: function(devices) {
+      // Peek-ahead: requested one extra device to know if there's a next page
+      // without a separate count request.
+      const hasNextPage = devices.length > pageSize;
+      const pageDevices = hasNextPage ? devices.slice(0, pageSize) : devices;
+
       // FullCalendar expects resources array
-      const resources = devices.map(dev => ({
+      const resources = pageDevices.map(dev => ({
         id: dev.devMac,
         title: dev.devName
       }));
 
       $('#calendar').fullCalendar('option', 'resources', resources);
       $('#calendar').fullCalendar('refetchResources');
+      updatePresencePagerControls(hasNextPage);
     }
   });
 
@@ -516,6 +545,25 @@ function getDevicesPresence (status) {
     }
   });
 };
+
+// -----------------------------------------------------------------------------
+// Move the presence resources page by delta (-1 = Prev, 1 = Next) and reload.
+function changePresencePage (delta) {
+  const button = delta < 0 ? $('#presencePrev') : $('#presenceNext');
+  if (button.hasClass('disabled')) {
+    return;
+  }
+  presencePage = Math.max(0, presencePage + delta);
+  getDevicesPresence(deviceStatus);
+}
+
+// -----------------------------------------------------------------------------
+// Enable/disable the Prev/Next pager buttons (DataTables' own convention:
+// a "disabled" class on the <li>, not a disabled attribute on the <a>).
+function updatePresencePagerControls (hasNextPage) {
+  $('#presencePrev').toggleClass('disabled', presencePage === 0);
+  $('#presenceNext').toggleClass('disabled', !hasNextPage);
+}
 
 function hidePresenceSkeleton() {
   hideSpinner();

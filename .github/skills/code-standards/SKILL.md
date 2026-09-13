@@ -25,6 +25,8 @@ description: NetAlertX coding standards and conventions. Use this when writing c
 - all code needs to be scalable to handle large networks with thousands of devices (10k+) without performance degradation
 - no inline imports, all imports must be at the top of the file
 - when using `server/logger.py` `mylog()`, only use valid levels: `none`, `minimal`, `verbose`, `debug`, `trace`; invalid levels silently degrade to `none`
+- every Python function/method needs a succinct docstring describing its current use and behavior — not what changed or why (see Docstrings section below)
+- before adding a new frontend language string, search `front/php/templates/language/en_us.json` for an existing key with the same text/purpose and reuse it — don't add a near-duplicate key just because it's needed on a new page (see Language Strings section below)
 
 
 ## File Length
@@ -79,6 +81,33 @@ Use timeNowUTC(as_string=False) for datetime operations (scheduling, comparisons
 ## String Sanitization
 
 Use sanitizers from `server/helper.py` before storing user input. MAC addresses are always lowercased and normalized. IP addresses should be validated.
+
+## Docstrings
+
+Every Python function/method gets a docstring — one or two sentences, describing what it does and how it's used *right now*. Not a changelog:
+
+```python
+# Correct
+def count_children_by_parent_mac(devices):
+    """Return {parentMac: childCount} for the given device list, keyed by devParentMAC."""
+
+# Wrong — narrates the diff instead of the current behavior
+def count_children_by_parent_mac(devices):
+    """Replaces the old get_number_of_children() to fix the O(n^2) scan."""
+```
+
+That history belongs in the commit message or PR description, not the docstring — it rots the moment the next change lands. Keep it succinct; only go past a couple of lines when the contract genuinely needs it (non-obvious return shape, units, a caller-visible side effect).
+
+## Language Strings — Reuse Before Adding (DRY)
+
+Before adding a new key to `front/php/templates/language/en_us.json`, grep it for an existing key with the same text or purpose and reuse that key instead of adding a near-duplicate:
+
+```bash
+grep -n "\"Gen_" front/php/templates/language/en_us.json   # generic, reusable strings
+grep -n "Next\|Previous\|Showing" front/php/templates/language/en_us.json
+```
+
+Prefer the generic `Gen_*` keys (e.g. `Gen_Prev`, `Gen_Next`) over a page-scoped name (`Presence_Page_Prev`) for genuinely generic UI text — a future page needing the same label should find it already there. Only add a new key when nothing existing fits; only that one file needs the addition — `getString()`/`lang()` fall back to the English string for any locale missing a key, so the other ~23 locale files don't need touching.
 
 ## Devcontainer Constraints
 

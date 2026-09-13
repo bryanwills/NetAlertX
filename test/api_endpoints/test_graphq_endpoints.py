@@ -5,7 +5,7 @@ import pytest
 INSTALL_PATH = "/app"
 sys.path.extend([f"{INSTALL_PATH}/server/plugins", f"{INSTALL_PATH}/server"])
 
-from helper import get_setting_value  # noqa: E402 [flake8 lint suppression]
+from helper import get_setting_value, count_children_by_parent_mac  # noqa: E402 [flake8 lint suppression]
 from api_server.api_server_start import app  # noqa: E402 [flake8 lint suppression]
 
 
@@ -77,6 +77,47 @@ def test_graphql_post_devices(client, api_token):
     assert "devices" in data
     assert isinstance(data["devices"]["devices"], list)
     assert isinstance(data["devices"]["count"], int)
+
+
+def test_graphql_devices_parent_children_count_matches_recount(client, api_token):
+    """devParentChildrenCount for every returned device must match an independent
+    recount of the same response (regression guard for the O(n^2)->O(n) rewrite of
+    resolve_devices()/count_children_by_parent_mac() in graphql_endpoint.py/helper.py).
+
+    Not seeded against a freshly-created fixture pair: table_devices.json (what
+    resolve_devices() reads) is only refreshed by the periodic update_api() loop,
+    not synchronously on a POST /device/<mac> create - a create-then-query test
+    would be flaky against snapshot staleness. Recomputing from the response
+    itself avoids that while still exercising the real resolver wiring.
+    """
+    query = {
+        "query": """
+        {
+            devices {
+                devices {
+                    devMac
+                    devParentMAC
+                    devParentChildrenCount
+                }
+                count
+            }
+        }
+        """
+    }
+    resp = client.post("/graphql", json=query, headers=auth_headers(api_token))
+    assert resp.status_code == 200
+
+    devices = resp.get_json()["data"]["devices"]["devices"]
+    expected_counts = count_children_by_parent_mac(
+        [{"devParentMAC": d["devParentMAC"]} for d in devices]
+    )
+
+    for device in devices:
+        expected = expected_counts.get((device["devMac"] or "").strip(), 0)
+        assert device["devParentChildrenCount"] == expected, (
+            f"devMac={device['devMac']}: expected {expected}, "
+            f"got {device['devParentChildrenCount']}"
+        )
 
 
 # --- SETTINGS TESTS ---
