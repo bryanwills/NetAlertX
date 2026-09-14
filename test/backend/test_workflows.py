@@ -22,7 +22,7 @@ from unittest.mock import patch, MagicMock
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "server"))
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from db_test_helpers import make_db, make_device_dict, insert_device_from_dict
+from db_test_helpers import make_db, make_device_dict, insert_device_from_dict, CREATE_PLUGINS_OBJECTS
 
 
 # ---------------------------------------------------------------------------
@@ -500,6 +500,9 @@ class TestTriggerDeviceGuidLookup(unittest.TestCase):
     def test_devguid_lookup_uses_index(self):
         from db.db_upgrade import ensure_Indexes
 
+        # ensure_Indexes() also indexes Plugins_Objects.objectGuid, which
+        # make_db()'s minimal fixture doesn't create.
+        self.conn.execute(CREATE_PLUGINS_OBJECTS)
         ensure_Indexes(self.conn)
 
         plan = self.conn.execute(

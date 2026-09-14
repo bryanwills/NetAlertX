@@ -135,8 +135,12 @@ def test_get_events_pagination(client, api_token, test_mac):
     """limit/offset on GET /events must page through the same set the
     unpaginated response gives for one MAC, ordered by eveDateTime
     descending, with no gaps or duplicates, and must reject invalid values."""
-    for _ in range(5):
-        create_event(client, api_token, test_mac)
+    # Distinct event_type per call - idx_events_unique is on
+    # (eveMac, eveIp, eveEventType, eveDateTime), and eveDateTime only has
+    # second precision, so 5 calls in the same second with the same
+    # event_type would collide and INSERT OR IGNORE would drop 4 of them.
+    for i in range(5):
+        create_event(client, api_token, test_mac, event=f"UnitTest Event {i}")
 
     full_resp = list_events(client, api_token, test_mac)
     assert full_resp.status_code == 200
