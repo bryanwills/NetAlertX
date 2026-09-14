@@ -23,13 +23,20 @@ Layout:
     GET /networks?filters=... call - one request for every unique
     NetworkID, not one per network, and a safe {} (not a crash) when the
     Socket Proxy denies it (missing NETWORKS=1).
+  - DockerHost._get(): unit tests for the shared timeout-budget/shape-
+    validation logic every request goes through - a run whose deadline is
+    already exhausted skips the request entirely, a request's own timeout
+    is capped by however much budget is left, and a response whose shape
+    doesn't match what the caller expects (e.g. /info returning a list
+    instead of a dict) is rejected the same as a network failure, rather
+    than crashing a caller further down that assumes the expected shape.
   - resolve_host_mac(): unit tests for the manual-MAC-short-circuits-
     without-any-request-first, else /info -> devName match chain (spec
     §3.2) - a configured DOCKERDISC_HOST_MAC wins immediately with zero
     Socket Proxy calls (deliberate: no auto-re-verification once you've
     told us the answer), so auto-detection only ever runs when it's
-    empty, and only then can hostname-unmatched or /info-unreachable
-    resolve to None.
+    empty, and only then can hostname-unmatched, ambiguous (more than one
+    device sharing that name), or /info-unreachable resolve to None.
   - lookup_device_mac(): unit test for the "host must already exist, this
     plugin never creates it" gate - explicit COLLATE NOCASE, not just
     relied on from the Devices.devMac column definition.
@@ -50,6 +57,7 @@ import base64
 import importlib.util
 import json
 import sys
+import time
 import types
 from pathlib import Path
 from unittest.mock import MagicMock, patch
@@ -146,6 +154,14 @@ def _load_dockerdisc_module():
 dockerdisc = _load_dockerdisc_module()
 
 
+def _deadline(seconds=5):
+    """A `time.monotonic()`-based deadline `seconds` in the future - what
+    DockerHost's real constructor now takes (a shared run deadline, not a
+    per-request timeout duration). Computed fresh per call so tests never
+    share a slowly-expiring value."""
+    return time.monotonic() + seconds
+
+
 def _resp(json_data):
     resp = MagicMock()
     resp.raise_for_status = MagicMock()
@@ -154,12 +170,17 @@ def _resp(json_data):
 
 
 def _db_returning(rows):
-    """A get_temp_db_connection() replacement whose cursor().fetchone()
-    yields successive `rows` entries (one per execute() call), then None."""
+    """A get_temp_db_connection() replacement whose cursor supports both
+    query styles used in this plugin: fetchone() (lookup_device_mac's
+    EXISTS-style check) yields successive `rows` entries (one per
+    execute() call), then None; fetchall() (resolve_host_mac's devName
+    match, which needs every matching row to detect ambiguity) returns
+    `rows` as-is. A given test only ever exercises one of the two."""
     conn = MagicMock()
     cursor = MagicMock()
     conn.cursor.return_value = cursor
     cursor.fetchone.side_effect = list(rows) + [None] * 10
+    cursor.fetchall.return_value = list(rows)
     return conn
 
 
@@ -235,7 +256,7 @@ def test_first_network_driver_missing_from_driver_lookup():
 
 
 def test_get_network_drivers_batches_into_one_request():
-    host = dockerdisc.DockerHost("http://proxy:2375", "", 5)
+    host = dockerdisc.DockerHost("http://proxy:2375", "", _deadline())
     networks_resp = _resp([
         {"Id": "net-a", "Driver": "macvlan"},
         {"Id": "net-b", "Driver": "bridge"},
@@ -248,7 +269,7 @@ def test_get_network_drivers_batches_into_one_request():
 
 
 def test_get_network_drivers_empty_input_makes_no_request():
-    host = dockerdisc.DockerHost("http://proxy:2375", "", 5)
+    host = dockerdisc.DockerHost("http://proxy:2375", "", _deadline())
     with patch("requests.get") as mock_get:
         assert host.get_network_drivers([]) == {}
     mock_get.assert_not_called()
@@ -257,9 +278,87 @@ def test_get_network_drivers_empty_input_makes_no_request():
 def test_get_network_drivers_denied_permission_returns_empty_dict():
     """Socket Proxy without NETWORKS=1 - request fails, callers must fall
     back to an empty lookup rather than crash."""
-    host = dockerdisc.DockerHost("http://proxy:2375", "", 5)
+    host = dockerdisc.DockerHost("http://proxy:2375", "", _deadline())
     with patch("requests.get", side_effect=requests.exceptions.ConnectionError("denied")):
         assert host.get_network_drivers(["net-a"]) == {}
+
+
+def test_get_network_drivers_skips_non_dict_entries():
+    """A malformed element inside an otherwise-list /networks response
+    (still passes the list-shape check) must be skipped, not crash on
+    `'Id' in n` for a non-dict `n`."""
+    host = dockerdisc.DockerHost("http://proxy:2375", "", _deadline())
+    with patch("requests.get", return_value=_resp(["not-a-dict", {"Id": "net-a", "Driver": "macvlan"}])):
+        assert host.get_network_drivers(["net-a"]) == {"net-a": "macvlan"}
+
+
+# ---------------------------------------------------------------------------
+# DockerHost._get() - shared timeout-budget and shape-validation logic
+# ---------------------------------------------------------------------------
+
+
+def test_dockerhost_get_timeout_returns_none():
+    host = dockerdisc.DockerHost("http://proxy:2375", "", _deadline())
+    with patch("requests.get", side_effect=requests.exceptions.Timeout("slow")):
+        assert host.get_info() is None
+
+
+def test_dockerhost_get_connection_error_returns_none():
+    host = dockerdisc.DockerHost("http://proxy:2375", "", _deadline())
+    with patch("requests.get", side_effect=requests.exceptions.ConnectionError("no route")):
+        assert host.get_containers() == []
+
+
+def test_dockerhost_get_containers_success():
+    host = dockerdisc.DockerHost("http://proxy:2375", "", _deadline())
+    with patch("requests.get", return_value=_resp([{"Id": "abc123"}])):
+        assert host.get_containers() == [{"Id": "abc123"}]
+
+
+def test_dockerhost_get_skips_request_when_deadline_already_passed():
+    """The whole run's timeout budget is already exhausted (e.g. an
+    earlier host/request ate it all) - the request must not even be
+    attempted, not fail after a full REQUEST_TIMEOUT_DEFAULT wait."""
+    host = dockerdisc.DockerHost("http://proxy:2375", "", time.monotonic() - 1)
+    with patch("requests.get") as mock_get:
+        assert host.get_info() is None
+    mock_get.assert_not_called()
+
+
+def test_dockerhost_get_caps_request_timeout_to_remaining_budget():
+    """With only a little run budget left, the individual request's own
+    timeout must be capped to that remaining amount, not the full
+    REQUEST_TIMEOUT_DEFAULT - so one host near the end of the shared
+    deadline can't still block for the plugin's whole default timeout."""
+    host = dockerdisc.DockerHost("http://proxy:2375", "", time.monotonic() + 2)
+    with patch("requests.get", return_value=_resp({"Name": "x"})) as mock_get:
+        host.get_info()
+    used_timeout = mock_get.call_args.kwargs["timeout"]
+    assert 0 < used_timeout <= 2
+
+
+def test_dockerhost_get_caps_request_timeout_to_request_default_when_budget_is_large():
+    """The reverse: plenty of run budget left, but a single request still
+    shouldn't be allowed to run longer than REQUEST_TIMEOUT_DEFAULT."""
+    host = dockerdisc.DockerHost("http://proxy:2375", "", time.monotonic() + 3600)
+    with patch("requests.get", return_value=_resp({"Name": "x"})) as mock_get:
+        host.get_info()
+    assert mock_get.call_args.kwargs["timeout"] == dockerdisc.REQUEST_TIMEOUT_DEFAULT
+
+
+def test_dockerhost_get_rejects_wrong_shape_dict_expected_got_list():
+    """/info returning a list instead of a dict (malformed/incompatible
+    Socket Proxy) must be rejected the same as a network failure - not
+    handed to a caller that assumes `.get()` works on it."""
+    host = dockerdisc.DockerHost("http://proxy:2375", "", _deadline())
+    with patch("requests.get", return_value=_resp(["unexpected"])):
+        assert host.get_info() is None
+
+
+def test_dockerhost_get_rejects_wrong_shape_list_expected_got_dict():
+    host = dockerdisc.DockerHost("http://proxy:2375", "", _deadline())
+    with patch("requests.get", return_value=_resp({"unexpected": True})):
+        assert host.get_containers() == []
 
 
 # ---------------------------------------------------------------------------
@@ -275,14 +374,14 @@ def test_resolve_host_mac_manual_mac_short_circuits_without_any_request():
     ever runs when the field is left blank - filling it in trades away
     the self-healing "auto-detect keeps re-verifying it" behavior for the
     saved request, on purpose."""
-    host = dockerdisc.DockerHost("http://proxy:2375", "11:22:33:44:55:66", 5)
+    host = dockerdisc.DockerHost("http://proxy:2375", "11:22:33:44:55:66", _deadline())
     with patch.object(host, "get_info") as mock_get_info:
         assert dockerdisc.resolve_host_mac(host) == "11:22:33:44:55:66"
     mock_get_info.assert_not_called()
 
 
 def test_resolve_host_mac_auto_detect_success():
-    host = dockerdisc.DockerHost("http://proxy:2375", "", 5)
+    host = dockerdisc.DockerHost("http://proxy:2375", "", _deadline())
     with patch.object(host, "get_info", return_value={"Name": "docker-host-1"}):
         with patch.object(dockerdisc, "get_temp_db_connection", return_value=_db_returning([("AA:BB:CC:DD:EE:FF",)])):
             assert dockerdisc.resolve_host_mac(host) == "aa:bb:cc:dd:ee:ff"
@@ -293,16 +392,40 @@ def test_resolve_host_mac_none_when_hostname_unmatched_and_no_manual_mac():
     nothing - the "fall back to manual" path only exists when manual is
     actually set, and when it is, it short-circuits before this branch is
     ever reached (see the short-circuit test above)."""
-    host = dockerdisc.DockerHost("http://proxy:2375", "", 5)
+    host = dockerdisc.DockerHost("http://proxy:2375", "", _deadline())
     with patch.object(host, "get_info", return_value={"Name": "unknown-host"}):
         with patch.object(dockerdisc, "get_temp_db_connection", return_value=_db_returning([])):
             assert dockerdisc.resolve_host_mac(host) is None
 
 
 def test_resolve_host_mac_none_when_info_unreachable_and_no_manual_mac():
-    host = dockerdisc.DockerHost("http://proxy:2375", "", 5)
+    host = dockerdisc.DockerHost("http://proxy:2375", "", _deadline())
     with patch.object(host, "get_info", return_value=None):
         assert dockerdisc.resolve_host_mac(host) is None
+
+
+def test_resolve_host_mac_ambiguous_hostname_falls_back_to_none_without_manual():
+    """Two devices share the auto-detected hostname (devName isn't unique)
+    - picking either one arbitrarily could attach every container to the
+    wrong device, so this must resolve the same as "no match" rather than
+    guessing."""
+    host = dockerdisc.DockerHost("http://proxy:2375", "", _deadline())
+    with patch.object(host, "get_info", return_value={"Name": "htpc"}):
+        with patch.object(
+            dockerdisc, "get_temp_db_connection",
+            return_value=_db_returning([("AA:BB:CC:DD:EE:01",), ("AA:BB:CC:DD:EE:02",)]),
+        ):
+            assert dockerdisc.resolve_host_mac(host) is None
+
+
+def test_resolve_host_mac_ambiguous_hostname_falls_back_to_manual_when_set():
+    """Same ambiguous-hostname case, but with a manual MAC configured -
+    that manual value wins immediately (see the short-circuit test), so
+    the ambiguous auto-detect branch is never even reached."""
+    host = dockerdisc.DockerHost("http://proxy:2375", "11:22:33:44:55:66", _deadline())
+    with patch.object(host, "get_info") as mock_get_info:
+        assert dockerdisc.resolve_host_mac(host) == "11:22:33:44:55:66"
+    mock_get_info.assert_not_called()
 
 
 # ---------------------------------------------------------------------------
@@ -318,29 +441,6 @@ def test_lookup_device_mac_found():
 def test_lookup_device_mac_not_found():
     with patch.object(dockerdisc, "get_temp_db_connection", return_value=_db_returning([])):
         assert dockerdisc.lookup_device_mac("aa:bb:cc:dd:ee:ff") is False
-
-
-# ---------------------------------------------------------------------------
-# DockerHost._get() error handling (never raises)
-# ---------------------------------------------------------------------------
-
-
-def test_dockerhost_get_timeout_returns_none():
-    host = dockerdisc.DockerHost("http://proxy:2375", "", 5)
-    with patch("requests.get", side_effect=requests.exceptions.Timeout("slow")):
-        assert host.get_info() is None
-
-
-def test_dockerhost_get_connection_error_returns_none():
-    host = dockerdisc.DockerHost("http://proxy:2375", "", 5)
-    with patch("requests.get", side_effect=requests.exceptions.ConnectionError("no route")):
-        assert host.get_containers() == []
-
-
-def test_dockerhost_get_containers_success():
-    host = dockerdisc.DockerHost("http://proxy:2375", "", 5)
-    with patch("requests.get", return_value=_resp([{"Id": "abc123"}])):
-        assert host.get_containers() == [{"Id": "abc123"}]
 
 
 # ---------------------------------------------------------------------------
@@ -384,13 +484,13 @@ def test_process_host_mixed_macvlan_and_bridge_containers():
     plugin_objects = MagicMock()
     plugin_objects.add_object = MagicMock()
 
-    host = dockerdisc.DockerHost(host_entry["DOCKERDISC_SOCKET_PROXY_URL"], host_entry["DOCKERDISC_HOST_MAC"], 5)
+    host = dockerdisc.DockerHost(host_entry["DOCKERDISC_SOCKET_PROXY_URL"], host_entry["DOCKERDISC_HOST_MAC"], _deadline())
     with patch.object(dockerdisc, "DockerHost", return_value=host):
         with patch.object(host, "get_info", return_value=None):  # unused - manual_mac short-circuits before this would ever be called
             with patch.object(host, "get_containers", return_value=containers):
                 with patch.object(host, "get_network_drivers", return_value={"net-lan": "macvlan", "net-bridge": "bridge"}) as mock_drivers:
                     with patch.object(dockerdisc, "get_temp_db_connection", return_value=_db_returning([(1,)])):
-                        added = dockerdisc.process_host(host_entry, 5, plugin_objects)
+                        added = dockerdisc.process_host(host_entry, _deadline(), plugin_objects)
 
     # one batched call for both containers' networks, not two
     mock_drivers.assert_called_once()
@@ -418,7 +518,7 @@ def test_process_host_mixed_macvlan_and_bridge_containers():
 def test_process_host_skips_unconfigured_entry_without_any_request():
     plugin_objects = MagicMock()
     with patch("requests.get") as mock_get:
-        added = dockerdisc.process_host({"DOCKERDISC_SOCKET_PROXY_URL": "", "DOCKERDISC_HOST_MAC": ""}, 5, plugin_objects)
+        added = dockerdisc.process_host({"DOCKERDISC_SOCKET_PROXY_URL": "", "DOCKERDISC_HOST_MAC": ""}, _deadline(), plugin_objects)
     assert added == 0
     mock_get.assert_not_called()
     plugin_objects.add_object.assert_not_called()
@@ -428,7 +528,7 @@ def test_process_host_skips_when_host_mac_unresolved():
     host_entry = {"DOCKERDISC_SOCKET_PROXY_URL": "http://proxy:2375", "DOCKERDISC_HOST_MAC": ""}
     plugin_objects = MagicMock()
     with patch.object(dockerdisc.DockerHost, "get_info", return_value=None):
-        added = dockerdisc.process_host(host_entry, 5, plugin_objects)
+        added = dockerdisc.process_host(host_entry, _deadline(), plugin_objects)
     assert added == 0
     plugin_objects.add_object.assert_not_called()
 
@@ -439,7 +539,7 @@ def test_process_host_skips_when_host_not_a_known_device_without_listing_contain
     with patch.object(dockerdisc.DockerHost, "get_info", return_value=None):
         with patch.object(dockerdisc, "get_temp_db_connection", return_value=_db_returning([])):  # not found
             with patch.object(dockerdisc.DockerHost, "get_containers") as mock_get_containers:
-                added = dockerdisc.process_host(host_entry, 5, plugin_objects)
+                added = dockerdisc.process_host(host_entry, _deadline(), plugin_objects)
     assert added == 0
     mock_get_containers.assert_not_called()
     plugin_objects.add_object.assert_not_called()

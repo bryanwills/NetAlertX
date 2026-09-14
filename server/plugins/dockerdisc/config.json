@@ -40,7 +40,15 @@
       "string": "Enriquece los hosts Docker que NetAlertX ya conoce con la lista de contenedores que corren en ellos - imagen, proyecto/servicio de Compose, driver de red y (cuando el contenedor tiene uno) su propio MAC/IP. Nunca crea devices; se conecta vía un Docker Socket Proxy de solo lectura, nunca directo a `/var/run/docker.sock`."
     }
   ],
-  "params": [],
+  "params": [
+    {
+      "name": "hosts",
+      "type": "setting",
+      "value": "DOCKERDISC_hosts",
+      "base64": true,
+      "timeoutMultiplier": true
+    }
+  ],
   "database_column_definitions": [
     {
       "column": "index",

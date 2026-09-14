@@ -43,6 +43,7 @@ otherwise" logic, applied here to the host instead of the container).
 import json
 import os
 import sys
+import time
 from urllib.parse import urlencode
 
 import requests
@@ -84,27 +85,45 @@ class DockerHost:
     """One configured `hosts` entry: a Docker Socket Proxy endpoint plus
     the manual host-MAC fallback for it. Does not connect on construction -
     call get_info()/get_containers() to actually talk to the proxy. Never
-    raises - a failed host is logged and skipped, not fatal to the run."""
+    raises - a failed host is logged and skipped, not fatal to the run.
 
-    def __init__(self, proxy_url, manual_mac, run_timeout):
+    `deadline` is a shared `time.monotonic()` timestamp for the *whole*
+    run (every host, every request) - not a per-request timeout. Each
+    request gets whatever's left of that budget, capped at
+    REQUEST_TIMEOUT_DEFAULT, so one slow/hanging call can't burn the
+    entire RUN_TIMEOUT kill-timeout by itself and starve every other host
+    still queued behind it (server/plugin.py enforces RUN_TIMEOUT as the
+    whole subprocess's hard timeout, not a safe per-call one)."""
+
+    def __init__(self, proxy_url, manual_mac, deadline):
         self.proxy_url = (proxy_url or '').rstrip('/')
         self.manual_mac = normalize_mac(manual_mac) if manual_mac else None
-        self.run_timeout = run_timeout
+        self.deadline = deadline
 
     @property
     def configured(self):
         return bool(self.proxy_url)
 
-    def _get(self, path):
+    def _get(self, path, expected_type=None):
         """GET against this host's Socket Proxy. Returns the parsed JSON
-        body, or None (logging why) on any failure."""
+        body, or None (logging why) on any failure - including the run's
+        timeout budget already being exhausted, or a response whose shape
+        doesn't match `expected_type` (a malformed/unexpected payload,
+        e.g. from a misconfigured or incompatible Socket Proxy - a plain
+        `dict`/`list` mismatch here would otherwise surface as a much
+        less obvious AttributeError/TypeError further down in a caller)."""
+        remaining = self.deadline - time.monotonic()
+        if remaining <= 0:
+            mylog('none', [f'[{pluginName}] {self.proxy_url}: run timeout budget exhausted before requesting {path} - skipping.'])
+            return None
+
         try:
             resp = requests.get(
                 self.proxy_url + path,
-                timeout=self.run_timeout,
+                timeout=min(remaining, REQUEST_TIMEOUT_DEFAULT),
             )
             resp.raise_for_status()
-            return resp.json()
+            data = resp.json()
         except requests.exceptions.Timeout:
             mylog('none', [f'[{pluginName}] {self.proxy_url}: request to {path} timed out. Try increasing the run timeout.'])
             return None
@@ -115,18 +134,28 @@ class DockerHost:
             mylog('none', [f'[{pluginName}] {self.proxy_url}: unexpected error on {path}: {e}'])
             return None
 
+        if expected_type is not None and not isinstance(data, expected_type):
+            mylog('none', [
+                f'[{pluginName}] {self.proxy_url}: unexpected response shape from {path} '
+                f'(expected {expected_type.__name__}, got {type(data).__name__}) - '
+                'check the Socket Proxy version/URL.'
+            ])
+            return None
+
+        return data
+
     def get_info(self):
         """Docker Engine API /info - used only for host-MAC auto-detection
         (the daemon's `Name`, i.e. hostname). Requires the Socket Proxy's
         INFO=1 permission; returns None if that's not granted or /info
         otherwise fails, in which case callers fall back to manual_mac."""
-        return self._get('/info')
+        return self._get('/info', expected_type=dict)
 
     def get_containers(self):
         """Docker Engine API /containers/json (running containers only,
         matching the default `all=false`) - includes NetworkSettings and
         Labels, which is all this plugin needs. Requires CONTAINERS=1."""
-        return self._get('/containers/json') or []
+        return self._get('/containers/json', expected_type=list) or []
 
     def get_network_drivers(self, network_ids):
         """{NetworkID: Driver} for the given network IDs, in one batched
@@ -141,12 +170,12 @@ class DockerHost:
             return {}
 
         query = urlencode({'filters': json.dumps({'id': network_ids})})
-        networks = self._get(f'/networks?{query}')
+        networks = self._get(f'/networks?{query}', expected_type=list)
         if networks is None:
             mylog('verbose', [f'[{pluginName}] {self.proxy_url}: could not read /networks (needs the Socket Proxy NETWORKS=1 permission) - network driver will show as empty.'])
             return {}
 
-        return {n['Id']: n.get('Driver') for n in networks if 'Id' in n}
+        return {n['Id']: n.get('Driver') for n in networks if isinstance(n, dict) and 'Id' in n}
 
 
 def resolve_host_mac(host):
@@ -168,21 +197,31 @@ def resolve_host_mac(host):
         conn = get_temp_db_connection()
         cursor = conn.cursor()
         cursor.execute(
-            "SELECT devMac FROM Devices WHERE devName = ? COLLATE NOCASE LIMIT 1",
+            "SELECT devMac FROM Devices WHERE devName = ? COLLATE NOCASE",
             (hostname.lstrip('/'),),
         )
-        row = cursor.fetchone()
+        rows = cursor.fetchall()
         conn.close()
 
-        if row:
+        if len(rows) == 1:
             mylog('verbose', [f'[{pluginName}] {host.proxy_url}: auto-detected host MAC via hostname "{hostname}".'])
-            return normalize_mac(row[0])
+            return normalize_mac(rows[0][0])
 
-        mylog(
-            'verbose',
-            [f'[{pluginName}] {host.proxy_url}: /info hostname "{hostname}" has no matching Devices.devName - '
-             'falling back to the manually configured host MAC, if any.'],
-        )
+        if len(rows) > 1:
+            # devName isn't unique across Devices - guessing which one is
+            # this host would risk attaching every container to the wrong
+            # device. Ambiguous, same as "no match": fall back to manual.
+            mylog(
+                'verbose',
+                [f'[{pluginName}] {host.proxy_url}: /info hostname "{hostname}" matches {len(rows)} devices, '
+                 'ambiguous - falling back to the manually configured host MAC, if any.'],
+            )
+        else:
+            mylog(
+                'verbose',
+                [f'[{pluginName}] {host.proxy_url}: /info hostname "{hostname}" has no matching Devices.devName - '
+                 'falling back to the manually configured host MAC, if any.'],
+            )
     else:
         mylog(
             'verbose',
@@ -243,11 +282,11 @@ def first_network_driver(networks, driver_by_id):
     return None
 
 
-def process_host(host_entry, run_timeout, plugin_objects):
+def process_host(host_entry, deadline, plugin_objects):
     host = DockerHost(
         proxy_url=host_entry.get('DOCKERDISC_SOCKET_PROXY_URL'),
         manual_mac=host_entry.get('DOCKERDISC_HOST_MAC'),
-        run_timeout=run_timeout,
+        deadline=deadline,
     )
 
     if not host.configured:
@@ -317,6 +356,12 @@ def main():
 
     host_configs = get_setting_value('DOCKERDISC_hosts') or []
     run_timeout = get_setting_value('DOCKERDISC_RUN_TIMEOUT') or REQUEST_TIMEOUT_DEFAULT
+    # One shared deadline for the whole run (every host, every request) -
+    # config.json's "hosts" param has timeoutMultiplier set, so the outer
+    # kill-timeout (server/plugin.py) already scales with host count; this
+    # mirrors that budget inside the script itself, so one slow host can't
+    # eat every other host's share of it. See DockerHost._get().
+    deadline = time.monotonic() + run_timeout
 
     mylog('verbose', [f'[{pluginName}] number of configured hosts: {len(host_configs)}'])
 
@@ -325,7 +370,7 @@ def main():
     total_added = 0
     for host_config in host_configs:
         host_entry = decode_settings_base64(host_config)
-        total_added += process_host(host_entry, run_timeout, plugin_objects)
+        total_added += process_host(host_entry, deadline, plugin_objects)
 
     plugin_objects.write_result_file()
 

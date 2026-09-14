@@ -86,9 +86,12 @@ services:
 Same file, on purpose:
 
 - Compose puts every service in one file on the same default network
-  automatically, so NetAlertX can reach it at `http://127.0.0.1:2375` or
-  `http://docker-socket-proxy:2375` for free - no extra `networks:` config,
-  no port published to the LAN (nothing else needs to reach it).
+  automatically, so NetAlertX can reach it at `http://docker-socket-proxy:2375`
+  for free - no extra `networks:` config, no port published to the LAN
+  (nothing else needs to reach it). (`http://127.0.0.1:2375` only applies
+  under the `network_mode: host` case above, not this default one - under
+  default bridge networking each container has its own loopback, so
+  `127.0.0.1` inside NetAlertX wouldn't reach the proxy container.)
 - Its lifecycle naturally follows NetAlertX's - one `docker compose up`/
   `down` brings both up or down together, instead of a second stack to
   remember to manage separately.
