@@ -189,7 +189,8 @@ class app_state_class:
                     buildTimestamp=self.buildTimestamp,
                     last_scan_run=self.last_scan_run,
                     next_scan_time=self.next_scan_time,
-                    pause_until=self.pause_until
+                    pause_until=self.pause_until,
+                    pluginsStates=self.pluginsStates
                 )
             except Exception as e:
                 mylog("none", [f"[app_state] SSE broadcast: {e}"])

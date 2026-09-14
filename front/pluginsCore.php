@@ -484,6 +484,11 @@ function autoHideEmptyTabs(counts, prefixes) {
   });
 }
 
+/**
+ * Build the plugin tab headers/panes for every show_ui plugin with a
+ * non-zero object/event/history count, and wire up (re-)initialization of
+ * each one's DataTable(s) via shown.bs.tab.
+ */
 function generateTabs() {
 
   // Reset the tabs by clearing previous headers and content
@@ -515,7 +520,10 @@ function generateTabs() {
 
   // Now that ALL DOM elements exist (both <a> headers and tab panes),
   // wire up DataTable initialization: immediate for the active tab,
-  // deferred via shown.bs.tab for the rest.
+  // on every subsequent shown.bs.tab for the rest - not just the first,
+  // so revisiting a plugin tab refreshes its active sub-table instead of
+  // leaving it stuck on whatever its one-time first fetch returned
+  // (namespaced + off() first so repeat calls don't stack duplicate handlers).
   let firstVisible = true;
   visiblePlugins.forEach(pluginObj => {
     const prefix = pluginObj.unique_prefix;
@@ -524,9 +532,11 @@ function generateTabs() {
       initializeDataTables(prefix, colDefinitions, pluginObj);
       firstVisible = false;
     } else {
-      $(`a[href="#${prefix}"]`).one('shown.bs.tab', function() {
-        initializeDataTables(prefix, colDefinitions, pluginObj);
-      });
+      $(`a[href="#${prefix}"]`)
+        .off('shown.bs.tab.pluginsCore')
+        .on('shown.bs.tab.pluginsCore', function() {
+          initializeDataTables(prefix, colDefinitions, pluginObj);
+        });
     }
   });
 
@@ -651,6 +661,14 @@ function generateDataTable(prefix, tableType, colDefinitions) {
   `;
 }
 
+/**
+ * Build (or, if already built, refresh) the Objects/Events/History
+ * DataTables for one plugin - the active sub-tab immediately, the other two
+ * on their own shown.bs.tab. Safe to call more than once per prefix.
+ * @param {string} prefix - The plugin's unique_prefix.
+ * @param {object[]} colDefinitions - This plugin's visible database_column_definitions.
+ * @param {object} pluginObj - The full plugin definition from plugins.json.
+ */
 function initializeDataTables(prefix, colDefinitions, pluginObj) {
   const mac        = $("#txtMacFilter").val();
   const foreignKey = (mac && mac !== "--") ? mac : null;
@@ -661,9 +679,16 @@ function initializeDataTables(prefix, colDefinitions, pluginObj) {
     { tableId: `historyTable_${prefix}`, gqlField: 'pluginsHistory', countId: `histCount_${prefix}`, badgeId: null },
   ];
 
+  /**
+   * Build tableId's DataTable on first call; on any later call, refresh its
+   * data in place instead of no-op'ing (the whole point of this fix).
+   */
   function buildDT(tableId, gqlField, countId, badgeId) {
     if ($.fn.DataTable.isDataTable(`#${tableId}`)) {
-      return; // already initialized
+      // Already built - refresh in place (keep current page/sort) instead of
+      // leaving it stuck on whatever its first-ever fetch returned.
+      $(`#${tableId}`).DataTable().ajax.reload(null, false);
+      return;
     }
     const skelId = `#skel-${tableId.replace('Table_', 'Target_')}`;
     $(`#${tableId}`).DataTable({
@@ -719,10 +744,14 @@ function initializeDataTables(prefix, colDefinitions, pluginObj) {
       // This sub-tab is the currently active one — initialize immediately
       buildDT(cfg.tableId, cfg.gqlField, cfg.countId, cfg.badgeId);
     } else if ($subPane.closest('.tab-pane').length) {
-      // Defer until shown
-      $(`a[href="${href}"]`).one('shown.bs.tab', function() {
-        buildDT(cfg.tableId, cfg.gqlField, cfg.countId, cfg.badgeId);
-      });
+      // Build on first shown, refresh (via buildDT's reload branch) on every
+      // one after - namespaced + off() first since initializeDataTables()
+      // itself can now run more than once (see generateTabs()).
+      $(`a[href="${href}"]`)
+        .off('shown.bs.tab.pluginsCore')
+        .on('shown.bs.tab.pluginsCore', function() {
+          buildDT(cfg.tableId, cfg.gqlField, cfg.countId, cfg.badgeId);
+        });
     }
   });
 }

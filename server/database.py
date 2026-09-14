@@ -73,6 +73,11 @@ class DB:
             # The WAL journaling mode uses a write-ahead log instead of a
             # rollback journal to implement transactions.
             self.sql_connection.execute("pragma journal_mode=WAL;")
+            # Wait up to 5s for a lock before raising "database is locked",
+            # matching get_temp_db_connection()'s value - without this, any
+            # collision with a concurrent writer (e.g. a PHP request) fails
+            # immediately instead of retrying internally.
+            self.sql_connection.execute("PRAGMA busy_timeout=5000;")
             # When synchronous is NORMAL (1), the SQLite database engine will
             # still sync at the most critical moments,
             # but less often than in FULL mode.
