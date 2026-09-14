@@ -578,6 +578,14 @@ def ensure_Indexes(sql) -> bool:
             ON Devices(LOWER(devParentMAC))
             """,
         ),
+        (
+            "idx_dev_guid",
+            "CREATE INDEX idx_dev_guid ON Devices(devGUID)",
+        ),
+        (
+            "idx_plobj_guid",
+            "CREATE INDEX idx_plobj_guid ON Plugins_Objects(objectGuid)",
+        ),
         # Optional filter indexes
         ("idx_dev_site", "CREATE INDEX idx_dev_site ON Devices(devSite)"),
         ("idx_dev_group", "CREATE INDEX idx_dev_group ON Devices(devGroup)"),

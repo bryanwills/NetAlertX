@@ -42,12 +42,12 @@ class Trigger:
             query = f"""
                     SELECT * FROM
                     {db_table}
-                    WHERE {refField} = '{event["objectGuid"]}'
+                    WHERE {refField} = ?
                 """
 
             mylog("trace", [query])
 
-            result = db.sql.execute(query).fetchall()
+            result = db.sql.execute(query, (event["objectGuid"],)).fetchall()
 
             if len(result) > 0:
                 self.object = result[0]
