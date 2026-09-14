@@ -17,6 +17,7 @@ Start from the template to get the basic structure:
 cd /workspaces/NetAlertX/server/plugins
 cp -r __template my_plugin
 cd my_plugin
+mv rename_me.py script.py
 ```
 
 ### 2. Update `config.json` Identifiers

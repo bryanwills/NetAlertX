@@ -224,6 +224,8 @@ CREATE INDEX IDX_dev_Favorite ON Devices (devFavorite);
 CREATE INDEX IDX_dev_LastIP ON Devices (devLastIP);
 CREATE INDEX IDX_dev_NewDevice ON Devices (devIsNew);
 CREATE INDEX IDX_dev_Archived ON Devices (devIsArchived);
+CREATE INDEX idx_dev_guid ON Devices(devGUID);
+CREATE INDEX idx_plobj_guid ON Plugins_Objects(objectGuid);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_events_unique
 ON Events (
     eveMac,

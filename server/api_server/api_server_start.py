@@ -73,6 +73,7 @@ from .openapi.validation import validate_request  # noqa: E402 [flake8 lint supp
 from .openapi.schemas import (  # noqa: E402 [flake8 lint suppression]
     DeviceSearchRequest, DeviceSearchResponse,
     DeviceListRequest, DeviceListResponse,
+    DeviceListAllRequest,
     DeviceListWrapperResponse,
     DeviceExportResponse,
     DeviceUpdateRequest,
@@ -101,6 +102,7 @@ from .openapi.schemas import (  # noqa: E402 [flake8 lint suppression]
     DbQueryUpdateRequest, DbQueryDeleteRequest,
     AddToQueueRequest, GetSettingResponse,
     RecentEventsRequest, SetDeviceAliasRequest,
+    EventListRequest,
     LanguagesResponse,
     PluginStatsResponse,
 )
@@ -636,14 +638,30 @@ def api_device_open_ports(payload=None):
 @validate_request(
     operation_id="get_all_devices",
     summary="Get All Devices",
-    description="Retrieve a list of all devices in the system. Returns all records. No pagination supported.",
+    description="Retrieve a list of all devices in the system, ordered by devMac. Returns every device if limit is omitted.",
+    request_model=DeviceListAllRequest,
     response_model=DeviceListWrapperResponse,
+    query_params=[{
+        "name": "limit",
+        "in": "query",
+        "required": False,
+        "description": "Max devices to return",
+        "schema": {"type": "integer", "minimum": 1, "maximum": 1000}
+    }, {
+        "name": "offset",
+        "in": "query",
+        "required": False,
+        "description": "Number of devices to skip",
+        "schema": {"type": "integer", "minimum": 0}
+    }],
     tags=["devices"],
     auth_callable=is_authorized
 )
-def api_get_devices(payload=None):
+def api_get_devices(payload: DeviceListAllRequest = None):
+    limit = payload.limit if payload else request.args.get("limit", type=int)
+    offset = payload.offset if payload else request.args.get("offset", type=int)
     device_handler = DeviceInstance()
-    devices = device_handler.getAll_AsResponse()
+    devices = device_handler.getAll_AsResponse(limit, offset)
     return jsonify({"success": True, "devices": devices})
 
 
@@ -1543,22 +1561,37 @@ def api_delete_all_events(payload=None):
 @validate_request(
     operation_id="get_all_events",
     summary="Get Events",
-    description="Retrieve a list of events, optionally filtered by MAC. Returns all matching records. No pagination supported.",
+    description="Retrieve a list of events, optionally filtered by MAC, ordered by eveDateTime descending. Returns every matching record if limit is omitted.",
+    request_model=EventListRequest,
     query_params=[{
         "name": "mac",
         "description": "Filter by Device MAC",
         "required": False,
         "schema": {"type": "string"}
+    }, {
+        "name": "limit",
+        "in": "query",
+        "required": False,
+        "description": "Max events to return",
+        "schema": {"type": "integer", "minimum": 1, "maximum": 1000}
+    }, {
+        "name": "offset",
+        "in": "query",
+        "required": False,
+        "description": "Number of events to skip",
+        "schema": {"type": "integer", "minimum": 0}
     }],
     response_model=BaseResponse,
     tags=["events"],
     auth_callable=is_authorized
 )
-def api_get_events(payload=None):
+def api_get_events(payload: EventListRequest = None):
     try:
-        mac = request.args.get("mac")
+        mac = payload.mac if payload else request.args.get("mac")
+        limit = payload.limit if payload else request.args.get("limit", type=int)
+        offset = payload.offset if payload else request.args.get("offset", type=int)
         event_handler = EventInstance()
-        events = event_handler.getEvents(mac)
+        events = event_handler.getEvents(mac, limit, offset)
         return jsonify({"success": True, "count": len(events), "events": events})
     except (ValueError, RuntimeError) as e:
         mylog("verbose", [f"[api_get_events] Error: {e}"])

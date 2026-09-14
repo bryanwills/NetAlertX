@@ -1,6 +1,6 @@
 ---
 name: skill-hygiene
-description: Read before writing or editing any SKILL.md in this repo (.claude/.gemini/.github skills trees). Covers the two standing rules for skill prose - state current behavior only, and prefer plain, short wording - plus the grep sweep to run before calling a skill clean.
+description: Read before writing or editing any SKILL.md, or any research/audit doc in .gemini/internal-docs/research/. Covers the two standing rules for living-reference prose - state current behavior only, and prefer plain, short wording - plus the grep sweep to run before calling a doc clean. PRDs are the deliberate exception (they keep a correction trail).
 ---
 
 # Skill Hygiene
@@ -38,6 +38,17 @@ grep -rniE "as of 202|caught in review|caught mid-review|correction:|correction 
 ```
 
 Read every hit in context — some are legitimate (a rule instructing PRD authors to write correction trails, or "previously down" describing device state, are not violations). Fix the ones that narrate the skill's own history instead of the system's current behavior.
+
+## Also applies to: research/audit docs
+
+The same two rules apply to `.gemini/internal-docs/research/*.md` (architecture audit docs) - they're a live reference for the system's current known issues, not a changelog of what's been fixed. When a finding is resolved:
+
+- Remove it from the live doc entirely. Don't leave a struck-through "Fixed 2026-09-14" row — a resolved item isn't a current priority, and tracking it that way is clutter against the doc's actual point (what to work on next).
+- If the original diagnosis has real archival value (the reasoning, what was ruled out, exact figures), copy the relevant section into `.gemini/internal-docs/research_old/` before deleting it from the live doc, rather than losing it outright.
+- If it doesn't (a one-line finding with an obvious, already-applied fix), just delete it — no archive needed.
+- Research docs don't need cross-tree sync the way skills do (they only live in `.gemini/internal-docs/research/`), so this section doesn't apply to them.
+
+This does not apply to PRDs (`.gemini/internal-docs/PRDs/`) — those keep their correction trail deliberately, per `prd-writing`.
 
 ## Keep the three trees in sync
 

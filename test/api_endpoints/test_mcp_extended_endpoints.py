@@ -177,7 +177,7 @@ def test_get_all_events(mock_get, client, api_token):
     response = client.get('/events?mac=00:11:22:33:44:55', headers=auth_headers(api_token))
     assert response.status_code == 200
     assert response.json["success"] is True
-    mock_get.assert_called_with("00:11:22:33:44:55")
+    mock_get.assert_called_with("00:11:22:33:44:55", None, None)
 
 
 @patch('models.event_instance.EventInstance.deleteEventsOlderThan')

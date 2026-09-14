@@ -1014,11 +1014,22 @@ def process_plugin_events(db, plugin, plugEventsArr):
             columnsStr = columnsStr[1:]
             valuesStr = valuesStr[1:]
 
+        # Destination CurrentScan columns that hold a MAC address.
+        # scanMac is normally already lowercase by this point - plugin_object_class.__init__
+        # (below) normalizes objectPrimaryId via primary_id_is_mac(), and every current
+        # CurrentScan-mapped plugin declares "type": "device_mac"/"device_name_mac" on that
+        # column - so this is defense-in-depth for a plugin that omits that type annotation.
+        # scanParentMAC has no equivalent upstream normalization at all (primary_id_is_mac()
+        # only ever checks objectPrimaryId), so this is the only place it gets normalized.
+        _MAC_COLUMNS = ("scanMac", "scanParentMAC")
+
         # Map the column names to plugin object event values and create a list of tuples 'sqlParams'.
         for plgEv in pluginEvents:
             tmpList = []
 
             for col in mappedCols:
+                _tmpList_len_before = len(tmpList)
+
                 if col["column"] == "index":
                     tmpList.append(plgEv.index)
                 elif col["column"] == "plugin":
@@ -1061,6 +1072,11 @@ def process_plugin_events(db, plugin, plugEventsArr):
                     "mapped_to_column_data" in col and "value" in col["mapped_to_column_data"]
                 ):
                     tmpList.append(col["mapped_to_column_data"]["value"])
+
+                if dbTable == "CurrentScan" and col.get("mapped_to_column") in _MAC_COLUMNS:
+                    for _i in range(_tmpList_len_before, len(tmpList)):
+                        if tmpList[_i]:
+                            tmpList[_i] = normalize_mac(tmpList[_i])
 
             # Append the mapped values to the list 'sqlParams' as a tuple.
             sqlParams.append(tuple(tmpList))

@@ -29,6 +29,8 @@ front/log/*
 !.gemini/internal-docs/PRDs/to_review/.gitkeep
 .gemini/internal-docs/research/*
 !.gemini/internal-docs/research/.gitkeep
+.gemini/internal-docs/research_old/*
+!.gemini/internal-docs/research_old/.gitkeep
 /log/plugins/*
 front/api/*
 /api/*

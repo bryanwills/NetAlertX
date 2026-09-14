@@ -664,7 +664,7 @@ def make_plugin_event_row(prefix: str, primary_id: str, secondary_id="sec",
                           watched1="val1", watched2="", watched3="",
                           watched4="", changed="2026-01-01 00:00:00",
                           extra="", user_data="", foreign_key="",
-                          status="not-processed"):
+                          status="not-processed", help_val1=None):
     """Build a tuple mimicking a raw plugin output row (19 columns + index)."""
     return (
         0,              # index (placeholder, not used for events)
@@ -682,7 +682,7 @@ def make_plugin_event_row(prefix: str, primary_id: str, secondary_id="sec",
         user_data,
         foreign_key,
         None,           # syncHubNodeName
-        None,           # helpVal1
+        help_val1,
         None,           # helpVal2
         None,           # helpVal3
         None,           # helpVal4

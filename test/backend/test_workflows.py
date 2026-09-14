@@ -22,7 +22,10 @@ from unittest.mock import patch, MagicMock
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "server"))
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from db_test_helpers import make_db, make_device_dict, insert_device_from_dict
+from db_test_helpers import (
+    make_db, make_device_dict, insert_device_from_dict,
+    CREATE_PLUGINS_OBJECTS, CREATE_PLUGINS_HISTORY,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -463,6 +466,57 @@ class TestConditionHandlesMissingTriggerObject(unittest.TestCase):
 
         condition = Condition({"field": "appEventType", "operator": "equals", "value": "update"})
         self.assertTrue(condition.evaluate(trigger))
+
+
+class TestTriggerDeviceGuidLookup(unittest.TestCase):
+    """Trigger.__init__'s Devices/devGUID lookup (workflows/triggers.py) -
+    covers the parameterized query and the idx_dev_guid index added
+    alongside it."""
+
+    def setUp(self):
+        from types import SimpleNamespace
+        self.conn = make_db()
+        self.db = SimpleNamespace(sql=self.conn)
+        dev = make_device_dict("aa:bb:cc:dd:ee:01", devGUID="guid-a")
+        insert_device_from_dict(self.conn, dev)
+
+    def test_lookup_finds_matching_device(self):
+        from workflows.triggers import Trigger
+
+        event = _make_app_event(obj_guid="guid-a", obj_type="Devices", event_type="update")
+        trigger = Trigger({"object_type": "Devices", "event_type": "update"}, event, self.db)
+
+        self.assertIsNotNone(trigger.object)
+        self.assertEqual(trigger.object["devMac"], "aa:bb:cc:dd:ee:01")
+
+    def test_query_is_parameterized_not_string_interpolated(self):
+        """A devGUID containing a single quote must not raise
+        sqlite3.OperationalError - regression guard against reverting to
+        f-string interpolation of event['objectGuid']."""
+        from workflows.triggers import Trigger
+
+        event = _make_app_event(obj_guid="a'b", obj_type="Devices", event_type="update")
+        trigger = Trigger({"object_type": "Devices", "event_type": "update"}, event, self.db)
+
+        self.assertIsNone(trigger.object)
+
+    def test_devguid_lookup_uses_index(self):
+        from db.db_upgrade import ensure_Indexes
+
+        # ensure_Indexes() also indexes Plugins_Objects.objectGuid and
+        # Plugins_History(plugin, dateTimeChanged), neither of which
+        # make_db()'s minimal fixture creates.
+        self.conn.execute(CREATE_PLUGINS_OBJECTS)
+        self.conn.execute(CREATE_PLUGINS_HISTORY)
+        ensure_Indexes(self.conn)
+
+        plan = self.conn.execute(
+            "EXPLAIN QUERY PLAN SELECT * FROM Devices WHERE devGUID = ?", ("guid-a",)
+        ).fetchall()
+        plan_text = " ".join(str(tuple(row)) for row in plan)
+
+        self.assertIn("idx_dev_guid", plan_text)
+        self.assertNotIn("SCAN Devices", plan_text)
 
 
 if __name__ == "__main__":
