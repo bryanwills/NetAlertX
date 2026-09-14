@@ -620,6 +620,12 @@ function initializeDatatable (status) {
 
 
 // -----------------------------------------------------------------------------
+/**
+ * Poll execution_queue.log for a pending "update_api|devices" entry and show
+ * a spinner while it's queued; reload the page once it clears if a reload
+ * was requested.
+ * @param {boolean} [needsReload=false] - Reload the page once the queue clears.
+ */
 function handleLoadingDialog(needsReload = false)
 {
   // console.log(`needsReload: ${needsReload}`);
@@ -630,7 +636,7 @@ function handleLoadingDialog(needsReload = false)
     {
       showSpinner("devices_old")
 
-      setTimeout(handleLoadingDialog(true), 1000);
+      setTimeout(() => handleLoadingDialog(true), 1000);
 
     } else if (needsReload)
     {

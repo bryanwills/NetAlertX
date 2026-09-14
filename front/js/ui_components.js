@@ -549,8 +549,14 @@ function goToDevice(mac, newtab = false) {
 
 
 // --------------------------------------------------------
-// Updating the execution queue in in modal pop-up
-function updateModalState() {
+/**
+ * Poll execution_queue.log into the ad-hoc-event modal until it's empty or a
+ * safety cap is hit (was: polled forever with no stop condition).
+ * @param {number} [elapsedMs=0] - Total time already spent polling.
+ */
+function updateModalState(elapsedMs = 0) {
+  const MAX_POLL_MS = 60000; // safety net - stop after 1 minute regardless
+
   setTimeout(function() {
       // Fetch the content from the log file using an AJAX request
       $.ajax({
@@ -560,7 +566,10 @@ function updateModalState() {
               // Update the content of the HTML element (e.g., a div with id 'logContent')
               $('#'+modalEventStatusId).html(data);
 
-              updateModalState();
+              if (data.trim() === '' || elapsedMs + 2000 >= MAX_POLL_MS) {
+                return; // queue drained (or safety net hit) - stop polling
+              }
+              updateModalState(elapsedMs + 2000);
           },
           error: function() {
               // Handle error, such as the file not being found
