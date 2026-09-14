@@ -265,6 +265,8 @@ class DeviceListRequest(BaseModel):
             "- offline: Devices not present in the last scan"
         )
     )
+    limit: Optional[int] = Field(None, ge=1, le=1000, description="Max devices to return")
+    offset: Optional[int] = Field(None, ge=0, description="Number of devices to skip")
 
 
 class DeviceListResponse(RootModel):

@@ -246,6 +246,32 @@ def cleanup_existing_dangling_parentmac(sql) -> bool:
         return False
 
 
+def cleanup_existing_default_devParentRelType(sql) -> bool:
+    """
+    One-time/idempotent cleanup for installations created before this setting's
+    config.json declared "dataType": "array" with a plain-string default_value
+    ("default", not a JSON array) - setting_value_to_python_type() failed to
+    json.loads() that default, logged a decode error on every scan, and wrote
+    the literal string '[]' into devParentRelType for every new device. Repairs
+    rows already stamped with '[]'; the type/default_value mismatch itself is
+    fixed in server/plugins/newdev_template/config.json.
+    """
+    try:
+        sql.execute("""
+            UPDATE Devices
+            SET devParentRelType = 'default'
+            WHERE devParentRelType = '[]'
+        """)
+        if sql.rowcount > 0:
+            mylog("verbose", [f"[db_upgrade] Fixed {sql.rowcount} device(s) with devParentRelType='[]'"])
+
+        return True
+
+    except Exception as e:
+        mylog("none", [f"[db_upgrade] ERROR while cleaning up devParentRelType='[]': {e}"])
+        return False
+
+
 def ensure_views(sql) -> bool:
     """
     Ensures required views exist.

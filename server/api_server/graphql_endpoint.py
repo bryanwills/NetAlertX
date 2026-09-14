@@ -12,7 +12,7 @@ from logger import mylog  # noqa: E402 [flake8 lint suppression]
 from const import apiPath, NULL_EQUIVALENTS  # noqa: E402 [flake8 lint suppression]
 from helper import (  # noqa: E402 [flake8 lint suppression]
     is_random_mac,
-    get_number_of_children,
+    count_children_by_parent_mac,
     format_ip_long,
     get_setting_value,
 )
@@ -178,10 +178,11 @@ class Query(ObjectType):
         ]
 
         # Add dynamic fields to each device
+        children_counts = count_children_by_parent_mac(devices_data)
         for device in devices_data:
             device["devIsRandomMac"] = 1 if is_random_mac(device["devMac"]) else 0
-            device["devParentChildrenCount"] = get_number_of_children(
-                device["devMac"], devices_data
+            device["devParentChildrenCount"] = children_counts.get(
+                device["devMac"].strip(), 0
             )
             # Return as string — IPv4 long values can exceed Int's signed 32-bit max (2,147,483,647)
             device["devIpLong"] = str(format_ip_long(device.get("devLastIP", "")))

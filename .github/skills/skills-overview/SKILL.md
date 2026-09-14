@@ -9,7 +9,7 @@ Three AI assistants are configured for this project, each with their own skill d
 
 - **GitHub Copilot** → `.github/skills/`
 - **Gemini CLI** → `.gemini/skills/`
-- **Claude Code** → `.claude/skills/` (currently mirrors only the 3 highest-value skills below, not the full set)
+- **Claude Code** → `.claude/skills/` (mirrors most, not all, of the shared skills below — see the table's Claude Skill column for which)
 
 Skills with the same purpose exist in more than one, sometimes under different names and with different depth. This index maps them so you can find the richer version when needed. A CI check (`scripts/check_skill_pairs.py`, run as `check-skill-pairs` in `.github/workflows/code-checks.yml`) flags PRs that touch some but not all files in a mirrored group - non-blocking, since some divergence is intentional.
 
@@ -30,7 +30,9 @@ Skills with the same purpose exist in more than one, sometimes under different n
 | Logging | `logging-standards` | `logging-standards` | — | `mylog` levels, message format, what not to log |
 | Scan pipeline internals | `scan-pipeline` | `scan-pipeline` | `scan-pipeline` | `process_scan()` call order and why it's load-bearing, `CurrentScan`/`Events`/`Sessions`/`DevicesView` relationships, how a session actually closes (no `close_session()` exists), and the `FIELD_SPECS` field-write authority mechanism. Complements `database-patterns` (Devices write-path/`*Source` attribution) rather than duplicating it. |
 | Database patterns | `database-patterns` | `database-patterns` | `database-patterns` | Devices table write-path inventory, the `FIELD_SOURCE_MAP`/`*Source` attribution system in `server/db/authoritative_handler.py`, SQLite trigger vs. Python-hook tradeoffs, and event-sourced vs. snapshot audit logging. |
-| PRD writing | `prd-writing` | `prd-writing` | `prd-writing` | Methodology for writing a design doc: challenge the idea, verify every claim against actual code, trace every downstream consumer of a new mechanism, evaluate performance impact against the real schema/indexes, record rejected alternatives and open-issue decisions explicitly, final-check pass before done. Distilled from the `plugin-import-behavior-controls` PRD process, including real mistakes caught mid-review. |
+| PRD writing | `prd-writing` | `prd-writing` | `prd-writing` | Methodology for writing a design doc: challenge the idea, verify every claim against actual code, trace every downstream consumer of a new mechanism, evaluate performance impact against the real schema/indexes, record rejected alternatives and open-issue decisions explicitly, final-check pass before done. |
+| UX/frontend design | `ux-design-patterns` | `ux-design-patterns` | `ux-design-patterns` | Don't invent new UX behavior/visual patterns unless a PRD calls for it - search `front/` for an existing pattern first and reuse it. Priority order for design tradeoffs when several options are reasonable: existing behavior > intuitiveness > information density > usability > utility > uniqueness > industry practices > generic UI. |
+| Skill hygiene | `skill-hygiene` | `skill-hygiene` | `skill-hygiene` | Read before writing/editing any SKILL.md. Two standing rules: state current behavior only (no "Correction:", no "as of <date>", no "caught in review" narration - that trail belongs in PRDs), and prefer plain, short wording. Includes the grep sweep to run before calling a skill clean. |
 
 ---
 

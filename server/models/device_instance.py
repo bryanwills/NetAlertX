@@ -451,10 +451,11 @@ class DeviceInstance:
 
         return json_obj
 
-    def getByStatus(self, status=None):
+    def getByStatus(self, status=None, limit=None, offset=None):
         """
-        Return devices filtered by status. Returns all if no status provided.
-        Possible statuses: my, connected, favorites, new, down, archived
+        Return devices filtered by status, ordered by devMac for stable pagination.
+        Returns all matching devices if limit is omitted. Possible statuses:
+        my, connected, favorites, new, down, archived (see get_device_conditions()).
         """
         conn = get_temp_db_connection()
         sql = conn.cursor()
@@ -463,8 +464,17 @@ class DeviceInstance:
         condition = get_device_condition_by_status(status) if status else ""
 
         # Only DevicesView has devFlapping
-        query = f"SELECT * FROM DevicesView {condition}"
-        sql.execute(query)
+        query = f"SELECT * FROM DevicesView {condition} ORDER BY devMac"
+        params = []
+        if limit is not None:
+            query += " LIMIT ? OFFSET ?"
+            params.extend([limit, offset or 0])
+        elif offset is not None:
+            # SQLite's unlimited-limit form - an offset with no limit still
+            # needs a LIMIT clause for OFFSET to take effect.
+            query += " LIMIT -1 OFFSET ?"
+            params.append(offset)
+        sql.execute(query, params)
 
         table_data = []
         for row in sql.fetchall():

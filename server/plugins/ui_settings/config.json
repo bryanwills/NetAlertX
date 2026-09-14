@@ -685,7 +685,7 @@
     {
       "function": "theme",
       "type": {
-        "dataType": "array",
+        "dataType": "string",
         "elements": [
           {
             "elementType": "select",
@@ -713,7 +713,7 @@
     {
       "function": "TOPOLOGY_ORDER",
       "type": {
-        "dataType": "array",
+        "dataType": "string",
         "elements": [
           {
             "elementType": "select",

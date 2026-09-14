@@ -19,6 +19,7 @@ from db.db_upgrade import (
     ensure_mac_lowercase_triggers,
     ensure_dangling_parentmac_cleanup_trigger,
     cleanup_existing_dangling_parentmac,
+    cleanup_existing_default_devParentRelType,
     migrate_to_camelcase,
     migrate_timestamps_to_utc,
 )
@@ -247,6 +248,9 @@ class DB:
 
             # Prevent/repair dangling devParentMAC references left by deleted devices
             cleanup_existing_dangling_parentmac(self.sql)
+
+            # Repair devParentRelType='[]' left by the array/string default_value mismatch
+            cleanup_existing_default_devParentRelType(self.sql)
 
             # Device history table + audit triggers
             ensure_deviceshistory_table(self.sql)

@@ -243,6 +243,7 @@ Check your plugin against these repo-wide conventions before opening a PR (verif
 - **Keep `description` strings short.** They render directly in the Settings UI. Put implementation rationale and design trade-offs in the plugin's README or code comments, not the UI-facing description.
 - **For "one or more instances of the same thing," use the nested array + popup-form settings pattern**, not a fixed hardcoded count (e.g. "primary"/"secondary"). See `rest_import` (`RSTIMPRT`)'s `imports` setting for a working example — it also gives each instance its own sub-settings (URL, credentials, per-instance flags) for free.
 - **Persist plugin state under `dbFolderPath`, config artifacts under `configPath`** — see [Persisting Plugin Data](#persisting-plugin-data-state--config-files) below.
+- **A setting's `dataType` and `default_value` must actually agree.** `dataType: "array"` (or `"object"`) means `default_value` must be a real JSON literal for that shape — `'["default"]'`, not the bare string `"default"`. `setting_value_to_python_type()` (`server/helper.py`) `json.loads()`s the default at runtime; a bare string fails that parse, silently logs a decode error, and returns `[]` instead of your intended default — this shipped for real in `devParentRelType`/`UI_theme`/`UI_TOPOLOGY_ORDER` before being caught. If `elementOptions` already sets `multiple`/`orderable: "false"`, that's a strong signal the setting is actually scalar and `dataType` should be `"string"`, not `"array"`, regardless of what UI widget (`select`, etc.) renders it.
 
 ---
 
@@ -311,7 +312,7 @@ To always map a static value (not read from plugin output):
 
 ### Import Behavior Columns (`scanCreatesDevice`, `scanNotificationMode`, `scanPresence`)
 
-Three optional columns on `CurrentScan` control what happens once a row reaches it — see the [Data contract](PLUGINS_DEV_DATA_CONTRACT.md#import-behavior-columns) for the full contract (allowed values, defaults, downstream effects). All three default to today's behavior if never mapped, so existing plugins need no changes.
+Three optional columns on `CurrentScan` control what happens once a row reaches it — see [Plugin Import Behavior](PLUGINS_IMPORT_BEHAVIOR.md) for the full contract (allowed values, defaults, downstream effects). All three default to today's behavior if never mapped, so existing plugins need no changes.
 
 Most plugins map a single static value for the whole import via `mapped_to_column_data` — e.g. an enrichment-only plugin that should never originate a new device:
 

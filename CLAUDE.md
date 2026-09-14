@@ -89,3 +89,5 @@ Procedural/how-to knowledge (running tests, resetting the DB, devcontainer manag
 - No inline imports — everything at module top level.
 - Reuse `test/db_test_helpers.py` for DB mocks/fixtures in tests rather than redefining `DummyDB`/`make_db` locally.
 - Keep files under ~500 lines; split rather than grow.
+- Every Python function/method gets a succinct docstring describing its current use and behavior — one or two sentences, not a changelog of what changed or why (that belongs in the commit/PR, not the docstring).
+- Before adding a new key to `front/php/templates/language/en_us.json`, search it for an existing key with the same text/purpose and reuse it — prefer generic `Gen_*` keys over page-scoped names for genuinely generic UI text (e.g. `Gen_Prev`/`Gen_Next`, not `Presence_Page_Prev`). Only the English file needs a new key; other locales fall back to it automatically.
