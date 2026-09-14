@@ -513,7 +513,7 @@ class TestTriggerDeviceGuidLookup(unittest.TestCase):
         plan = self.conn.execute(
             "EXPLAIN QUERY PLAN SELECT * FROM Devices WHERE devGUID = ?", ("guid-a",)
         ).fetchall()
-        plan_text = " ".join(str(row) for row in plan)
+        plan_text = " ".join(str(tuple(row)) for row in plan)
 
         self.assertIn("idx_dev_guid", plan_text)
         self.assertNotIn("SCAN Devices", plan_text)
