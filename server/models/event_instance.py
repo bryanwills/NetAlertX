@@ -136,21 +136,31 @@ class EventInstance:
         mylog("debug", f"[Events] Created event for {mac} ({event_type})")
         return {"success": True, "message": f"Created event for {mac}"}
 
-    def getEvents(self, mac=None):
+    def getEvents(self, mac=None, limit=None, offset=None):
         """
-        Fetch all events, or events for a specific MAC if provided.
-        Returns list of events.
+        Fetch all events, or events for a specific MAC if provided, ordered by
+        eveDateTime descending. Returns every matching event if limit is omitted.
         """
         conn = self._conn()
         cur = conn.cursor()
 
         if mac:
             sql = "SELECT * FROM Events WHERE eveMac=? ORDER BY eveDateTime DESC"
-            cur.execute(sql, (mac,))
+            params = [mac]
         else:
             sql = "SELECT * FROM Events ORDER BY eveDateTime DESC"
-            cur.execute(sql)
+            params = []
 
+        if limit is not None:
+            sql += " LIMIT ? OFFSET ?"
+            params.extend([limit, offset or 0])
+        elif offset is not None:
+            # SQLite's unlimited-limit form - an offset with no limit still
+            # needs a LIMIT clause for OFFSET to take effect.
+            sql += " LIMIT -1 OFFSET ?"
+            params.append(offset)
+
+        cur.execute(sql, params)
         rows = cur.fetchall()
         events = [row_to_json(list(r.keys()), r) for r in rows]
 

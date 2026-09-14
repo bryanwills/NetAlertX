@@ -131,6 +131,49 @@ def test_delete_all_events(client, api_token, test_mac):
     assert len(resp.json.get("events", [])) == 0
 
 
+def test_get_events_pagination(client, api_token, test_mac):
+    """limit/offset on GET /events must page through the same set the
+    unpaginated response gives for one MAC, ordered by eveDateTime
+    descending, with no gaps or duplicates, and must reject invalid values."""
+    for _ in range(5):
+        create_event(client, api_token, test_mac)
+
+    full_resp = list_events(client, api_token, test_mac)
+    assert full_resp.status_code == 200
+    full_events = full_resp.json.get("events", [])
+    assert len(full_events) >= 5
+
+    total = len(full_events)
+    half = (total + 1) // 2
+    page1 = client.get(
+        f"/events?mac={test_mac}&limit={half}&offset=0",
+        headers=auth_headers(api_token),
+    ).json.get("events", [])
+    page2 = client.get(
+        f"/events?mac={test_mac}&limit={total - half}&offset={half}",
+        headers=auth_headers(api_token),
+    ).json.get("events", [])
+    assert page1 + page2 == full_events
+
+    # offset alone (no limit) must still take effect.
+    offset_only = client.get(
+        f"/events?mac={test_mac}&offset={half}",
+        headers=auth_headers(api_token),
+    ).json.get("events", [])
+    assert offset_only == full_events[half:]
+
+    # Invalid limit/offset are rejected, not silently clamped.
+    resp_bad_limit = client.get(
+        f"/events?mac={test_mac}&limit=0", headers=auth_headers(api_token)
+    )
+    assert resp_bad_limit.status_code == 422
+
+    resp_bad_offset = client.get(
+        f"/events?mac={test_mac}&offset=-1", headers=auth_headers(api_token)
+    )
+    assert resp_bad_offset.status_code == 422
+
+
 def test_delete_events_dynamic_days(client, api_token, test_mac):
     # Determine initial count so test doesn't rely on preexisting events
     before = list_events(client, api_token, test_mac)

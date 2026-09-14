@@ -46,8 +46,20 @@ class DeviceInstance:
         conn.close()
 
     # --- public API -----------------------------------------------------------
-    def getAll(self):
-        return self._fetchall("SELECT * FROM Devices")
+    def getAll(self, limit=None, offset=None):
+        """Return all devices, ordered by devMac for stable pagination.
+        Returns every device if limit is omitted."""
+        query = "SELECT * FROM Devices ORDER BY devMac"
+        params = []
+        if limit is not None:
+            query += " LIMIT ? OFFSET ?"
+            params.extend([limit, offset or 0])
+        elif offset is not None:
+            # SQLite's unlimited-limit form - an offset with no limit still
+            # needs a LIMIT clause for OFFSET to take effect.
+            query += " LIMIT -1 OFFSET ?"
+            params.append(offset)
+        return self._fetchall(query, params)
 
     def getUnknown(self):
         return self._fetchall("""
@@ -229,9 +241,9 @@ class DeviceInstance:
 
     # --- devices_endpoint.py methods (HTTP response layer) -------------------
 
-    def getAll_AsResponse(self):
+    def getAll_AsResponse(self, limit=None, offset=None):
         """Return all devices as raw data (not jsonified)."""
-        return self.getAll()
+        return self.getAll(limit, offset)
 
     def deleteDevices(self, macs):
         """

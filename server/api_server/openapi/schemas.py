@@ -245,6 +245,12 @@ class DeviceSearchResponse(BaseResponse):
     devices: List[DeviceInfo] = Field(default_factory=list, description="List of matching devices")
 
 
+class DeviceListAllRequest(BaseModel):
+    """Request for listing all devices, with optional pagination."""
+    limit: Optional[int] = Field(None, ge=1, le=1000, description="Max devices to return")
+    offset: Optional[int] = Field(None, ge=0, description="Number of devices to skip")
+
+
 class DeviceListRequest(BaseModel):
     """Request for listing devices by status."""
     status: Optional[Literal[
@@ -751,6 +757,13 @@ class EventInfo(BaseModel):
     eveDateTime: Optional[str] = Field(None, description="Event timestamp")
     eveEventType: Optional[str] = Field(None, description="Type of event")
     evePreviousIP: Optional[str] = Field(None, description="Previous IP if changed")
+
+
+class EventListRequest(BaseModel):
+    """Request for listing events, optionally filtered by MAC, with optional pagination."""
+    mac: Optional[str] = Field(None, description="Filter by Device MAC")
+    limit: Optional[int] = Field(None, ge=1, le=1000, description="Max events to return")
+    offset: Optional[int] = Field(None, ge=0, description="Number of events to skip")
 
 
 class RecentEventsRequest(BaseModel):
