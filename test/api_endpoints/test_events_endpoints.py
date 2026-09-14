@@ -178,6 +178,39 @@ def test_get_events_pagination(client, api_token, test_mac):
     assert resp_bad_offset.status_code == 422
 
 
+def test_get_events_pagination_stable_order_for_ties(client, api_token, test_mac):
+    """Events sharing the exact same eveDateTime (a real occurrence - it only
+    has second precision) must still page deterministically: ORDER BY
+    eveDateTime DESC alone leaves tied rows in an unspecified order, so
+    concatenated pages could omit or duplicate rows. rowid DESC as a secondary
+    key must make the order stable across the unpaginated and paged calls."""
+    # create_event() only sets event_time when days_old is given, so post
+    # directly with an explicit, identical event_time for all 5 to force a tie.
+    shared_time = timeNowUTC(as_string=False).isoformat()
+    for i in range(5):
+        payload = {"ip": "0.0.0.0", "event_type": f"TieEventExplicit {i}", "event_time": shared_time}
+        resp = client.post(f"/events/create/{test_mac}", json=payload, headers=auth_headers(api_token))
+        assert resp.status_code == 200
+
+    full_resp = list_events(client, api_token, test_mac)
+    full_events = full_resp.json.get("events", [])
+    tied = [e for e in full_events if e.get("eveEventType", "").startswith("TieEventExplicit")]
+    assert len(tied) == 5
+    assert all(e["eveDateTime"] == tied[0]["eveDateTime"] for e in tied)
+
+    total = len(full_events)
+    half = (total + 1) // 2
+    page1 = client.get(
+        f"/events?mac={test_mac}&limit={half}&offset=0",
+        headers=auth_headers(api_token),
+    ).json.get("events", [])
+    page2 = client.get(
+        f"/events?mac={test_mac}&limit={total - half}&offset={half}",
+        headers=auth_headers(api_token),
+    ).json.get("events", [])
+    assert page1 + page2 == full_events
+
+
 def test_delete_events_dynamic_days(client, api_token, test_mac):
     # Determine initial count so test doesn't rely on preexisting events
     before = list_events(client, api_token, test_mac)

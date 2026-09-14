@@ -97,7 +97,7 @@ def get_sql_devices_tiles():
     )
 
     def tile(key, label):
-        return f'SUM(CASE WHEN {f(key)} THEN 1 ELSE 0 END) AS "{label}"'
+        return f'COALESCE(SUM(CASE WHEN {f(key)} THEN 1 ELSE 0 END), 0) AS "{label}"'
 
     return f"""
                         WITH Statuses AS (
@@ -114,8 +114,8 @@ def get_sql_devices_tiles():
                             {tile('favorites', 'favorites')},
                             {tile('all', 'all')},
                             COUNT(*) AS "all_devices",
-                            SUM(CASE WHEN {my_devices_clauses}
-                                THEN 1 ELSE 0 END) AS "my_devices"
+                            COALESCE(SUM(CASE WHEN {my_devices_clauses}
+                                THEN 1 ELSE 0 END), 0) AS "my_devices"
                         FROM DevicesView, Statuses;
                     """
 

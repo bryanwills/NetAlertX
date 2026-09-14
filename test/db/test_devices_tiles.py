@@ -67,6 +67,25 @@ class TestDevicesTilesCounts:
         finally:
             conn.close()
 
+    def test_empty_devicesview_returns_zero_not_null(self):
+        """Regression guard: SUM(CASE...) over a zero-row DevicesView/Statuses
+        cross join returns NULL per column, not 0 - COALESCE(..., 0) must be
+        wrapped around every SUM-based tile, or a fresh install with no
+        devices yet would see null tile counts instead of zeros."""
+        conn = make_db()
+        try:
+            row = conn.execute(get_sql_devices_tiles()).fetchone()
+            cols = [d[0] for d in conn.execute(get_sql_devices_tiles()).description]
+            tiles = dict(zip(cols, row))
+
+            # Iterate the query's own output columns rather than a separately
+            # hardcoded key list, so this stays correct if a tile is renamed
+            # or added/removed in get_sql_devices_tiles() itself.
+            for key, value in tiles.items():
+                assert value == 0, f"{key} was {value!r}, expected 0"
+        finally:
+            conn.close()
+
     def test_devicesview_evaluated_once_not_per_tile(self):
         """Regression guard: the query must not re-scan/re-evaluate DevicesView
         once per tile column (the bug this rewrite fixed). SQLite's planner

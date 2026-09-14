@@ -144,11 +144,14 @@ class EventInstance:
         conn = self._conn()
         cur = conn.cursor()
 
+        # rowid DESC is a tiebreaker for events sharing the same eveDateTime
+        # (only second precision) - without it, LIMIT/OFFSET pages aren't
+        # guaranteed to reconstruct the same order as the unpaginated query.
         if mac:
-            sql = "SELECT * FROM Events WHERE eveMac=? ORDER BY eveDateTime DESC"
+            sql = "SELECT * FROM Events WHERE eveMac=? ORDER BY eveDateTime DESC, rowid DESC"
             params = [mac]
         else:
-            sql = "SELECT * FROM Events ORDER BY eveDateTime DESC"
+            sql = "SELECT * FROM Events ORDER BY eveDateTime DESC, rowid DESC"
             params = []
 
         if limit is not None:
