@@ -544,13 +544,13 @@
                     "name": [
                       {
                         "language_code": "en_us",
-                        "string": "Docker Host MAC Address (Fallback)"
+                        "string": "Docker Host MAC Address (Manual)"
                       }
                     ],
                     "description": [
                       {
                         "language_code": "en_us",
-                        "string": "Manual fallback physical MAC address of the Docker host, used if auto-detecting it via the Socket Proxy <code>/info</code> endpoint fails. The host must already exist as a device in NetAlertX (found via ARP/Nmap) - this plugin never creates it."
+                        "string": "Manually configured physical MAC address of the Docker host. When set, it is used immediately - no Socket Proxy <code>/info</code> call is made. Leave blank to auto-detect the host via hostname matching instead. The host must already exist as a device in NetAlertX (found via ARP/Nmap) - this plugin never creates it."
                       }
                     ]
                   }
@@ -620,7 +620,7 @@
       "description": [
         {
           "language_code": "en_us",
-          "string": "One entry per Docker host to track. Each entry pairs a read-only Docker Socket Proxy URL with that host's device (auto-detected, or entered manually as a fallback). Every container found on a host is listed under that host's own Device Details -> Plugins -> DOCKERDISC tab - the host device must already exist in NetAlertX (via ARP/Nmap); this plugin never creates devices."
+          "string": "One entry per Docker host to track. Each entry pairs a read-only Docker Socket Proxy URL with that host's device, matched either by a manually configured MAC (used immediately when set) or by auto-detected hostname. Every container found on a host is listed under that host's own Device Details -> Plugins -> DOCKERDISC tab - the host device must already exist in NetAlertX (via ARP/Nmap); this plugin never creates devices."
         }
       ]
     },
