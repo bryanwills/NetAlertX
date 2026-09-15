@@ -1098,12 +1098,16 @@ function hideSpinner() {
 
 
 // --------------------------------------------------------
-// Calls a backend function to add a front-end event to an execution queue
+/**
+ * Queue an "update_api" ad-hoc event so the backend refreshes just the
+ * given data sources (e.g. "devices,appevents") on its next tick.
+ * @param {string} apiEndpoints - Comma-separated data source names.
+ */
 function updateApi(apiEndpoints)
 {
 
   // value has to be in format event|param. e.g. run|ARPSCAN
-  action = `${getGuid()}|update_api|${apiEndpoints}`
+  action = `update_api|${apiEndpoints}`
 
   const { token: apiToken, apiBase: apiBaseUrl, authHeader } = getAuthContext();
   const url = `${apiBaseUrl}/logs/add-to-execution-queue`;

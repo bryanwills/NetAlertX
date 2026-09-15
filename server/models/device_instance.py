@@ -115,6 +115,13 @@ class DeviceInstance:
             SELECT * FROM Devices WHERE devLastIP = ?
         """, (ip,))
 
+    def getAllByName(self, name):
+        """Return every device whose devName matches (case-insensitive) - devName has
+        no column-level collation, so COLLATE NOCASE is explicit here, unlike devMac."""
+        return self._fetchall("""
+            SELECT * FROM Devices WHERE devName = ? COLLATE NOCASE
+        """, (name,))
+
     def queryByConditions(self, conditions):
         """Query Devices using a list of condition dicts.
 
