@@ -445,6 +445,22 @@ def test_lookup_device_mac_not_found():
         assert dockerdisc.lookup_device_mac("aa:bb:cc:dd:ee:ff") is False
 
 
+def test_lookup_device_mac_found_regardless_of_stored_mac_case():
+    """The plugin always passes a lowercase, normalize_mac()'d value in -
+    this only guards that lookup_device_mac() doesn't do anything of its
+    own (e.g. an exact-string comparison) that would undo whatever
+    case-insensitivity DeviceInstance.getByMac() provides. The real
+    guarantee is schema-level - Devices.devMac is declared
+    `COLLATE NOCASE` (server/db/schema/app.sql), which is exactly why
+    getByMac() itself doesn't need to apply it explicitly (unlike
+    getAllByName(), which does - devName has no such column collation;
+    see that method's docstring and test/backend/test_device_instance.py).
+    This test's stub can't exercise real SQLite collation, only that this
+    function's own logic is agnostic to it."""
+    with patch.object(dockerdisc, "DeviceInstance", _stub_device_instance(get_by_mac={"devMac": "AA:BB:CC:DD:EE:FF"})):
+        assert dockerdisc.lookup_device_mac("aa:bb:cc:dd:ee:ff") is True
+
+
 # ---------------------------------------------------------------------------
 # process_host()
 # ---------------------------------------------------------------------------
