@@ -6,9 +6,6 @@ sole source of device presence. Instead, for each configured Docker host
 this plugin lists that host's containers under the *host's own* Device
 Details -> Plugins -> DOCKERDISC tab.
 
-Design ("Device = Docker host -> List of containers", agreed with maintainer
-jokob-sk across several rounds on issue #1721):
-
   - objectPrimaryId / foreignKey is always the Docker HOST's MAC - never a
     container's own MAC. Every plugin object (one per container) attaches
     to the host device, which must already exist in NetAlertX (found the
@@ -24,13 +21,12 @@ jokob-sk across several rounds on issue #1721):
     proxy's own /info endpoint) doesn't resolve to a known device. Never
     connects to /var/run/docker.sock directly.
 
-Verified 2026-09-08 against a real Docker Engine + docker-socket-proxy:
 `GET /containers/json`'s `NetworkSettings.Networks.<name>` does NOT carry
 a `Driver` field inline (only NetworkID/Gateway/IPAddress/MacAddress/...) -
 the driver has to come from a separate `GET /networks` call, filtered by
 the unique NetworkIDs seen across a host's containers in one batched
-request (cacheable per run, as originally anticipated). This needs the
-Socket Proxy's NETWORKS=1 permission in addition to CONTAINERS=1/INFO=1.
+request. This needs the Socket Proxy's NETWORKS=1 permission in addition
+to CONTAINERS=1/INFO=1.
 
 Structural references: server/plugins/internet_speedtest/config.json
 (plugin_type "other", no mapped_to_column - this never writes into
