@@ -14,14 +14,6 @@
     {
       "language_code": "en_us",
       "string": "Docker discovery"
-    },
-    {
-      "language_code": "es_es",
-      "string": "Descubrimiento de Docker"
-    },
-    {
-      "language_code": "de_de",
-      "string": "Docker-Erkennung"
     }
   ],
   "icon": [
@@ -34,10 +26,6 @@
     {
       "language_code": "en_us",
       "string": "Enriches known Docker hosts with their running containers - image, Compose project/service, network, and MAC/IP when available. Never creates devices; connects via a read-only Docker Socket Proxy."
-    },
-    {
-      "language_code": "es_es",
-      "string": "Enriquece los hosts Docker que NetAlertX ya conoce con la lista de contenedores que corren en ellos - imagen, proyecto/servicio de Compose, driver de red y (cuando el contenedor tiene uno) su propio MAC/IP. Nunca crea devices; se conecta vía un Docker Socket Proxy de solo lectura, nunca directo a `/var/run/docker.sock`."
     }
   ],
   "params": [
@@ -251,14 +239,6 @@
         {
           "language_code": "en_us",
           "string": "Comments"
-        },
-        {
-          "language_code": "es_es",
-          "string": "Comentarios"
-        },
-        {
-          "language_code": "de_de",
-          "string": "Kommentare"
         }
       ]
     },
@@ -292,14 +272,6 @@
       "name": [
         {
           "language_code": "en_us",
-          "string": "Status"
-        },
-        {
-          "language_code": "es_es",
-          "string": "Estado"
-        },
-        {
-          "language_code": "de_de",
           "string": "Status"
         }
       ]
@@ -336,24 +308,12 @@
         {
           "language_code": "en_us",
           "string": "When to run"
-        },
-        {
-          "language_code": "es_es",
-          "string": "Cuando ejecuta"
-        },
-        {
-          "language_code": "de_de",
-          "string": "Wann ausführen"
         }
       ],
       "description": [
         {
           "language_code": "en_us",
           "string": "Enable a regular Docker discovery run. If you select <code>schedule</code> the scheduling settings from below are applied. If you select <code>once</code> the scan is run only once on start of the application (container) for the time specified in <a href=\"#DOCKERDISC_RUN_TIMEOUT\"><code>DOCKERDISC_RUN_TIMEOUT</code> setting</a>."
-        },
-        {
-          "language_code": "es_es",
-          "string": "Habilita una ejecución periódica de descubrimiento de Docker. Si selecciona <code>schedule</code> se aplican las opciones de programación de abajo. Si selecciona <code>once</code> el escaneo se ejecuta solo una vez al iniciar la aplicación (contenedor) durante el tiempo especificado en la configuración <a href=\"#DOCKERDISC_RUN_TIMEOUT\"><code>DOCKERDISC_RUN_TIMEOUT</code></a>."
         }
       ]
     },
@@ -383,28 +343,12 @@
         {
           "language_code": "en_us",
           "string": "Command"
-        },
-        {
-          "language_code": "es_es",
-          "string": "Comando"
-        },
-        {
-          "language_code": "de_de",
-          "string": "Befehl"
         }
       ],
       "description": [
         {
           "language_code": "en_us",
           "string": "Command to run"
-        },
-        {
-          "language_code": "es_es",
-          "string": "Comando a ejecutar"
-        },
-        {
-          "language_code": "de_de",
-          "string": "Auszuführender Befehl"
         }
       ]
     },
@@ -449,24 +393,12 @@
         {
           "language_code": "en_us",
           "string": "Schedule"
-        },
-        {
-          "language_code": "es_es",
-          "string": "Schedule"
-        },
-        {
-          "language_code": "de_de",
-          "string": "Zeitplan"
         }
       ],
       "description": [
         {
           "language_code": "en_us",
           "string": "Only enabled if you select <code>schedule</code> in the <a href=\"#DOCKERDISC_RUN\"><code>DOCKERDISC_RUN</code> setting</a>. Make sure you enter the schedule in the correct cron-like format (e.g. validate at <a href=\"https://crontab.guru/\" target=\"_blank\">crontab.guru</a>). For example entering <code>0 4 * * *</code> will run the scan after 4 am in the <a onclick=\"toggleAllSettings()\" href=\"#TIMEZONE\"><code>TIMEZONE</code> you set above</a>. Will be run NEXT time the time passes."
-        },
-        {
-          "language_code": "es_es",
-          "string": "Solo habilitado si selecciona <code>schedule</code> en la configuración <a href=\"#DOCKERDISC_RUN\"><code>DOCKERDISC_RUN</code></a>. Asegúrese de ingresar el schedule en el formato similar a cron correcto (por ejemplo, valide en <a href=\"https://crontab.guru/\" target=\"_blank\">crontab.guru</a>). Por ejemplo, ingrese <code>0 4 * * *</code> ejecutará el escaneo después de las 4 am en el <a onclick=\"toggleAllSettings()\" href=\"#TIMEZONE\"><code>TIMEZONE</code> que configuró arriba</a>. Se ejecutará la PRÓXIMA vez que pase el tiempo."
         }
       ]
     },
@@ -496,24 +428,12 @@
         {
           "language_code": "en_us",
           "string": "Run timeout"
-        },
-        {
-          "language_code": "es_es",
-          "string": "Tiempo de espera de ejecución"
-        },
-        {
-          "language_code": "de_de",
-          "string": "Zeitlimit"
         }
       ],
       "description": [
         {
           "language_code": "en_us",
           "string": "Maximum time in seconds to wait for the script to finish. If this time is exceeded the script is aborted."
-        },
-        {
-          "language_code": "es_es",
-          "string": "Tiempo máximo en segundos para esperar a que finalice el script. Si se supera este tiempo, el script se cancela."
         }
       ]
     },
@@ -700,7 +620,7 @@
       "description": [
         {
           "language_code": "en_us",
-          "string": "One entry per Docker host to track. Each entry pairs a read-only Docker Socket Proxy URL with that host's device (auto-detected, or entered manually as a fallback). Every container found on a host is listed under that host's own Device Details &rarr; Plugins &rarr; DOCKERDISC tab - the host device must already exist in NetAlertX (via ARP/Nmap); this plugin never creates devices."
+          "string": "One entry per Docker host to track. Each entry pairs a read-only Docker Socket Proxy URL with that host's device (auto-detected, or entered manually as a fallback). Every container found on a host is listed under that host's own Device Details -> Plugins -> DOCKERDISC tab - the host device must already exist in NetAlertX (via ARP/Nmap); this plugin never creates devices."
         }
       ]
     },
@@ -736,24 +656,12 @@
         {
           "language_code": "en_us",
           "string": "Watched"
-        },
-        {
-          "language_code": "es_es",
-          "string": "Visto"
-        },
-        {
-          "language_code": "de_de",
-          "string": "Überwacht"
         }
       ],
       "description": [
         {
           "language_code": "en_us",
           "string": "Send a notification if selected values change. Use <code>CTRL + Click</code> to select/deselect. <ul><li><code>watchedValue1</code> is the container image</li><li><code>watchedValue2</code> is the Compose project/service</li><li><code>watchedValue3</code> is the network driver</li><li><code>watchedValue4</code> is the container's own MAC, when it has one</li></ul>"
-        },
-        {
-          "language_code": "es_es",
-          "string": "Envíe una notificación si los valores seleccionados cambian. Use <code>CTRL + Clic</code> para seleccionar/deseleccionar. <ul><li><code>watchedValue1</code> es la imagen del contenedor</li><li><code>watchedValue2</code> es el proyecto/servicio de Compose</li><li><code>watchedValue3</code> es el driver de red</li><li><code>watchedValue4</code> es el MAC propio del contenedor, cuando tiene uno</li></ul>"
         }
       ]
     },
@@ -789,24 +697,12 @@
         {
           "language_code": "en_us",
           "string": "Report on"
-        },
-        {
-          "language_code": "es_es",
-          "string": "Informar sobre"
-        },
-        {
-          "language_code": "de_de",
-          "string": "Benachrichtige wenn"
         }
       ],
       "description": [
         {
           "language_code": "en_us",
           "string": "Send a notification only on these statuses. <code>new</code> means a new unique (unique combination of PrimaryId and SecondaryId) object was discovered. <code>watched-changed</code> means that selected <code>watchedValueN</code> columns changed."
-        },
-        {
-          "language_code": "es_es",
-          "string": "Envíe una notificación solo en estos estados. <code>new</code> significa que se descubrió un nuevo objeto único (combinación única de PrimaryId y SecondaryId). <code>watched-changed</code> significa que las columnas <code>watchedValueN</code> seleccionadas cambiaron."
         }
       ]
     }

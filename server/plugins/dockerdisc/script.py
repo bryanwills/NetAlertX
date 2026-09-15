@@ -6,8 +6,8 @@ sole source of device presence. Instead, for each configured Docker host
 this plugin lists that host's containers under the *host's own* Device
 Details -> Plugins -> DOCKERDISC tab.
 
-Design ("Device = Docker host -> List of containers", per maintainer
-jokob-sk, see ../../../PLUGIN_DOCKERDISC_SPEC.md for the full history):
+Design ("Device = Docker host -> List of containers", agreed with maintainer
+jokob-sk across several rounds on issue #1721):
 
   - objectPrimaryId / foreignKey is always the Docker HOST's MAC - never a
     container's own MAC. Every plugin object (one per container) attaches
@@ -24,8 +24,7 @@ jokob-sk, see ../../../PLUGIN_DOCKERDISC_SPEC.md for the full history):
     proxy's own /info endpoint) doesn't resolve to a known device. Never
     connects to /var/run/docker.sock directly.
 
-Verified 2026-09-08 against a real Docker Engine + docker-socket-proxy
-(see PLUGIN_DOCKERDISC_SPEC.md §9 for the open questions this closed):
+Verified 2026-09-08 against a real Docker Engine + docker-socket-proxy:
 `GET /containers/json`'s `NetworkSettings.Networks.<name>` does NOT carry
 a `Driver` field inline (only NetworkID/Gateway/IPAddress/MacAddress/...) -
 the driver has to come from a separate `GET /networks` call, filtered by
@@ -60,7 +59,7 @@ from plugin_helper import (  # noqa: E402
 from logger import mylog, Logger  # noqa: E402
 from helper import get_setting_value  # noqa: E402
 from const import logPath  # noqa: E402
-from database import get_temp_db_connection  # noqa: E402
+from models.device_instance import DeviceInstance  # noqa: E402
 import conf  # noqa: E402
 from pytz import timezone  # noqa: E402
 
@@ -194,18 +193,11 @@ def resolve_host_mac(host):
     hostname = (info or {}).get('Name')
 
     if hostname:
-        conn = get_temp_db_connection()
-        cursor = conn.cursor()
-        cursor.execute(
-            "SELECT devMac FROM Devices WHERE devName = ? COLLATE NOCASE",
-            (hostname.lstrip('/'),),
-        )
-        rows = cursor.fetchall()
-        conn.close()
+        rows = DeviceInstance().getAllByName(hostname.lstrip('/'))
 
         if len(rows) == 1:
             mylog('verbose', [f'[{pluginName}] {host.proxy_url}: auto-detected host MAC via hostname "{hostname}".'])
-            return normalize_mac(rows[0][0])
+            return normalize_mac(rows[0]['devMac'])
 
         if len(rows) > 1:
             # devName isn't unique across Devices - guessing which one is
@@ -235,17 +227,10 @@ def resolve_host_mac(host):
 def lookup_device_mac(mac):
     """True if `mac` already exists as a Devices row - this plugin never
     creates the host device, same rule vendor_update applies to the
-    devices it enriches. COLLATE NOCASE is explicit here (not just relied
-    on from the Devices.devMac column definition) so this still matches
-    correctly even if that ever changes - normalize_mac() lowercases what
-    we search for, but what's actually stored can come from other
-    discovery methods and isn't guaranteed to be lowercase."""
-    conn = get_temp_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT 1 FROM Devices WHERE devMac = ? COLLATE NOCASE LIMIT 1", (mac,))
-    row = cursor.fetchone()
-    conn.close()
-    return row is not None
+    devices it enriches. Delegates the actual matching (case sensitivity
+    included) to DeviceInstance.getByMac() - the core's own contract for
+    what "the same MAC" means, not something this plugin second-guesses."""
+    return DeviceInstance().getByMac(mac) is not None
 
 
 def pick_lan_network(networks, driver_by_id):

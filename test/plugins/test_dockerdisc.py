@@ -1,13 +1,17 @@
 """Tests for the dockerdisc (DOCKERDISC) plugin.
 
 script.py is loaded with its NetAlertX-internal dependencies
-(plugin_helper, logger, helper, const, conf, pytz, database) stubbed out,
-the same approach test_pihole_monitor.py uses - it keeps these tests
-runnable without the full devcontainer environment and without a live
+(plugin_helper, logger, helper, const, models.device_instance, conf, pytz)
+stubbed out, the same approach test_pihole_monitor.py uses - it keeps these
+tests runnable without the full devcontainer environment and without a live
 Docker Socket Proxy. `requests` itself is left real; individual HTTP calls
 are mocked per test. `handleEmpty`/`normalize_mac`/`decode_settings_base64`
 are reimplemented locally (same shape as plugin_helper's) rather than
 imported, to avoid pulling in plugin_helper's own dependency chain.
+`models.device_instance` is stubbed with a fake `DeviceInstance` rather than
+letting the real one load, since the real module pulls in its own separate
+dependency chain (db.db_helper, workflows.constants, ...) this harness
+doesn't otherwise need.
 
 Layout:
   - pick_lan_network() / first_network_driver(): pure-function unit tests
@@ -37,9 +41,9 @@ Layout:
     told us the answer), so auto-detection only ever runs when it's
     empty, and only then can hostname-unmatched, ambiguous (more than one
     device sharing that name), or /info-unreachable resolve to None.
+    Delegates the actual devName lookup to DeviceInstance.getAllByName().
   - lookup_device_mac(): unit test for the "host must already exist, this
-    plugin never creates it" gate - explicit COLLATE NOCASE, not just
-    relied on from the Devices.devMac column definition.
+    plugin never creates it" gate - delegates to DeviceInstance.getByMac().
   - process_host(): integration tests with DockerHost's network-touching
     methods stubbed at the object level - covers a mixed macvlan+bridge
     container list (only the macvlan one gets a MAC/IP), an unconfigured
@@ -132,7 +136,7 @@ def _load_dockerdisc_module():
     stub("logger", mylog=MagicMock(), Logger=MagicMock())
     stub("helper", get_setting_value=MagicMock(return_value="UTC"))
     stub("const", logPath="/tmp")
-    stub("database", get_temp_db_connection=MagicMock())
+    stub("models.device_instance", DeviceInstance=MagicMock)
     stub("conf", tz=None)
     stub("pytz", timezone=MagicMock(return_value="UTC"))
 
@@ -169,19 +173,17 @@ def _resp(json_data):
     return resp
 
 
-def _db_returning(rows):
-    """A get_temp_db_connection() replacement whose cursor supports both
-    query styles used in this plugin: fetchone() (lookup_device_mac's
-    EXISTS-style check) yields successive `rows` entries (one per
-    execute() call), then None; fetchall() (resolve_host_mac's devName
-    match, which needs every matching row to detect ambiguity) returns
-    `rows` as-is. A given test only ever exercises one of the two."""
-    conn = MagicMock()
-    cursor = MagicMock()
-    conn.cursor.return_value = cursor
-    cursor.fetchone.side_effect = list(rows) + [None] * 10
-    cursor.fetchall.return_value = list(rows)
-    return conn
+def _stub_device_instance(get_all_by_name=None, get_by_mac=None):
+    """A DeviceInstance *class* replacement, for `patch.object(dockerdisc,
+    "DeviceInstance", ...)` - calling it (as resolve_host_mac()/
+    lookup_device_mac() do: `DeviceInstance()`) returns a fixed instance
+    whose getAllByName()/getByMac() return the given values, mirroring the
+    real model's method names/shapes (getAllByName -> list of device
+    dicts, getByMac -> a device dict or None)."""
+    instance = MagicMock()
+    instance.getAllByName.return_value = get_all_by_name if get_all_by_name is not None else []
+    instance.getByMac.return_value = get_by_mac
+    return MagicMock(return_value=instance)
 
 
 # ---------------------------------------------------------------------------
@@ -383,7 +385,7 @@ def test_resolve_host_mac_manual_mac_short_circuits_without_any_request():
 def test_resolve_host_mac_auto_detect_success():
     host = dockerdisc.DockerHost("http://proxy:2375", "", _deadline())
     with patch.object(host, "get_info", return_value={"Name": "docker-host-1"}):
-        with patch.object(dockerdisc, "get_temp_db_connection", return_value=_db_returning([("AA:BB:CC:DD:EE:FF",)])):
+        with patch.object(dockerdisc, "DeviceInstance", _stub_device_instance(get_all_by_name=[{"devMac": "AA:BB:CC:DD:EE:FF"}])):
             assert dockerdisc.resolve_host_mac(host) == "aa:bb:cc:dd:ee:ff"
 
 
@@ -394,7 +396,7 @@ def test_resolve_host_mac_none_when_hostname_unmatched_and_no_manual_mac():
     ever reached (see the short-circuit test above)."""
     host = dockerdisc.DockerHost("http://proxy:2375", "", _deadline())
     with patch.object(host, "get_info", return_value={"Name": "unknown-host"}):
-        with patch.object(dockerdisc, "get_temp_db_connection", return_value=_db_returning([])):
+        with patch.object(dockerdisc, "DeviceInstance", _stub_device_instance(get_all_by_name=[])):
             assert dockerdisc.resolve_host_mac(host) is None
 
 
@@ -412,8 +414,8 @@ def test_resolve_host_mac_ambiguous_hostname_falls_back_to_none_without_manual()
     host = dockerdisc.DockerHost("http://proxy:2375", "", _deadline())
     with patch.object(host, "get_info", return_value={"Name": "htpc"}):
         with patch.object(
-            dockerdisc, "get_temp_db_connection",
-            return_value=_db_returning([("AA:BB:CC:DD:EE:01",), ("AA:BB:CC:DD:EE:02",)]),
+            dockerdisc, "DeviceInstance",
+            _stub_device_instance(get_all_by_name=[{"devMac": "AA:BB:CC:DD:EE:01"}, {"devMac": "AA:BB:CC:DD:EE:02"}]),
         ):
             assert dockerdisc.resolve_host_mac(host) is None
 
@@ -434,12 +436,12 @@ def test_resolve_host_mac_ambiguous_hostname_falls_back_to_manual_when_set():
 
 
 def test_lookup_device_mac_found():
-    with patch.object(dockerdisc, "get_temp_db_connection", return_value=_db_returning([(1,)])):
+    with patch.object(dockerdisc, "DeviceInstance", _stub_device_instance(get_by_mac={"devMac": "aa:bb:cc:dd:ee:ff"})):
         assert dockerdisc.lookup_device_mac("aa:bb:cc:dd:ee:ff") is True
 
 
 def test_lookup_device_mac_not_found():
-    with patch.object(dockerdisc, "get_temp_db_connection", return_value=_db_returning([])):
+    with patch.object(dockerdisc, "DeviceInstance", _stub_device_instance(get_by_mac=None)):
         assert dockerdisc.lookup_device_mac("aa:bb:cc:dd:ee:ff") is False
 
 
@@ -489,7 +491,7 @@ def test_process_host_mixed_macvlan_and_bridge_containers():
         with patch.object(host, "get_info", return_value=None):  # unused - manual_mac short-circuits before this would ever be called
             with patch.object(host, "get_containers", return_value=containers):
                 with patch.object(host, "get_network_drivers", return_value={"net-lan": "macvlan", "net-bridge": "bridge"}) as mock_drivers:
-                    with patch.object(dockerdisc, "get_temp_db_connection", return_value=_db_returning([(1,)])):
+                    with patch.object(dockerdisc, "DeviceInstance", _stub_device_instance(get_by_mac={"devMac": host_entry["DOCKERDISC_HOST_MAC"]})):
                         added = dockerdisc.process_host(host_entry, _deadline(), plugin_objects)
 
     # one batched call for both containers' networks, not two
@@ -537,7 +539,7 @@ def test_process_host_skips_when_host_not_a_known_device_without_listing_contain
     host_entry = {"DOCKERDISC_SOCKET_PROXY_URL": "http://proxy:2375", "DOCKERDISC_HOST_MAC": "aa:bb:cc:dd:ee:ff"}
     plugin_objects = MagicMock()
     with patch.object(dockerdisc.DockerHost, "get_info", return_value=None):
-        with patch.object(dockerdisc, "get_temp_db_connection", return_value=_db_returning([])):  # not found
+        with patch.object(dockerdisc, "DeviceInstance", _stub_device_instance(get_by_mac=None)):  # not found
             with patch.object(dockerdisc.DockerHost, "get_containers") as mock_get_containers:
                 added = dockerdisc.process_host(host_entry, _deadline(), plugin_objects)
     assert added == 0
