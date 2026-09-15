@@ -1023,6 +1023,14 @@ height: 50px;
     display: flex;
 }
 
+/* The wrapper above is a flex container, so the content section shrinks to
+   its content width unless stretched; make it span the full page like the
+   other Monitoring pages (#1762). */
+#notifications .content
+{
+    width: 100%;
+}
+
 #notificationData
 {
     margin-bottom: 10px;

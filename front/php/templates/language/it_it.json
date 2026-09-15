@@ -836,5 +836,7 @@
     "settings_system_icon": "fa-solid fa-gear",
     "settings_system_label": "Sistema",
     "settings_update_item_warning": "Aggiorna il valore qui sotto. Fai attenzione a seguire il formato precedente. <b>La convalida non viene eseguita.</b>",
-    "test_event_tooltip": "Salva le modifiche prima di provare le nuove impostazioni."
+    "test_event_tooltip": "Salva le modifiche prima di provare le nuove impostazioni.",
+    "Gen_Next": "Successivo",
+    "Gen_Prev": "Precedente"
 }
