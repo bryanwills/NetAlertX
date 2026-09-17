@@ -1909,15 +1909,11 @@ def metrics(payload=None):
     tags=["messaging"],
     auth_callable=is_authorized
 )
-def api_write_notification(payload=None):
-    data = request.json or {}
-    content = data.get("content")
-    level = data.get("level", "alert")
-
-    if not content:
-        return jsonify({"success": False, "message": "ERROR: Missing parameters", "error": "Missing content"}), 400
-
-    write_notification(content, level)
+def api_write_notification(payload: CreateNotificationRequest = None):
+    # Use the validated payload, not the raw request body - CreateNotificationRequest's
+    # truncate_content validator runs against payload.content; re-reading request.json
+    # directly would silently bypass it and store the untruncated original.
+    write_notification(payload.content, payload.level)
     return jsonify({"success": True})
 
 

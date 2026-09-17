@@ -5,6 +5,14 @@ description: How to analyze and respond to GitHub PR review comments in NetAlert
 
 # PR Analysis
 
+## Standing Rule: A Repeated Comment Becomes a Skill Update
+
+If a review comment corrects something a skill *should* already cover, don't just fix that one instance — update the relevant skill as part of addressing the comment, same PR, same turn. If no skill covers it yet, that's the signal to create one. Check the skill first, though — sometimes it already covers the point and just wasn't consulted; the fix is in *applying* it, not in the skill being incomplete.
+
+## Code Style
+
+- **Prefer explicit, readable logic over compact-but-opaque expressions.** When a built-in/clever expression (e.g. a `max()`-based one-liner) saves a line or two but a reader has to reverse-engineer *why* it produces the right answer, write it out as plain conditional logic instead.
+
 ## Before Writing Any Test Code — Non-Negotiable Checklist
 
 Run through this before creating or editing any file under `test/`:
