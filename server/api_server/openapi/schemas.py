@@ -916,7 +916,7 @@ class CreateNotificationRequest(BaseModel):
         description="Notification content"
     )
     level: NOTIFICATION_LEVELS = Field(
-        "info",
+        "alert",
         description="Notification severity level"
     )
 

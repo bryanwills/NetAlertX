@@ -15,6 +15,10 @@ Don't run `git checkout -b <new-branch>`, `git branch <new-branch>`, or anything
 
 Absent other instructions, work lands on `next_release` directly — commit there, `git push` targets `origin next_release`. Don't invent a feature-branch/PR workflow unless asked for one.
 
+## Confirm before every push
+
+Ask for explicit confirmation immediately before running `git push`, even to the default `next_release` target. Don't fold a push into a larger task silently — surface it as its own step and wait for a go-ahead.
+
 ## Before any git command that changes shared state
 
 Run `git status` and `git branch --show-current` first, and don't assume the branch you last left the repo on is still checked out — another process/terminal may have changed it.
