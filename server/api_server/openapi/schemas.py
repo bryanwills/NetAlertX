@@ -912,13 +912,25 @@ class CreateNotificationRequest(BaseModel):
     content: str = Field(
         ...,
         min_length=1,
-        max_length=1024,
+        max_length=4096,
         description="Notification content"
     )
     level: NOTIFICATION_LEVELS = Field(
         "info",
         description="Notification severity level"
     )
+
+    @field_validator("content", mode="before")
+    @classmethod
+    def truncate_content(cls, v):
+        """Truncate instead of rejecting - content is often a generated
+        summary (e.g. a bulk multi-edit's affected MAC list) with no natural
+        length cap, and the notification store is a JSON file with no
+        underlying column limit that 4096 corresponds to. Losing the whole
+        write on overlength input would be worse than a truncated one."""
+        if isinstance(v, str) and len(v) > 4096:
+            return v[:4093] + "..."
+        return v
 
 
 # =============================================================================

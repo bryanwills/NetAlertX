@@ -5,6 +5,18 @@ description: How to analyze and respond to GitHub PR review comments in NetAlert
 
 # PR Analysis
 
+## Standing Rule: A Repeated Comment Becomes a Skill Update
+
+jokob (the maintainer) has asked for this explicitly on real PRs, not just implied it:
+- PR #1739 (test-mocking/MAC-case feedback repeated across two PRs): "will those skill prevent the issues I had to comment on for you to fix in the last 2 PRs? ... will you next time follow these based on available guidelines and skills? if not update those to make this explicit"
+- PR #1744 (wrong `mylog()` level): "change 'warn' to 'none' and update skills so this doesn't happen again"
+
+So: if a review comment corrects something a skill *should* already cover, don't just fix that one instance — update the relevant skill as part of addressing the comment, same PR, same turn. If no skill covers it yet, that's the signal to create one. Check the skill first, though — sometimes it already covers the point and just wasn't consulted (e.g. `logging-standards` already lists the valid `mylog()` levels; the PR #1744 fix was in *applying* it, not in the skill being incomplete).
+
+## Code Style (from real review history)
+
+- **Prefer explicit, readable logic over compact-but-opaque expressions.** Real feedback on a `max()`-based one-liner: "make it easier to read, using max() obfuscates logic." When a built-in/clever expression saves a line or two but a reader has to reverse-engineer *why* it produces the right answer, write it out as plain conditional logic instead.
+
 ## Before Writing Any Test Code — Non-Negotiable Checklist
 
 Run through this before creating or editing any file under `test/`:
