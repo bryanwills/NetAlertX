@@ -5,15 +5,20 @@ the list of containers running on them - image, Compose project/service,
 network driver, and (for containers on a `macvlan`/`ipvlan` network) their
 own MAC/IP.
 
-It does **not** discover devices. NetAlertX's own ARP/Nmap scanners remain
-the only source of device presence. `DOCKERDISC` never creates a device row
-- not for a container, and not for the Docker host itself, which must
-already exist in NetAlertX before this plugin can attach anything to it.
+It never creates the Docker **host** itself as a device - that must already
+exist in NetAlertX before this plugin can attach anything to it. A
+**container**, on the other hand, can optionally get its own device too:
+opt in with `DOCKERDISC_CREATE_DEV` and a container on a `macvlan`/`ipvlan`
+network (its own LAN-visible MAC) can create or confirm a device of its
+own, parented to its host. A container without its own MAC
+(`bridge`/overlay/etc.) never creates one, regardless of that setting -
+there's no LAN-visible identity to create a device from.
 
 Maintainer's mental model for this plugin: **Device = Docker host → List of
 containers.** Every container found on a host shows up under that **host's
-own** Device Details → Plugins → DOCKERDISC tab, not as a device of its
-own.
+own** Device Details → Plugins → DOCKERDISC tab either way - opting a
+container into its own device is additive, it doesn't remove it from the
+host's list.
 
 > [!TIP]
 > Connects via a read-only [Docker Socket
@@ -128,6 +133,13 @@ create/start/stop/kill anything.
   - Docker Host MAC Address (Fallback) `DOCKERDISC_HOST_MAC` - optional if
     auto-detection works for that host
 
+#### Optional Settings
+
+- Create/confirm devices for containers with a real MAC
+  `DOCKERDISC_CREATE_DEV` - off by default. A container without its own
+  MAC (`bridge`/overlay/etc.) never creates a device either way; this only
+  affects containers on a `macvlan`/`ipvlan` network.
+
 ### Host MAC auto-detection
 
 If `DOCKERDISC_HOST_MAC` is filled in, it's used immediately - no Socket
@@ -172,10 +184,13 @@ whether it has a real LAN-visible identity to show:
 
 ### Notes
 
-- This plugin never writes to `devMac`, `devLastIP`, `devFirstConnection`,
-  `devSourcePlugin`, or `devCustomProps` - ARP/Nmap remain authoritative
-  for device identity and discovery-source attribution on every device,
-  including the Docker host itself.
+- The Docker host's own `devMac`/`devLastIP`/`devFirstConnection`/
+  `devSourcePlugin`/`devCustomProps` are never touched - ARP/Nmap remain
+  authoritative for the host's identity and discovery-source attribution.
+  A container promoted to its own device (`DOCKERDISC_CREATE_DEV`) gets its
+  `devMac`/`devLastIP`/`devParentMAC` from this plugin, same as any other
+  `CurrentScan`-mapped plugin - see [Plugin Import
+  Behavior](../../../docs/PLUGINS_IMPORT_BEHAVIOR.md).
 - Only Socket Proxy permissions required: `CONTAINERS=1` (list containers,
   their networks and labels), `INFO=1` (host-MAC auto-detection), and
   `NETWORKS=1` (network driver lookup - one batched `GET /networks` call
@@ -184,6 +199,6 @@ whether it has a real LAN-visible identity to show:
 - Design history and open implementation questions in [issue #1721]
   (https://github.com/netalertx/NetAlertX/issues/1721).
 
-- Version: 0.1.0
+- Version: 0.2.0
 - Author: [mauricio-camayo](https://github.com/mauricio-camayo/)
-- Release Date: `2026-09-14`
+- Release Date: `2026-09-18`
