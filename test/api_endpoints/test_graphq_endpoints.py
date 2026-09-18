@@ -5,7 +5,7 @@ import pytest
 INSTALL_PATH = "/app"
 sys.path.extend([f"{INSTALL_PATH}/server/plugins", f"{INSTALL_PATH}/server"])
 
-from helper import get_setting_value, count_children_by_parent_mac  # noqa: E402 [flake8 lint suppression]
+from helper import get_setting_value, count_children_by_parent_mac, format_ip_long  # noqa: E402 [flake8 lint suppression]
 from api_server.api_server_start import app  # noqa: E402 [flake8 lint suppression]
 
 
@@ -118,6 +118,35 @@ def test_graphql_devices_parent_children_count_matches_recount(client, api_token
             f"devMac={device['devMac']}: expected {expected}, "
             f"got {device['devParentChildrenCount']}"
         )
+
+
+@pytest.mark.parametrize("field", ["devLastIP", "devPrimaryIPv4", "devPrimaryIPv6"])
+def test_graphql_devices_sort_by_ip_is_numeric(client, api_token, field):
+    """Sorting devices by an IP field must order numerically (e.g. 192.168.1.15
+    before 192.168.1.105), not lexicographically. Regression guard for #1797.
+
+    Not seeded: reuses whatever devices already exist (see the docstring on
+    test_graphql_devices_parent_children_count_matches_recount for why this
+    file avoids create-then-query against table_devices.json).
+    """
+    query = {
+        "query": f"""
+        {{
+            devices(options: {{sort: [{{field: "{field}", order: "ASC"}}]}}) {{
+                devices {{
+                    {field}
+                }}
+            }}
+        }}
+        """
+    }
+    resp = client.post("/graphql", json=query, headers=auth_headers(api_token))
+    assert resp.status_code == 200
+
+    values = [d[field] for d in resp.get_json()["data"]["devices"]["devices"]]
+    longs = [format_ip_long(v or "") for v in values]
+
+    assert longs == sorted(longs)
 
 
 # --- SETTINGS TESTS ---
