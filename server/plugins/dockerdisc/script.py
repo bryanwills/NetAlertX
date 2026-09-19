@@ -15,13 +15,16 @@ is never created by this plugin - it must already exist in NetAlertX
     shown (watched4/extra) when it has a macvlan/ipvlan network; otherwise
     those fields are "null".
   - Also maps to CurrentScan (scanMac/scanCreatesDevice/scanParentMAC/
-    scanLastIP - see docs/PLUGINS_IMPORT_BEHAVIOR.md) so a container can
-    optionally become its own device: a container without its own MAC
+    scanLastIP - see docs/PLUGINS_IMPORT_BEHAVIOR.md), gated by
+    DOCKERDISC_IMPORT_ON (whether this run promotes to CurrentScan at all)
+    and, independently, DOCKERDISC_CREATE_DEV (whether a container with
+    its own MAC may originate a brand-new device via scanCreatesDevice -
+    neither setting gates the other). A container without its own MAC
     (bridge/overlay/etc.) always gets a blank scanMac, which blocks device
     creation for the whole group regardless of scanCreatesDevice - it can
-    never be its own device. One with a real MAC only creates/confirms a
-    device when DOCKERDISC_CREATE_DEV is on, and is parented to its host
-    via scanParentMAC either way.
+    never be its own device. One with a real MAC is parented to its host
+    via scanParentMAC on every promoted run, whether or not CREATE_DEV
+    lets it also originate a device.
   - One `hosts` entry = one Docker host: a read-only Docker Socket Proxy
     URL, plus a manual MAC fallback for when auto-detection (via the
     proxy's own /info endpoint) doesn't resolve to a known device. Never
@@ -270,6 +273,12 @@ def first_network_driver(networks, driver_by_id):
 
 
 def process_host(host_entry, deadline, plugin_objects, create_dev):
+    """Lists one Docker host's containers as plugin objects under that
+    host's Device Details tab, and maps each to a CurrentScan row. Skips
+    the whole host (no containers listed) if its Socket Proxy URL is
+    missing, its MAC can't be resolved, or that MAC isn't a known device.
+    Returns the number of containers reported."""
+
     host = DockerHost(
         proxy_url=host_entry.get('DOCKERDISC_SOCKET_PROXY_URL'),
         manual_mac=host_entry.get('DOCKERDISC_HOST_MAC'),
@@ -351,6 +360,10 @@ def process_host(host_entry, deadline, plugin_objects, create_dev):
 
 
 def main():
+    """Entry point: reads the configured Docker hosts and DOCKERDISC_CREATE_DEV,
+    processes each host in turn against a shared per-run request-time
+    budget, and writes the combined result file."""
+
     mylog('verbose', [f'[{pluginName}] In script'])
 
     host_configs = get_setting_value('DOCKERDISC_hosts') or []

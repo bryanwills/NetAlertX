@@ -139,6 +139,13 @@ create/start/stop/kill anything.
   `DOCKERDISC_CREATE_DEV` - off by default. A container without its own
   MAC (`bridge`/overlay/etc.) never creates a device either way; this only
   affects containers on a `macvlan`/`ipvlan` network.
+- Allow updating existing devices from this plugin's data
+  `DOCKERDISC_IMPORT_ON` - on by default. Turn off to make a run purely
+  informational: no `CurrentScan` promotion at all, so a container's own
+  already-existing device (found independently by ARP/Nmap) won't get its
+  presence/IP/parent fields updated from this plugin either, regardless of
+  `DOCKERDISC_CREATE_DEV`. The two settings are independent - one doesn't
+  gate the other.
 
 ### Host MAC auto-detection
 
@@ -187,9 +194,14 @@ whether it has a real LAN-visible identity to show:
 - The Docker host's own `devMac`/`devLastIP`/`devFirstConnection`/
   `devSourcePlugin`/`devCustomProps` are never touched - ARP/Nmap remain
   authoritative for the host's identity and discovery-source attribution.
-  A container promoted to its own device (`DOCKERDISC_CREATE_DEV`) gets its
-  `devMac`/`devLastIP`/`devParentMAC` from this plugin, same as any other
-  `CurrentScan`-mapped plugin - see [Plugin Import
+  A container with its own macvlan/ipvlan MAC always maps to `CurrentScan`
+  (`DOCKERDISC_IMPORT_ON` permitting) - with `DOCKERDISC_CREATE_DEV` on,
+  it can originate a brand-new device; either way, if that MAC is already
+  a device (found independently by ARP/Nmap, since it's LAN-visible), this
+  plugin's row still confirms its presence and updates its
+  `devLastIP`/`devParentMAC` on every run. Turn `DOCKERDISC_IMPORT_ON` off
+  to skip all of that and keep this plugin purely informational (its
+  `Plugins_Objects` listing still updates either way) - see [Plugin Import
   Behavior](../../../docs/PLUGINS_IMPORT_BEHAVIOR.md).
 - Only Socket Proxy permissions required: `CONTAINERS=1` (list containers,
   their networks and labels), `INFO=1` (host-MAC auto-detection), and

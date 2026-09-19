@@ -357,6 +357,41 @@
       ]
     },
     {
+      "function": "IMPORT_ON",
+      "type": {
+        "dataType": "boolean",
+        "elements": [
+          {
+            "elementType": "input",
+            "elementOptions": [
+              {
+                "type": "checkbox"
+              }
+            ],
+            "transformers": []
+          }
+        ]
+      },
+      "default_value": true,
+      "options": [],
+      "localized": [
+        "name",
+        "description"
+      ],
+      "name": [
+        {
+          "language_code": "en_us",
+          "string": "Allow updating existing devices from this plugin's data"
+        }
+      ],
+      "description": [
+        {
+          "language_code": "en_us",
+          "string": "On by default. Turn off to make this run purely informational - no CurrentScan promotion at all, so a container's own already-existing device (found independently by ARP/Nmap) won't get its presence/IP/parent updated from this plugin either, regardless of <a href=\"#DOCKERDISC_CREATE_DEV\"><code>DOCKERDISC_CREATE_DEV</code></a>."
+        }
+      ]
+    },
+    {
       "function": "CMD",
       "type": {
         "dataType": "string",
