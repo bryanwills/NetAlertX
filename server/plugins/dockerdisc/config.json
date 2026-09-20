@@ -25,7 +25,7 @@
   "description": [
     {
       "language_code": "en_us",
-      "string": "Enriches known Docker hosts with their running containers - image, Compose project/service, network, MAC/IP. Optionally creates devices for LAN-visible containers; via a read-only Docker Socket Proxy."
+      "string": "Enriches known Docker hosts with their running containers."
     }
   ],
   "params": [
@@ -249,6 +249,27 @@
     {
       "column": "helpVal2",
       "mapped_to_column": "scanCreatesDevice",
+      "css_classes": "col-sm-2",
+      "show": false,
+      "type": "none",
+      "default_value": "",
+      "options": [],
+      "localized": [
+        "name"
+      ],
+      "name": [
+        {
+          "language_code": "en_us",
+          "string": "N/A"
+        }
+      ]
+    },
+    {
+      "column": "Dummy",
+      "mapped_to_column": "scanSourcePlugin",
+      "mapped_to_column_data": {
+        "value": "DOCKERDISC"
+      },
       "css_classes": "col-sm-2",
       "show": false,
       "type": "none",

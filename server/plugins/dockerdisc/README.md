@@ -196,12 +196,15 @@ whether it has a real LAN-visible identity to show:
   authoritative for the host's identity and discovery-source attribution.
   A container with its own macvlan/ipvlan MAC always maps to `CurrentScan`
   (`DOCKERDISC_IMPORT_ON` permitting) - with `DOCKERDISC_CREATE_DEV` on,
-  it can originate a brand-new device; either way, if that MAC is already
-  a device (found independently by ARP/Nmap, since it's LAN-visible), this
-  plugin's row still confirms its presence and updates its
-  `devLastIP`/`devParentMAC` on every run. Turn `DOCKERDISC_IMPORT_ON` off
-  to skip all of that and keep this plugin purely informational (its
-  `Plugins_Objects` listing still updates either way) - see [Plugin Import
+  it can originate a brand-new device (`devSourcePlugin` set to
+  `DOCKERDISC` at creation, like any other `CurrentScan`-mapped plugin);
+  either way, if that MAC is already a device (found independently by
+  ARP/Nmap, since it's LAN-visible), this plugin's row still confirms its
+  presence and updates its `devLastIP`/`devParentMAC` on every run - that
+  existing device's own `devSourcePlugin` isn't touched, since it's only
+  set once, at creation. Turn `DOCKERDISC_IMPORT_ON` off to skip all of
+  that and keep this plugin purely informational (its `Plugins_Objects`
+  listing still updates either way) - see [Plugin Import
   Behavior](../../../docs/PLUGINS_IMPORT_BEHAVIOR.md).
 - Only Socket Proxy permissions required: `CONTAINERS=1` (list containers,
   their networks and labels), `INFO=1` (host-MAC auto-detection), and
