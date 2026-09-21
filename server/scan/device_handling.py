@@ -348,39 +348,51 @@ def update_devices_data_from_scan(db):
 
 def update_ipv4_ipv6(db):
     """
-    Fill devPrimaryIPv4 and devPrimaryIPv6 based on devLastIP.
-    Skips empty devLastIP and preserves existing values for the other version.
+    Fill devPrimaryIPv4 and devPrimaryIPv6 from CurrentScan directly, ranking each
+    scanMac's rows independently per address family (not per plugin, not via the
+    single already-reduced devLastIP) so a device reporting both families in the
+    same scan cycle - dual-stack, the normal case on any modern network, not an
+    edge case - gets both fields populated from that one cycle instead of only
+    whichever family happened to win devLastIP's single-value reduction.
+    Skips empty/presence-suppressed rows and preserves existing values for a
+    family not refreshed this cycle. See .gemini/internal-docs/PRDs/dual-stack-primary-ip-support.md.
     """
     sql = db.sql
-    mylog("debug", "[Update Devices] Updating devPrimaryIPv4 / devPrimaryIPv6 from devLastIP")
+    mylog("debug", "[Update Devices] Updating devPrimaryIPv4 / devPrimaryIPv6 from CurrentScan")
 
-    devices = sql.execute("SELECT devMac, devLastIP FROM Devices").fetchall()
-    records_to_update = []
+    rows = sql.execute(f"""
+        WITH ranked AS (
+            SELECT
+                scanMac,
+                scanLastIP,
+                CASE WHEN instr(scanLastIP, ':') > 0 THEN 'v6' ELSE 'v4' END AS family,
+                ROW_NUMBER() OVER (
+                    PARTITION BY scanMac, CASE WHEN instr(scanLastIP, ':') > 0 THEN 'v6' ELSE 'v4' END
+                    ORDER BY scanLastConnection DESC
+                ) AS family_rn
+            FROM CurrentScan
+            WHERE scanLastIP NOT IN ({NULL_EQUIVALENTS_SQL})
+              AND scanPresence = 1
+        )
+        SELECT scanMac, family, scanLastIP FROM ranked WHERE family_rn = 1
+    """).fetchall()
 
-    for device in devices:
-        last_ip = device["devLastIP"]
-        # Keeping your specific skip logic
-        if not last_ip or last_ip.lower() in ("", "null", "(unknown)", "(Unknown)"):
-            continue
-
-        ipv4, ipv6 = None, None
+    per_mac = {}
+    for row in rows:
+        mac, family, ip = row["scanMac"], row["family"], row["scanLastIP"]
         try:
-            ip_obj = ipaddress.ip_address(last_ip)
-            if ip_obj.version == 4:
-                ipv4 = last_ip
-            else:
-                ipv6 = last_ip
+            ipaddress.ip_address(ip)  # defensive re-validation of the SQL-side family classification
         except ValueError:
             continue
+        per_mac.setdefault(mac, {})[family] = ip
 
-        records_to_update.append((ipv4, ipv6, device["devMac"]))
+    records_to_update = [
+        (v.get("v4"), v.get("v6"), mac) for mac, v in per_mac.items()
+    ]
 
     if records_to_update:
         # We use COALESCE(?, Column) so that if the first arg is NULL,
         # it keeps the current value of the column.
-
-        # mylog("none", f"[Update Devices] Updated records_to_update: {records_to_update}")
-
         sql.executemany(
             """
             UPDATE Devices
