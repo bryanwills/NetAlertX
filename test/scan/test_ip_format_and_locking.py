@@ -261,3 +261,60 @@ def test_dual_stack_presence_suppressed_row_excluded(scan_db, mock_ip_handlers):
     ).fetchone()
     assert row["devPrimaryIPv4"] == "192.168.1.70"
     assert row["devPrimaryIPv6"] in (None, "")
+
+
+def test_dual_stack_blank_scan_mac_row_is_inert(scan_db, mock_ip_handlers):
+    """A CurrentScan row with a blank scanMac must never update any Devices
+    row, even if it has an otherwise-valid scanLastIP - matches the same
+    blank-scanMac guard create_new_devices() already applies (see the
+    scan-pipeline skill's Gotcha 5)."""
+    cur = scan_db.cursor()
+    cur.execute("INSERT INTO Devices (devMac, devPrimaryIPv4) VALUES (?, ?)", ("cc:cc:cc:cc:cc:07", "203.0.113.1"))
+    cur.execute(
+        "INSERT INTO CurrentScan (scanMac, scanLastIP, scanSourcePlugin, scanLastConnection) VALUES (?, ?, ?, ?)",
+        ("", "192.168.1.99", "DOCKERDISC", "2025-01-01 03:00:00")
+    )
+    scan_db.commit()
+
+    db = Mock(sql_connection=scan_db, sql=cur)
+    device_handling.update_devices_data_from_scan(db)
+    device_handling.update_ipv4_ipv6(db)
+
+    # The blank-scanMac row must not have created/updated any Devices row -
+    # in particular, it must not have overwritten the unrelated real device.
+    row = cur.execute(
+        "SELECT devPrimaryIPv4 FROM Devices WHERE devMac = ?",
+        ("cc:cc:cc:cc:cc:07",),
+    ).fetchone()
+    assert row["devPrimaryIPv4"] == "203.0.113.1"
+
+    blank_mac_row = cur.execute("SELECT devMac FROM Devices WHERE devMac = ''").fetchone()
+    assert blank_mac_row is None
+
+
+def test_dual_stack_malformed_newer_row_falls_back_to_valid_older_row(scan_db, mock_ip_handlers):
+    """When the most-recent CurrentScan row for a (mac, family) has a
+    malformed scanLastIP (passes the SQL-side ':' family heuristic but fails
+    real IP validation), an older but valid row for the same mac/family must
+    still be used instead of the family being dropped entirely this cycle."""
+    cur = scan_db.cursor()
+    cur.execute("INSERT INTO Devices (devMac) VALUES (?)", ("cc:cc:cc:cc:cc:08",))
+    cur.execute(
+        "INSERT INTO CurrentScan (scanMac, scanLastIP, scanSourcePlugin, scanLastConnection) VALUES (?, ?, ?, ?)",
+        ("cc:cc:cc:cc:cc:08", "999.999.999.999", "BUGGYPLG", "2025-01-01 05:00:00")
+    )
+    cur.execute(
+        "INSERT INTO CurrentScan (scanMac, scanLastIP, scanSourcePlugin, scanLastConnection) VALUES (?, ?, ?, ?)",
+        ("cc:cc:cc:cc:cc:08", "172.16.0.5", "ARPSCAN", "2025-01-01 04:00:00")
+    )
+    scan_db.commit()
+
+    db = Mock(sql_connection=scan_db, sql=cur)
+    device_handling.update_devices_data_from_scan(db)
+    device_handling.update_ipv4_ipv6(db)
+
+    row = cur.execute(
+        "SELECT devPrimaryIPv4 FROM Devices WHERE devMac = ?",
+        ("cc:cc:cc:cc:cc:08",),
+    ).fetchone()
+    assert row["devPrimaryIPv4"] == "172.16.0.5"

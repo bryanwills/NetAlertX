@@ -372,14 +372,22 @@ def update_ipv4_ipv6(db):
                 ) AS family_rn
             FROM CurrentScan
             WHERE scanLastIP NOT IN ({NULL_EQUIVALENTS_SQL})
+              AND scanMac NOT IN ({NULL_EQUIVALENTS_SQL})
               AND scanPresence = 1
         )
-        SELECT scanMac, family, scanLastIP FROM ranked WHERE family_rn = 1
+        SELECT scanMac, family, scanLastIP FROM ranked ORDER BY scanMac, family, family_rn
     """).fetchall()
 
     per_mac = {}
     for row in rows:
         mac, family, ip = row["scanMac"], row["family"], row["scanLastIP"]
+        if family in per_mac.get(mac, {}):
+            # Already have a valid candidate for this (mac, family) from a more-
+            # recent row (rows arrive ordered by family_rn) - a malformed *newer*
+            # scanLastIP (passes the SQL-side ':' family heuristic but fails real
+            # IP parsing below) must not block an older, valid one for the same
+            # mac/family from being used instead.
+            continue
         try:
             ipaddress.ip_address(ip)  # defensive re-validation of the SQL-side family classification
         except ValueError:
