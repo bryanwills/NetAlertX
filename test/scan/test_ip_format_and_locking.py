@@ -261,4 +261,3 @@ def test_dual_stack_presence_suppressed_row_excluded(scan_db, mock_ip_handlers):
     ).fetchone()
     assert row["devPrimaryIPv4"] == "192.168.1.70"
     assert row["devPrimaryIPv6"] in (None, "")
-

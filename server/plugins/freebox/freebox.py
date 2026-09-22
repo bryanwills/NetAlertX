@@ -4,7 +4,7 @@ import os
 import sys
 from pytz import timezone
 import asyncio
-from datetime import datetime, timezone
+from datetime import datetime, timezone as dt_timezone
 from pathlib import Path
 from typing import cast
 import socket
@@ -170,7 +170,7 @@ def main():
                         watched1=host.get("primary_name", "(unknown)"),
                         watched2=host.get("vendor_name", "(unknown)"),
                         watched3=map_device_type(host.get("host_type", "")),
-                        watched4=datetime.fromtimestamp(ip.get("last_time_reachable", 0), tz=timezone.utc).strftime(DATETIME_PATTERN),
+                        watched4=datetime.fromtimestamp(ip.get("last_time_reachable", 0), tz=dt_timezone.utc).strftime(DATETIME_PATTERN),
                         extra="",
                         foreignKey=mac,
                     )
