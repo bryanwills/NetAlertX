@@ -39,6 +39,26 @@ from models.device_history_instance import DevicesHistoryInstance  # noqa: E402
 
 folder = apiPath
 
+# Device fields holding a dotted/colon IP address string — sorted numerically (via
+# format_ip_long), not lexicographically, so e.g. 192.168.1.15 sorts before 192.168.1.105.
+# devIpLong is excluded: it already holds the pre-computed long value as a decimal
+# string, which mixed_type_sort_key sorts numerically on its own.
+_IP_SORT_FIELDS = {"devLastIP", "devPrimaryIPv4", "devPrimaryIPv6"}
+
+
+def _ip_sort_key(value):
+    """Sort key for an IP-address field: (0, long_value) for a real address,
+    (1, 0) for empty/unparseable - mirrors mixed_type_sort_key's bucketing
+    (valid values sort before the empty bucket in ascending order, and Python's
+    sorted(reverse=True) flips both together) instead of relying on
+    format_ip_long's -1 sentinel, which put blanks *before* real addresses in
+    ascending order - the opposite of every other column's convention."""
+    long_value = format_ip_long(value) if value else -1
+    if long_value < 0:
+        return (1, 0)
+    return (0, long_value)
+
+
 # In-memory cache for lang strings
 _langstrings_cache = {}        # caches lists per file (core JSON or plugin)
 _langstrings_cache_mtime = {}  # tracks last modified times
@@ -392,15 +412,24 @@ class Query(ObjectType):
             # sorting
             if options.sort:
                 for sort_option in options.sort:
-                    devices_data = sorted(
-                        devices_data,
-                        key=lambda x: mixed_type_sort_key(
-                            x.get(sort_option.field).lower()
-                            if isinstance(x.get(sort_option.field), str)
-                            else x.get(sort_option.field)
-                        ),
-                        reverse=(sort_option.order.lower() == "desc"),
-                    )
+                    field = sort_option.field
+                    if field in _IP_SORT_FIELDS:
+                        # Numeric sort so e.g. 192.168.1.15 sorts before 192.168.1.105
+                        devices_data = sorted(
+                            devices_data,
+                            key=lambda x: _ip_sort_key(x.get(field)),
+                            reverse=(sort_option.order.lower() == "desc"),
+                        )
+                    else:
+                        devices_data = sorted(
+                            devices_data,
+                            key=lambda x: mixed_type_sort_key(
+                                x.get(field).lower()
+                                if isinstance(x.get(field), str)
+                                else x.get(field)
+                            ),
+                            reverse=(sort_option.order.lower() == "desc"),
+                        )
 
             # capture total count after all the filtering and searching, BEFORE pagination
             total_count = len(devices_data)

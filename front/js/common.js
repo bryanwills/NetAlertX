@@ -795,36 +795,6 @@ function isValidIPv4(ip) {
   return ipv4Regex.test(ip);
 }
 
-
-function formatIPlong(ipAddress) {
-  if (ipAddress.includes(':') && isValidIPv6(ipAddress)) {
-    const parts = ipAddress.split(':');
-
-    return parts.reduce((acc, part, index) => {
-      if (part === '') {
-        const remainingGroups = 8 - parts.length + 1;
-        return acc << (16 * remainingGroups);
-      }
-
-      const hexValue = parseInt(part, 16);
-      return acc | (hexValue << (112 - index * 16));
-    }, 0);
-  } else {
-    // Handle IPv4 address
-    const parts = ipAddress.split('.');
-
-    if (parts.length !== 4) {
-      console.log("⚠ Invalid IPv4 address: " + ipAddress);
-      return -1; // or any other default value indicating an error
-    }
-
-    return (parseInt(parts[0]) << 24) |
-           (parseInt(parts[1]) << 16) |
-           (parseInt(parts[2]) << 8) |
-           parseInt(parts[3]);
-  }
-}
-
 // -----------------------------------------------------------------------------
 // Check if MAC is a random one
 function isRandomMAC(mac)

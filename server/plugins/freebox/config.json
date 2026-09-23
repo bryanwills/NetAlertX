@@ -484,8 +484,9 @@
     },
     {
       "column": "watchedValue4",
+      "mapped_to_column": "scanLastConnection",
       "css_classes": "col-sm-2",
-      "show": false,
+      "show": true,
       "type": "label",
       "default_value": "",
       "options": [],
@@ -495,7 +496,7 @@
       "name": [
         {
           "language_code": "en_us",
-          "string": "N/A"
+          "string": "Last Connection"
         }
       ]
     },

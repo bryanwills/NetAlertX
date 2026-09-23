@@ -243,6 +243,7 @@ Check your plugin against these repo-wide conventions before opening a PR (verif
 - **Keep `description` strings short.** They render directly in the Settings UI. Put implementation rationale and design trade-offs in the plugin's README or code comments, not the UI-facing description.
 - **For "one or more instances of the same thing," use the nested array + popup-form settings pattern**, not a fixed hardcoded count (e.g. "primary"/"secondary"). See `rest_import` (`RSTIMPRT`)'s `imports` setting for a working example — it also gives each instance its own sub-settings (URL, credentials, per-instance flags) for free.
 - **Persist plugin state under `dbFolderPath`, config artifacts under `configPath`** — see [Persisting Plugin Data](#persisting-plugin-data-state--config-files) below.
+- **A plugin mapped to `mapped_to_table: "CurrentScan"` must also map `scanSourcePlugin`** (a static value via `mapped_to_column_data`, see [Static Value Mapping](#static-value-mapping) below) — not mechanically enforced by `test_plugin_conventions.py`, so review it by eye. Omitting it leaves `scanSourcePlugin` `NULL` on every row this plugin inserts, which silently breaks two things in `server/scan/device_handling.py`: `create_new_devices()`'s `plugin_prefix = str(scanSourcePlugin).strip() if scanSourcePlugin else "NEWDEV"` mislabels devices this plugin creates as source `NEWDEV`; and `update_devices_data_from_scan()`'s `SELECT DISTINCT scanSourcePlugin FROM CurrentScan` + `[row[0] for row in plugin_rows if row[0]] or [None]` drops the `NULL` rows entirely (the `or [None]` fallback never triggers once any other plugin contributes a non-null prefix), so this plugin's `CurrentScan` rows never get picked up by the per-plugin device-update loop at all — the plugin can *insert* into `CurrentScan` but never actually confirm/update a device's presence.
 - **A setting's `dataType` and `default_value` must actually agree.** `dataType: "array"` (or `"object"`) means `default_value` must be a real JSON literal for that shape — `'["default"]'`, not the bare string `"default"`. `setting_value_to_python_type()` (`server/helper.py`) `json.loads()`s the default at runtime; a bare string fails that parse, silently logs a decode error, and returns `[]` instead of your intended default — this shipped for real in `devParentRelType`/`UI_theme`/`UI_TOPOLOGY_ORDER` before being caught. If `elementOptions` already sets `multiple`/`orderable: "false"`, that's a strong signal the setting is actually scalar and `dataType` should be `"string"`, not `"array"`, regardless of what UI widget (`select`, etc.) renders it.
 
 ---
@@ -309,6 +310,8 @@ To always map a static value (not read from plugin output):
   }
 }
 ```
+
+Every `mapped_to_table: "CurrentScan"` plugin needs this `scanSourcePlugin` mapping — see the Conventions Checklist above for what breaks downstream if it's left out.
 
 ### Import Behavior Columns (`scanCreatesDevice`, `scanNotificationMode`, `scanPresence`)
 

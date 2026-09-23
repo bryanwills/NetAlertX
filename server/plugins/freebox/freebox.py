@@ -4,7 +4,7 @@ import os
 import sys
 from pytz import timezone
 import asyncio
-from datetime import datetime
+from datetime import datetime, timezone as dt_timezone
 from pathlib import Path
 from typing import cast
 import socket
@@ -170,7 +170,11 @@ def main():
                         watched1=host.get("primary_name", "(unknown)"),
                         watched2=host.get("vendor_name", "(unknown)"),
                         watched3=map_device_type(host.get("host_type", "")),
-                        watched4=datetime.fromtimestamp(ip.get("last_time_reachable", 0)).strftime(DATETIME_PATTERN),
+                        # .get(..., 0) alone isn't enough: the Freebox API can return this
+                        # key present but explicitly null, and dict.get()'s default only
+                        # applies when the key is absent, not when its value is None -
+                        # `or 0` catches both, avoiding a TypeError from fromtimestamp(None).
+                        watched4=datetime.fromtimestamp(ip.get("last_time_reachable") or 0, tz=dt_timezone.utc).strftime(DATETIME_PATTERN),
                         extra="",
                         foreignKey=mac,
                     )
