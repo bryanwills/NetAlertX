@@ -1216,8 +1216,12 @@ class plugin_object_class:
                 objDbRow,
             )
 
-        self.idsHash = str(hash(str(self.primaryId) + str(self.secondaryId)))
-        # self.idsHash      = str(self.primaryId) + str(self.secondaryId)
+        # Hashing the pair, not their concatenation - str(primaryId) + str(secondaryId)
+        # would make ("ab", "c") and ("a", "bc") produce the identical string "abc"
+        # and therefore the identical hash, wrongly treating two distinct identities
+        # as one (and, since seen_by_hash above compares idsHash too, wrongly
+        # rejecting a legitimate batch as a collision).
+        self.idsHash = str(hash((str(self.primaryId), str(self.secondaryId))))
 
         self.watchedClmns = []
         self.watchedIndxs = []

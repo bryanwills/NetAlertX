@@ -127,6 +127,26 @@ class TestNoCollisionBehavesAsBefore:
         ids = {r[2] for r in rows}
         assert ids == {"device_A", "device_B"}
 
+    def test_concatenation_boundary_shift_is_not_a_false_collision(self, plugin_db, monkeypatch):
+        """idsHash hashes the (primaryId, secondaryId) pair, not their string
+        concatenation - ("ab", "c") and ("a", "bc") both concatenate to "abc",
+        which would wrongly hash identically and trip the collision guard,
+        rejecting a legitimate batch that has no real duplicate in it."""
+        db, conn = plugin_db
+        monkeypatch.setattr("plugin.get_setting_value", _no_report_on)
+
+        plugin = make_plugin_dict(PREFIX)
+        events = [
+            make_plugin_event_row(PREFIX, "ab", secondary_id="c"),
+            make_plugin_event_row(PREFIX, "a", secondary_id="bc"),
+        ]
+
+        process_plugin_events(db, plugin, events)
+
+        rows = plugin_objects_rows(conn, PREFIX)
+        pairs = {(r[2], r[3]) for r in rows}  # (objectPrimaryId, objectSecondaryId)
+        assert pairs == {("ab", "c"), ("a", "bc")}
+
     def test_event_matching_a_preexisting_object_is_not_a_collision(self, plugin_db, monkeypatch):
         """The collision check only compares events against each other, not
         against pre-existing Plugins_Objects rows - matching an existing
