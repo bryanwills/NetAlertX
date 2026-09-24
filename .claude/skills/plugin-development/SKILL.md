@@ -48,6 +48,8 @@ plugin_objects.write_result_file()   # exactly once, at the end
 
 Full column spec: `docs/PLUGINS_DEV_DATA_CONTRACT.md`. Note `helpVal1-4`/`watchedValue1-4` both preserve a real `0`/`False` you pass explicitly — only an omitted (`None`) value defaults to `""`.
 
+Every mapped field (`objectPrimaryId`/`objectSecondaryId`/`watchedValue1-4`/`extra`/`helpVal1-4`) is HTML/control-char-stripped by default before it's persisted: plugin output is untrusted (network responses, device-reported names, etc.). `foreignKey` is always sanitized too, unconditionally. Only opt a column out (`"allow_raw_text": true`) if it's a display-only type (`textarea_readonly`); see `docs/PLUGINS_DEV.md#field-sanitization`.
+
 ## Execution Phases
 
 | Phase | Trigger |
@@ -71,7 +73,9 @@ Full column spec: `docs/PLUGINS_DEV_DATA_CONTRACT.md`. Note `helpVal1-4`/`watche
 
 ## Before Opening a PR
 
-Check the plugin against the [Conventions Checklist](../../../docs/PLUGINS_DEV.md#conventions-checklist) — `RUN` default, schedule precedent, `RUN_TIMEOUT` semantics, reusing core settings instead of duplicating them, description length (renders in the Settings UI — keep it short), and the multi-instance settings pattern (nested array + popup-form, see `rest_import`, not a hardcoded "primary"/"secondary" pair). Most plugin PR review comments trace back to one of these, and `test/plugins/test_plugin_conventions.py` mechanically enforces the RUN-default, description-length, hardcoded-default-drift, RUN_TIMEOUT-reuse-in-loop, and array/object dataType-default_value-mismatch items — run it after touching a plugin.
+Check the plugin against the [Conventions Checklist](../../../docs/PLUGINS_DEV.md#conventions-checklist) — `RUN` default, schedule precedent, `RUN_TIMEOUT` semantics, reusing core settings instead of duplicating them, description length (renders in the Settings UI — keep it short), the multi-instance settings pattern (nested array + popup-form, see `rest_import`, not a hardcoded "primary"/"secondary" pair), and `allow_raw_text` restricted to display-only column types. Most plugin PR review comments trace back to one of these, and `test/plugins/test_plugin_conventions.py` mechanically enforces the RUN-default, description-length, hardcoded-default-drift, RUN_TIMEOUT-reuse-in-loop, array/object dataType-default_value-mismatch, and allow_raw_text-type-restriction items — run it after touching a plugin.
+
+If the plugin needs a new system package or Python dependency, mirroring it into the root `Dockerfile`/`requirements.txt` alone is not enough: see the Conventions Checklist's build-target-mirroring bullet for `.devcontainer/Dockerfile` (regenerate via `.devcontainer/scripts/generate-configs.sh`, don't hand-edit it), `Dockerfile.debian`, and `install/ubuntu24`/`install/proxmox`'s own `requirements.txt` files.
 
 ## Starting Point
 

@@ -27,7 +27,11 @@ Cut anything that narrates the past instead of stating the present:
 
 ## Rule 2: plain words, fewer words
 
-If a shorter or simpler phrasing says the same thing, use it. Cut qualifiers that don't change the meaning ("actually," "really," "genuinely," "in this exact process"). Prefer a plain verb over a nominalization. A dense skill with real information beats a padded one — trim narration and hedging before trimming facts.
+If a shorter or simpler phrasing says the same thing, use it. Cut qualifiers that don't change the meaning ("actually," "really," "genuinely," "in this exact process"). Prefer a plain verb over a nominalization. A dense skill with real information beats a padded one: trim narration and hedging before trimming facts.
+
+## Rule 3: no em-dashes
+
+Never use an em-dash ("—"), in a skill or anywhere else this session writes prose (docs, code comments, PRDs, commit messages, chat replies). Use a period, comma, colon, semicolon, or parentheses instead, whichever actually fits the sentence.
 
 ## Sweep before calling a skill clean
 
@@ -35,9 +39,10 @@ Run this across `.claude/skills/`, `.gemini/skills/`, `.github/skills/` (or a si
 
 ```bash
 grep -rniE "as of 202|caught in review|caught mid-review|correction:|correction \(|shipped for real|previously|used to be|no longer|originally|was later|historically|in the past|distilled from|real mistake|it turned out|turns out|discovered that|during a past" .claude/skills/ .gemini/skills/ .github/skills/
+grep -rn "—" .claude/skills/ .gemini/skills/ .github/skills/
 ```
 
-Read every hit in context — some are legitimate (a rule instructing PRD authors to write correction trails, or "previously down" describing device state, are not violations). Fix the ones that narrate the skill's own history instead of the system's current behavior.
+Read every hit in context: some are legitimate (a rule instructing PRD authors to write correction trails, or "previously down" describing device state, are not violations). Fix the ones that narrate the skill's own history instead of the system's current behavior, and replace every em-dash hit per Rule 3.
 
 ## Also applies to: research/audit docs
 

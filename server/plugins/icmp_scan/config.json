@@ -2,7 +2,7 @@
   "code_name": "icmp_scan",
   "unique_prefix": "ICMP",
   "plugin_type": "other",
-  "execution_order" : "Layer_4",
+  "execution_order": "Layer_4",
   "enabled": true,
   "data_source": "script",
   "mapped_to_table": "CurrentScan",
@@ -16,7 +16,11 @@
       "compare_use_quotes": true
     }
   ],
-  "localized": ["display_name", "description", "icon"],
+  "localized": [
+    "display_name",
+    "description",
+    "icon"
+  ],
   "display_name": [
     {
       "language_code": "en_us",
@@ -46,11 +50,17 @@
   "settings": [
     {
       "function": "RUN",
-      "events": ["run"],
+      "events": [
+        "run"
+      ],
       "type": {
         "dataType": "string",
         "elements": [
-          { "elementType": "select", "elementOptions": [], "transformers": [] }
+          {
+            "elementType": "select",
+            "elementOptions": [],
+            "transformers": []
+          }
         ]
       },
       "default_value": "disabled",
@@ -61,7 +71,10 @@
         "schedule",
         "always_after_scan"
       ],
-      "localized": ["name", "description"],
+      "localized": [
+        "name",
+        "description"
+      ],
       "name": [
         {
           "language_code": "en_us",
@@ -77,11 +90,17 @@
     },
     {
       "function": "MODE",
-      "events": ["run"],
+      "events": [
+        "run"
+      ],
       "type": {
         "dataType": "string",
         "elements": [
-          { "elementType": "select", "elementOptions": [], "transformers": [] }
+          {
+            "elementType": "select",
+            "elementOptions": [],
+            "transformers": []
+          }
         ]
       },
       "default_value": "fping",
@@ -89,7 +108,10 @@
         "fping",
         "ping"
       ],
-      "localized": ["name", "description"],
+      "localized": [
+        "name",
+        "description"
+      ],
       "name": [
         {
           "language_code": "en_us",
@@ -110,14 +132,21 @@
         "elements": [
           {
             "elementType": "input",
-            "elementOptions": [{ "readonly": "true" }],
+            "elementOptions": [
+              {
+                "readonly": "true"
+              }
+            ],
             "transformers": []
           }
         ]
       },
       "default_value": "python3 /app/server/plugins/icmp_scan/icmp.py",
       "options": [],
-      "localized": ["name", "description"],
+      "localized": [
+        "name",
+        "description"
+      ],
       "name": [
         {
           "language_code": "en_us",
@@ -145,7 +174,10 @@
       },
       "default_value": "-i 0.5 -c 3",
       "options": [],
-      "localized": ["name", "description"],
+      "localized": [
+        "name",
+        "description"
+      ],
       "name": [
         {
           "language_code": "en_us",
@@ -173,7 +205,10 @@
       },
       "default_value": ".*",
       "options": [],
-      "localized": ["name", "description"],
+      "localized": [
+        "name",
+        "description"
+      ],
       "name": [
         {
           "language_code": "en_us",
@@ -255,7 +290,10 @@
       },
       "default_value": "*/5 * * * *",
       "options": [],
-      "localized": ["name", "description"],
+      "localized": [
+        "name",
+        "description"
+      ],
       "name": [
         {
           "language_code": "en_us",
@@ -276,14 +314,21 @@
         "elements": [
           {
             "elementType": "input",
-            "elementOptions": [{ "type": "number" }],
+            "elementOptions": [
+              {
+                "type": "number"
+              }
+            ],
             "transformers": []
           }
         ]
       },
       "default_value": 10,
       "options": [],
-      "localized": ["name", "description"],
+      "localized": [
+        "name",
+        "description"
+      ],
       "name": [
         {
           "language_code": "en_us",
@@ -304,17 +349,28 @@
         "elements": [
           {
             "elementType": "select",
-            "elementOptions": [{ "multiple": "true", "orderable": "true" }],
+            "elementOptions": [
+              {
+                "multiple": "true",
+                "orderable": "true"
+              }
+            ],
             "transformers": []
           }
         ]
       },
-      "default_value": ["devMac", "devLastIP"],
+      "default_value": [
+        "devMac",
+        "devLastIP"
+      ],
       "options": [
         "devMac",
         "devLastIP"
       ],
-      "localized": ["name", "description"],
+      "localized": [
+        "name",
+        "description"
+      ],
       "name": [
         {
           "language_code": "en_us",
@@ -335,7 +391,12 @@
         "elements": [
           {
             "elementType": "select",
-            "elementOptions": [{ "multiple": "true", "orderable": "true" }],
+            "elementOptions": [
+              {
+                "multiple": "true",
+                "orderable": "true"
+              }
+            ],
             "transformers": []
           }
         ]
@@ -347,7 +408,10 @@
         "devName",
         "devSourcePlugin"
       ],
-      "localized": ["name", "description"],
+      "localized": [
+        "name",
+        "description"
+      ],
       "name": [
         {
           "language_code": "en_us",
@@ -448,7 +512,8 @@
           "language_code": "en_us",
           "string": "Output"
         }
-      ]
+      ],
+      "allow_raw_text": true
     },
     {
       "column": "watchedValue3",

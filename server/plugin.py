@@ -29,7 +29,7 @@ from models.notification_instance import NotificationInstance
 from messaging.in_app import write_notification
 from models.user_events_queue_instance import UserEventsQueueInstance
 from utils.crypto_utils import generate_deterministic_guid
-from plugin_helper import normalize_mac
+from plugin_helper import normalize_mac, sanitize_plugin_text
 
 
 # -------------------------------------------------------------------------------
@@ -766,6 +766,29 @@ def process_plugin_events(db, plugin, plugEventsArr):
             mylog("debug", f"[Plugins] Existing objects from Plugins_Objects: {len(pluginObjects)}")
             mylog("debug", f"[Plugins] Logged events from the plugin run    : {len(pluginEvents)}")
 
+            # Reject this run's whole batch if two of its own events share an
+            # idsHash - nothing in the merge loop below expects that, and
+            # merging both into the same object would silently conflate two
+            # distinct discovered identities. Only checked within this run's
+            # own events, not against pre-existing pluginObjects - matching
+            # an existing object there is the normal "exists" case, not a
+            # collision. Doesn't pick a winner and doesn't touch the merge
+            # loop itself; a run with no collision behaves exactly as before.
+            seen_by_hash = {}
+            for tmpObjFromEvent in pluginEvents:
+                prior = seen_by_hash.get(tmpObjFromEvent.idsHash)
+                if prior is not None:
+                    mylog(
+                        "none",
+                        f"[Plugins] {pluginPref}: identity-hash collision between "
+                        f"({prior.primaryId!r}, {prior.secondaryId!r}) and "
+                        f"({tmpObjFromEvent.primaryId!r}, {tmpObjFromEvent.secondaryId!r}) "
+                        f"in this run's events - rejecting all {len(pluginEvents)} events "
+                        "without persisting any of them.",
+                    )
+                    return
+                seen_by_hash[tmpObjFromEvent.idsHash] = tmpObjFromEvent
+
             #  Loop thru all current events and update the status to "exists" if the event matches an existing object
             index = 0
             for tmpObjFromEvent in pluginEvents:
@@ -1105,6 +1128,24 @@ def process_plugin_events(db, plugin, plugEventsArr):
     return
 
 
+# Maps a database_column_definitions "column" name to the plugin_object_class
+# attribute it feeds, for the sanitize-by-default pass below. Same vocabulary
+# already used by the CurrentScan-mapping loop in process_plugin_events().
+_SANITIZE_COLUMN_MAP = {
+    "objectPrimaryId": "primaryId",
+    "objectSecondaryId": "secondaryId",
+    "watchedValue1": "watched1",
+    "watchedValue2": "watched2",
+    "watchedValue3": "watched3",
+    "watchedValue4": "watched4",
+    "extra": "extra",
+    "helpVal1": "helpVal1",
+    "helpVal2": "helpVal2",
+    "helpVal3": "helpVal3",
+    "helpVal4": "helpVal4",
+}
+
+
 # -------------------------------------------------------------------------------
 class plugin_object_class:
     def __init__(self, plugin, objDbRow):
@@ -1129,6 +1170,34 @@ class plugin_object_class:
         self.helpVal2 = objDbRow[16]
         self.helpVal3 = objDbRow[17]
         self.helpVal4 = objDbRow[18]
+
+        # Sanitize plugin-sourced text fields by default (defense-in-depth
+        # against a plugin persisting HTML-dangerous content) - skip a field
+        # only if its config.json entry declares "allow_raw_text": true.
+        for col in plugin.get("database_column_definitions", []):
+            attr = _SANITIZE_COLUMN_MAP.get(col.get("column"))
+            if attr is None or col.get("allow_raw_text"):
+                continue
+            raw_value = getattr(self, attr)
+            sanitized = sanitize_plugin_text(raw_value)
+            if sanitized != raw_value:
+                mylog(
+                    "none",
+                    f"[Plugins] {plugin['unique_prefix']}.{col['column']} sanitized (HTML/control chars stripped): {raw_value!r} -> {sanitized!r}",
+                )
+            setattr(self, attr, sanitized)
+
+        # foreignKey has no database_column_definitions entry of its own (no
+        # config flag to attach an opt-out to), so it's sanitized unconditionally.
+        if self.foreignKey:
+            sanitized = sanitize_plugin_text(self.foreignKey)
+            if sanitized != self.foreignKey:
+                mylog(
+                    "none",
+                    f"[Plugins] {plugin['unique_prefix']}.foreignKey sanitized (HTML/control chars stripped): {self.foreignKey!r} -> {sanitized!r}",
+                )
+            self.foreignKey = sanitized
+
         self.objectGUID = generate_deterministic_guid(
             self.pluginPref, self.primaryId, self.secondaryId
         )
@@ -1147,8 +1216,12 @@ class plugin_object_class:
                 objDbRow,
             )
 
-        self.idsHash = str(hash(str(self.primaryId) + str(self.secondaryId)))
-        # self.idsHash      = str(self.primaryId) + str(self.secondaryId)
+        # Hashing the pair, not their concatenation - str(primaryId) + str(secondaryId)
+        # would make ("ab", "c") and ("a", "bc") produce the identical string "abc"
+        # and therefore the identical hash, wrongly treating two distinct identities
+        # as one (and, since seen_by_hash above compares idsHash too, wrongly
+        # rejecting a legitimate batch as a collision).
+        self.idsHash = str(hash((str(self.primaryId), str(self.secondaryId))))
 
         self.watchedClmns = []
         self.watchedIndxs = []
@@ -1162,6 +1235,12 @@ class plugin_object_class:
             (8, "watchedValue3"),
             (9, "watchedValue4"),
         ]
+        indexAttrMapping = {
+            6: "watched1",
+            7: "watched2",
+            8: "watched3",
+            9: "watched4",
+        }
 
         if setObj is not None:
             self.watchedClmns = setObj["value"]
@@ -1171,9 +1250,11 @@ class plugin_object_class:
                     if clmName == mapping[1]:
                         self.watchedIndxs.append(mapping[0])
 
+        # Use the sanitized watched1-4 attributes, not the raw objDbRow values,
+        # so two events exposing the same sanitized value hash identically.
         tmp = ""
         for indx in self.watchedIndxs:
-            tmp += str(objDbRow[indx])
+            tmp += str(getattr(self, indexAttrMapping[indx]))
 
         self.watchedHash = str(hash(tmp))
 
