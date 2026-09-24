@@ -54,6 +54,58 @@ def _publisher_plugin(allow_raw_text_on_watched2=False):
     }
 
 
+def _watched_publisher_plugin():
+    """Same shape as _publisher_plugin, but declares watchedValue1 as a WATCH
+    column so watchedIndxs/watchedHash actually get populated."""
+    plugin = _publisher_plugin()
+    plugin["settings"] = [{"function": "WATCH", "value": ["watchedValue1"]}]
+    return plugin
+
+
+def _non_mac_identity_plugin():
+    """A non-MAC-primaryId plugin (e.g. sync.py's GUID-keyed objects) that
+    declares objectPrimaryId/objectSecondaryId, so both go through the
+    generic sanitize loop instead of normalize_mac()."""
+    return {
+        "unique_prefix": PREFIX,
+        "settings": [],
+        "database_column_definitions": [
+            {"column": "objectPrimaryId", "type": "text"},
+            {"column": "objectSecondaryId", "type": "text"},
+        ],
+    }
+
+
+class TestIdsHashUsesSanitizedValues:
+    def test_ids_hash_reflects_sanitized_primary_id_not_raw(self):
+        """Same risk class as watchedHash: idsHash drives the merge/dedup
+        loop in process_plugin_events(), so it must be computed from the
+        sanitized primaryId/secondaryId, not a bypassed raw value."""
+        plugin = _non_mac_identity_plugin()
+        clean = plugin_object_class(plugin, make_plugin_event_row(PREFIX, "hello"))
+        dirty = plugin_object_class(plugin, make_plugin_event_row(PREFIX, "<hello>"))
+        assert clean.primaryId == dirty.primaryId == "hello"
+        assert clean.idsHash == dirty.idsHash
+
+
+class TestWatchedHashUsesSanitizedValues:
+    def test_watched_hash_reflects_sanitized_value_not_raw(self):
+        """Two raw watched1 values that sanitize to the same text must
+        produce the same watchedHash - it has to be computed from self.watched1
+        (post-sanitization), not objDbRow's raw value."""
+        plugin = _watched_publisher_plugin()
+        clean = plugin_object_class(plugin, make_plugin_event_row(PREFIX, "id1", watched1="hello"))
+        dirty = plugin_object_class(plugin, make_plugin_event_row(PREFIX, "id1", watched1="<hello>"))
+        assert clean.watched1 == dirty.watched1 == "hello"
+        assert clean.watchedHash == dirty.watchedHash
+
+    def test_watched_hash_still_differs_for_genuinely_different_values(self):
+        plugin = _watched_publisher_plugin()
+        a = plugin_object_class(plugin, make_plugin_event_row(PREFIX, "id1", watched1="hello"))
+        b = plugin_object_class(plugin, make_plugin_event_row(PREFIX, "id1", watched1="world"))
+        assert a.watchedHash != b.watchedHash
+
+
 class TestDefaultSanitization:
     def test_watched_field_without_allow_raw_text_is_sanitized(self):
         row = make_plugin_event_row(PREFIX, "id1", watched2=PAYLOAD)

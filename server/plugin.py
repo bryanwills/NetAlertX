@@ -1208,6 +1208,12 @@ class plugin_object_class:
             (8, "watchedValue3"),
             (9, "watchedValue4"),
         ]
+        indexAttrMapping = {
+            6: "watched1",
+            7: "watched2",
+            8: "watched3",
+            9: "watched4",
+        }
 
         if setObj is not None:
             self.watchedClmns = setObj["value"]
@@ -1217,9 +1223,11 @@ class plugin_object_class:
                     if clmName == mapping[1]:
                         self.watchedIndxs.append(mapping[0])
 
+        # Use the sanitized watched1-4 attributes, not the raw objDbRow values,
+        # so two events exposing the same sanitized value hash identically.
         tmp = ""
         for indx in self.watchedIndxs:
-            tmp += str(objDbRow[indx])
+            tmp += str(getattr(self, indexAttrMapping[indx]))
 
         self.watchedHash = str(hash(tmp))
 
