@@ -250,13 +250,27 @@ def check_trusted_aps(aps, trusted_aps):
     against the user's trusted-AP baseline (WIFICANARY_trusted_aps)."""
     found = []
 
+    # Every explicitly-trusted BSSID, grouped by SSID - lets a match get
+    # excluded from another entry's evaluation below (each trusted radio
+    # is judged only against its own entry's accepted set, not a sibling
+    # entry's - e.g. a main AP requiring wpa3 must not flag a legitimately
+    # separately-trusted extender that only accepts wpa2).
+    trusted_bssids_by_ssid = {}
+    for t in trusted_aps:
+        if t['bssid']:
+            trusted_bssids_by_ssid.setdefault(t['ssid'], set()).add(t['bssid'])
+
     for trust in trusted_aps:
         matches = [ap for ap in aps if ap['ssid'] == trust['ssid']]
+        other_trusted_bssids = trusted_bssids_by_ssid.get(trust['ssid'], set()) - {trust['bssid']}
         baseline_bssid_seen = any(ap['bssid'] == trust['bssid'] for ap in matches) if trust['bssid'] else True
         accepted = trust['security_set']
         expected_desc = ' or '.join(sorted(accepted))
 
         for ap in matches:
+            if ap['bssid'] in other_trusted_bssids:
+                continue  # evaluated against its own trusted entry instead
+
             if not is_downgrade(ap['security'], accepted):
                 continue
 

@@ -5,21 +5,7 @@ Runs a periodic passive WiFi scan (`iw scan`, no monitor mode) and flags rogue A
 ### Requirements
 
 - A WiFi interface reachable from the NetAlertX host, in station mode (monitor mode is *not* required - a normal onboard or USB WiFi adapter is enough). If your NetAlertX host has no WiFi hardware, this plugin has nothing to scan with.
-- The container needs `iw` installed and enough privilege to run `sudo iw dev <iface> scan` (same style of requirement as `ARPSCAN`'s `sudo arp-scan`) - host networking and `NET_ADMIN`, typically.
-
-#### `iw` isn't in the published image yet
-
-The official NetAlertX image doesn't ship `iw` (it has `arp-scan`/`nmap`/etc., but nothing WiFi-specific), so `WIFICANARY_IFACE` will fail to scan until it's added. Same fix `Dockerfile` already applies to `arp-scan`/`nmap`/`nbtscan`/`traceroute`: install the package, then `setcap` it so it works for the non-root runtime user without needing real `sudo` (this hardened image's `sudo` is a no-op passthrough, not a privilege escalation - see the `Dockerfile`'s final stage).
-
-```dockerfile
-# In the apk add line that already installs arp-scan/nmap/nbtscan/etc.:
-RUN apk add --no-cache ... iw ...
-
-# Alongside the existing setcap lines for nmap/arp-scan/nbtscan/traceroute:
-    setcap cap_net_raw,cap_net_admin+eip /usr/sbin/iw && \
-```
-
-Until this lands in the published `ghcr.io/jokob-sk/netalertx` image, build your own from this repo's `Dockerfile` (`docker compose build`) rather than pulling the tag - pulling the published image will have `WIFICANARY_IFACE` scans fail with "command not found."
+- The image ships `iw` with `cap_net_raw,cap_net_admin` already set (same treatment as `arp-scan`/`nmap`/`nbtscan`/`traceroute`), so the plugin can scan as the non-root runtime user without real `sudo`. You still need a WiFi interface actually visible to the container, e.g. via host networking.
 
 ### Usage
 

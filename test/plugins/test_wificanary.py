@@ -407,6 +407,25 @@ def test_two_trusted_bssids_same_ssid_no_false_positive():
     assert wificanary.check_trusted_aps(aps, trusted) == []
 
 
+def test_trusted_extender_with_stricter_main_ap_not_flagged_as_clone():
+    # Regression (CodeRabbit): a main AP entry requiring a *stronger*
+    # accepted set (wpa3 only) than a separately-trusted extender (wpa2)
+    # must not flag the extender - it was being matched against the main
+    # AP's accepted set instead of its own, both when the main AP is
+    # present and when it's out of range.
+    trusted = [
+        {'ssid': 'HomeWiFi', 'bssid': 'aa:bb:cc:11:22:33', 'security_set': {'wpa3'}},
+        {'ssid': 'HomeWiFi', 'bssid': '44:55:66:aa:bb:cc', 'security_set': {'wpa2'}},
+    ]
+    aps = [
+        _ap('aa:bb:cc:11:22:33', 'HomeWiFi', 'wpa3'),
+        _ap('44:55:66:aa:bb:cc', 'HomeWiFi', 'wpa2'),
+    ]
+    assert wificanary.check_trusted_aps(aps, trusted) == []
+    # Main AP out of range - the extender alone must still be clean.
+    assert wificanary.check_trusted_aps([aps[1]], trusted) == []
+
+
 # ---------------------------------------------------------------------------
 # check_duplicate_ssid()
 # ---------------------------------------------------------------------------
