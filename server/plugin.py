@@ -766,6 +766,29 @@ def process_plugin_events(db, plugin, plugEventsArr):
             mylog("debug", f"[Plugins] Existing objects from Plugins_Objects: {len(pluginObjects)}")
             mylog("debug", f"[Plugins] Logged events from the plugin run    : {len(pluginEvents)}")
 
+            # Reject this run's whole batch if two of its own events share an
+            # idsHash - nothing in the merge loop below expects that, and
+            # merging both into the same object would silently conflate two
+            # distinct discovered identities. Only checked within this run's
+            # own events, not against pre-existing pluginObjects - matching
+            # an existing object there is the normal "exists" case, not a
+            # collision. Doesn't pick a winner and doesn't touch the merge
+            # loop itself; a run with no collision behaves exactly as before.
+            seen_by_hash = {}
+            for tmpObjFromEvent in pluginEvents:
+                prior = seen_by_hash.get(tmpObjFromEvent.idsHash)
+                if prior is not None:
+                    mylog(
+                        "none",
+                        f"[Plugins] {pluginPref}: identity-hash collision between "
+                        f"({prior.primaryId!r}, {prior.secondaryId!r}) and "
+                        f"({tmpObjFromEvent.primaryId!r}, {tmpObjFromEvent.secondaryId!r}) "
+                        f"in this run's events - rejecting all {len(pluginEvents)} events "
+                        "without persisting any of them.",
+                    )
+                    return
+                seen_by_hash[tmpObjFromEvent.idsHash] = tmpObjFromEvent
+
             #  Loop thru all current events and update the status to "exists" if the event matches an existing object
             index = 0
             for tmpObjFromEvent in pluginEvents:
