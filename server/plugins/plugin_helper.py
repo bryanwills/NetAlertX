@@ -265,6 +265,30 @@ def normalize_mac(mac):
 
 
 # -------------------------------------------------------------------
+_UNSAFE_TEXT_RE = re.compile(r'[<>\x00-\x08\x0b\x0c\x0e-\x1f]')  # tag delimiters + control chars (tab/LF/CR kept)
+
+
+def sanitize_plugin_text(value):
+    """
+    Strip HTML tag-delimiter and control characters from a plugin-sourced
+    value. Applied to every plugin field by default in plugin_object_class
+    (server/plugin.py) - skip only via a column's config.json
+    'allow_raw_text: true'. Defense-in-depth only - every renderer must
+    still escape on display, this does not replace that. Stripping (not
+    HTML-encoding) avoids double-encoding wherever the value is later
+    escaped for display. Deliberately does not truncate: length-limiting is
+    a data-integrity/DoS concern, not an XSS one, and belongs in a separate
+    mechanism if ever added.
+
+    :param value: the plugin-sourced value to sanitize, or None.
+    :return: the sanitized value, or None if value was None.
+    """
+    if value is None:
+        return value
+    return _UNSAFE_TEXT_RE.sub('', str(value))
+
+
+# -------------------------------------------------------------------
 def per_item_timeout(run_timeout, item_count, floor=1):
     """
     Divide a RUN_TIMEOUT budget evenly across `item_count` sequential

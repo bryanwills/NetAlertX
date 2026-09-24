@@ -369,3 +369,27 @@ def test_run_timeout_not_reused_in_loop(plugin_name):
         'plugin_helper.per_item_timeout() for a runtime-variable-length one. '
         "See docs/PLUGINS_DEV.md#conventions-checklist:\n" + "\n".join(issues)
     )
+
+
+# Column types where the rendered value is never HTML-interpreted and a plugin
+# legitimately needs to show raw text (e.g. an API response body) - the only
+# types allowed to opt out of the default sanitize-on-persist pass via
+# "allow_raw_text": true. See docs/PLUGINS_DEV.md#conventions-checklist.
+_ALLOW_RAW_TEXT_TYPES = {"textarea_readonly"}
+
+
+@pytest.mark.parametrize('plugin_name', _PLUGIN_NAMES)
+def test_allow_raw_text_only_on_safe_types(plugin_name):
+    config = _load_config(plugin_name)
+    for col in config.get('database_column_definitions', []):
+        if not col.get('allow_raw_text'):
+            continue
+        col_type = col.get('type')
+        assert col_type in _ALLOW_RAW_TEXT_TYPES, (
+            f"{plugin_name}: column {col.get('column')!r} sets \"allow_raw_text\": true "
+            f"but has type {col_type!r}, not one of {sorted(_ALLOW_RAW_TEXT_TYPES)}. "
+            'allow_raw_text skips HTML/control-char stripping for this field - only safe '
+            'on a type that is never rendered as HTML (e.g. a read-only textarea), and '
+            'still requires the renderer to escape on display - see '
+            'docs/PLUGINS_DEV.md#conventions-checklist.'
+        )

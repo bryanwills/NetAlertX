@@ -1,11 +1,9 @@
 """
 Regression guard for server/app_state.py's updateState()/broadcast_state_update()
 call - pluginsStates must reach the SSE broadcast payload, not just the
-persisted app_state.json. See
-.gemini/internal-docs/PRDs/to_review/execution-queue-fe-locking-fix.md's
-post-implementation addendum: the original broadcast_state_update() call
-never passed pluginsStates, so front/js/ui_components.js's watchPluginState()
-(fix C1) waited on an SSE event that could never arrive.
+persisted app_state.json. The original broadcast_state_update() call never
+passed pluginsStates, so front/js/ui_components.js's watchPluginState() waited
+on an SSE event that could never arrive.
 """
 
 import os

@@ -5,7 +5,11 @@
   "enabled": true,
   "data_source": "script",
   "show_ui": true,
-  "localized": ["display_name", "description", "icon"],
+  "localized": [
+    "display_name",
+    "description",
+    "icon"
+  ],
   "display_name": [
     {
       "language_code": "en_us",
@@ -37,7 +41,9 @@
       "type": "none",
       "default_value": "",
       "options": [],
-      "localized": ["name"],
+      "localized": [
+        "name"
+      ],
       "name": [
         {
           "language_code": "en_us",
@@ -52,7 +58,9 @@
       "type": "label",
       "default_value": "",
       "options": [],
-      "localized": ["name"],
+      "localized": [
+        "name"
+      ],
       "name": [
         {
           "language_code": "en_us",
@@ -71,7 +79,9 @@
       "type": "label",
       "default_value": "",
       "options": [],
-      "localized": ["name"],
+      "localized": [
+        "name"
+      ],
       "name": [
         {
           "language_code": "en_us",
@@ -86,7 +96,9 @@
       "type": "label",
       "default_value": "",
       "options": [],
-      "localized": ["name"],
+      "localized": [
+        "name"
+      ],
       "name": [
         {
           "language_code": "en_us",
@@ -106,7 +118,9 @@
           "param": "`<a href='/report.php?guid=${value}'>${value}</a>`"
         }
       ],
-      "localized": ["name"],
+      "localized": [
+        "name"
+      ],
       "name": [
         {
           "language_code": "en_us",
@@ -121,13 +135,16 @@
       "type": "textarea_readonly",
       "default_value": "",
       "options": [],
-      "localized": ["name"],
+      "localized": [
+        "name"
+      ],
       "name": [
         {
           "language_code": "en_us",
           "string": "Response"
         }
-      ]
+      ],
+      "allow_raw_text": true
     },
     {
       "column": "watchedValue3",
@@ -136,7 +153,9 @@
       "type": "label",
       "default_value": "",
       "options": [],
-      "localized": ["name"],
+      "localized": [
+        "name"
+      ],
       "name": [
         {
           "language_code": "en_us",
@@ -151,7 +170,9 @@
       "type": "device_mac",
       "default_value": "",
       "options": [],
-      "localized": ["name"],
+      "localized": [
+        "name"
+      ],
       "name": [
         {
           "language_code": "en_us",
@@ -166,7 +187,9 @@
       "type": "textbox_save",
       "default_value": "",
       "options": [],
-      "localized": ["name"],
+      "localized": [
+        "name"
+      ],
       "name": [
         {
           "language_code": "en_us",
@@ -202,7 +225,9 @@
           "replacement": "<div style='text-align:center'><i class='fa-solid fa-question'></i></div>"
         }
       ],
-      "localized": ["name"],
+      "localized": [
+        "name"
+      ],
       "name": [
         {
           "language_code": "en_us",
@@ -221,7 +246,9 @@
       "type": "label",
       "default_value": "",
       "options": [],
-      "localized": ["name"],
+      "localized": [
+        "name"
+      ],
       "name": [
         {
           "language_code": "en_us",
@@ -237,16 +264,28 @@
   "settings": [
     {
       "function": "RUN",
-      "events": ["test"],
+      "events": [
+        "test"
+      ],
       "type": {
         "dataType": "string",
         "elements": [
-          { "elementType": "select", "elementOptions": [], "transformers": [] }
+          {
+            "elementType": "select",
+            "elementOptions": [],
+            "transformers": []
+          }
         ]
       },
       "default_value": "disabled",
-      "options": ["disabled", "on_notification"],
-      "localized": ["name", "description"],
+      "options": [
+        "disabled",
+        "on_notification"
+      ],
+      "localized": [
+        "name",
+        "description"
+      ],
       "name": [
         {
           "language_code": "en_us",
@@ -275,14 +314,21 @@
         "elements": [
           {
             "elementType": "input",
-            "elementOptions": [{ "readonly": "true" }],
+            "elementOptions": [
+              {
+                "readonly": "true"
+              }
+            ],
             "transformers": []
           }
         ]
       },
       "default_value": "python3 /app/server/plugins/_publisher_ntfy/ntfy.py",
       "options": [],
-      "localized": ["name", "description"],
+      "localized": [
+        "name",
+        "description"
+      ],
       "name": [
         {
           "language_code": "en_us",
@@ -311,14 +357,21 @@
         "elements": [
           {
             "elementType": "input",
-            "elementOptions": [{ "type": "number" }],
+            "elementOptions": [
+              {
+                "type": "number"
+              }
+            ],
             "transformers": []
           }
         ]
       },
       "default_value": 10,
       "options": [],
-      "localized": ["name", "description"],
+      "localized": [
+        "name",
+        "description"
+      ],
       "name": [
         {
           "language_code": "en_us",
@@ -349,12 +402,19 @@
       "type": {
         "dataType": "string",
         "elements": [
-          { "elementType": "input", "elementOptions": [], "transformers": [] }
+          {
+            "elementType": "input",
+            "elementOptions": [],
+            "transformers": []
+          }
         ]
       },
       "default_value": "https://ntfy.sh",
       "options": [],
-      "localized": ["name", "description"],
+      "localized": [
+        "name",
+        "description"
+      ],
       "name": [
         {
           "language_code": "en_us",
@@ -381,12 +441,19 @@
       "type": {
         "dataType": "string",
         "elements": [
-          { "elementType": "input", "elementOptions": [], "transformers": [] }
+          {
+            "elementType": "input",
+            "elementOptions": [],
+            "transformers": []
+          }
         ]
       },
       "default_value": "",
       "options": [],
-      "localized": ["name", "description"],
+      "localized": [
+        "name",
+        "description"
+      ],
       "name": [
         {
           "language_code": "en_us",
@@ -422,7 +489,10 @@
       },
       "default_value": "",
       "options": [],
-      "localized": ["name", "description"],
+      "localized": [
+        "name",
+        "description"
+      ],
       "name": [
         {
           "language_code": "en_us",
@@ -441,12 +511,19 @@
       "type": {
         "dataType": "string",
         "elements": [
-          { "elementType": "input", "elementOptions": [], "transformers": [] }
+          {
+            "elementType": "input",
+            "elementOptions": [],
+            "transformers": []
+          }
         ]
       },
       "default_value": "",
       "options": [],
-      "localized": ["name", "description"],
+      "localized": [
+        "name",
+        "description"
+      ],
       "name": [
         {
           "language_code": "en_us",
@@ -475,14 +552,21 @@
         "elements": [
           {
             "elementType": "input",
-            "elementOptions": [{ "type": "password" }],
+            "elementOptions": [
+              {
+                "type": "password"
+              }
+            ],
             "transformers": []
           }
         ]
       },
       "default_value": "",
       "options": [],
-      "localized": ["name", "description"],
+      "localized": [
+        "name",
+        "description"
+      ],
       "name": [
         {
           "language_code": "en_us",
@@ -509,12 +593,25 @@
       "type": {
         "dataType": "string",
         "elements": [
-          { "elementType": "select", "elementOptions": [], "transformers": [] }
+          {
+            "elementType": "select",
+            "elementOptions": [],
+            "transformers": []
+          }
         ]
       },
       "default_value": "urgent",
-      "options": ["urgent", "high", "default", "low", "min"],
-      "localized": ["name", "description"],
+      "options": [
+        "urgent",
+        "high",
+        "default",
+        "low",
+        "min"
+      ],
+      "localized": [
+        "name",
+        "description"
+      ],
       "name": [
         {
           "language_code": "en_us",
@@ -535,14 +632,21 @@
         "elements": [
           {
             "elementType": "input",
-            "elementOptions": [{ "type": "checkbox" }],
+            "elementOptions": [
+              {
+                "type": "checkbox"
+              }
+            ],
             "transformers": []
           }
         ]
       },
       "default_value": true,
       "options": [],
-      "localized": ["name", "description"],
+      "localized": [
+        "name",
+        "description"
+      ],
       "name": [
         {
           "language_code": "en_us",
@@ -561,12 +665,23 @@
       "type": {
         "dataType": "string",
         "elements": [
-          { "elementType": "input", "elementOptions": [{ "type": "password" }], "transformers": [] }
+          {
+            "elementType": "input",
+            "elementOptions": [
+              {
+                "type": "password"
+              }
+            ],
+            "transformers": []
+          }
         ]
       },
       "default_value": "",
       "options": [],
-      "localized": ["name", "description"],
+      "localized": [
+        "name",
+        "description"
+      ],
       "name": [
         {
           "language_code": "en_us",
@@ -588,21 +703,41 @@
           {
             "elementType": "input",
             "elementOptions": [
-              { "placeholder": "Enter value" },
-              { "suffix": "_in" },
-              { "cssClasses": "col-sm-10" },
-              { "prefillValue": "null" }
+              {
+                "placeholder": "Enter value"
+              },
+              {
+                "suffix": "_in"
+              },
+              {
+                "cssClasses": "col-sm-10"
+              },
+              {
+                "prefillValue": "null"
+              }
             ],
             "transformers": []
           },
           {
             "elementType": "button",
             "elementOptions": [
-              { "sourceSuffixes": ["_in"] },
-              { "separator": "" },
-              { "cssClasses": "col-xs-12" },
-              { "onClick": "addList(this, false)" },
-              { "getStringKey": "Gen_Add" }
+              {
+                "sourceSuffixes": [
+                  "_in"
+                ]
+              },
+              {
+                "separator": ""
+              },
+              {
+                "cssClasses": "col-xs-12"
+              },
+              {
+                "onClick": "addList(this, false)"
+              },
+              {
+                "getStringKey": "Gen_Add"
+              }
             ],
             "transformers": []
           },
@@ -610,31 +745,57 @@
             "elementType": "select",
             "elementHasInputValue": 1,
             "elementOptions": [
-              { "multiple": "true" },
-              { "readonly": "true" },
-              { "editable": "true" }
+              {
+                "multiple": "true"
+              },
+              {
+                "readonly": "true"
+              },
+              {
+                "editable": "true"
+              }
             ],
             "transformers": []
           },
           {
             "elementType": "button",
             "elementOptions": [
-              { "sourceSuffixes": [] },
-              { "separator": "" },
-              { "cssClasses": "col-xs-6" },
-              { "onClick": "removeAllOptions(this)" },
-              { "getStringKey": "Gen_Remove_All" }
+              {
+                "sourceSuffixes": []
+              },
+              {
+                "separator": ""
+              },
+              {
+                "cssClasses": "col-xs-6"
+              },
+              {
+                "onClick": "removeAllOptions(this)"
+              },
+              {
+                "getStringKey": "Gen_Remove_All"
+              }
             ],
             "transformers": []
           },
           {
             "elementType": "button",
             "elementOptions": [
-              { "sourceSuffixes": [] },
-              { "separator": "" },
-              { "cssClasses": "col-xs-6" },
-              { "onClick": "removeFromList(this)" },
-              { "getStringKey": "Gen_Remove_Last" }
+              {
+                "sourceSuffixes": []
+              },
+              {
+                "separator": ""
+              },
+              {
+                "cssClasses": "col-xs-6"
+              },
+              {
+                "onClick": "removeFromList(this)"
+              },
+              {
+                "getStringKey": "Gen_Remove_Last"
+              }
             ],
             "transformers": []
           }
@@ -642,7 +803,10 @@
       },
       "default_value": [],
       "options": [],
-      "localized": ["name", "description"],
+      "localized": [
+        "name",
+        "description"
+      ],
       "name": [
         {
           "language_code": "en_us",

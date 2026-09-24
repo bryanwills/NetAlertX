@@ -29,7 +29,7 @@ from models.notification_instance import NotificationInstance
 from messaging.in_app import write_notification
 from models.user_events_queue_instance import UserEventsQueueInstance
 from utils.crypto_utils import generate_deterministic_guid
-from plugin_helper import normalize_mac
+from plugin_helper import normalize_mac, sanitize_plugin_text
 
 
 # -------------------------------------------------------------------------------
@@ -1105,6 +1105,24 @@ def process_plugin_events(db, plugin, plugEventsArr):
     return
 
 
+# Maps a database_column_definitions "column" name to the plugin_object_class
+# attribute it feeds, for the sanitize-by-default pass below. Same vocabulary
+# already used by the CurrentScan-mapping loop in process_plugin_events().
+_SANITIZE_COLUMN_MAP = {
+    "objectPrimaryId": "primaryId",
+    "objectSecondaryId": "secondaryId",
+    "watchedValue1": "watched1",
+    "watchedValue2": "watched2",
+    "watchedValue3": "watched3",
+    "watchedValue4": "watched4",
+    "extra": "extra",
+    "helpVal1": "helpVal1",
+    "helpVal2": "helpVal2",
+    "helpVal3": "helpVal3",
+    "helpVal4": "helpVal4",
+}
+
+
 # -------------------------------------------------------------------------------
 class plugin_object_class:
     def __init__(self, plugin, objDbRow):
@@ -1129,6 +1147,34 @@ class plugin_object_class:
         self.helpVal2 = objDbRow[16]
         self.helpVal3 = objDbRow[17]
         self.helpVal4 = objDbRow[18]
+
+        # Sanitize plugin-sourced text fields by default (defense-in-depth
+        # against a plugin persisting HTML-dangerous content) - skip a field
+        # only if its config.json entry declares "allow_raw_text": true.
+        for col in plugin.get("database_column_definitions", []):
+            attr = _SANITIZE_COLUMN_MAP.get(col.get("column"))
+            if attr is None or col.get("allow_raw_text"):
+                continue
+            raw_value = getattr(self, attr)
+            sanitized = sanitize_plugin_text(raw_value)
+            if sanitized != raw_value:
+                mylog(
+                    "none",
+                    f"[Plugins] {plugin['unique_prefix']}.{col['column']} sanitized (HTML/control chars stripped): {raw_value!r} -> {sanitized!r}",
+                )
+            setattr(self, attr, sanitized)
+
+        # foreignKey has no database_column_definitions entry of its own (no
+        # config flag to attach an opt-out to), so it's sanitized unconditionally.
+        if self.foreignKey:
+            sanitized = sanitize_plugin_text(self.foreignKey)
+            if sanitized != self.foreignKey:
+                mylog(
+                    "none",
+                    f"[Plugins] {plugin['unique_prefix']}.foreignKey sanitized (HTML/control chars stripped): {self.foreignKey!r} -> {sanitized!r}",
+                )
+            self.foreignKey = sanitized
+
         self.objectGUID = generate_deterministic_guid(
             self.pluginPref, self.primaryId, self.secondaryId
         )

@@ -63,6 +63,8 @@ plugin_objects.add_object(...)  # During processing
 plugin_objects.write_result_file()  # Exactly once at end
 ```
 
+Every mapped field (`objectPrimaryId`/`objectSecondaryId`/`watchedValue1-4`/`extra`/`helpVal1-4`) is HTML/control-char-stripped by default before it's persisted: plugin output is untrusted (network responses, device-reported names, etc.). `foreignKey` is always sanitized too, unconditionally. Only opt a column out (`"allow_raw_text": true`) if it's a display-only type (`textarea_readonly`); see `docs/PLUGINS_DEV.md#field-sanitization`.
+
 ## Execution Phases
 
 - `once`: runs once at startup
@@ -84,7 +86,7 @@ plugin_objects.write_result_file()  # Exactly once at end
 
 ## Before Opening a PR
 
-Check the plugin against the [Conventions Checklist](../../../docs/PLUGINS_DEV.md#conventions-checklist) in `docs/PLUGINS_DEV.md` — `RUN` default, schedule precedent, `RUN_TIMEOUT` semantics, reusing core settings, description length, and the multi-instance settings pattern. Most plugin PR review comments trace back to one of these.
+Check the plugin against the [Conventions Checklist](../../../docs/PLUGINS_DEV.md#conventions-checklist) in `docs/PLUGINS_DEV.md` — `RUN` default, schedule precedent, `RUN_TIMEOUT` semantics, reusing core settings, description length, the multi-instance settings pattern, and `allow_raw_text` restricted to display-only column types. Most plugin PR review comments trace back to one of these.
 
 ## Starting Point
 

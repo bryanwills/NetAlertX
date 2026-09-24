@@ -5,7 +5,11 @@
   "enabled": true,
   "data_source": "script",
   "show_ui": true,
-  "localized": ["display_name", "description", "icon"],
+  "localized": [
+    "display_name",
+    "description",
+    "icon"
+  ],
   "display_name": [
     {
       "language_code": "en_us",
@@ -33,7 +37,9 @@
       "type": "none",
       "default_value": "",
       "options": [],
-      "localized": ["name"],
+      "localized": [
+        "name"
+      ],
       "name": [
         {
           "language_code": "en_us",
@@ -48,7 +54,9 @@
       "type": "label",
       "default_value": "",
       "options": [],
-      "localized": ["name"],
+      "localized": [
+        "name"
+      ],
       "name": [
         {
           "language_code": "en_us",
@@ -67,7 +75,9 @@
       "type": "url",
       "default_value": "",
       "options": [],
-      "localized": ["name"],
+      "localized": [
+        "name"
+      ],
       "name": [
         {
           "language_code": "en_us",
@@ -82,7 +92,9 @@
       "type": "label",
       "default_value": "",
       "options": [],
-      "localized": ["name"],
+      "localized": [
+        "name"
+      ],
       "name": [
         {
           "language_code": "en_us",
@@ -101,7 +113,9 @@
       "type": "label",
       "default_value": "",
       "options": [],
-      "localized": ["name"],
+      "localized": [
+        "name"
+      ],
       "name": [
         {
           "language_code": "en_us",
@@ -116,7 +130,9 @@
       "type": "label",
       "default_value": "",
       "options": [],
-      "localized": ["name"],
+      "localized": [
+        "name"
+      ],
       "name": [
         {
           "language_code": "en_us",
@@ -140,7 +156,9 @@
           "param": "`<a href='/report.php?guid=${value}'>${value}</a>`"
         }
       ],
-      "localized": ["name"],
+      "localized": [
+        "name"
+      ],
       "name": [
         {
           "language_code": "en_us",
@@ -155,13 +173,16 @@
       "type": "textarea_readonly",
       "default_value": "",
       "options": [],
-      "localized": ["name"],
+      "localized": [
+        "name"
+      ],
       "name": [
         {
           "language_code": "en_us",
           "string": "Result"
         }
-      ]
+      ],
+      "allow_raw_text": true
     },
     {
       "column": "watchedValue3",
@@ -170,7 +191,9 @@
       "type": "label",
       "default_value": "",
       "options": [],
-      "localized": ["name"],
+      "localized": [
+        "name"
+      ],
       "name": [
         {
           "language_code": "en_us",
@@ -189,7 +212,9 @@
       "type": "label",
       "default_value": "",
       "options": [],
-      "localized": ["name"],
+      "localized": [
+        "name"
+      ],
       "name": [
         {
           "language_code": "en_us",
@@ -208,7 +233,9 @@
       "type": "textbox_save",
       "default_value": "",
       "options": [],
-      "localized": ["name"],
+      "localized": [
+        "name"
+      ],
       "name": [
         {
           "language_code": "en_us",
@@ -244,7 +271,9 @@
           "replacement": "<div style='text-align:center'><i class='fa-solid fa-question'></i></div>"
         }
       ],
-      "localized": ["name"],
+      "localized": [
+        "name"
+      ],
       "name": [
         {
           "language_code": "en_us",
@@ -263,7 +292,9 @@
       "type": "label",
       "default_value": "",
       "options": [],
-      "localized": ["name"],
+      "localized": [
+        "name"
+      ],
       "name": [
         {
           "language_code": "en_us",
@@ -279,16 +310,28 @@
   "settings": [
     {
       "function": "RUN",
-      "events": ["test"],
+      "events": [
+        "test"
+      ],
       "type": {
         "dataType": "string",
         "elements": [
-          { "elementType": "select", "elementOptions": [], "transformers": [] }
+          {
+            "elementType": "select",
+            "elementOptions": [],
+            "transformers": []
+          }
         ]
       },
       "default_value": "disabled",
-      "options": ["disabled", "on_notification"],
-      "localized": ["name", "description"],
+      "options": [
+        "disabled",
+        "on_notification"
+      ],
+      "localized": [
+        "name",
+        "description"
+      ],
       "name": [
         {
           "language_code": "en_us",
@@ -313,14 +356,21 @@
         "elements": [
           {
             "elementType": "input",
-            "elementOptions": [{ "readonly": "true" }],
+            "elementOptions": [
+              {
+                "readonly": "true"
+              }
+            ],
             "transformers": []
           }
         ]
       },
       "default_value": "python3 /app/server/plugins/_publisher_telegram/tg.py",
       "options": [],
-      "localized": ["name", "description"],
+      "localized": [
+        "name",
+        "description"
+      ],
       "name": [
         {
           "language_code": "en_us",
@@ -349,14 +399,21 @@
         "elements": [
           {
             "elementType": "input",
-            "elementOptions": [{ "type": "number" }],
+            "elementOptions": [
+              {
+                "type": "number"
+              }
+            ],
             "transformers": []
           }
         ]
       },
       "default_value": 10,
       "options": [],
-      "localized": ["name", "description"],
+      "localized": [
+        "name",
+        "description"
+      ],
       "name": [
         {
           "language_code": "en_us",
@@ -387,12 +444,19 @@
       "type": {
         "dataType": "string",
         "elements": [
-          { "elementType": "input", "elementOptions": [], "transformers": [] }
+          {
+            "elementType": "input",
+            "elementOptions": [],
+            "transformers": []
+          }
         ]
       },
       "default_value": "",
       "options": [],
-      "localized": ["name", "description"],
+      "localized": [
+        "name",
+        "description"
+      ],
       "name": [
         {
           "language_code": "en_us",
@@ -411,12 +475,19 @@
       "type": {
         "dataType": "string",
         "elements": [
-          { "elementType": "input", "elementOptions": [], "transformers": [] }
+          {
+            "elementType": "input",
+            "elementOptions": [],
+            "transformers": []
+          }
         ]
       },
       "default_value": "",
       "options": [],
-      "localized": ["name", "description"],
+      "localized": [
+        "name",
+        "description"
+      ],
       "name": [
         {
           "language_code": "en_us",
@@ -437,14 +508,21 @@
         "elements": [
           {
             "elementType": "input",
-            "elementOptions": [{ "type": "number" }],
+            "elementOptions": [
+              {
+                "type": "number"
+              }
+            ],
             "transformers": []
           }
         ]
       },
       "default_value": 1024,
       "options": [],
-      "localized": ["name", "description"],
+      "localized": [
+        "name",
+        "description"
+      ],
       "name": [
         {
           "language_code": "en_us",

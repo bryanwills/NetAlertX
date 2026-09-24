@@ -1,4 +1,4 @@
-from server.plugins.plugin_helper import Plugin_Object, is_mac, normalize_mac, per_item_timeout
+from server.plugins.plugin_helper import Plugin_Object, is_mac, normalize_mac, per_item_timeout, sanitize_plugin_text
 
 
 def test_is_mac_accepts_wildcard():
@@ -65,3 +65,20 @@ def test_watched_columns_unaffected_by_helpval_fix():
     assert obj.watched2 is False
     assert obj.watched3 == ""
     assert obj.watched4 is None
+
+
+def test_sanitize_plugin_text_strips_tag_delimiters():
+    assert sanitize_plugin_text("<img src=x onerror=alert(1)>") == "img src=x onerror=alert(1)"
+
+
+def test_sanitize_plugin_text_strips_control_chars_but_keeps_tab_and_newline():
+    assert sanitize_plugin_text("a\x00b\x1fc\td\ne\rf") == "abc\td\ne\rf"
+
+
+def test_sanitize_plugin_text_passes_through_clean_text_unchanged():
+    text = "Living Room TV (Samsung) - " + ("x" * 2000)  # no length cap
+    assert sanitize_plugin_text(text) == text
+
+
+def test_sanitize_plugin_text_passes_none_through():
+    assert sanitize_plugin_text(None) is None
