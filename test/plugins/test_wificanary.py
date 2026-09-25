@@ -489,6 +489,51 @@ def test_duplicate_ssid_flags_oui_not_among_multiple_trusted():
 
 
 # ---------------------------------------------------------------------------
+# dedupe_detections()
+# ---------------------------------------------------------------------------
+
+def test_dedupe_detections_collapses_same_bssid_and_motor():
+    detections = [
+        _detection(bssid='aa:bb:cc:11:22:33', motor='evil_twin'),
+        _detection(bssid='aa:bb:cc:11:22:33', motor='evil_twin'),
+        _detection(bssid='aa:bb:cc:11:22:33', motor='duplicate_ssid_diff_vendor'),
+    ]
+    deduped = wificanary.dedupe_detections(detections)
+    assert len(deduped) == 2
+    assert {d['motor'] for d in deduped} == {'evil_twin', 'duplicate_ssid_diff_vendor'}
+
+
+def test_dedupe_detections_keeps_distinct_bssids():
+    detections = [
+        _detection(bssid='aa:bb:cc:11:22:33', motor='evil_twin'),
+        _detection(bssid='ff:ee:dd:99:88:77', motor='evil_twin'),
+    ]
+    assert wificanary.dedupe_detections(detections) == detections
+
+
+def test_check_trusted_aps_flags_rogue_clone_twice_when_two_entries_share_ssid():
+    # Reproduces the real gap jokob-sk found on PR #1809: a rogue AP cloning
+    # a protected SSID gets evaluated once per WIFICANARY_trusted_aps entry
+    # sharing that SSID - including the plugin's own documented range-
+    # extender pattern (main AP + extender, same SSID, each its own entry).
+    # check_trusted_aps() alone still produces the duplicate - dedupe_detections()
+    # is what main() uses to collapse it, tested at the main() level below.
+    trusted = [
+        {'ssid': 'HomeWiFi', 'bssid': 'aa:bb:cc:11:22:33', 'security_set': {'wpa3'}},
+        {'ssid': 'HomeWiFi', 'bssid': '44:55:66:aa:bb:cc', 'security_set': {'wpa2'}},
+    ]
+    aps = [
+        _ap('aa:bb:cc:11:22:33', 'HomeWiFi', 'wpa3'),
+        _ap('44:55:66:aa:bb:cc', 'HomeWiFi', 'wpa2'),
+        _ap('ff:ee:dd:99:88:77', 'HomeWiFi', 'open'),
+    ]
+    found = wificanary.check_trusted_aps(aps, trusted)
+    rogue_hits = [d for d in found if d['bssid'] == 'ff:ee:dd:99:88:77']
+    assert len(rogue_hits) == 2
+    assert {d['motor'] for d in rogue_hits} == {'evil_twin'}
+
+
+# ---------------------------------------------------------------------------
 # parse_security_set()
 # ---------------------------------------------------------------------------
 
@@ -668,6 +713,44 @@ def test_main_end_to_end_one_detection():
     assert call_kwargs['helpVal3'] == 'normal'
     assert call_kwargs['helpVal4'] == '1'
     wificanary.plugin_objects.write_result_file.assert_called_once()
+
+
+def test_main_dedupes_rogue_clone_across_two_trusted_entries_sharing_ssid():
+    # Regression for jokob-sk's PR #1809 review: a main AP + range extender
+    # (same SSID, each its own trusted_aps entry - the plugin's own
+    # documented pattern) must not turn one rogue clone into two identical
+    # (bssid, motor) rows - that pair is the plugin_objects identity NetAlertX
+    # core's own dedup guard hashes per run, so a real duplicate here would
+    # get the whole run's batch silently dropped once that guard lands.
+    settings = {
+        'WIFICANARY_IFACE': 'wlan0',
+        'WIFICANARY_RUN_TIMEOUT': 60,
+        'WIFICANARY_trusted_aps': [
+            _encode_trusted_entry('HomeWiFi', 'aa:bb:cc:11:22:33', ('wpa3',)),
+            _encode_trusted_entry('HomeWiFi', '44:55:66:aa:bb:cc', ('wpa2',)),
+        ],
+    }
+    aps = [
+        _ap('aa:bb:cc:11:22:33', 'HomeWiFi', 'wpa3'),
+        _ap('44:55:66:aa:bb:cc', 'HomeWiFi', 'wpa2'),
+        _ap('ff:ee:dd:99:88:77', 'HomeWiFi', 'open'),
+    ]
+
+    with patch.object(wificanary, 'get_setting_value', side_effect=lambda k: settings.get(k)):
+        with patch.object(wificanary, 'scan', return_value=aps):
+            with patch.object(wificanary, 'DeviceInstance') as MockDeviceInstance:
+                MockDeviceInstance.return_value.getAllByMacs.return_value = {}
+                wificanary.plugin_objects.add_object = MagicMock()
+                wificanary.plugin_objects.write_result_file = MagicMock()
+                wificanary.main()
+
+    # The rogue AP legitimately trips two distinct motors (evil-twin clone AND
+    # duplicate-SSID/different-vendor, same as test_main_end_to_end_one_detection)
+    # - dedupe_detections() must not collapse those, only a repeated identity.
+    identities = [(c.kwargs['primaryId'], c.kwargs['secondaryId'])
+                  for c in wificanary.plugin_objects.add_object.call_args_list]
+    assert len(identities) == len(set(identities)), f"duplicate (bssid, motor) row: {identities}"
+    assert identities.count(('ff:ee:dd:99:88:77', 'evil_twin')) == 1
 
 
 if __name__ == '__main__':

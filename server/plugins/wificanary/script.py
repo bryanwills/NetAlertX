@@ -72,6 +72,7 @@ def main():
     detections += check_global_signatures(aps)
     detections += check_trusted_aps(aps, trusted_aps)
     detections += check_duplicate_ssid(aps, trusted_aps)
+    detections = dedupe_detections(detections)
     escalate_known_devices(detections)
 
     for det in detections:
@@ -350,6 +351,22 @@ def check_duplicate_ssid(aps, trusted_aps):
                              f"(other APs for this SSID are {primary_oui})"))
 
     return found
+
+
+def dedupe_detections(detections):
+    """Collapse detections sharing the same (bssid, motor) identity -
+    check_trusted_aps() can otherwise flag one rogue clone once per
+    WIFICANARY_trusted_aps entry sharing its SSID (e.g. a main AP + range
+    extender pair). Keeps the first occurrence of each identity."""
+    seen = set()
+    deduped = []
+    for det in detections:
+        key = (det['bssid'], det['motor'])
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped.append(det)
+    return deduped
 
 
 def escalate_known_devices(detections):
