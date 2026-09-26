@@ -434,6 +434,44 @@ def mqtt_create_client():
 
 
 # -----------------------------------------------------------------------------
+def build_device_id(mac):
+    """Turn a device's MAC into the slug used as its Home Assistant deviceId
+    (topic/unique_id component) - e.g. 'AA:BB:CC' -> 'mac_aabbcc'."""
+    return 'mac_' + mac.replace(" ", "").replace(":", "_").lower()
+
+
+# -----------------------------------------------------------------------------
+def build_display_name(name):
+    """Strip characters Home Assistant's entity naming doesn't accept from a
+    device's name, for use as its displayed sensor/device_tracker name."""
+    return re.sub('[^a-zA-Z0-9-_\\s]', '', normalize_string(name))
+
+
+# -----------------------------------------------------------------------------
+def build_device_tracker_attributes(device, devices, devDisplayName):
+    """Build the shared JSON payload published both to a device's individual
+    sensor state topic and to its device_tracker's json_attributes_topic -
+    every key here becomes a Home Assistant entity attribute."""
+    return {
+        "last_ip": device["devLastIP"],
+        "is_new": str(device["devIsNew"]),
+        "alert_down": str(device["devAlertDown"]),
+        "vendor": sanitize_string(device["devVendor"]),
+        "mac_address": str(device["devMac"]),
+        "model": devDisplayName,
+        "last_connection": format_date_iso(str(device["devLastConnection"])),
+        "first_connection": format_date_iso(str(device["devFirstConnection"])),
+        "sync_node": device["devSyncHubNode"],
+        "group": device["devGroup"],
+        "location": device["devLocation"],
+        "ssid": device["devSSID"],
+        "vlan": device["devVlan"],
+        "network_parent_mac": device["devParentMAC"],
+        "network_parent_name": next((dev["devName"] for dev in devices if dev["devMac"] == device["devParentMAC"]), "")
+    }
+
+
+# -----------------------------------------------------------------------------
 def mqtt_start(db):
 
     global mqtt_client
@@ -493,9 +531,8 @@ def mqtt_start(db):
             # # debug statement END   🔺
 
             # Create devices in Home Assistant - send config messages
-            deviceId        = 'mac_' + device["devMac"].replace(" ", "").replace(":", "_").lower()
-            # Normalize the string and remove unwanted characters
-            devDisplayName = re.sub('[^a-zA-Z0-9-_\\s]', '', normalize_string(device["devName"]))
+            deviceId        = build_device_id(device["devMac"])
+            devDisplayName = build_display_name(device["devName"])
 
             sensorConfig = create_sensor(mqtt_client, deviceId, devDisplayName, 'sensor', 'last_ip', 'ip-network', device["devMac"])
             sensorConfig = create_sensor(mqtt_client, deviceId, devDisplayName, 'sensor', 'mac_address', 'folder-key-network', device["devMac"])
@@ -506,21 +543,7 @@ def mqtt_start(db):
 
             # handle device_tracker
             # IMPORTANT: shared payload - device_tracker attributes and individual sensors
-            devJson = {
-                "last_ip": device["devLastIP"],
-                "is_new": str(device["devIsNew"]),
-                "alert_down": str(device["devAlertDown"]),
-                "vendor": sanitize_string(device["devVendor"]),
-                "mac_address": str(device["devMac"]),
-                "model": devDisplayName,
-                "last_connection": format_date_iso(str(device["devLastConnection"])),
-                "first_connection": format_date_iso(str(device["devFirstConnection"])),
-                "sync_node": device["devSyncHubNode"],
-                "group": device["devGroup"],
-                "location": device["devLocation"],
-                "network_parent_mac": device["devParentMAC"],
-                "network_parent_name": next((dev["devName"] for dev in devices if dev["devMac"] == device["devParentMAC"]), "")
-            }
+            devJson = build_device_tracker_attributes(device, devices, devDisplayName)
 
             # bulk update device sensors in home assistant
             publish_mqtt(mqtt_client, sensorConfig.state_topic, devJson)  # REQUIRED, DON'T DELETE
