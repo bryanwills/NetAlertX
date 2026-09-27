@@ -572,6 +572,11 @@ def save_own_device(db):
 
 # -------------------------------------------------------------------------------
 def print_scan_stats(db):
+    """
+    Log diagnostic scan-cycle counts (devices detected, new devices, down
+    alerts, new connections, disconnections, IP changes, per-plugin scan
+    method counts) at verbose/trace log levels. No return value.
+    """
     sql = db.sql  # TO-DO
 
     query = f"""

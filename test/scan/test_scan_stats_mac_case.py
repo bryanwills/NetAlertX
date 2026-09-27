@@ -44,6 +44,8 @@ def _run_stats(conn, monkeypatch):
     logged = {}
 
     def fake_mylog(level, parts):
+        """Stand in for logger.mylog: parse the down_alerts/new_down_alerts
+        counts straight out of print_scan_stats()'s own log lines."""
         text = "".join(parts) if isinstance(parts, list) else str(parts)
         if "Down Alerts" in text and "New Down Alerts" not in text:
             logged["down_alerts"] = int(text.rsplit(":", 1)[1].strip())
