@@ -95,8 +95,8 @@ CREATE_EVENTS = """
 
 CREATE_CURRENT_SCAN = """
     CREATE TABLE IF NOT EXISTS CurrentScan (
-        scanMac              TEXT,
-        scanLastIP           TEXT,
+        scanMac              TEXT COLLATE NOCASE,
+        scanLastIP           TEXT COLLATE NOCASE,
         scanVendor           TEXT,
         scanSourcePlugin     TEXT,
         scanName             TEXT,
