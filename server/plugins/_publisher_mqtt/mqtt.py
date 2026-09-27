@@ -256,19 +256,30 @@ class sensor_config:
 
 # -------------------------------------------------------------------------------
 
+# A single publish() call is retried a bounded number of times (not
+# indefinitely) - see publish_mqtt()'s docstring for why.
+_PUBLISH_MAX_ATTEMPTS = 20
+_PUBLISH_RETRY_DELAY_SEC = 0.1
+
+
 def publish_mqtt(mqtt_client, topic, message):
     """
     Publishes a message to an MQTT topic using the provided MQTT client.
     If the message is not a string, it is converted to a JSON-formatted string.
     The function retrieves the desired QoS level from settings and logs the publishing process.
     If the client is not connected to the broker, the function logs an error and aborts.
-    It attempts to publish the message, retrying until the publish status indicates success.
+    Retries a bounded number of times (_PUBLISH_MAX_ATTEMPTS) on failure rather
+    than indefinitely - an unbounded retry here would burn this plugin's whole
+    RUN_TIMEOUT budget on one stuck publish call whenever the broker is
+    degraded (accepting connections but rejecting publishes), silently
+    dropping every other device queued for this run.
     Args:
         mqtt_client: The MQTT client instance used to publish the message.
         topic (str): The MQTT topic to publish to.
         message (Any): The message payload to send. Non-string messages are converted to JSON.
     Returns:
-        bool: True if the message was published successfully, False if not connected to the broker.
+        bool: True if the message was published successfully, False if not
+              connected to the broker or the retry budget was exhausted.
     """
     status = 1
 
@@ -286,7 +297,7 @@ def publish_mqtt(mqtt_client, topic, message):
         mylog('minimal', [f"[{pluginName}] ⚠ ERROR: Not connected to broker, aborting."])
         return False
 
-    while status != 0:
+    for attempt in range(_PUBLISH_MAX_ATTEMPTS):
 
         # mylog('verbose', [f"[{pluginName}]  mqtt_client.publish "])
         # mylog('verbose', [f"[{pluginName}]  mqtt_client.is_connected(): {mqtt_client.is_connected()} "])
@@ -303,10 +314,14 @@ def publish_mqtt(mqtt_client, topic, message):
         # mylog('verbose', [f"[{pluginName}] status: {status}"])
         # mylog('verbose', [f"[{pluginName}] result: {result}"])
 
-        if status != 0:
-            mylog('debug', [f"[{pluginName}] Waiting to reconnect to MQTT broker"])
-            time.sleep(0.1)
-    return True
+        if status == 0:
+            return True
+
+        mylog('debug', [f"[{pluginName}] Waiting to reconnect to MQTT broker (attempt {attempt + 1}/{_PUBLISH_MAX_ATTEMPTS})"])
+        time.sleep(_PUBLISH_RETRY_DELAY_SEC)
+
+    mylog('minimal', [f"[{pluginName}] ⚠ ERROR: Giving up on topic {topic} after {_PUBLISH_MAX_ATTEMPTS} attempts (status={status})."])
+    return False
 
 
 # ------------------------------------------------------------------------------

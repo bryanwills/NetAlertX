@@ -14,6 +14,11 @@ from the JSON payload published to both a device's individual sensor state
 topic and its device_tracker's json_attributes_topic (mqtt.py's
 build_device_tracker_attributes(), extracted from mqtt_start() specifically
 so this logic is testable without mocking the whole MQTT publish flow).
+
+Also covers publish_mqtt()'s bounded retry: a failing publish() call used to
+retry indefinitely (an unbounded `while status != 0` loop), which could burn
+this plugin's entire RUN_TIMEOUT budget on one stuck call against a degraded
+broker. It now gives up after _PUBLISH_MAX_ATTEMPTS.
 """
 
 import importlib.util
@@ -21,7 +26,7 @@ import os
 import sys
 import types
 from pathlib import Path
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 INSTALL_PATH = os.getenv("NETALERTX_APP", "/app")
 sys.path.extend([f"{INSTALL_PATH}/server/plugins", f"{INSTALL_PATH}/server"])
@@ -207,3 +212,42 @@ class TestBuildDeviceTrackerAttributes:
         attrs = mqtt.build_device_tracker_attributes(device, [device], "My Device")
         assert attrs["vendor"] == "TP-Link"
         assert attrs["ssid"] == "Bob's WiFi!"
+
+
+class TestPublishMqttBoundedRetry:
+    def _client(self, publish_return):
+        client = MagicMock()
+        client.publish.return_value = publish_return
+        return client
+
+    def test_succeeds_immediately_on_first_try(self):
+        mqtt.mqtt_connected_to_broker = True
+        client = self._client((0, 1))
+        with patch.object(mqtt.time, "sleep") as mock_sleep:
+            assert mqtt.publish_mqtt(client, "topic", "payload") is True
+        assert client.publish.call_count == 1
+        mock_sleep.assert_not_called()
+
+    def test_retries_then_succeeds(self):
+        mqtt.mqtt_connected_to_broker = True
+        client = MagicMock()
+        client.publish.side_effect = [(1, 1), (1, 1), (0, 1)]
+        with patch.object(mqtt.time, "sleep"):
+            assert mqtt.publish_mqtt(client, "topic", "payload") is True
+        assert client.publish.call_count == 3
+
+    def test_gives_up_after_max_attempts_instead_of_hanging_forever(self):
+        """The regression this guards against: a broker that always rejects
+        the publish must not spin the caller indefinitely."""
+        mqtt.mqtt_connected_to_broker = True
+        client = self._client((1, 1))  # always fails
+        with patch.object(mqtt.time, "sleep") as mock_sleep:
+            assert mqtt.publish_mqtt(client, "topic", "payload") is False
+        assert client.publish.call_count == mqtt._PUBLISH_MAX_ATTEMPTS
+        assert mock_sleep.call_count == mqtt._PUBLISH_MAX_ATTEMPTS
+
+    def test_aborts_immediately_when_not_connected(self):
+        mqtt.mqtt_connected_to_broker = False
+        client = self._client((0, 1))
+        assert mqtt.publish_mqtt(client, "topic", "payload") is False
+        client.publish.assert_not_called()
