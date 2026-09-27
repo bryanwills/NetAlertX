@@ -477,7 +477,10 @@
         "Device_TableHead_IPv4",
         "Device_TableHead_IPv6",
         "Device_TableHead_Flapping",
-        "Device_TableHead_Comments"
+        "Device_TableHead_Comments",
+        "Device_TableHead_AlertEvents",
+        "Device_TableHead_CanSleep",
+        "Device_TableHead_StaticIP"
       ],
       "localized": ["name", "description"],
       "name": [

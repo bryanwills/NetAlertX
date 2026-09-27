@@ -572,17 +572,22 @@ def save_own_device(db):
 
 # -------------------------------------------------------------------------------
 def print_scan_stats(db):
+    """
+    Log diagnostic scan-cycle counts (devices detected, new devices, down
+    alerts, new connections, disconnections, IP changes, per-plugin scan
+    method counts) at verbose/trace log levels. No return value.
+    """
     sql = db.sql  # TO-DO
 
     query = f"""
     SELECT
         (SELECT COUNT(*) FROM CurrentScan) AS devices_detected,
         (SELECT COUNT(*) FROM CurrentScan WHERE NOT EXISTS (SELECT 1 FROM Devices WHERE devMac = scanMac)) AS new_devices,
-        (SELECT COUNT(*) FROM DevicesView WHERE devAlertDown != 0 AND devIsSleeping = 0 AND NOT EXISTS (SELECT 1 FROM CurrentScan WHERE devMac = scanMac)) AS down_alerts,
+        (SELECT COUNT(*) FROM DevicesView WHERE devAlertDown != 0 AND devIsSleeping = 0 AND NOT EXISTS (SELECT 1 FROM CurrentScan WHERE scanMac = devMac)) AS down_alerts,
         (SELECT COUNT(*) FROM DevicesView
             WHERE devAlertDown != 0 AND devCanSleep = 0
             AND devPresentLastScan = 1
-            AND NOT EXISTS (SELECT 1 FROM CurrentScan WHERE devMac = scanMac)
+            AND NOT EXISTS (SELECT 1 FROM CurrentScan WHERE scanMac = devMac)
         ) AS new_down_alerts,
         (SELECT COUNT(*) FROM Devices WHERE devPresentLastScan = 0) AS new_connections,
         (SELECT COUNT(*) FROM Devices WHERE devPresentLastScan = 1 AND NOT EXISTS (SELECT 1 FROM CurrentScan WHERE devMac = scanMac)) AS disconnections,

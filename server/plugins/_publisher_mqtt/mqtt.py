@@ -256,25 +256,36 @@ class sensor_config:
 
 # -------------------------------------------------------------------------------
 
+# A single publish() call is retried a bounded number of times (not
+# indefinitely) - see publish_mqtt()'s docstring for why.
+_PUBLISH_MAX_ATTEMPTS = 20
+_PUBLISH_RETRY_DELAY_SEC = 0.1
+
+
 def publish_mqtt(mqtt_client, topic, message):
     """
     Publishes a message to an MQTT topic using the provided MQTT client.
     If the message is not a string, it is converted to a JSON-formatted string.
     The function retrieves the desired QoS level from settings and logs the publishing process.
     If the client is not connected to the broker, the function logs an error and aborts.
-    It attempts to publish the message, retrying until the publish status indicates success.
+    Retries a bounded number of times (_PUBLISH_MAX_ATTEMPTS) on failure rather
+    than indefinitely - an unbounded retry here would burn this plugin's whole
+    RUN_TIMEOUT budget on one stuck publish call whenever the broker is
+    degraded (accepting connections but rejecting publishes), silently
+    dropping every other device queued for this run.
     Args:
         mqtt_client: The MQTT client instance used to publish the message.
         topic (str): The MQTT topic to publish to.
         message (Any): The message payload to send. Non-string messages are converted to JSON.
     Returns:
-        bool: True if the message was published successfully, False if not connected to the broker.
+        bool: True if the message was published successfully, False if not
+              connected to the broker or the retry budget was exhausted.
     """
     status = 1
 
     # convert anything but a simple string to json
     if not isinstance(message, str):
-        message = json.dumps(message).replace("'", '"')
+        message = json.dumps(message)
 
     qos = get_setting_value('MQTT_QOS')
 
@@ -286,7 +297,7 @@ def publish_mqtt(mqtt_client, topic, message):
         mylog('minimal', [f"[{pluginName}] ⚠ ERROR: Not connected to broker, aborting."])
         return False
 
-    while status != 0:
+    for attempt in range(_PUBLISH_MAX_ATTEMPTS):
 
         # mylog('verbose', [f"[{pluginName}]  mqtt_client.publish "])
         # mylog('verbose', [f"[{pluginName}]  mqtt_client.is_connected(): {mqtt_client.is_connected()} "])
@@ -303,10 +314,14 @@ def publish_mqtt(mqtt_client, topic, message):
         # mylog('verbose', [f"[{pluginName}] status: {status}"])
         # mylog('verbose', [f"[{pluginName}] result: {result}"])
 
-        if status != 0:
-            mylog('debug', [f"[{pluginName}] Waiting to reconnect to MQTT broker"])
-            time.sleep(0.1)
-    return True
+        if status == 0:
+            return True
+
+        mylog('debug', [f"[{pluginName}] Waiting to reconnect to MQTT broker (attempt {attempt + 1}/{_PUBLISH_MAX_ATTEMPTS})"])
+        time.sleep(_PUBLISH_RETRY_DELAY_SEC)
+
+    mylog('minimal', [f"[{pluginName}] ⚠ ERROR: Giving up on topic {topic} after {_PUBLISH_MAX_ATTEMPTS} attempts (status={status})."])
+    return False
 
 
 # ------------------------------------------------------------------------------
@@ -434,6 +449,44 @@ def mqtt_create_client():
 
 
 # -----------------------------------------------------------------------------
+def build_device_id(mac):
+    """Turn a device's MAC into the slug used as its Home Assistant deviceId
+    (topic/unique_id component) - e.g. 'AA:BB:CC' -> 'mac_aabbcc'."""
+    return 'mac_' + mac.replace(" ", "").replace(":", "_").lower()
+
+
+# -----------------------------------------------------------------------------
+def build_display_name(name):
+    """Strip characters Home Assistant's entity naming doesn't accept from a
+    device's name, for use as its displayed sensor/device_tracker name."""
+    return re.sub('[^a-zA-Z0-9-_\\s]', '', normalize_string(name))
+
+
+# -----------------------------------------------------------------------------
+def build_device_tracker_attributes(device, devices, devDisplayName):
+    """Build the shared JSON payload published both to a device's individual
+    sensor state topic and to its device_tracker's json_attributes_topic -
+    every key here becomes a Home Assistant entity attribute."""
+    return {
+        "last_ip": device["devLastIP"],
+        "is_new": str(device["devIsNew"]),
+        "alert_down": str(device["devAlertDown"]),
+        "vendor": sanitize_string(device["devVendor"]),
+        "mac_address": str(device["devMac"]),
+        "model": devDisplayName,
+        "last_connection": format_date_iso(str(device["devLastConnection"])),
+        "first_connection": format_date_iso(str(device["devFirstConnection"])),
+        "sync_node": device["devSyncHubNode"],
+        "group": device["devGroup"],
+        "location": device["devLocation"],
+        "ssid": device["devSSID"] if "devSSID" in device.keys() else "",
+        "vlan": device["devVlan"] if "devVlan" in device.keys() else "",
+        "network_parent_mac": device["devParentMAC"],
+        "network_parent_name": next((dev["devName"] for dev in devices if dev["devMac"] == device["devParentMAC"]), "")
+    }
+
+
+# -----------------------------------------------------------------------------
 def mqtt_start(db):
 
     global mqtt_client
@@ -493,9 +546,8 @@ def mqtt_start(db):
             # # debug statement END   🔺
 
             # Create devices in Home Assistant - send config messages
-            deviceId        = 'mac_' + device["devMac"].replace(" ", "").replace(":", "_").lower()
-            # Normalize the string and remove unwanted characters
-            devDisplayName = re.sub('[^a-zA-Z0-9-_\\s]', '', normalize_string(device["devName"]))
+            deviceId        = build_device_id(device["devMac"])
+            devDisplayName = build_display_name(device["devName"])
 
             sensorConfig = create_sensor(mqtt_client, deviceId, devDisplayName, 'sensor', 'last_ip', 'ip-network', device["devMac"])
             sensorConfig = create_sensor(mqtt_client, deviceId, devDisplayName, 'sensor', 'mac_address', 'folder-key-network', device["devMac"])
@@ -506,21 +558,7 @@ def mqtt_start(db):
 
             # handle device_tracker
             # IMPORTANT: shared payload - device_tracker attributes and individual sensors
-            devJson = {
-                "last_ip": device["devLastIP"],
-                "is_new": str(device["devIsNew"]),
-                "alert_down": str(device["devAlertDown"]),
-                "vendor": sanitize_string(device["devVendor"]),
-                "mac_address": str(device["devMac"]),
-                "model": devDisplayName,
-                "last_connection": format_date_iso(str(device["devLastConnection"])),
-                "first_connection": format_date_iso(str(device["devFirstConnection"])),
-                "sync_node": device["devSyncHubNode"],
-                "group": device["devGroup"],
-                "location": device["devLocation"],
-                "network_parent_mac": device["devParentMAC"],
-                "network_parent_name": next((dev["devName"] for dev in devices if dev["devMac"] == device["devParentMAC"]), "")
-            }
+            devJson = build_device_tracker_attributes(device, devices, devDisplayName)
 
             # bulk update device sensors in home assistant
             publish_mqtt(mqtt_client, sensorConfig.state_topic, devJson)  # REQUIRED, DON'T DELETE

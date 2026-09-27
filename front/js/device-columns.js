@@ -51,6 +51,9 @@ const DEVICE_COLUMN_FIELDS = [
   "devPrimaryIPv6",        // 32 Device_TableHead_IPv6
   "devFlapping",           // 33 Device_TableHead_Flapping
   "devComments",           // 34 Device_TableHead_Comments
+  "devAlertEvents",        // 35 Device_TableHead_AlertEvents
+  "devCanSleep",           // 36 Device_TableHead_CanSleep
+  "devStaticIP",           // 37 Device_TableHead_StaticIP
 ];
 
 // Named index constants — eliminates all mapIndx(N) magic numbers.
@@ -68,10 +71,8 @@ const NUMERIC_DEFAULTS = new Set([
 // These are merged with DEVICE_COLUMN_FIELDS to build the GraphQL query.
 const GRAPHQL_EXTRA_FIELDS = [
   "devComments",
-  "devStaticIP",
   "devScan",
   "devLogEvents",
-  "devAlertEvents",
   "devSkipRepeated",
   "devLastNotification",
   "devIsNew",
@@ -130,6 +131,9 @@ const COLUMN_NAME_MAP = {
   "Device_TableHead_IPv6":              "devPrimaryIPv6",
   "Device_TableHead_Flapping":          "devFlapping",
   "Device_TableHead_Comments":          "devComments",
+  "Device_TableHead_AlertEvents":       "devAlertEvents",
+  "Device_TableHead_CanSleep":          "devCanSleep",
+  "Device_TableHead_StaticIP":          "devStaticIP",
 };
 
 console.log("init device-columns.js");
