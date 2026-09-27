@@ -22,6 +22,7 @@ broker. It now gives up after _PUBLISH_MAX_ATTEMPTS.
 """
 
 import importlib.util
+import json
 import os
 import sys
 import types
@@ -213,6 +214,18 @@ class TestBuildDeviceTrackerAttributes:
         assert attrs["vendor"] == "TP-Link"
         assert attrs["ssid"] == "Bob's WiFi!"
 
+    def test_missing_ssid_and_vlan_columns_default_to_blank(self):
+        """MQTT_DEVICES_SQL is a free-text user setting (default SELECT *,
+        but users can save a narrower custom query). A pre-#1816 custom query
+        that doesn't select devSSID/devVlan must not crash the whole device
+        loop - it should fall back to blank for just those two fields."""
+        device = _device()
+        del device["devSSID"]
+        del device["devVlan"]
+        attrs = mqtt.build_device_tracker_attributes(device, [device], "My Device")
+        assert attrs["ssid"] == ""
+        assert attrs["vlan"] == ""
+
 
 class TestPublishMqttBoundedRetry:
     def _client(self, publish_return):
@@ -251,3 +264,14 @@ class TestPublishMqttBoundedRetry:
         client = self._client((0, 1))
         assert mqtt.publish_mqtt(client, "topic", "payload") is False
         client.publish.assert_not_called()
+
+    def test_dict_payload_with_apostrophe_serializes_to_valid_json(self):
+        """Regression guard: a prior post-serialization .replace("'", '"')
+        corrupted any string value containing an apostrophe (e.g. an SSID
+        like "Bob's WiFi!") into invalid JSON. json.dumps() output must be
+        published unmodified."""
+        mqtt.mqtt_connected_to_broker = True
+        client = self._client((0, 1))
+        mqtt.publish_mqtt(client, "topic", {"ssid": "Bob's WiFi!"})
+        published_payload = client.publish.call_args.kwargs["payload"]
+        assert json.loads(published_payload) == {"ssid": "Bob's WiFi!"}

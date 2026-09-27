@@ -285,7 +285,7 @@ def publish_mqtt(mqtt_client, topic, message):
 
     # convert anything but a simple string to json
     if not isinstance(message, str):
-        message = json.dumps(message).replace("'", '"')
+        message = json.dumps(message)
 
     qos = get_setting_value('MQTT_QOS')
 
@@ -479,8 +479,8 @@ def build_device_tracker_attributes(device, devices, devDisplayName):
         "sync_node": device["devSyncHubNode"],
         "group": device["devGroup"],
         "location": device["devLocation"],
-        "ssid": device["devSSID"],
-        "vlan": device["devVlan"],
+        "ssid": device["devSSID"] if "devSSID" in device.keys() else "",
+        "vlan": device["devVlan"] if "devVlan" in device.keys() else "",
         "network_parent_mac": device["devParentMAC"],
         "network_parent_name": next((dev["devName"] for dev in devices if dev["devMac"] == device["devParentMAC"]), "")
     }
