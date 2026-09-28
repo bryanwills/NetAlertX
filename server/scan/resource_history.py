@@ -70,6 +70,16 @@ def insert_resource_history(db, pre, post, duration_ms, tick_failed=False):
     resIoReadBytes = post[1] - pre[1]
     resIoWriteBytes = post[2] - pre[2]
 
+    # Sampled independently of the INSERT's own try/except below - a psutil
+    # failure here must zero this one field, not get misreported as an
+    # "insert failed" and skip the whole row (CPU/IO were already computed
+    # successfully at this point).
+    try:
+        resRssMb = round(psutil.Process().memory_info().rss / (1024 * 1024), 2)
+    except (psutil.Error, AttributeError) as e:
+        mylog("verbose", [f"[resource_history] RSS sampling failed, using 0.0: {e}"])
+        resRssMb = 0.0
+
     try:
         db.sql.execute(
             """
@@ -81,7 +91,7 @@ def insert_resource_history(db, pre, post, duration_ms, tick_failed=False):
             (
                 timeNowUTC(),
                 resCpuPercent,
-                round(psutil.Process().memory_info().rss / (1024 * 1024), 2),
+                resRssMb,
                 resIoReadBytes,
                 resIoWriteBytes,
                 duration_ms,

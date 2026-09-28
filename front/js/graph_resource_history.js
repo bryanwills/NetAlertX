@@ -2,6 +2,12 @@
 // building a new one on the same canvas (Chart.js throws otherwise).
 var resourceHistoryChartInstances = {};
 
+// Monotonically increasing id, bumped on every initResourceHistoryGraphs()
+// call. A fast double-click across two range buttons fires two overlapping
+// AJAX requests; without this, whichever response lands last wins regardless
+// of click order, so a stale response can silently overwrite newer data.
+var resourceHistoryRequestId = 0;
+
 // Chart axis labels: time only - date/year are dropped entirely to keep the
 // axis readable; the full date (including year) is still available on
 // hover via each chart's tooltip title callback below. Passed as
@@ -25,7 +31,13 @@ var CHART_TIMESTAMP_OPTIONS_TOOLTIP = {
  * message when no rows exist yet (collection off, or just enabled).
  */
 function initResourceHistoryGraphs(range) {
+  var requestId = ++resourceHistoryRequestId;
+
   $.get('php/server/query_json.php', { file: `table_resource_history_${range}.json`, nocache: Date.now() }, function (res) {
+    if (requestId !== resourceHistoryRequestId) {
+      return; // a newer range request has since started - discard this stale response
+    }
+
     var rows = (res && res.data) ? res.data : [];
 
     if (rows.length === 0) {

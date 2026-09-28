@@ -156,7 +156,14 @@ def main():
                 # happens in this window and is the class of cost this history
                 # exists to catch. Gated on MAINT_PERF_DAYS so a disabled install
                 # pays no sampling cost at all (see scan/resource_history.py).
-                resource_history_enabled = int(get_setting_value("MAINT_PERF_DAYS", 30)) != 0
+                # Defensive: an empty/corrupted setting value must disable this
+                # optional feature, not raise and kill the whole main loop -
+                # this sits outside the try/finally below, so an uncaught
+                # ValueError/TypeError here would have no safety net at all.
+                try:
+                    resource_history_enabled = int(get_setting_value("MAINT_PERF_DAYS", 30)) != 0
+                except (TypeError, ValueError):
+                    resource_history_enabled = False
                 resource_pre = get_process_cpu_times_and_io() if resource_history_enabled else None
                 tick_start_monotonic = time.monotonic()
                 tick_failed = False

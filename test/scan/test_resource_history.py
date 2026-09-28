@@ -11,6 +11,7 @@ import types
 from types import SimpleNamespace
 from unittest.mock import MagicMock
 
+import psutil
 import pytest
 
 from server.scan import resource_history as rh
@@ -153,6 +154,30 @@ def test_insert_failure_is_caught_and_logged():
 
     # Must not raise.
     rh.insert_resource_history(RaisingDB(), (0.0, 0, 0), (0.0, 0, 0), duration_ms=1000)
+
+
+def test_rss_sampling_failure_does_not_skip_the_row(monkeypatch):
+    """
+    Regression: a failing psutil RSS read must zero resRssMb, not get caught
+    by the INSERT's own except block and skip the whole row (CPU/IO were
+    already computed successfully by that point).
+    """
+    db = _make_resource_history_db()
+
+    def raising_process():
+        raise psutil.AccessDenied()
+
+    monkeypatch.setattr(rh.psutil, "Process", raising_process)
+
+    rh.insert_resource_history(db, (0.0, 0, 0), (1.0, 100, 200), duration_ms=1000)
+
+    row = db.sql.execute(
+        "SELECT resRssMb, resIoReadBytes, resIoWriteBytes FROM Resource_History"
+    ).fetchone()
+    assert row is not None, "Row must still be inserted despite the RSS sampling failure"
+    assert row[0] == 0.0
+    assert row[1] == 100  # IO values, computed before the RSS read, are unaffected
+    assert row[2] == 200
 
 
 # ---------------------------------------------------------------------------
@@ -325,6 +350,40 @@ def test_maint_perf_days_zero_disables_collection(monkeypatch, main_mod):
 
     row = conn.execute("SELECT COUNT(*) FROM Resource_History").fetchone()
     assert row[0] == 0, "MAINT_PERF_DAYS=0 must produce zero Resource_History rows"
+
+
+def test_maint_perf_days_non_numeric_disables_instead_of_crashing(monkeypatch, main_mod):
+    """
+    Regression: an empty/corrupted MAINT_PERF_DAYS setting value must disable
+    the optional feature, not raise ValueError/TypeError and kill the whole
+    main loop - this int() call sits outside the tick's own try/except/finally,
+    so it has no other safety net.
+    """
+    conn = make_db()
+    rh_upgrade_conn = conn.cursor()
+    from server.db.db_upgrade import ensure_Resource_History
+    ensure_Resource_History(rh_upgrade_conn)
+    conn.commit()
+    db = _FakeDB(conn)
+
+    fake_pm = _FakePM(raise_on_schedule=False)
+    _common_patches(monkeypatch, main_mod, db, fake_pm)
+    # Simulate a corrupted/empty setting value instead of a real integer.
+    monkeypatch.setattr(main_mod, "get_setting_value", lambda key, default=None: "" if key == "MAINT_PERF_DAYS" else default)
+    monkeypatch.setattr(main_mod, "get_notifications", lambda db: {})
+    monkeypatch.setattr(main_mod, "NotificationInstance", lambda db: _FakeNotificationInstance())
+    monkeypatch.setattr(main_mod, "update_devices_names", lambda pm: None)
+    monkeypatch.setattr(main_mod, "WorkflowManager", _FakeWorkflowManager)
+    monkeypatch.setattr(main_mod, "UserEventsQueueInstance", lambda: SimpleNamespace(
+        has_update_devices=lambda: False
+    ))
+
+    # Must reach the sentinel (i.e. complete the tick normally), not raise ValueError.
+    with pytest.raises(_StopTestLoop):
+        main_mod.main()
+
+    row = conn.execute("SELECT COUNT(*) FROM Resource_History").fetchone()
+    assert row[0] == 0, "A non-numeric MAINT_PERF_DAYS must disable collection, not crash"
 
 
 def test_after_sample_precedes_insert_and_final_commit(monkeypatch, main_mod):

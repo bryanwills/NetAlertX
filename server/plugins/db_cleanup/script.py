@@ -117,7 +117,10 @@ def cleanup_database(
     # no separate zero-check needed here: if collection is disabled via
     # MAINT_PERF_DAYS=0, the table is already empty)
     mylog("verbose", f"[{pluginName}] Resource_History: Delete all older than {str(MAINT_PERF_DAYS)} days (MAINT_PERF_DAYS setting)")
-    sql = f"""DELETE FROM Resource_History WHERE resDateTime <= date('now', '-{str(MAINT_PERF_DAYS)} day')"""
+    # datetime(), not date(): resDateTime carries a time component (timeNowUTC()),
+    # and a bare date() cutoff (midnight, no time) never compares <= against a
+    # same-day timestamped row, silently keeping the whole boundary day.
+    sql = f"""DELETE FROM Resource_History WHERE resDateTime <= datetime('now', '-{str(MAINT_PERF_DAYS)} day')"""
     mylog("verbose", [f"[{pluginName}] SQL : {sql}"])
     cursor.execute(sql)
     mylog("verbose", [f"[{pluginName}] Resource_History deleted rows: {cursor.rowcount}"])

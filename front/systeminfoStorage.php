@@ -21,16 +21,25 @@ $nax_db_size = file_exists($nax_db) ? number_format((filesize($nax_db) / 1000000
 $nax_wal_size = file_exists($nax_wal) ? number_format((filesize($nax_wal) / 1000000), 2, ",", ".") . ' MB' : '0 MB';
 $nax_db_mod = file_exists($nax_db) ? date("F d Y H:i:s", filemtime($nax_db)) : 'N/A';
 
-// Table row counts
+// Table row counts. Read-only + existence check: a plain `new SQLite3($nax_db)`
+// with default flags would CREATE an empty app.db if the path is ever wrong/
+// missing (e.g. before first scan), and an unhandled open/query exception here
+// would previously fatal-error this entire AJAX-loaded tab, not just this box.
 $tableSizesHTML = "";
-$db_info_conn = new SQLite3($nax_db);
-$table_names_result = $db_info_conn->query("SELECT name FROM sqlite_master WHERE type='table'");
-while ($row = $table_names_result->fetchArray(SQLITE3_ASSOC)) {
-    $tableName = $row['name'];
-    $countResult = $db_info_conn->querySingle("SELECT COUNT(*) FROM $tableName");
-    $tableSizesHTML = $tableSizesHTML . "$tableName (<b>$countResult</b>), ";
+if (is_readable($nax_db)) {
+    try {
+        $db_info_conn = new SQLite3($nax_db, SQLITE3_OPEN_READONLY);
+        $table_names_result = $db_info_conn->query("SELECT name FROM sqlite_master WHERE type='table'");
+        while ($row = $table_names_result->fetchArray(SQLITE3_ASSOC)) {
+            $tableName = $row['name'];
+            $countResult = $db_info_conn->querySingle("SELECT COUNT(*) FROM $tableName");
+            $tableSizesHTML = $tableSizesHTML . "$tableName (<b>$countResult</b>), ";
+        }
+        $db_info_conn->close();
+    } catch (Exception $e) {
+        $tableSizesHTML = '';
+    }
 }
-$db_info_conn->close();
 
 echo '<div class="box box-solid">
             <div class="box-header">

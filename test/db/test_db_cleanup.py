@@ -185,13 +185,13 @@ def _seed_resource_history(cur, old_count: int, recent_count: int, days: int):
     for i in range(old_count):
         cur.execute(
             "INSERT INTO Resource_History (resDateTime, resCpuPercent) "
-            "VALUES (date('now', ?), 10.0)",
+            "VALUES (datetime('now', ?), 10.0)",
             (f"-{days + 1} day",),
         )
     for i in range(recent_count):
         cur.execute(
             "INSERT INTO Resource_History (resDateTime, resCpuPercent) "
-            "VALUES (date('now'), 10.0)"
+            "VALUES (datetime('now'), 10.0)"
         )
 
 
@@ -199,7 +199,7 @@ def _run_resource_history_trim(cur, days: int) -> int:
     """Execute the exact DELETE used by db_cleanup and return rowcount."""
     cur.execute(
         f"DELETE FROM Resource_History "
-        f"WHERE resDateTime <= date('now', '-{days} day')"
+        f"WHERE resDateTime <= datetime('now', '-{days} day')"
     )
     return cur.rowcount
 
@@ -233,6 +233,52 @@ class TestResourceHistoryTrim:
         cur = conn.cursor()
 
         assert _run_resource_history_trim(cur, days=30) == 0
+
+    def test_date_cutoff_would_silently_under_delete_the_boundary_day(self):
+        """
+        Regression, demonstrating the bug the datetime() fix closes: date()
+        truncates the cutoff to midnight (10-char "YYYY-MM-DD"), while
+        resDateTime always carries a time component (19-char
+        "YYYY-MM-DD HH:MM:SS", from timeNowUTC()). Since the bare date string
+        is a strict prefix of any same-day timestamp, plain string comparison
+        (SQLite has no typed DATE column here) means resDateTime <= date(...)
+        is FALSE for every row on the cutoff day, regardless of its time of
+        day - the whole boundary day silently survives a date() cutoff.
+        datetime() doesn't have this gap: both sides are 19-char timestamps.
+        """
+        conn = sqlite3.connect(":memory:")
+        cur = conn.cursor()
+        date_cutoff = cur.execute("SELECT date('now', '-30 day')").fetchone()[0]
+        datetime_cutoff = cur.execute("SELECT datetime('now', '-30 day')").fetchone()[0]
+
+        assert len(date_cutoff) == 10  # "YYYY-MM-DD" - no time component
+        assert len(datetime_cutoff) == 19  # "YYYY-MM-DD HH:MM:SS"
+        assert datetime_cutoff.startswith(date_cutoff)
+
+        # A same-day resDateTime value (any time after midnight) sorts after
+        # the bare date cutoff, so it would never satisfy `<=` under date().
+        same_day_timestamp = date_cutoff + " 08:00:00"
+        assert not (same_day_timestamp <= date_cutoff), (
+            "date() cutoff must fail to catch a same-day timestamped row - "
+            "this is exactly the bug datetime() fixes"
+        )
+
+    def test_resource_history_trim_uses_datetime_not_date(self):
+        """
+        Regression: assert script.py's actual DELETE uses datetime(), matching
+        the precision of resDateTime and the read-side range queries
+        (const.py's sql_resource_history_* use datetime() too) - a bare
+        date() cutoff would silently under-delete (see test above).
+        """
+        INSTALL_PATH = os.getenv("NETALERTX_APP", "/app")
+        script_path = os.path.join(
+            INSTALL_PATH, "server", "plugins", "db_cleanup", "script.py"
+        )
+        with open(script_path) as fh:
+            source = fh.read()
+
+        expr = "DELETE FROM Resource_History WHERE resDateTime <= datetime('now', '-{str(MAINT_PERF_DAYS)} day')"
+        assert expr in source, "Resource_History DELETE must use datetime(), not date()"
 
 
 # ---------------------------------------------------------------------------
