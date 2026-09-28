@@ -269,7 +269,7 @@
     "Device_TableHead_Rowid": "Zeilennummer",
     "Device_TableHead_SSID": "SSID",
     "Device_TableHead_SourcePlugin": "Quellerweiterung",
-    "Device_TableHead_StaticIP": "",
+    "Device_TableHead_StaticIP": "Statische IP",
     "Device_TableHead_Status": "Status",
     "Device_TableHead_SyncHubNodeName": "Synchronisationsknoten",
     "Device_TableHead_Type": "Typ",
