@@ -11,7 +11,7 @@
 <div class="box box-solid">
   <div class="box-header">
     <h3 class="box-title sysinfo_headline"><i class="fa fa-chart-line"></i> <?= lang('Systeminfo_Performance');?>
-      <a href="https://docs.netalertx.com/PERFORMANCE" target="_blank"><i class="fa fa-circle-question"></i></a>
+      <a href="https://docs.netalertx.com/PERFORMANCE" target="_blank"><i class="fa fa-circle-question" style="font-size: 14px;"></i></a>
     </h3>
   </div>
   <div class="box-body">
@@ -28,17 +28,17 @@
     </div>
 
     <div id="resourceHistoryCharts">
-      <div style="position: relative; height: 150px; width: 100%; margin-bottom: 25px;">
+      <div style="position: relative; height: 220px; width: 100%; margin-bottom: 25px;">
         <canvas id="ResourceCpuChart"></canvas>
       </div>
-      <div style="position: relative; height: 150px; width: 100%; margin-bottom: 25px;">
+      <div style="position: relative; height: 220px; width: 100%; margin-bottom: 25px;">
         <canvas id="ResourceRssChart"></canvas>
       </div>
-      <div style="position: relative; height: 150px; width: 100%; margin-bottom: 5px;">
+      <div style="position: relative; height: 220px; width: 100%; margin-bottom: 5px;">
         <canvas id="ResourceIoChart"></canvas>
       </div>
       <p class="text-muted" style="font-size: 12px; margin-bottom: 25px;"><?= lang('Systeminfo_Performance_IO_Caption');?></p>
-      <div style="position: relative; height: 150px; width: 100%; margin-bottom: 15px;">
+      <div style="position: relative; height: 220px; width: 100%; margin-bottom: 15px;">
         <canvas id="ResourceDurationChart"></canvas>
       </div>
     </div>
