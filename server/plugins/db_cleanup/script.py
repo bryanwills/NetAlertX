@@ -36,6 +36,7 @@ def main():
     DAYS_TO_KEEP_EVENTS = int(get_setting_value("DAYS_TO_KEEP_EVENTS"))
     CLEAR_NEW_FLAG = get_setting_value("CLEAR_NEW_FLAG")
     DEV_HIST_DAYS = int(get_setting_value("DEV_HIST_DAYS") or 14)
+    MAINT_PERF_DAYS = int(get_setting_value("MAINT_PERF_DAYS", 30))
 
     mylog("verbose", [f"[{pluginName}] In script"])
 
@@ -48,6 +49,7 @@ def main():
         PLUGINS_KEEP_HIST,
         CLEAR_NEW_FLAG,
         DEV_HIST_DAYS,
+        MAINT_PERF_DAYS,
     )
 
     mylog("verbose", [f"[{pluginName}] Cleanup complete"])
@@ -66,6 +68,7 @@ def cleanup_database(
     PLUGINS_KEEP_HIST,
     CLEAR_NEW_FLAG,
     DEV_HIST_DAYS=14,
+    MAINT_PERF_DAYS=30,
 ):
     """
     Cleaning out old records from the tables that don't need to keep all data.
@@ -108,6 +111,16 @@ def cleanup_database(
     mylog("verbose", [f"[{pluginName}] SQL : {sql}"])
     cursor.execute(sql)
     mylog("verbose", [f"[{pluginName}] Sessions deleted rows: {cursor.rowcount}"])
+
+    # -----------------------------------------------------
+    # Resource_History (own resource-usage history, MAINT_PERF_DAYS setting -
+    # no separate zero-check needed here: if collection is disabled via
+    # MAINT_PERF_DAYS=0, the table is already empty)
+    mylog("verbose", f"[{pluginName}] Resource_History: Delete all older than {str(MAINT_PERF_DAYS)} days (MAINT_PERF_DAYS setting)")
+    sql = f"""DELETE FROM Resource_History WHERE resDateTime <= date('now', '-{str(MAINT_PERF_DAYS)} day')"""
+    mylog("verbose", [f"[{pluginName}] SQL : {sql}"])
+    cursor.execute(sql)
+    mylog("verbose", [f"[{pluginName}] Resource_History deleted rows: {cursor.rowcount}"])
 
     # -----------------------------------------------------
     # Plugins_History

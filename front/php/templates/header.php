@@ -474,6 +474,9 @@
              <li>
               <a href="systeminfo.php#panInitCheck" onclick="setCache('activeSysinfoTab','tabInitCheck');initializeTabs()">  <?= lang("Maintenance_InitCheck");?> </a>
             </li>
+            <li>
+              <a href="systeminfo.php#panPerformance" onclick="setCache('activeSysinfoTab','tabPerformance');initializeTabs()"><?= lang('Systeminfo_Performance');?></a>
+            </li>
           </ul>
         </li>
 

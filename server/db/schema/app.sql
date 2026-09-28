@@ -10,6 +10,17 @@ CREATE TABLE IF NOT EXISTS Online_History (
             offlineDevices INTEGER,
             PRIMARY KEY("index" AUTOINCREMENT)
           );
+CREATE TABLE IF NOT EXISTS Resource_History (
+            "index"           INTEGER PRIMARY KEY AUTOINCREMENT,
+            resDateTime       TEXT NOT NULL,
+            resCpuPercent     REAL,
+            resRssMb          REAL,
+            resIoReadBytes    INTEGER,
+            resIoWriteBytes   INTEGER,
+            resScanDurationMs INTEGER,
+            resTickFailed     INTEGER NOT NULL DEFAULT 0
+          );
+CREATE INDEX IF NOT EXISTS idx_reshist_datetime ON Resource_History(resDateTime);
 CREATE TABLE Devices (
               devMac STRING (50) PRIMARY KEY NOT NULL COLLATE NOCASE,
               devName STRING (50) NOT NULL DEFAULT "(unknown)",

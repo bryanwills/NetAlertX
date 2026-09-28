@@ -48,6 +48,19 @@ def _make_db():
         )
     """)
 
+    cur.execute("""
+        CREATE TABLE Resource_History (
+            "index"           INTEGER PRIMARY KEY AUTOINCREMENT,
+            resDateTime       TEXT NOT NULL,
+            resCpuPercent     REAL,
+            resRssMb          REAL,
+            resIoReadBytes    INTEGER,
+            resIoWriteBytes   INTEGER,
+            resScanDurationMs INTEGER,
+            resTickFailed     INTEGER NOT NULL DEFAULT 0
+        )
+    """)
+
     conn.commit()
     return conn
 
@@ -162,6 +175,64 @@ class TestSessionsTrim:
 
         assert events_expr in source, "Events DELETE expression changed unexpectedly"
         assert sessions_expr in source, "Sessions DELETE is not aligned with Events DELETE"
+
+
+# ---------------------------------------------------------------------------
+# Resource_History retention (MAINT_PERF_DAYS)
+# ---------------------------------------------------------------------------
+
+def _seed_resource_history(cur, old_count: int, recent_count: int, days: int):
+    for i in range(old_count):
+        cur.execute(
+            "INSERT INTO Resource_History (resDateTime, resCpuPercent) "
+            "VALUES (date('now', ?), 10.0)",
+            (f"-{days + 1} day",),
+        )
+    for i in range(recent_count):
+        cur.execute(
+            "INSERT INTO Resource_History (resDateTime, resCpuPercent) "
+            "VALUES (date('now'), 10.0)"
+        )
+
+
+def _run_resource_history_trim(cur, days: int) -> int:
+    """Execute the exact DELETE used by db_cleanup and return rowcount."""
+    cur.execute(
+        f"DELETE FROM Resource_History "
+        f"WHERE resDateTime <= date('now', '-{days} day')"
+    )
+    return cur.rowcount
+
+
+class TestResourceHistoryTrim:
+
+    def test_old_rows_are_deleted(self):
+        conn = _make_db()
+        cur = conn.cursor()
+        _seed_resource_history(cur, old_count=10, recent_count=5, days=30)
+
+        deleted = _run_resource_history_trim(cur, days=30)
+
+        assert deleted == 10
+        cur.execute("SELECT COUNT(*) FROM Resource_History")
+        assert cur.fetchone()[0] == 5
+
+    def test_recent_rows_are_preserved(self):
+        conn = _make_db()
+        cur = conn.cursor()
+        _seed_resource_history(cur, old_count=0, recent_count=20, days=30)
+
+        deleted = _run_resource_history_trim(cur, days=30)
+
+        assert deleted == 0
+        cur.execute("SELECT COUNT(*) FROM Resource_History")
+        assert cur.fetchone()[0] == 20
+
+    def test_empty_table_is_a_no_op(self):
+        conn = _make_db()
+        cur = conn.cursor()
+
+        assert _run_resource_history_trim(cur, days=30) == 0
 
 
 # ---------------------------------------------------------------------------

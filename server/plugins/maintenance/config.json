@@ -271,6 +271,34 @@
           "string": "How many latest in-app Notification entries to keep. Set to <code>0</code> to disable purging."
         }
       ]
+    },
+    {
+      "function": "PERF_DAYS",
+      "type": {
+        "dataType": "integer",
+        "elements": [
+          {
+            "elementType": "input",
+            "elementOptions": [{ "type": "number" }],
+            "transformers": []
+          }
+        ]
+      },
+      "default_value": 30,
+      "options": [],
+      "localized": ["name", "description"],
+      "name": [
+        {
+          "language_code": "en_us",
+          "string": "Performance history retention (days)"
+        }
+      ],
+      "description": [
+        {
+          "language_code": "en_us",
+          "string": "How many days of NetAlertX's own CPU/RAM/IO/scan-duration history to keep (System Info -> Performance tab). Set to <code>0</code> to disable collection entirely - history cannot be backfilled once enabled, so collection starts from whenever this is turned on."
+        }
+      ]
     }
   ],
 
