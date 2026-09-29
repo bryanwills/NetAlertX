@@ -12,43 +12,6 @@
   showSpinner();
 </script>
 
-<?php
-
-// Size and last mod of DB ------------------------------------------------------
-
-$dbBasePath = rtrim(getenv('NETALERTX_DB') ?: '/data/db', '/');
-$nax_db = $dbBasePath . '/app.db';
-$nax_wal = $dbBasePath . '/app.db-wal';
-$nax_db_size = file_exists($nax_db) ? number_format((filesize($nax_db) / 1000000),2,",",".") . ' MB' : '0 MB';
-$nax_wal_size = file_exists($nax_wal) ? number_format((filesize($nax_wal) / 1000000),2,",",".") . ' MB' : '0 MB';
-$nax_db_mod = file_exists($nax_db) ? date ("F d Y H:i:s", filemtime($nax_db)) : 'N/A';
-
-
-// Table sizes -----------------------------------------------------------------
-
-$tableSizesHTML = "";
-
-// Open a connection to the SQLite database
-$db = new SQLite3($nax_db);
-
-// Retrieve the table names from sqlite_master
-$query = "SELECT name FROM sqlite_master WHERE type='table'";
-$result = $db->query($query);
-
-// Iterate over the tables and get the row counts
-while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
-    $tableName = $row['name'];
-    $query = "SELECT COUNT(*) FROM $tableName";
-    $countResult = $db->querySingle($query);
-    $tableSizesHTML = $tableSizesHTML . "$tableName (<b>$countResult</b>), ";
-}
-
-// Close the database connection
-$db->close();
-
-
-?>
-
       <div class="row">
           <div class="col-md-12">
           <div class="box" id="Maintain-Status">
@@ -83,30 +46,6 @@ $db->close();
                         <div class="db_info_table_cell" style="min-width: 140px"><?= lang('Maintenance_Running_Version');?></div>
                         <div class="db_info_table_cell">
                           <span data-plc="version"></span>
-                        </div>
-                    </div>
-                    <div class="db_info_table_row">
-                        <div class="db_info_table_cell" style="min-width: 140px"><?= lang('Maintenance_database_path');?></div>
-                        <div class="db_info_table_cell">
-                            <?php echo $nax_db;?>
-                        </div>
-                    </div>
-                    <div class="db_info_table_row">
-                        <div class="db_info_table_cell"><?= lang('Maintenance_database_size');?></div>
-                        <div class="db_info_table_cell">
-                            <?php echo $nax_db_size;?> (wal: <?php echo $nax_wal_size;?>)
-                        </div>
-                    </div>
-                    <div class="db_info_table_row">
-                        <div class="db_info_table_cell"><?= lang('Maintenance_database_rows');?></div>
-                        <div class="db_info_table_cell">
-                            <?php echo $tableSizesHTML;?>
-                        </div>
-                    </div>
-                    <div class="db_info_table_row">
-                        <div class="db_info_table_cell"><?= lang('Maintenance_database_lastmod');?></div>
-                        <div class="db_info_table_cell">
-                            <?php echo $nax_db_mod;?>
                         </div>
                     </div>
                 </div>

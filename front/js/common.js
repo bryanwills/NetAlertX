@@ -91,13 +91,33 @@ function deleteCookie (cookie) {
 // -----------------------------------------------------------------------------
 // DateTime utilities
 // -----------------------------------------------------------------------------
-function localizeTimestamp(input) {
+/**
+ * Parses a timestamp in any of several common formats (unix seconds/ms,
+ * DD/MM/YYYY, MM/DD/YYYY, ISO, RFC2822, DD-MM-YYYY) and formats it in the
+ * user's configured TIMEZONE/UI_LOCALE settings.
+ * @param {string|number} input - The timestamp to localize.
+ * @param {Intl.DateTimeFormatOptions} [dtfOptions] - Full Intl.DateTimeFormat
+ *   options object, replacing (not merging with) the default year/month/day/
+ *   hour/minute/second/hour12 shape - e.g. for a shorter chart-axis label.
+ * @returns {string} The localized, formatted timestamp.
+ */
+function localizeTimestamp(input, dtfOptions) {
 
   // Read fresh on every call (not a module-level const): getSetting() reads
   // a localStorage cache that clearCache() wipes before reloading, so a
   // stale/hardcoded fallback could otherwise stick for the page's lifetime. See #1640.
   const tz = getSetting("TIMEZONE") || 'Europe/Berlin';
   const LOCALE = getSetting('UI_LOCALE') || 'en-GB';
+
+  // Optional second arg: full Intl.DateTimeFormat options object, replacing
+  // (not merging with) the historical year+seconds default below - e.g. a
+  // chart axis label that wants month/day/hour/minute only. Omit it for the
+  // original full-precision behavior every existing caller relies on.
+  const options = dtfOptions || {
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit',
+    hour12: false
+  };
 
   input = String(input || '').trim();
 
@@ -106,9 +126,7 @@ function localizeTimestamp(input) {
     const ms = input.length === 10 ? parseInt(input, 10) * 1000 : parseInt(input, 10);
     return new Intl.DateTimeFormat('default', {
       timeZone: tz,
-      year: 'numeric', month: '2-digit', day: '2-digit',
-      hour: '2-digit', minute: '2-digit', second: '2-digit',
-      hour12: false
+      ...options
     }).format(new Date(ms));
   }
 
@@ -198,9 +216,7 @@ function localizeTimestamp(input) {
     return new Intl.DateTimeFormat(LOCALE, {
       // Convert from UTC to user's configured timezone
       timeZone: tz,
-      year: 'numeric', month: '2-digit', day: '2-digit',
-      hour: '2-digit', minute: '2-digit', second: '2-digit',
-      hour12: false
+      ...options
     }).format(date);
   }
 }

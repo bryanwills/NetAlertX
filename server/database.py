@@ -12,6 +12,7 @@ from db.db_upgrade import (
     ensure_column,
     ensure_table_columns,
     ensure_CurrentScan,
+    ensure_Resource_History,
     ensure_plugins_tables,
     ensure_Parameters,
     ensure_Settings,
@@ -240,6 +241,9 @@ class DB:
 
             # CurrentScan table setup
             ensure_CurrentScan(self.sql)
+
+            # Resource_History table setup
+            ensure_Resource_History(self.sql)
 
             # Views are created in importConfigs() after settings are committed,
             # so NTFPRCS_sleep_time is available when the view is built.

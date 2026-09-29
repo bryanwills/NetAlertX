@@ -659,6 +659,29 @@ def ensure_CurrentScan(sql) -> bool:
     return True
 
 
+def ensure_Resource_History(sql) -> bool:
+    """
+    Ensures the Resource_History table and its datetime index exist.
+
+    Parameters:
+    - sql: database cursor or connection wrapper (must support execute() and fetchall()).
+    """
+    sql.execute(""" CREATE TABLE IF NOT EXISTS Resource_History (
+                                "index"           INTEGER PRIMARY KEY AUTOINCREMENT,
+                                resDateTime       TEXT NOT NULL,
+                                resCpuPercent     REAL,
+                                resRssMb          REAL,
+                                resIoReadBytes    INTEGER,
+                                resIoWriteBytes   INTEGER,
+                                resScanDurationMs INTEGER,
+                                resTickFailed     INTEGER NOT NULL DEFAULT 0
+                            );
+                        """)
+    sql.execute("CREATE INDEX IF NOT EXISTS idx_reshist_datetime ON Resource_History(resDateTime);")
+
+    return True
+
+
 def ensure_Parameters(sql) -> bool:
     """
     Ensures required Parameters table exist.

@@ -15,6 +15,10 @@
 ?>
 <!-- ----------------------------------------------------------------------- -->
 
+<!-- Loaded here (not in systeminfoPerformance.php itself) so it's available
+     before that tab's AJAX-fetched content runs - matching presence.php/
+     devices.php's own graph component pattern. -->
+<script src="lib/chart.js/Chart.js"></script>
 
 <script>
 
@@ -65,6 +69,14 @@
                     </span>
                 </a>
               </li>
+              <li>
+                <a id="tabPerformance" href="#panPerformance" data-toggle="tab">
+                  <i class="fa fa-chart-line"></i>
+                    <span class="dev-detail-tab-name">
+                      <?= lang('Systeminfo_Performance');?>
+                    </span>
+                </a>
+              </li>
             </ul>
 
             <div class="tab-content spinnerTarget">
@@ -79,6 +91,9 @@
               </div>
               <div class="tab-pane fade" data-php-file="systeminfoInitCheck.php" id="panInitCheck">
                 <?php require 'php/templates/skel_tab_sysinfo_initcheck.php'; ?>
+              </div>
+              <div class="tab-pane fade" data-php-file="systeminfoPerformance.php" id="panPerformance">
+                <?php require 'php/templates/skel_tab_sysinfo_performance.php'; ?>
               </div>
             </div>
             <!-- /.tab-content -->

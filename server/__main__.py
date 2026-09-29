@@ -25,11 +25,12 @@ from pathlib import Path
 import conf
 from const import fullConfPath, sql_new_devices
 from logger import mylog
-from helper import filePermissions
+from helper import filePermissions, get_setting_value
 from utils.datetime_utils import timeNowUTC, is_datetime_future, normalizeTimeStamp
 from app_state import updateState
 from api import update_api, check_activity, update_GUI_port
 from scan.session_events import process_scan
+from scan.resource_history import get_process_cpu_times_and_io, insert_resource_history
 from initialise import importConfigs, renameSettings
 from database import DB
 from messaging.reporting import get_notifications
@@ -149,43 +150,70 @@ def main():
                 # last time any scan or maintenance/upkeep was run
                 conf.last_scan_run = loop_start_time
 
-                # Header (also broadcasts last_scan_run to frontend via SSE / app_state.json)
-                updateState("Process: Start",
-                            last_scan_run=loop_start_time.replace(microsecond=0).isoformat(),
-                            next_scan_time="")
+                # Resource-usage sampling: brackets the whole schedule-tick block
+                # below (run_plugin_scripts("schedule") through process_scan()),
+                # not just the scan pipeline itself - plugin subprocess execution
+                # happens in this window and is the class of cost this history
+                # exists to catch. Gated on MAINT_PERF_DAYS so a disabled install
+                # pays no sampling cost at all (see scan/resource_history.py).
+                # Defensive: an empty/corrupted setting value must disable this
+                # optional feature, not raise and kill the whole main loop -
+                # this sits outside the try/finally below, so an uncaught
+                # ValueError/TypeError here would have no safety net at all.
+                try:
+                    resource_history_enabled = int(get_setting_value("MAINT_PERF_DAYS", 30)) != 0
+                except (TypeError, ValueError):
+                    resource_history_enabled = False
+                resource_pre = get_process_cpu_times_and_io() if resource_history_enabled else None
+                tick_start_monotonic = time.monotonic()
+                tick_failed = False
 
-                # Timestamp
-                startTime = loop_start_time
-                startTime = startTime.replace(microsecond=0)
+                try:
+                    # Header (also broadcasts last_scan_run to frontend via SSE / app_state.json)
+                    updateState("Process: Start",
+                                last_scan_run=loop_start_time.replace(microsecond=0).isoformat(),
+                                next_scan_time="")
 
-                # Check if any plugins need to run on schedule
-                pm.run_plugin_scripts("schedule")
+                    # Timestamp
+                    startTime = loop_start_time
+                    startTime = startTime.replace(microsecond=0)
 
-                # Compute the next scheduled run time AFTER schedule check (which updates last_next_schedule)
-                # Only device_scanner plugins have meaningful next_scan times for user display
-                scanner_prefixes = {p["unique_prefix"] for p in all_plugins if p.get("plugin_type") == "device_scanner"}
-                scanner_next = [s.last_next_schedule for s in conf.mySchedules if s.service in scanner_prefixes]
+                    # Check if any plugins need to run on schedule
+                    pm.run_plugin_scripts("schedule")
 
-                # Get the earliest next scan time across all device scanners and broadcast.
-                # updateState validates the value is in the future before storing/broadcasting.
-                if scanner_next:
-                    next_scan_dt = min(scanner_next)
-                    updateState(next_scan_time=next_scan_dt.replace(microsecond=0).isoformat())
+                    # Compute the next scheduled run time AFTER schedule check (which updates last_next_schedule)
+                    # Only device_scanner plugins have meaningful next_scan times for user display
+                    scanner_prefixes = {p["unique_prefix"] for p in all_plugins if p.get("plugin_type") == "device_scanner"}
+                    scanner_next = [s.last_next_schedule for s in conf.mySchedules if s.service in scanner_prefixes]
 
-                # determine run/scan type based on passed time
-                # --------------------------------------------
+                    # Get the earliest next scan time across all device scanners and broadcast.
+                    # updateState validates the value is in the future before storing/broadcasting.
+                    if scanner_next:
+                        next_scan_dt = min(scanner_next)
+                        updateState(next_scan_time=next_scan_dt.replace(microsecond=0).isoformat())
 
-                # Runs plugin scripts which are set to run every time after a scans finished
-                pm.run_plugin_scripts("always_after_scan")
+                    # determine run/scan type based on passed time
+                    # --------------------------------------------
 
-                # process all the scanned data into new devices
-                processScan = updateState("Check scan").processScan
-                mylog("debug", [f"[MAIN] processScan: {processScan}"])
+                    # Runs plugin scripts which are set to run every time after a scans finished
+                    pm.run_plugin_scripts("always_after_scan")
 
-                if processScan is True:
-                    mylog("debug", "[MAIN] start processing scan results")
-                    process_scan(db)
-                    updateState("Scan processed", None, None, None, None, False)
+                    # process all the scanned data into new devices
+                    processScan = updateState("Check scan").processScan
+                    mylog("debug", [f"[MAIN] processScan: {processScan}"])
+
+                    if processScan is True:
+                        mylog("debug", "[MAIN] start processing scan results")
+                        process_scan(db)
+                        updateState("Scan processed", None, None, None, None, False)
+                except Exception:
+                    tick_failed = True
+                    raise
+                finally:
+                    if resource_history_enabled:
+                        duration_ms = int((time.monotonic() - tick_start_monotonic) * 1000)
+                        resource_post = get_process_cpu_times_and_io()
+                        insert_resource_history(db, resource_pre, resource_post, duration_ms, tick_failed)
 
                 # Name resolution
                 # --------------------------------------------

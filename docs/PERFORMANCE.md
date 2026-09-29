@@ -16,7 +16,7 @@ The application performs regular maintenance and database cleanup. If these task
 
 ### Database and Log File Size
 
-A large database or oversized log files can impact performance. You can check database and table sizes on the **Maintenance** page.
+A large database or oversized log files can impact performance. You can check database and table sizes on the **System Info → Storage** page.
 
 ![DB size check](./img/PERFORMANCE/db_size_check.png)
 
@@ -29,6 +29,26 @@ A large database or oversized log files can impact performance. You can check da
 Please note that excessively large log files will increase memory consumption. Decrease `MAINT_LOG_LENGTH` if you want to optimize memory use and increase it when debugging issues. See below chart on memory use after logs cleanup.
 
 ![memory use after excessive log clean up](./img/PERFORMANCE/logs_memory_usage.png)
+
+---
+
+## Tracking NetAlertX's Own Resource Usage Over Time
+
+The **System Info → Performance** page graphs NetAlertX's own process CPU%, memory, disk I/O, and scan duration over hour/day/week/month ranges, sampled once per scan cycle. This turns "did a recent change make things slower" into a question you can answer by looking at real history, instead of guessing from what a change *should* cost.
+
+**What each chart shows:**
+
+* **CPU %** - average CPU utilisation over the scan cycle (`100%` = one fully-utilized CPU core; can exceed `100%` with multi-threaded work). This is an average over the whole cycle, not an instantaneous reading - a short burst of high usage followed by idle time reads as a lower percentage than the peak.
+* **Memory Usage** - resident memory (RSS - the physical RAM the process currently holds), in MB, sampled once per cycle.
+* **IO Read / IO Write** - bytes read/written by the NetAlertX process itself during that cycle, in MB. This only ever reflects NetAlertX's own direct I/O (its own DB/cache writes) - a plugin's own subprocess doing heavy disk I/O (e.g. a scanner writing its own result file) is not captured; this is a structural limitation of how the OS attributes child-process I/O to the parent, not a gap that can be closed later.
+* **Scan Duration** - wall-clock time the scan cycle took, in seconds.
+
+> [!NOTE]
+> The IO numbers come from the kernel's own per-process I/O accounting (`/proc/<pid>/io`), which the kernel itself documents as an approximation. On some Docker storage drivers this can be badly inaccurate - confirmed on the deprecated `aufs` driver (common on older Synology NAS Docker setups), where union-filesystem copy-up writes get mis-attributed and can report write volumes many times larger than what's actually reaching disk (`docker info | grep -i "storage driver"` shows which driver you're on; `aufs` is a known-bad case, alongside its own `blkio throttle` warnings confirming the kernel's block-I/O accounting isn't properly wired up for it). If the IO chart shows large, consistent write numbers that don't match actual database growth (check the DB/WAL size on **System Info → Storage**), that's this known driver limitation, not a real cost. Newer Docker storage drivers (`overlay2`) don't have this problem.
+
+* Controlled by the `MAINT_PERF_DAYS` setting (part of the `MAINT` plugin) - the number of days of history to retain, `0` disables collection. Defaults to `30`.
+* History cannot be backfilled - data starts accumulating from whenever collection is enabled.
+* `GET /health` also exposes live `process_cpu_pct`/`process_rss_mb` fields for external monitoring, independent of this history.
 
 ---
 

@@ -2058,7 +2058,7 @@ def check_auth(payload=None):
 @validate_request(
     operation_id="check_health",
     summary="System Health Check",
-    description="Retrieve system vitality metrics including database size, memory pressure, system load, disk usage, and CPU temperature.",
+    description="Retrieve system vitality metrics including database size, memory pressure, system load, disk usage, CPU temperature, and the NetAlertX process's own CPU%/RSS.",
     response_model=HealthCheckResponse,
     tags=["system", "health"],
     auth_callable=is_authorized

@@ -718,7 +718,9 @@ class HealthCheckResponse(BaseResponse):
                 "storage_pct": 42,
                 "cpu_temp": 58,
                 "storage_gb": 8,
-                "mem_mb" : 8192
+                "mem_mb" : 8192,
+                "process_cpu_pct": 3.2,
+                "process_rss_mb": 142.75
             }]
         }
     )
@@ -730,6 +732,8 @@ class HealthCheckResponse(BaseResponse):
     cpu_temp: Optional[int] = Field(None, description="CPU temperature in Celsius (nullable if unavailable)")
     storage_gb: Optional[int] = Field(..., description="Storage size in GB")
     mem_mb: Optional[int] = Field(..., description="Installed memory size in MB")
+    process_cpu_pct: float = Field(..., description="NetAlertX process CPU usage percentage since the last /health call (live gauge, not a tick average)")
+    process_rss_mb: float = Field(..., description="NetAlertX process resident memory (RSS) in MB")
 
 
 # =============================================================================

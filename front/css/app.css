@@ -2597,7 +2597,7 @@ textarea[readonly],
     width: 100%;
 }
 
-#panInitCheck 
+#panInitCheck.active
 {
     display: flow-root;
 }
